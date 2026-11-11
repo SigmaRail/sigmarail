@@ -1,0 +1,163 @@
+version: 1
+source: 68-schema-minervini-trend-template.sql
+entities:
+- id: sigmarail.mart.minervini_trend_template.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.date
+  kind: concept
+  title: date
+  definition: Trading date for the observation
+  binds:
+    column: date
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.price_above_sma150_and_sma200
+  kind: concept
+  title: price above sma150 and sma200
+  definition: 1 when price is above both SMA150 and SMA200
+  binds:
+    column: price_above_sma150_and_sma200
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.sma150_above_sma200
+  kind: concept
+  title: sma150 above sma200
+  definition: 1 when SMA150 is greater than SMA200
+  binds:
+    column: sma150_above_sma200
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.sma200_rising_30d
+  kind: concept
+  title: sma200 rising 30d
+  definition: 1 when SMA200 is higher than 30 trading days ago
+  binds:
+    column: sma200_rising_30d
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.sma200_rising_150d
+  kind: concept
+  title: sma200 rising 150d
+  definition: 1 when SMA200 is higher than 150 trading days ago
+  binds:
+    column: sma200_rising_150d
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.sma50_above_long_smas
+  kind: concept
+  title: sma50 above long smas
+  definition: 1 when SMA50 is above both SMA150 and SMA200
+  binds:
+    column: sma50_above_long_smas
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.price_above_sma50
+  kind: concept
+  title: price above sma50
+  definition: 1 when price is above SMA50
+  binds:
+    column: price_above_sma50
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.price_30pct_above_52w_low
+  kind: concept
+  title: price 30pct above 52w low
+  definition: 1 when price is at least 30% above the 52-week low
+  binds:
+    column: price_30pct_above_52w_low
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.price_70pct_above_52w_low
+  kind: concept
+  title: price 70pct above 52w low
+  definition: 1 when price is at least 70% above the 52-week low
+  binds:
+    column: price_70pct_above_52w_low
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.price_within_25pct_52w_high
+  kind: concept
+  title: price within 25pct 52w high
+  definition: 1 when price is within 25% of the 52-week high
+  binds:
+    column: price_within_25pct_52w_high
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.rs_rating_at_least_70
+  kind: concept
+  title: rs rating at least 70
+  definition: 1 when relative strength rating is 70 or higher
+  binds:
+    column: rs_rating_at_least_70
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_score_full
+  kind: concept
+  title: tt score full
+  definition: Count of all eight Trend Template conditions met
+  binds:
+    column: tt_score_full
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_score_light
+  kind: concept
+  title: tt score light
+  definition: Count excluding price above SMA50 and enhanced SMA200 duration
+  binds:
+    column: tt_score_light
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_score_enhanced
+  kind: concept
+  title: tt score enhanced
+  definition: Count using the 150-day SMA200 uptrend requirement
+  binds:
+    column: tt_score_enhanced
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_all_conditions_full
+  kind: concept
+  title: tt all conditions full
+  definition: 1 when all eight standard conditions are satisfied
+  binds:
+    column: tt_all_conditions_full
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_all_conditions_light
+  kind: concept
+  title: tt all conditions light
+  definition: 1 when light-mode conditions are satisfied
+  binds:
+    column: tt_all_conditions_light
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_all_conditions_enhanced
+  kind: concept
+  title: tt all conditions enhanced
+  definition: 1 when enhanced (150d) conditions are satisfied
+  binds:
+    column: tt_all_conditions_enhanced
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.tt_buy_signal
+  kind: concept
+  title: tt buy signal
+  definition: 1 when Trend Template conditions are met alongside a SMA20 crossover
+  binds:
+    column: tt_buy_signal
+    table: minervini_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.minervini_trend_template.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record
+  binds:
+    column: lastupdated
+    table: minervini_trend_template
+  computability: sigmarail_native

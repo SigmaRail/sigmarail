@@ -1,0 +1,230 @@
+version: 1
+source: 11-schema-ary.sql
+entities:
+- id: sigmarail.mart.ary.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.date
+  kind: concept
+  title: date
+  definition: Calendar date of the fiscal year end for which ARY data is reported.
+  binds:
+    column: date
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue
+  kind: concept
+  title: revenue
+  definition: Revenues (ARY). Amount of Revenue recognised for the fiscal year.
+  binds:
+    column: revenue
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.gp
+  kind: concept
+  title: gp
+  definition: 'Gross Profit (ARY): Revenue - CostOfRevenue for the fiscal year.'
+  binds:
+    column: gp
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.ebit
+  kind: concept
+  title: ebit
+  definition: Earnings Before Interest & Taxes (EBIT) (ARY) for the fiscal year.
+  binds:
+    column: ebit
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.ebitda
+  kind: concept
+  title: ebitda
+  definition: Earnings Before Interest, Taxes, Depreciation & Amortization (EBITDA) (ARY) for the fiscal
+    year.
+  binds:
+    column: ebitda
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: Net Income Common Stock (ARY) for the fiscal year.
+  binds:
+    column: netinccmn
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.epsdil
+  kind: concept
+  title: epsdil
+  definition: Earnings per Diluted Share (ARY) for the fiscal year.
+  binds:
+    column: epsdil
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.fcf
+  kind: concept
+  title: fcf
+  definition: 'Free Cash Flow (ARY): NetCashFlowFromOperations - CapitalExpenditures for the fiscal year.'
+  binds:
+    column: fcf
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.dps
+  kind: concept
+  title: dps
+  definition: Dividends per Basic Common Share (ARY) for the fiscal year.
+  binds:
+    column: dps
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: 'Gross Margin (ARY): GrossProfit / Revenue for the fiscal year.'
+  binds:
+    column: grossmargin
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.netmargin
+  kind: concept
+  title: netmargin
+  definition: 'Net Profit Margin (ARY): NetIncomeCommon / Revenue for the fiscal year.'
+  binds:
+    column: netmargin
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.ebitdamargin
+  kind: concept
+  title: ebitdamargin
+  definition: 'EBITDA Margin (ARY): EBITDA / Revenue for the fiscal year.'
+  binds:
+    column: ebitdamargin
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.currentratio
+  kind: concept
+  title: currentratio
+  definition: 'Current Ratio (ARY): CurrentAssets / CurrentLiabilities at fiscal year end.'
+  binds:
+    column: currentratio
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.de
+  kind: concept
+  title: de
+  definition: 'Debt to Equity Ratio (ARY): TotalLiabilities / ShareholdersEquity at fiscal year end.'
+  binds:
+    column: de
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue_yoy_growth
+  kind: concept
+  title: revenue yoy growth
+  definition: Year over year Revenue growth (Current ARY Revenue vs Prior ARY Revenue).
+  binds:
+    column: revenue_yoy_growth
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.eps_growth_yoy
+  kind: concept
+  title: eps growth yoy
+  definition: Year over year EPS growth (Current ARY EPS vs Prior ARY EPS).
+  binds:
+    column: eps_growth_yoy
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue_yoy_growth_industry_rank
+  kind: concept
+  title: revenue yoy growth industry rank
+  definition: Industry percentile rank for ARY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_industry_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue_yoy_growth_sector_rank
+  kind: concept
+  title: revenue yoy growth sector rank
+  definition: Sector percentile rank for ARY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_sector_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: Industry percentile rank for ARY Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: Sector percentile rank for ARY Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: Industry percentile rank for ARY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: Sector percentile rank for ARY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.eps_growth_3y_cagr
+  kind: concept
+  title: eps growth 3y cagr
+  definition: 3-Year EPS Growth Compound Annual Growth Rate (ARY).
+  binds:
+    column: eps_growth_3y_cagr
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.eps_acceleration_fy
+  kind: concept
+  title: eps acceleration fy
+  definition: 'EPS Growth Acceleration Fiscal Year: 1 if current ARY YoY EPS growth > previous ARY YoY
+    EPS growth, 0 otherwise, NULL if not determinable.'
+  binds:
+    column: eps_acceleration_fy
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue_growth_3y_cagr
+  kind: concept
+  title: revenue growth 3y cagr
+  definition: 3-Year Revenue Growth Compound Annual Growth Rate (ARY).
+  binds:
+    column: revenue_growth_3y_cagr
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.revenue_acceleration_fy
+  kind: concept
+  title: revenue acceleration fy
+  definition: 'Revenue Growth Acceleration Fiscal Year: 1 if current ARY YoY Revenue growth > previous
+    ARY YoY Revenue growth, 0 otherwise, NULL if not determinable.'
+  binds:
+    column: revenue_acceleration_fy
+    table: ary
+  computability: sigmarail_native
+- id: sigmarail.mart.ary.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: ary
+  computability: sigmarail_native

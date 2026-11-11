@@ -1,0 +1,1243 @@
+version: 1
+source: 177-schema-screener_fundamentals_daily.sql
+entities:
+- id: sigmarail.mart.screener_fundamentals_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.company_name
+  kind: concept
+  title: company name
+  definition: Company name
+  binds:
+    column: company_name
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.sector
+  kind: concept
+  title: sector
+  definition: Sector
+  binds:
+    column: sector
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.industry
+  kind: concept
+  title: industry
+  definition: Industry
+  binds:
+    column: industry
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roa
+  kind: concept
+  title: mrt roa
+  definition: Return on Assets (TTM)
+  binds:
+    column: mrt_roa
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roe
+  kind: concept
+  title: mrt roe
+  definition: Return on Equity (TTM)
+  binds:
+    column: mrt_roe
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roic
+  kind: concept
+  title: mrt roic
+  definition: Return on Invested Capital (TTM)
+  binds:
+    column: mrt_roic
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_revenue
+  kind: concept
+  title: mrt revenue
+  definition: Revenue (TTM)
+  binds:
+    column: mrt_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_gp
+  kind: concept
+  title: mrt gp
+  definition: Gross Profit (TTM)
+  binds:
+    column: mrt_gp
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_ebit
+  kind: concept
+  title: mrt ebit
+  definition: EBIT (TTM)
+  binds:
+    column: mrt_ebit
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_ebitda
+  kind: concept
+  title: mrt ebitda
+  definition: EBITDA (TTM)
+  binds:
+    column: mrt_ebitda
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_netinccmn
+  kind: concept
+  title: mrt netinccmn
+  definition: Net Income Common (TTM)
+  binds:
+    column: mrt_netinccmn
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_epsdil
+  kind: concept
+  title: mrt epsdil
+  definition: Diluted EPS (TTM)
+  binds:
+    column: mrt_epsdil
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_fcf
+  kind: concept
+  title: mrt fcf
+  definition: Free Cash Flow (TTM)
+  binds:
+    column: mrt_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_assetsavg
+  kind: concept
+  title: mrt assetsavg
+  definition: Average Assets (TTM)
+  binds:
+    column: mrt_assetsavg
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_equityavg
+  kind: concept
+  title: mrt equityavg
+  definition: Average Equity (TTM)
+  binds:
+    column: mrt_equityavg
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_invcapavg
+  kind: concept
+  title: mrt invcapavg
+  definition: Average Invested Capital (TTM)
+  binds:
+    column: mrt_invcapavg
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_currentratio
+  kind: concept
+  title: mrt currentratio
+  definition: Current Ratio (TTM)
+  binds:
+    column: mrt_currentratio
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_de
+  kind: concept
+  title: mrt de
+  definition: Debt to Equity (TTM)
+  binds:
+    column: mrt_de
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_grossmargin
+  kind: concept
+  title: mrt grossmargin
+  definition: Gross Margin (TTM)
+  binds:
+    column: mrt_grossmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_netmargin
+  kind: concept
+  title: mrt netmargin
+  definition: Net Margin (TTM)
+  binds:
+    column: mrt_netmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roa_yoy_growth
+  kind: concept
+  title: mrt roa yoy growth
+  definition: YoY ROA growth (TTM)
+  binds:
+    column: mrt_roa_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roe_yoy_growth
+  kind: concept
+  title: mrt roe yoy growth
+  definition: YoY ROE growth (TTM)
+  binds:
+    column: mrt_roe_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roic_yoy_growth
+  kind: concept
+  title: mrt roic yoy growth
+  definition: YoY ROIC growth (TTM)
+  binds:
+    column: mrt_roic_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roa_industry_rank
+  kind: concept
+  title: mrt roa industry rank
+  definition: Industry rank TTM ROA
+  binds:
+    column: mrt_roa_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roe_industry_rank
+  kind: concept
+  title: mrt roe industry rank
+  definition: Industry rank TTM ROE
+  binds:
+    column: mrt_roe_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roic_industry_rank
+  kind: concept
+  title: mrt roic industry rank
+  definition: Industry rank TTM ROIC
+  binds:
+    column: mrt_roic_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roa_sector_rank
+  kind: concept
+  title: mrt roa sector rank
+  definition: Sector rank TTM ROA
+  binds:
+    column: mrt_roa_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roe_sector_rank
+  kind: concept
+  title: mrt roe sector rank
+  definition: Sector rank TTM ROE
+  binds:
+    column: mrt_roe_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_roic_sector_rank
+  kind: concept
+  title: mrt roic sector rank
+  definition: Sector rank TTM ROIC
+  binds:
+    column: mrt_roic_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_ncfo
+  kind: concept
+  title: mrt ncfo
+  definition: Net Cash Flow from Operations (TTM)
+  binds:
+    column: mrt_ncfo
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex
+  kind: concept
+  title: mrt capex
+  definition: CapEx (TTM)
+  binds:
+    column: mrt_capex
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_depamor
+  kind: concept
+  title: mrt depamor
+  definition: Depreciation/Amortization (TTM)
+  binds:
+    column: mrt_depamor
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_fxusd
+  kind: concept
+  title: mrt fxusd
+  definition: FXUSD (TTM)
+  binds:
+    column: mrt_fxusd
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_abs
+  kind: concept
+  title: mrt capex abs
+  definition: abs(capex) TTM
+  binds:
+    column: mrt_capex_abs
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_ocf_margin
+  kind: concept
+  title: mrt ocf margin
+  definition: OCF margin TTM
+  binds:
+    column: mrt_ocf_margin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_fcf_margin
+  kind: concept
+  title: mrt fcf margin
+  definition: FCF margin TTM
+  binds:
+    column: mrt_fcf_margin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf
+  kind: concept
+  title: mrt capex to ocf
+  definition: CapEx/OCF TTM
+  binds:
+    column: mrt_capex_to_ocf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_fcf_to_ocf
+  kind: concept
+  title: mrt fcf to ocf
+  definition: FCF/OCF TTM
+  binds:
+    column: mrt_fcf_to_ocf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_da
+  kind: concept
+  title: mrt capex to da
+  definition: CapEx/DA TTM
+  binds:
+    column: mrt_capex_to_da
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_fcf_recon_gap
+  kind: concept
+  title: mrt fcf recon gap
+  definition: FCF recon gap TTM
+  binds:
+    column: mrt_fcf_recon_gap
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_yoy_growth
+  kind: concept
+  title: mrt capex yoy growth
+  definition: CapEx YoY TTM
+  binds:
+    column: mrt_capex_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_vs_5y
+  kind: concept
+  title: mrt capex vs 5y
+  definition: CapEx vs 5y avg TTM
+  binds:
+    column: mrt_capex_vs_5y
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf_industry_rank
+  kind: concept
+  title: mrt capex to ocf industry rank
+  definition: Industry rank CapEx/OCF
+  binds:
+    column: mrt_capex_to_ocf_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf_sector_rank
+  kind: concept
+  title: mrt capex to ocf sector rank
+  definition: Sector rank CapEx/OCF
+  binds:
+    column: mrt_capex_to_ocf_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrt_cash_posture
+  kind: concept
+  title: mrt cash posture
+  definition: Cash posture TTM
+  binds:
+    column: mrt_cash_posture
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_revenue
+  kind: concept
+  title: mrq revenue
+  definition: Revenue (MRQ)
+  binds:
+    column: mrq_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_gp
+  kind: concept
+  title: mrq gp
+  definition: Gross Profit (MRQ)
+  binds:
+    column: mrq_gp
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_ebit
+  kind: concept
+  title: mrq ebit
+  definition: EBIT (MRQ)
+  binds:
+    column: mrq_ebit
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_ebitda
+  kind: concept
+  title: mrq ebitda
+  definition: EBITDA (MRQ)
+  binds:
+    column: mrq_ebitda
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_netinccmn
+  kind: concept
+  title: mrq netinccmn
+  definition: Net Income Common (MRQ)
+  binds:
+    column: mrq_netinccmn
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_epsdil
+  kind: concept
+  title: mrq epsdil
+  definition: Diluted EPS (MRQ)
+  binds:
+    column: mrq_epsdil
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin
+  kind: concept
+  title: mrq grossmargin
+  definition: Gross Margin (MRQ)
+  binds:
+    column: mrq_grossmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_netmargin
+  kind: concept
+  title: mrq netmargin
+  definition: Net Margin (MRQ)
+  binds:
+    column: mrq_netmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin
+  kind: concept
+  title: mrq ebitdamargin
+  definition: EBITDA Margin (MRQ)
+  binds:
+    column: mrq_ebitdamargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_currentratio
+  kind: concept
+  title: mrq currentratio
+  definition: Current Ratio (MRQ)
+  binds:
+    column: mrq_currentratio
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_de
+  kind: concept
+  title: mrq de
+  definition: Debt to Equity (MRQ)
+  binds:
+    column: mrq_de
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_fcf
+  kind: concept
+  title: mrq fcf
+  definition: Free Cash Flow (MRQ)
+  binds:
+    column: mrq_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin_industry_rank
+  kind: concept
+  title: mrq grossmargin industry rank
+  definition: Industry rank MRQ gross margin
+  binds:
+    column: mrq_grossmargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin_sector_rank
+  kind: concept
+  title: mrq grossmargin sector rank
+  definition: Sector rank MRQ gross margin
+  binds:
+    column: mrq_grossmargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_netmargin_industry_rank
+  kind: concept
+  title: mrq netmargin industry rank
+  definition: Industry rank MRQ net margin
+  binds:
+    column: mrq_netmargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_netmargin_sector_rank
+  kind: concept
+  title: mrq netmargin sector rank
+  definition: Sector rank MRQ net margin
+  binds:
+    column: mrq_netmargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin_industry_rank
+  kind: concept
+  title: mrq ebitdamargin industry rank
+  definition: Industry rank MRQ EBITDA margin
+  binds:
+    column: mrq_ebitdamargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin_sector_rank
+  kind: concept
+  title: mrq ebitdamargin sector rank
+  definition: Sector rank MRQ EBITDA margin
+  binds:
+    column: mrq_ebitdamargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue
+  kind: concept
+  title: arq revenue
+  definition: Revenue (ARQ)
+  binds:
+    column: arq_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_gp
+  kind: concept
+  title: arq gp
+  definition: Gross Profit (ARQ)
+  binds:
+    column: arq_gp
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_ebit
+  kind: concept
+  title: arq ebit
+  definition: EBIT (ARQ)
+  binds:
+    column: arq_ebit
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_ebitda
+  kind: concept
+  title: arq ebitda
+  definition: EBITDA (ARQ)
+  binds:
+    column: arq_ebitda
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_netinccmn
+  kind: concept
+  title: arq netinccmn
+  definition: Net Income Common (ARQ)
+  binds:
+    column: arq_netinccmn
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_epsdil
+  kind: concept
+  title: arq epsdil
+  definition: Diluted EPS (ARQ)
+  binds:
+    column: arq_epsdil
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_fcf
+  kind: concept
+  title: arq fcf
+  definition: Free Cash Flow (ARQ)
+  binds:
+    column: arq_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_grossmargin
+  kind: concept
+  title: arq grossmargin
+  definition: Gross Margin (ARQ)
+  binds:
+    column: arq_grossmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_netmargin
+  kind: concept
+  title: arq netmargin
+  definition: Net Margin (ARQ)
+  binds:
+    column: arq_netmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_ebitdamargin
+  kind: concept
+  title: arq ebitdamargin
+  definition: EBITDA Margin (ARQ)
+  binds:
+    column: arq_ebitdamargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_currentratio
+  kind: concept
+  title: arq currentratio
+  definition: Current Ratio (ARQ)
+  binds:
+    column: arq_currentratio
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_de
+  kind: concept
+  title: arq de
+  definition: Debt to Equity (ARQ)
+  binds:
+    column: arq_de
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue_growth_yoy
+  kind: concept
+  title: arq revenue growth yoy
+  definition: YoY revenue growth (ARQ)
+  binds:
+    column: arq_revenue_growth_yoy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_eps_growth_yoy
+  kind: concept
+  title: arq eps growth yoy
+  definition: YoY EPS growth (ARQ)
+  binds:
+    column: arq_eps_growth_yoy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_fcf_growth_yoy
+  kind: concept
+  title: arq fcf growth yoy
+  definition: YoY FCF growth (ARQ)
+  binds:
+    column: arq_fcf_growth_yoy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_netincome_growth_yoy
+  kind: concept
+  title: arq netincome growth yoy
+  definition: YoY net income growth (ARQ)
+  binds:
+    column: arq_netincome_growth_yoy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_eps_growth_qoq
+  kind: concept
+  title: arq eps growth qoq
+  definition: QoQ EPS growth (ARQ)
+  binds:
+    column: arq_eps_growth_qoq
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_qoq
+  kind: concept
+  title: arq eps acceleration qoq
+  definition: EPS acceleration QoQ (ARQ)
+  binds:
+    column: arq_eps_acceleration_qoq
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue_growth_qoq
+  kind: concept
+  title: arq revenue growth qoq
+  definition: QoQ revenue growth (ARQ)
+  binds:
+    column: arq_revenue_growth_qoq
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_qoq
+  kind: concept
+  title: arq revenue acceleration qoq
+  definition: Revenue acceleration QoQ (ARQ)
+  binds:
+    column: arq_revenue_acceleration_qoq
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_q2
+  kind: concept
+  title: arq eps acceleration q2
+  definition: 'ChartMill s_epsaQ2: YoY EPS acceleration (2 consecutive increases); NULL if incomplete'
+  binds:
+    column: arq_eps_acceleration_q2
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_q3
+  kind: concept
+  title: arq eps acceleration q3
+  definition: 'ChartMill s_epsaQ3: YoY EPS acceleration (3 consecutive increases); NULL if incomplete'
+  binds:
+    column: arq_eps_acceleration_q3
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_q2
+  kind: concept
+  title: arq revenue acceleration q2
+  definition: 'ChartMill s_revaQ2: YoY revenue acceleration (2 consecutive increases); NULL if incomplete'
+  binds:
+    column: arq_revenue_acceleration_q2
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_q3
+  kind: concept
+  title: arq revenue acceleration q3
+  definition: 'ChartMill s_revaQ3: YoY revenue acceleration (3 consecutive increases); NULL if incomplete'
+  binds:
+    column: arq_revenue_acceleration_q3
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_pmi_up_q2
+  kind: concept
+  title: arq pmi up q2
+  definition: 'ChartMill s_pmiQ2: ARQ net-margin up 2 consecutive quarters; NULL if incomplete'
+  binds:
+    column: arq_pmi_up_q2
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.arq_pmi_up_q3
+  kind: concept
+  title: arq pmi up q3
+  definition: 'ChartMill s_pmiQ3: ARQ net-margin up 3 consecutive quarters; NULL if incomplete'
+  binds:
+    column: arq_pmi_up_q3
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_revenue
+  kind: concept
+  title: mry revenue
+  definition: Revenue (MRY)
+  binds:
+    column: mry_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_gp
+  kind: concept
+  title: mry gp
+  definition: Gross Profit (MRY)
+  binds:
+    column: mry_gp
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_ebit
+  kind: concept
+  title: mry ebit
+  definition: EBIT (MRY)
+  binds:
+    column: mry_ebit
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_ebitda
+  kind: concept
+  title: mry ebitda
+  definition: EBITDA (MRY)
+  binds:
+    column: mry_ebitda
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_netinccmn
+  kind: concept
+  title: mry netinccmn
+  definition: Net Income Common (MRY)
+  binds:
+    column: mry_netinccmn
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_epsdil
+  kind: concept
+  title: mry epsdil
+  definition: Diluted EPS (MRY)
+  binds:
+    column: mry_epsdil
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_fcf
+  kind: concept
+  title: mry fcf
+  definition: Free Cash Flow (MRY)
+  binds:
+    column: mry_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_dps
+  kind: concept
+  title: mry dps
+  definition: Dividends Per Share (MRY)
+  binds:
+    column: mry_dps
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_grossmargin
+  kind: concept
+  title: mry grossmargin
+  definition: Gross Margin (MRY)
+  binds:
+    column: mry_grossmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_netmargin
+  kind: concept
+  title: mry netmargin
+  definition: Net Margin (MRY)
+  binds:
+    column: mry_netmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin
+  kind: concept
+  title: mry ebitdamargin
+  definition: EBITDA Margin (MRY)
+  binds:
+    column: mry_ebitdamargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth
+  kind: concept
+  title: mry revenue yoy growth
+  definition: YoY revenue growth (MRY)
+  binds:
+    column: mry_revenue_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth_industry_rank
+  kind: concept
+  title: mry revenue yoy growth industry rank
+  definition: Industry rank MRY revenue YoY
+  binds:
+    column: mry_revenue_yoy_growth_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth_sector_rank
+  kind: concept
+  title: mry revenue yoy growth sector rank
+  definition: Sector rank MRY revenue YoY
+  binds:
+    column: mry_revenue_yoy_growth_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_netmargin_industry_rank
+  kind: concept
+  title: mry netmargin industry rank
+  definition: Industry rank MRY net margin
+  binds:
+    column: mry_netmargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_netmargin_sector_rank
+  kind: concept
+  title: mry netmargin sector rank
+  definition: Sector rank MRY net margin
+  binds:
+    column: mry_netmargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin_industry_rank
+  kind: concept
+  title: mry ebitdamargin industry rank
+  definition: Industry rank MRY EBITDA margin
+  binds:
+    column: mry_ebitdamargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin_sector_rank
+  kind: concept
+  title: mry ebitdamargin sector rank
+  definition: Sector rank MRY EBITDA margin
+  binds:
+    column: mry_ebitdamargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue
+  kind: concept
+  title: ary revenue
+  definition: Revenue (ARY)
+  binds:
+    column: ary_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_gp
+  kind: concept
+  title: ary gp
+  definition: Gross Profit (ARY)
+  binds:
+    column: ary_gp
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_ebit
+  kind: concept
+  title: ary ebit
+  definition: EBIT (ARY)
+  binds:
+    column: ary_ebit
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_ebitda
+  kind: concept
+  title: ary ebitda
+  definition: EBITDA (ARY)
+  binds:
+    column: ary_ebitda
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_netinccmn
+  kind: concept
+  title: ary netinccmn
+  definition: Net Income Common (ARY)
+  binds:
+    column: ary_netinccmn
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_epsdil
+  kind: concept
+  title: ary epsdil
+  definition: Diluted EPS (ARY)
+  binds:
+    column: ary_epsdil
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_fcf
+  kind: concept
+  title: ary fcf
+  definition: Free Cash Flow (ARY)
+  binds:
+    column: ary_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_dps
+  kind: concept
+  title: ary dps
+  definition: Dividends Per Share (ARY)
+  binds:
+    column: ary_dps
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_grossmargin
+  kind: concept
+  title: ary grossmargin
+  definition: Gross Margin (ARY)
+  binds:
+    column: ary_grossmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_netmargin
+  kind: concept
+  title: ary netmargin
+  definition: Net Margin (ARY)
+  binds:
+    column: ary_netmargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin
+  kind: concept
+  title: ary ebitdamargin
+  definition: EBITDA Margin (ARY)
+  binds:
+    column: ary_ebitdamargin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_currentratio
+  kind: concept
+  title: ary currentratio
+  definition: Current Ratio (ARY)
+  binds:
+    column: ary_currentratio
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_de
+  kind: concept
+  title: ary de
+  definition: Debt to Equity (ARY)
+  binds:
+    column: ary_de
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth
+  kind: concept
+  title: ary revenue yoy growth
+  definition: YoY revenue growth (ARY)
+  binds:
+    column: ary_revenue_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth_industry_rank
+  kind: concept
+  title: ary revenue yoy growth industry rank
+  definition: Industry rank ARY revenue YoY
+  binds:
+    column: ary_revenue_yoy_growth_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth_sector_rank
+  kind: concept
+  title: ary revenue yoy growth sector rank
+  definition: Sector rank ARY revenue YoY
+  binds:
+    column: ary_revenue_yoy_growth_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_netmargin_industry_rank
+  kind: concept
+  title: ary netmargin industry rank
+  definition: Industry rank ARY net margin
+  binds:
+    column: ary_netmargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_netmargin_sector_rank
+  kind: concept
+  title: ary netmargin sector rank
+  definition: Sector rank ARY net margin
+  binds:
+    column: ary_netmargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin_industry_rank
+  kind: concept
+  title: ary ebitdamargin industry rank
+  definition: Industry rank ARY EBITDA margin
+  binds:
+    column: ary_ebitdamargin_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin_sector_rank
+  kind: concept
+  title: ary ebitdamargin sector rank
+  definition: Sector rank ARY EBITDA margin
+  binds:
+    column: ary_ebitdamargin_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_eps_growth_yoy
+  kind: concept
+  title: ary eps growth yoy
+  definition: YoY EPS growth (ARY)
+  binds:
+    column: ary_eps_growth_yoy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_eps_growth_3y_cagr
+  kind: concept
+  title: ary eps growth 3y cagr
+  definition: 3y EPS CAGR (ARY)
+  binds:
+    column: ary_eps_growth_3y_cagr
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_eps_acceleration_fy
+  kind: concept
+  title: ary eps acceleration fy
+  definition: EPS acceleration FY (ARY)
+  binds:
+    column: ary_eps_acceleration_fy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue_growth_3y_cagr
+  kind: concept
+  title: ary revenue growth 3y cagr
+  definition: 3y revenue CAGR (ARY)
+  binds:
+    column: ary_revenue_growth_3y_cagr
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.ary_revenue_acceleration_fy
+  kind: concept
+  title: ary revenue acceleration fy
+  definition: Revenue acceleration FY (ARY)
+  binds:
+    column: ary_revenue_acceleration_fy
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_ncfo
+  kind: concept
+  title: art ncfo
+  definition: Net Cash Flow from Operations (ART)
+  binds:
+    column: art_ncfo
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex
+  kind: concept
+  title: art capex
+  definition: CapEx (ART)
+  binds:
+    column: art_capex
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_depamor
+  kind: concept
+  title: art depamor
+  definition: Depreciation/Amortization (ART)
+  binds:
+    column: art_depamor
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_fxusd
+  kind: concept
+  title: art fxusd
+  definition: FXUSD (ART)
+  binds:
+    column: art_fxusd
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_abs
+  kind: concept
+  title: art capex abs
+  definition: abs(capex) ART
+  binds:
+    column: art_capex_abs
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_fcf
+  kind: concept
+  title: art fcf
+  definition: Free Cash Flow (ART)
+  binds:
+    column: art_fcf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_revenue
+  kind: concept
+  title: art revenue
+  definition: Revenue (ART)
+  binds:
+    column: art_revenue
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_roic
+  kind: concept
+  title: art roic
+  definition: ROIC (ART)
+  binds:
+    column: art_roic
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_ocf_margin
+  kind: concept
+  title: art ocf margin
+  definition: OCF margin ART
+  binds:
+    column: art_ocf_margin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_fcf_margin
+  kind: concept
+  title: art fcf margin
+  definition: FCF margin ART
+  binds:
+    column: art_fcf_margin
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf
+  kind: concept
+  title: art capex to ocf
+  definition: CapEx/OCF ART
+  binds:
+    column: art_capex_to_ocf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_fcf_to_ocf
+  kind: concept
+  title: art fcf to ocf
+  definition: FCF/OCF ART
+  binds:
+    column: art_fcf_to_ocf
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_to_da
+  kind: concept
+  title: art capex to da
+  definition: CapEx/DA ART
+  binds:
+    column: art_capex_to_da
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_fcf_recon_gap
+  kind: concept
+  title: art fcf recon gap
+  definition: FCF recon gap ART
+  binds:
+    column: art_fcf_recon_gap
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_yoy_growth
+  kind: concept
+  title: art capex yoy growth
+  definition: CapEx YoY ART
+  binds:
+    column: art_capex_yoy_growth
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_vs_5y
+  kind: concept
+  title: art capex vs 5y
+  definition: CapEx vs 5y ART
+  binds:
+    column: art_capex_vs_5y
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf_industry_rank
+  kind: concept
+  title: art capex to ocf industry rank
+  definition: Industry rank ART CapEx/OCF
+  binds:
+    column: art_capex_to_ocf_industry_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf_sector_rank
+  kind: concept
+  title: art capex to ocf sector rank
+  definition: Sector rank ART CapEx/OCF
+  binds:
+    column: art_capex_to_ocf_sector_rank
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_cash_posture
+  kind: concept
+  title: art cash posture
+  definition: Cash posture ART
+  binds:
+    column: art_cash_posture
+    table: screener_fundamentals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_fundamentals_daily.art_cash_posture_disagree
+  kind: concept
+  title: art cash posture disagree
+  definition: ART vs MRT cash_posture disagree
+  binds:
+    column: art_cash_posture_disagree
+    table: screener_fundamentals_daily
+  computability: sigmarail_native

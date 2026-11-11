@@ -1,0 +1,235 @@
+version: 1
+source: 142-schema-ownership_signals_daily.sql
+entities:
+- id: sigmarail.mart.ownership_signals_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker symbol
+  binds:
+    column: ticker
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.date
+  kind: concept
+  title: date
+  definition: Trading session date (PIT as-of this date)
+  binds:
+    column: date
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Row update timestamp
+  binds:
+    column: lastupdated
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_calendardate
+  kind: concept
+  title: inst calendardate
+  definition: Latest complete quarter eligible for PIT on date
+  binds:
+    column: inst_calendardate
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_public_asof_date
+  kind: concept
+  title: inst public asof date
+  definition: inst_calendardate + 45d — first session allowed to use quarter
+  binds:
+    column: inst_public_asof_date
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_calendardate_complete
+  kind: concept
+  title: inst calendardate complete
+  definition: 1 when quarter passes holder-count quality gate
+  binds:
+    column: inst_calendardate_complete
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_data_lag_days
+  kind: concept
+  title: inst data lag days
+  definition: date - inst_public_asof_date (public filing staleness)
+  binds:
+    column: inst_data_lag_days
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_holdings_lag_days
+  kind: concept
+  title: inst holdings lag days
+  definition: date - inst_calendardate (holdings snapshot age)
+  binds:
+    column: inst_holdings_lag_days
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrholders
+  kind: concept
+  title: inst shrholders
+  definition: Institutional shareholder count (sf3a.shrholders)
+  binds:
+    column: inst_shrholders
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrholders_prev
+  kind: concept
+  title: inst shrholders prev
+  definition: Prior complete quarter shareholder count
+  binds:
+    column: inst_shrholders_prev
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrholders_qoq_delta
+  kind: concept
+  title: inst shrholders qoq delta
+  definition: QoQ change in institutional holders
+  binds:
+    column: inst_shrholders_qoq_delta
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrholders_qoq_pct
+  kind: concept
+  title: inst shrholders qoq pct
+  definition: QoQ pct change in institutional holders
+  binds:
+    column: inst_shrholders_qoq_pct
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrunits
+  kind: concept
+  title: inst shrunits
+  definition: Institutional share units held
+  binds:
+    column: inst_shrunits
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrunits_qoq_pct
+  kind: concept
+  title: inst shrunits qoq pct
+  definition: QoQ pct change in share units
+  binds:
+    column: inst_shrunits_qoq_pct
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_shrvalue
+  kind: concept
+  title: inst shrvalue
+  definition: USD value of institutional share holdings
+  binds:
+    column: inst_shrvalue
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.inst_sponsor_trend
+  kind: concept
+  title: inst sponsor trend
+  definition: rising if delta>=+3 holders; falling if delta<=-3; else stable
+  binds:
+    column: inst_sponsor_trend
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_open_buys_90d
+  kind: concept
+  title: insider open buys 90d
+  definition: Count of qualifying open-market buys (P+NA/DA) in 90d
+  binds:
+    column: insider_open_buys_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_open_sells_90d
+  kind: concept
+  title: insider open sells 90d
+  definition: Count of qualifying open-market sells (S+ND/DD) in 90d
+  binds:
+    column: insider_open_sells_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_open_buy_value_90d
+  kind: concept
+  title: insider open buy value 90d
+  definition: Sum of capped buy transaction values in 90d
+  binds:
+    column: insider_open_buy_value_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_open_sell_value_90d
+  kind: concept
+  title: insider open sell value 90d
+  definition: Sum of capped sell transaction values in 90d
+  binds:
+    column: insider_open_sell_value_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_net_buy_value_90d
+  kind: concept
+  title: insider net buy value 90d
+  definition: Buy value minus sell value in 90d
+  binds:
+    column: insider_net_buy_value_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_officer_buys_90d
+  kind: concept
+  title: insider officer buys 90d
+  definition: Officer open-market buys in 90d
+  binds:
+    column: insider_officer_buys_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_officer_sells_90d
+  kind: concept
+  title: insider officer sells 90d
+  definition: Officer open-market sells in 90d
+  binds:
+    column: insider_officer_sells_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_cluster_buy_flag
+  kind: concept
+  title: insider cluster buy flag
+  definition: 1 when 3+ owners in 7d window or 2+ officers same filing day (30d)
+  binds:
+    column: insider_cluster_buy_flag
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_days_since_open_buy
+  kind: concept
+  title: insider days since open buy
+  definition: Days since last qualifying buy; 65535 if none
+  binds:
+    column: insider_days_since_open_buy
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_days_since_open_sell
+  kind: concept
+  title: insider days since open sell
+  definition: Days since last qualifying sell; 65535 if none
+  binds:
+    column: insider_days_since_open_sell
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_last_filingdate
+  kind: concept
+  title: insider last filingdate
+  definition: Max filingdate in 90d insider window
+  binds:
+    column: insider_last_filingdate
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_filing_lag_days
+  kind: concept
+  title: insider filing lag days
+  definition: date - transactiondate of latest buy in window
+  binds:
+    column: insider_filing_lag_days
+    table: ownership_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ownership_signals_daily.insider_sentiment_90d
+  kind: concept
+  title: insider sentiment 90d
+  definition: net_buy/net_sell when |net value| > $250k; else neutral
+  binds:
+    column: insider_sentiment_90d
+    table: ownership_signals_daily
+  computability: sigmarail_native

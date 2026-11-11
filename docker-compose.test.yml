@@ -1,0 +1,31 @@
+# pytest-docker starts one ephemeral ClickHouse for the full pytest session.
+# All tests share sigmarail_test; its data disappears when pytest tears the stack down.
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.5
+    ports:
+      - target: 8123
+        published: "0"
+        host_ip: 127.0.0.1
+        protocol: tcp
+      - target: 9000
+        published: "0"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - ${SIGMARAIL_TEST_FIXTURE_DIR:?pytest must generate a temporary synthetic fixture directory}:/var/lib/clickhouse/user_files
+    tmpfs:
+      - /var/lib/clickhouse:size=4G
+    environment:
+      CLICKHOUSE_DB: sigmarail_test
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s

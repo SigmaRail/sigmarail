@@ -1,0 +1,267 @@
+version: 1
+source: 179-schema-screener_stage_weekly_daily.sql
+entities:
+- id: sigmarail.mart.screener_stage_weekly_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.stage_primary
+  kind: concept
+  title: legacy primary stage
+  definition: 'Legacy broad-stage value projected from stage_analysis for existing daily-keyed allocation/screen consumers. This compatibility field is not the canonical detailed daily or completed-week stage output; weekly stage_code and stage_duration remain on weekly_metrics_derived at weekly grain. See the SigmaRail core compatibility contract.'
+  binds:
+    column: stage_primary
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.stage_quality
+  kind: concept
+  title: stage quality
+  definition: Stage quality 0-100
+  binds:
+    column: stage_quality
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.allocation_fraction
+  kind: concept
+  title: allocation fraction
+  definition: 'Legacy allocation fraction projected from stage_analysis for existing consumers. This compatibility surface does not change allocation behavior. See the SigmaRail core compatibility contract.'
+  binds:
+    column: allocation_fraction
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.sma30w_slope
+  kind: concept
+  title: sma30w slope
+  definition: 30w SMA slope from stage_analysis
+  binds:
+    column: sma30w_slope
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.sma50w_slope
+  kind: concept
+  title: sma50w slope
+  definition: 50w SMA slope from stage_analysis
+  binds:
+    column: sma50w_slope
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.sma50d_slope_20d
+  kind: concept
+  title: sma50d slope 20d
+  definition: 50d SMA slope ~20d from stage_analysis
+  binds:
+    column: sma50d_slope_20d
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.sma10w_slope
+  kind: concept
+  title: sma10w slope
+  definition: 10w SMA slope from stage_analysis
+  binds:
+    column: sma10w_slope
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.sma200d_trend
+  kind: concept
+  title: sma200d trend
+  definition: 200d trend from stage_analysis
+  binds:
+    column: sma200d_trend
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.price_vs_sma30w
+  kind: concept
+  title: price vs sma30w
+  definition: Price vs 30w SMA
+  binds:
+    column: price_vs_sma30w
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.price_vs_sma50w
+  kind: concept
+  title: price vs sma50w
+  definition: Price vs 50w SMA
+  binds:
+    column: price_vs_sma50w
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.price_vs_sma50d
+  kind: concept
+  title: price vs sma50d
+  definition: Price vs 50d SMA
+  binds:
+    column: price_vs_sma50d
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.price_vs_sma10w
+  kind: concept
+  title: price vs sma10w
+  definition: Price vs 10w SMA
+  binds:
+    column: price_vs_sma10w
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_trend
+  kind: concept
+  title: volume trend
+  definition: Volume trend
+  binds:
+    column: volume_trend
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_sma_ratio
+  kind: concept
+  title: volume sma ratio
+  definition: Volume vs MA ratio
+  binds:
+    column: volume_sma_ratio
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_breakout_ratio
+  kind: concept
+  title: volume breakout ratio
+  definition: Breakout volume ratio
+  binds:
+    column: volume_breakout_ratio
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_accumulation
+  kind: concept
+  title: volume accumulation
+  definition: Volume accumulation
+  binds:
+    column: volume_accumulation
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_divergence
+  kind: concept
+  title: volume divergence
+  definition: Volume divergence
+  binds:
+    column: volume_divergence
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volume_breakout_strength
+  kind: concept
+  title: volume breakout strength
+  definition: Breakout strength
+  binds:
+    column: volume_breakout_strength
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.relative_strength_vs_spy
+  kind: concept
+  title: relative strength vs spy
+  definition: RS vs SPY (stage_analysis)
+  binds:
+    column: relative_strength_vs_spy
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.relative_strength_vs_sector
+  kind: concept
+  title: relative strength vs sector
+  definition: RS vs sector (stage_analysis)
+  binds:
+    column: relative_strength_vs_sector
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.days_in_stage
+  kind: concept
+  title: legacy days in stage
+  definition: 'Legacy stage_analysis duration field retained for compatibility. It is not the canonical daily stage_duration or completed-week stage_duration.'
+  binds:
+    column: days_in_stage
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.days_in_substage
+  kind: concept
+  title: legacy days in substage
+  definition: 'Legacy stage_analysis duration field retained for compatibility. It is not the canonical daily stage_duration or completed-week stage_duration.'
+  binds:
+    column: days_in_substage
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.stage_transition
+  kind: concept
+  title: stage transition
+  definition: Stage transition label
+  binds:
+    column: stage_transition
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.trend_duration_weeks
+  kind: concept
+  title: trend duration weeks
+  definition: 'Legacy stage_analysis trend-duration field retained for compatibility. It is not the canonical completed-week stage_duration.'
+  binds:
+    column: trend_duration_weeks
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.ma_alignment_score
+  kind: concept
+  title: ma alignment score
+  definition: MA alignment score
+  binds:
+    column: ma_alignment_score
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.trend_consistency
+  kind: concept
+  title: trend consistency
+  definition: Trend consistency
+  binds:
+    column: trend_consistency
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.risk_level
+  kind: concept
+  title: risk level
+  definition: Risk level
+  binds:
+    column: risk_level
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.volatility_regime
+  kind: concept
+  title: volatility regime
+  definition: Volatility regime
+  binds:
+    column: volatility_regime
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.trend_regime
+  kind: concept
+  title: trend regime
+  definition: Trend regime
+  binds:
+    column: trend_regime
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_stage_weekly_daily.breakout_strength
+  kind: concept
+  title: breakout strength
+  definition: Breakout strength
+  binds:
+    column: breakout_strength
+    table: screener_stage_weekly_daily
+  computability: sigmarail_native

@@ -1,0 +1,171 @@
+version: 1
+source: 12-schema-mrq.sql
+entities:
+- id: sigmarail.mart.mrq.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.date
+  kind: concept
+  title: date
+  definition: Calendar Date (end of quarter) for which MRQ data is reported.
+  binds:
+    column: date
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.revenue
+  kind: concept
+  title: revenue
+  definition: Revenues (MRQ). Amount of Revenue recognised for the quarter.
+  binds:
+    column: revenue
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.gp
+  kind: concept
+  title: gp
+  definition: 'Gross Profit (MRQ): Revenue - CostOfRevenue for the quarter.'
+  binds:
+    column: gp
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.ebit
+  kind: concept
+  title: ebit
+  definition: Earnings Before Interest & Taxes (EBIT) (MRQ) for the quarter.
+  binds:
+    column: ebit
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.ebitda
+  kind: concept
+  title: ebitda
+  definition: Earnings Before Interest, Taxes, Depreciation & Amortization (EBITDA) (MRQ) for the quarter.
+  binds:
+    column: ebitda
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: Net Income Common Stock (MRQ) for the quarter.
+  binds:
+    column: netinccmn
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.epsdil
+  kind: concept
+  title: epsdil
+  definition: Earnings per Diluted Share (MRQ) for the quarter.
+  binds:
+    column: epsdil
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: 'Gross Margin (MRQ): GrossProfit / Revenue for the quarter.'
+  binds:
+    column: grossmargin
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.netmargin
+  kind: concept
+  title: netmargin
+  definition: 'Net Profit Margin (MRQ): NetIncomeCommon / Revenue for the quarter.'
+  binds:
+    column: netmargin
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.ebitdamargin
+  kind: concept
+  title: ebitdamargin
+  definition: 'EBITDA Margin (MRQ): EBITDA / Revenue for the quarter.'
+  binds:
+    column: ebitdamargin
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.currentratio
+  kind: concept
+  title: currentratio
+  definition: 'Current Ratio (MRQ): CurrentAssets / CurrentLiabilities at quarter end.'
+  binds:
+    column: currentratio
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.de
+  kind: concept
+  title: de
+  definition: 'Debt to Equity Ratio (MRQ): TotalLiabilities / ShareholdersEquity at quarter end.'
+  binds:
+    column: de
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.fcf
+  kind: concept
+  title: fcf
+  definition: 'Free Cash Flow (MRQ): NetCashFlowFromOperations - CapitalExpenditures for the quarter.'
+  binds:
+    column: fcf
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.grossmargin_industry_rank
+  kind: concept
+  title: grossmargin industry rank
+  definition: Industry percentile rank for MRQ Gross Margin (0-100).
+  binds:
+    column: grossmargin_industry_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.grossmargin_sector_rank
+  kind: concept
+  title: grossmargin sector rank
+  definition: Sector percentile rank for MRQ Gross Margin (0-100).
+  binds:
+    column: grossmargin_sector_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: Industry percentile rank for MRQ Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: Sector percentile rank for MRQ Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: Industry percentile rank for MRQ EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: Sector percentile rank for MRQ EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: mrq
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mrq
+  computability: sigmarail_native

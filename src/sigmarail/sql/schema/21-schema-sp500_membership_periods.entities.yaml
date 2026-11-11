@@ -1,0 +1,28 @@
+version: 1
+source: 21-schema-sp500_membership_periods.sql
+entities:
+- id: sigmarail.mart.sp500_membership_periods.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol, matching sp500 table.
+  binds:
+    column: ticker
+    table: sp500_membership_periods
+  computability: sigmarail_native
+- id: sigmarail.mart.sp500_membership_periods.member_start_date
+  kind: concept
+  title: member start date
+  definition: The date the ticker was added to the S&P 500.
+  binds:
+    column: member_start_date
+    table: sp500_membership_periods
+  computability: sigmarail_native
+- id: sigmarail.mart.sp500_membership_periods.member_end_date
+  kind: concept
+  title: member end date
+  definition: The date the ticker was removed from the S&P 500. A far future date (e.g., 2999-12-31) indicates
+    current membership.
+  binds:
+    column: member_end_date
+    table: sp500_membership_periods
+  computability: sigmarail_native

@@ -1,0 +1,172 @@
+version: 1
+source: 14-schema-mry.sql
+entities:
+- id: sigmarail.mart.mry.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.date
+  kind: concept
+  title: date
+  definition: Calendar Date (fiscal year end) for which MRY data is reported.
+  binds:
+    column: date
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.revenue
+  kind: concept
+  title: revenue
+  definition: Revenues (MRY). Amount of Revenue recognised for the fiscal year.
+  binds:
+    column: revenue
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.gp
+  kind: concept
+  title: gp
+  definition: 'Gross Profit (MRY): Revenue - CostOfRevenue for the fiscal year.'
+  binds:
+    column: gp
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.ebit
+  kind: concept
+  title: ebit
+  definition: Earnings Before Interest & Taxes (EBIT) (MRY) for the fiscal year.
+  binds:
+    column: ebit
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.ebitda
+  kind: concept
+  title: ebitda
+  definition: Earnings Before Interest, Taxes, Depreciation & Amortization (EBITDA) (MRY) for the fiscal
+    year.
+  binds:
+    column: ebitda
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: Net Income Common Stock (MRY) for the fiscal year.
+  binds:
+    column: netinccmn
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.epsdil
+  kind: concept
+  title: epsdil
+  definition: Earnings per Diluted Share (MRY) for the fiscal year.
+  binds:
+    column: epsdil
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.fcf
+  kind: concept
+  title: fcf
+  definition: 'Free Cash Flow (MRY): NetCashFlowFromOperations - CapitalExpenditures for the fiscal year.'
+  binds:
+    column: fcf
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.dps
+  kind: concept
+  title: dps
+  definition: Dividends per Basic Common Share (MRY) for the fiscal year.
+  binds:
+    column: dps
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: 'Gross Margin (MRY): GrossProfit / Revenue for the fiscal year.'
+  binds:
+    column: grossmargin
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.netmargin
+  kind: concept
+  title: netmargin
+  definition: 'Net Profit Margin (MRY): NetIncomeCommon / Revenue for the fiscal year.'
+  binds:
+    column: netmargin
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.ebitdamargin
+  kind: concept
+  title: ebitdamargin
+  definition: 'EBITDA Margin (MRY): EBITDA / Revenue for the fiscal year.'
+  binds:
+    column: ebitdamargin
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.revenue_yoy_growth
+  kind: concept
+  title: revenue yoy growth
+  definition: Year over year Revenue growth (Current MRY Revenue vs Prior MRY Revenue).
+  binds:
+    column: revenue_yoy_growth
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.revenue_yoy_growth_industry_rank
+  kind: concept
+  title: revenue yoy growth industry rank
+  definition: Industry percentile rank for MRY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_industry_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.revenue_yoy_growth_sector_rank
+  kind: concept
+  title: revenue yoy growth sector rank
+  definition: Sector percentile rank for MRY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_sector_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: Industry percentile rank for MRY Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: Sector percentile rank for MRY Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: Industry percentile rank for MRY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: Sector percentile rank for MRY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: mry
+  computability: sigmarail_native
+- id: sigmarail.mart.mry.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mry
+  computability: sigmarail_native

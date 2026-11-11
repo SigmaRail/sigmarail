@@ -1,0 +1,69 @@
+version: 1
+source: 18-accumulation-distribution-rating.sql
+entities:
+- id: sigmarail.mart.accumulation_distribution_rating.ticker
+  kind: concept
+  title: ticker
+  definition: Equity ticker symbol
+  binds:
+    column: ticker
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.date
+  kind: concept
+  title: date
+  definition: Trading session date
+  binds:
+    column: date
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.volume_score
+  kind: concept
+  title: volume score
+  definition: Volume characteristics (40 points) - Up days with volume vs down days
+  binds:
+    column: volume_score
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.pocket_pivot_score
+  kind: concept
+  title: pocket pivot score
+  definition: Pocket pivot signal (0 or 30) - Up day, vol > max of prior ~10 down days, price near/through
+    sma10d/sma50d [Morales & Kacher]
+  binds:
+    column: pocket_pivot_score
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.volume_ratio_score
+  kind: concept
+  title: volume ratio score
+  definition: Up/Down volume ratio 50-day (20 points) - Cumulative buying pressure
+  binds:
+    column: volume_ratio_score
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.obv_score
+  kind: concept
+  title: obv score
+  definition: OBV SMA-stack score (+10/0/-10) - Rising/falling Granville OBV via sma50/150/200 of cumulative
+    OBV [computed in transform 67]
+  binds:
+    column: obv_score
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.accumulation_distribution_rating
+  kind: concept
+  title: accumulation distribution rating
+  definition: Institutional sponsorship rating (1-99) - The "I" in CAN SLIM [William O'Neil]
+  binds:
+    column: accumulation_distribution_rating
+    table: accumulation_distribution_rating
+  computability: sigmarail_native
+- id: sigmarail.mart.accumulation_distribution_rating.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: lastupdated
+    table: accumulation_distribution_rating
+  computability: sigmarail_native

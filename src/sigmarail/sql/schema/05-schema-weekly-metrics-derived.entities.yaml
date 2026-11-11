@@ -1,0 +1,402 @@
+version: 1
+source: 05-schema-weekly-metrics-derived.sql
+entities:
+- id: sigmarail.mart.weekly_metrics_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.date
+  kind: concept
+  title: date
+  definition: Start of the week (Monday)
+  binds:
+    column: date
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record
+  binds:
+    column: lastupdated
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.sma20w_slope
+  kind: concept
+  title: sma20w slope
+  definition: 1-week slope of 20-week SMA
+  binds:
+    column: sma20w_slope
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.sma30w_slope
+  kind: concept
+  title: sma30w slope
+  definition: 1-week slope of 30-week SMA
+  binds:
+    column: sma30w_slope
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.sma50w_slope
+  kind: concept
+  title: sma50w slope
+  definition: 1-week slope of 50-week SMA
+  binds:
+    column: sma50w_slope
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.sma20w_slope_4w
+  kind: concept
+  title: sma20w slope 4w
+  definition: 4-week slope of 20-week SMA
+  binds:
+    column: sma20w_slope_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.sma50w_slope_4w
+  kind: concept
+  title: sma50w slope 4w
+  definition: 4-week slope of 50-week SMA
+  binds:
+    column: sma50w_slope_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.trend_strength_10w_20w
+  kind: concept
+  title: trend strength 10w 20w
+  definition: Trend strength between 10w and 20w SMAs (ADX-like)
+  binds:
+    column: trend_strength_10w_20w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.trend_strength_20w_50w
+  kind: concept
+  title: trend strength 20w 50w
+  definition: Trend strength between 20w and 50w SMAs
+  binds:
+    column: trend_strength_20w_50w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_4w
+  kind: concept
+  title: momentum 4w
+  definition: '4-week momentum: (current_week_close / 4_weeks_ago_close) - 1'
+  binds:
+    column: momentum_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_8w
+  kind: concept
+  title: momentum 8w
+  definition: '8-week momentum: (current_week_close / 8_weeks_ago_close) - 1'
+  binds:
+    column: momentum_8w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_12w
+  kind: concept
+  title: momentum 12w
+  definition: '12-week momentum: (current_week_close / 12_weeks_ago_close) - 1'
+  binds:
+    column: momentum_12w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_26w
+  kind: concept
+  title: momentum 26w
+  definition: '26-week momentum: (current_week_close / 26_weeks_ago_close) - 1'
+  binds:
+    column: momentum_26w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_acceleration_4w
+  kind: concept
+  title: momentum acceleration 4w
+  definition: 'Acceleration of 4-week momentum: current - previous'
+  binds:
+    column: momentum_acceleration_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_acceleration_8w
+  kind: concept
+  title: momentum acceleration 8w
+  definition: 'Acceleration of 8-week momentum: current - previous'
+  binds:
+    column: momentum_acceleration_8w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.momentum_acceleration_12w
+  kind: concept
+  title: momentum acceleration 12w
+  definition: 'Acceleration of 12-week momentum: current - previous'
+  binds:
+    column: momentum_acceleration_12w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.macd_line
+  kind: concept
+  title: macd line
+  definition: 'MACD Line: EMA(12) - EMA(26) using weekly data'
+  binds:
+    column: macd_line
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.macd_signal
+  kind: concept
+  title: macd signal
+  definition: 'MACD Signal Line: EMA(9) of MACD Line using weekly data'
+  binds:
+    column: macd_signal
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.macd_histogram
+  kind: concept
+  title: macd histogram
+  definition: 'MACD Histogram: MACD Line - Signal Line using weekly data'
+  binds:
+    column: macd_histogram
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.rsi14w
+  kind: concept
+  title: rsi14w
+  definition: Weekly RSI (14-period) calculated from weekly data
+  binds:
+    column: rsi14w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.stoch_k_14w
+  kind: concept
+  title: stoch k 14w
+  definition: Weekly Stochastic Oscillator %K (14-period)
+  binds:
+    column: stoch_k_14w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.stoch_d_14w
+  kind: concept
+  title: stoch d 14w
+  definition: Weekly Stochastic Oscillator %D (3-period SMA of %K)
+  binds:
+    column: stoch_d_14w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.williams_r_14w
+  kind: concept
+  title: williams r 14w
+  definition: Weekly Williams %R (14-period)
+  binds:
+    column: williams_r_14w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.bb20w_middle
+  kind: concept
+  title: bb20w middle
+  definition: 20-week Bollinger Band middle line (SMA)
+  binds:
+    column: bb20w_middle
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.bb20w_upper
+  kind: concept
+  title: bb20w upper
+  definition: 20-week Bollinger Band upper line (+2 std dev)
+  binds:
+    column: bb20w_upper
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.bb20w_lower
+  kind: concept
+  title: bb20w lower
+  definition: 20-week Bollinger Band lower line (-2 std dev)
+  binds:
+    column: bb20w_lower
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.bb20w_width
+  kind: concept
+  title: bb20w width
+  definition: 'Bollinger Band width: (upper - lower) / middle'
+  binds:
+    column: bb20w_width
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.bb20w_position
+  kind: concept
+  title: bb20w position
+  definition: 'Price position within BB: (close - lower) / (upper - lower)'
+  binds:
+    column: bb20w_position
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.wcr_pct
+  kind: concept
+  title: wcr pct
+  definition: Weekly Closing Range as a percentage. (close-low)/(high-low). 100% is a close at the high.
+  binds:
+    column: wcr_pct
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.atr_10w_pct
+  kind: concept
+  title: atr 10w pct
+  definition: 10-week Average True Range as a percentage of the weekly closing price.
+  binds:
+    column: atr_10w_pct
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.total_return_1w
+  kind: concept
+  title: total return 1w
+  definition: Dividend-adjusted 1-week total return calculated from closeadj.
+  binds:
+    column: total_return_1w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.total_return_4w
+  kind: concept
+  title: total return 4w
+  definition: Dividend-adjusted 4-week total return calculated from closeadj.
+  binds:
+    column: total_return_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.total_return_8w
+  kind: concept
+  title: total return 8w
+  definition: Dividend-adjusted 8-week total return calculated from closeadj.
+  binds:
+    column: total_return_8w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.total_return_12w
+  kind: concept
+  title: total return 12w
+  definition: Dividend-adjusted 12-week total return calculated from closeadj.
+  binds:
+    column: total_return_12w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.total_return_26w
+  kind: concept
+  title: total return 26w
+  definition: Dividend-adjusted 26-week total return calculated from closeadj.
+  binds:
+    column: total_return_26w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_1w
+  kind: concept
+  title: perf 1w
+  definition: 1-week performance ((close / lag(close, 1)) - 1)
+  binds:
+    column: perf_1w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_4w
+  kind: concept
+  title: perf 4w
+  definition: 4-week performance ((close / lag(close, 4)) - 1)
+  binds:
+    column: perf_4w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_8w
+  kind: concept
+  title: perf 8w
+  definition: '8-week price performance: (current_week_close / 8_weeks_ago_close - 1)'
+  binds:
+    column: perf_8w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_12w
+  kind: concept
+  title: perf 12w
+  definition: '12-week price performance: (current_week_close / 12_weeks_ago_close - 1)'
+  binds:
+    column: perf_12w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_26w
+  kind: concept
+  title: perf 26w
+  definition: '26-week price performance: (current_week_close / 26_weeks_ago_close - 1)'
+  binds:
+    column: perf_26w
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_1w_acceleration
+  kind: concept
+  title: perf 1w acceleration
+  definition: Acceleration of 1-week performance
+  binds:
+    column: perf_1w_acceleration
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_4w_acceleration
+  kind: concept
+  title: perf 4w acceleration
+  definition: Acceleration of 4-week performance
+  binds:
+    column: perf_4w_acceleration
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_8w_acceleration
+  kind: concept
+  title: perf 8w acceleration
+  definition: Acceleration of 8-week performance
+  binds:
+    column: perf_8w_acceleration
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.perf_12w_acceleration
+  kind: concept
+  title: perf 12w acceleration
+  definition: Acceleration of 12-week performance
+  binds:
+    column: perf_12w_acceleration
+    table: weekly_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.stage_code
+  kind: concept
+  title: stage code
+  definition: Completed-week stage token, including the observed substage when available; NULL until the moving-average inputs are ready or a state is established.
+  binds:
+    column: stage_code
+    table: weekly_metrics_derived
+    role: canonical
+  narrative: Computed from completed weekly close and the 10-, 30-, and 40-week simple averages in weekly_metrics. The ordered state transitions are a clean-room reconstruction from completed weekly bars. The transform SQL is the executable definition of the state transitions and their time boundary.
+  related:
+    - sigmarail.mart.weekly_metrics.close
+    - sigmarail.mart.weekly_metrics.sma10w
+    - sigmarail.mart.weekly_metrics.sma30w
+    - sigmarail.mart.weekly_metrics.sma40w
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.stage_duration
+  kind: concept
+  title: stage duration
+  definition: Number of consecutive completed weekly observations with the current stage code.
+  binds:
+    column: stage_duration
+    table: weekly_metrics_derived
+    role: canonical
+  narrative: Counted across completed-week observations and continued from the prior chunk checkpoint, so the value is independent of populate chunk boundaries. NULL when stage_code is NULL.
+  related:
+    - sigmarail.mart.weekly_metrics_derived.stage_code
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics_derived.stage_transition_state
+  kind: concept
+  title: stage transition checkpoint
+  definition: Internal state carried between completed-week transform chunks so the stage fold can resume without replaying earlier weekly bars.
+  binds:
+    column: stage_transition_state
+    table: weekly_metrics_derived
+  narrative: Stores the current numeric stage id, eight transition counters, the stage-4A low watermark, consecutive duration, and an initialized marker. It is an implementation checkpoint, not a separate user-facing metric. The first refresh after adding the column must rebuild stage history from the earliest available weekly bar; subsequent chunks resume from the latest initialized row before the chunk boundary.
+  related:
+    - sigmarail.mart.weekly_metrics_derived.stage_code
+    - sigmarail.mart.weekly_metrics_derived.stage_duration
+  computability: sigmarail_native

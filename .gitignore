@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage*
+.pytest_cache/
+.venv/
+venv/
+.env
+config.yaml
+config-*.yaml
+data/
+logs/
+.DS_Store

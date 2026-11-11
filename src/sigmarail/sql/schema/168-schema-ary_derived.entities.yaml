@@ -1,0 +1,123 @@
+source: 168-schema-ary_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.ary_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.date
+  kind: concept
+  title: date
+  definition: Fiscal year end date (aligned with ary.date).
+  binds:
+    column: date
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.revenue_yoy_growth
+  kind: concept
+  title: revenue yoy growth
+  definition: kind=sigmarail_derived. YoY Revenue growth (ARY).
+  binds:
+    column: revenue_yoy_growth
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.eps_growth_yoy
+  kind: concept
+  title: eps growth yoy
+  definition: kind=sigmarail_derived. YoY EPS growth (ARY).
+  binds:
+    column: eps_growth_yoy
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.revenue_yoy_growth_industry_rank
+  kind: concept
+  title: revenue yoy growth industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for ARY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_industry_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.revenue_yoy_growth_sector_rank
+  kind: concept
+  title: revenue yoy growth sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for ARY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_sector_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for ARY Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for ARY Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for ARY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for ARY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.eps_growth_3y_cagr
+  kind: concept
+  title: eps growth 3y cagr
+  definition: kind=sigmarail_derived. 3-Year EPS CAGR (ARY).
+  binds:
+    column: eps_growth_3y_cagr
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.eps_acceleration_fy
+  kind: concept
+  title: eps acceleration fy
+  definition: kind=sigmarail_derived. 1 if current ARY YoY EPS growth > prior year.
+  binds:
+    column: eps_acceleration_fy
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.revenue_growth_3y_cagr
+  kind: concept
+  title: revenue growth 3y cagr
+  definition: kind=sigmarail_derived. 3-Year Revenue CAGR (ARY).
+  binds:
+    column: revenue_growth_3y_cagr
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.revenue_acceleration_fy
+  kind: concept
+  title: revenue acceleration fy
+  definition: kind=sigmarail_derived. 1 if current ARY YoY Revenue growth > prior year.
+  binds:
+    column: revenue_acceleration_fy
+    table: ary_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.ary_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: ary_derived
+  computability: sigmarail_native

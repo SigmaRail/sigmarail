@@ -1,0 +1,75 @@
+source: 169-schema-mrq_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.mrq_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.date
+  kind: concept
+  title: date
+  definition: Quarter end date (aligned with mrq.date).
+  binds:
+    column: date
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.grossmargin_industry_rank
+  kind: concept
+  title: grossmargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRQ Gross Margin (0-100).
+  binds:
+    column: grossmargin_industry_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.grossmargin_sector_rank
+  kind: concept
+  title: grossmargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRQ Gross Margin (0-100).
+  binds:
+    column: grossmargin_sector_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRQ Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRQ Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRQ EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRQ EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: mrq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrq_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mrq_derived
+  computability: sigmarail_native

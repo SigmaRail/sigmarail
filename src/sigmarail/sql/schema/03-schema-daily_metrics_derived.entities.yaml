@@ -1,0 +1,631 @@
+version: 1
+source: 03-schema-daily_metrics_derived.sql
+entities:
+- id: sigmarail.mart.daily_metrics_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record
+  binds:
+    column: lastupdated
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma10d_trend
+  kind: concept
+  title: sma10d trend
+  definition: 'Formula: (close - sma10d) / sma10d. Normalized distance from price to the 10-day SMA.
+    Positive means price is above SMA.'
+  binds:
+    column: sma10d_trend
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma20d_trend
+  kind: concept
+  title: sma20d trend
+  definition: 'Formula: (close - sma20d) / sma20d. Normalized distance from price to the 20-day SMA.'
+  binds:
+    column: sma20d_trend
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma50d_trend
+  kind: concept
+  title: sma50d trend
+  definition: 'Formula: (close - sma50d) / sma50d. Normalized distance from price to the 50-day SMA.'
+  binds:
+    column: sma50d_trend
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma150d_trend
+  kind: concept
+  title: sma150d trend
+  definition: 'Formula: (close - sma150d) / sma150d. Normalized distance from price to the 150-day
+    SMA.'
+  binds:
+    column: sma150d_trend
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma200d_trend
+  kind: concept
+  title: sma200d trend
+  definition: 'Formula: (close - sma200d) / sma200d. Normalized distance from price to the 200-day
+    SMA.'
+  binds:
+    column: sma200d_trend
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma50d_slope_20d
+  kind: concept
+  title: sma50d slope 20d
+  definition: 'Formula: (sma50d / sma50d_lag_20d) - 1. The 20-day slope of the 50-day SMA.'
+  binds:
+    column: sma50d_slope_20d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma200d_slope_20d
+  kind: concept
+  title: sma200d slope 20d
+  definition: 'Formula: (sma200d / sma200d_lag_20d) - 1. The 20-day slope of the 200-day SMA.'
+  binds:
+    column: sma200d_slope_20d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_5d
+  kind: concept
+  title: perf 5d
+  definition: 'Formula: (close / close_lag_5d) - 1. 5-day split-adjusted price return.'
+  binds:
+    column: perf_5d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_10d
+  kind: concept
+  title: perf 10d
+  definition: 'Formula: (close / close_lag_10d) - 1. 10-day split-adjusted price return.'
+  binds:
+    column: perf_10d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_1m
+  kind: concept
+  title: perf 1m
+  definition: 'Formula: (close / close_lag_21d) - 1. 1-month (21 trading days) split-adjusted price return.'
+  binds:
+    column: perf_1m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_3m
+  kind: concept
+  title: perf 3m
+  definition: 'Formula: (close / close_lag_63d) - 1. 3-month (63 trading days) split-adjusted price return.'
+  binds:
+    column: perf_3m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_6m
+  kind: concept
+  title: perf 6m
+  definition: 'Formula: (close / close_lag_126d) - 1. 6-month (126 trading days) split-adjusted price return.'
+  binds:
+    column: perf_6m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_1y
+  kind: concept
+  title: perf 1y
+  definition: 'Formula: (close / close_lag_252d) - 1. 1-year (252 trading days) split-adjusted price return.'
+  binds:
+    column: perf_1y
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_9m
+  kind: concept
+  title: perf 9m
+  definition: 'Formula: (close / close_lag_189d) - 1. 9-month (189 trading days) split-adjusted price return.'
+  binds:
+    column: perf_9m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_q1
+  kind: concept
+  title: perf q1
+  definition: 'Formula: (close_lag_189d / close_lag_252d) - 1. Oldest quarter of the trailing year
+    (days 190-252 back).'
+  binds:
+    column: perf_q1
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_q2
+  kind: concept
+  title: perf q2
+  definition: 'Formula: (close_lag_126d / close_lag_189d) - 1. Second quarter back (days 127-189).'
+  binds:
+    column: perf_q2
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_q3
+  kind: concept
+  title: perf q3
+  definition: 'Formula: (close_lag_63d / close_lag_126d) - 1. Third quarter back (days 64-126).'
+  binds:
+    column: perf_q3
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.perf_q4
+  kind: concept
+  title: perf q4
+  definition: 'Formula: (close / close_lag_63d) - 1. Most recent quarter (days 1-63); equals perf_3m.'
+  binds:
+    column: perf_q4
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_5d
+  kind: concept
+  title: total return 5d
+  definition: Dividend-adjusted 5-session return calculated from closeadj.
+  binds:
+    column: total_return_5d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_10d
+  kind: concept
+  title: total return 10d
+  definition: Dividend-adjusted 10-session return calculated from closeadj.
+  binds:
+    column: total_return_10d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_1m
+  kind: concept
+  title: total return 1m
+  definition: Dividend-adjusted 21-session return calculated from closeadj.
+  binds:
+    column: total_return_1m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_3m
+  kind: concept
+  title: total return 3m
+  definition: Dividend-adjusted 63-session return calculated from closeadj.
+  binds:
+    column: total_return_3m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_6m
+  kind: concept
+  title: total return 6m
+  definition: Dividend-adjusted 126-session return calculated from closeadj.
+  binds:
+    column: total_return_6m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_9m
+  kind: concept
+  title: total return 9m
+  definition: Dividend-adjusted 189-session return calculated from closeadj.
+  binds:
+    column: total_return_9m
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_1y
+  kind: concept
+  title: total return 1y
+  definition: Dividend-adjusted 252-session return calculated from closeadj.
+  binds:
+    column: total_return_1y
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_q1
+  kind: concept
+  title: total return q1
+  definition: Dividend-adjusted oldest quarter of the trailing year return calculated from closeadj.
+  binds:
+    column: total_return_q1
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_q2
+  kind: concept
+  title: total return q2
+  definition: Dividend-adjusted second quarter of the trailing year return calculated from closeadj.
+  binds:
+    column: total_return_q2
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_q3
+  kind: concept
+  title: total return q3
+  definition: Dividend-adjusted third quarter of the trailing year return calculated from closeadj.
+  binds:
+    column: total_return_q3
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.total_return_q4
+  kind: concept
+  title: total return q4
+  definition: Dividend-adjusted most recent quarter of the trailing year return calculated from closeadj.
+  binds:
+    column: total_return_q4
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_sma50
+  kind: concept
+  title: price vs sma50
+  definition: 'Formula: (close / sma50d) * 100. Price as percentage of 50-day SMA.'
+  binds:
+    column: price_vs_sma50
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_sma150
+  kind: concept
+  title: price vs sma150
+  definition: 'Formula: (close / sma150d) * 100. Price as percentage of 150-day SMA.'
+  binds:
+    column: price_vs_sma150
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_sma200
+  kind: concept
+  title: price vs sma200
+  definition: 'Formula: (close / sma200d) * 100. Price as percentage of 200-day SMA.'
+  binds:
+    column: price_vs_sma200
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma50_vs_sma150
+  kind: concept
+  title: sma50 vs sma150
+  definition: 'Formula: (sma50d / sma150d) * 100. 50-day SMA as percentage of 150-day SMA.'
+  binds:
+    column: sma50_vs_sma150
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma150_vs_sma200
+  kind: concept
+  title: sma150 vs sma200
+  definition: 'Formula: (sma150d / sma200d) * 100. 150-day SMA as percentage of 200-day SMA.'
+  binds:
+    column: sma150_vs_sma200
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_52w_high
+  kind: concept
+  title: price vs 52w high
+  definition: 'Formula: (close / high_52w) * 100. Price as percentage of 52-week high.'
+  binds:
+    column: price_vs_52w_high
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.atr_to_sma50
+  kind: concept
+  title: atr to sma50
+  definition: 'Formula: (atr_14 / sma50d) * 100. ATR as percentage of 50-day SMA.'
+  binds:
+    column: atr_to_sma50
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_sma20
+  kind: concept
+  title: price vs sma20
+  definition: 'Formula: (close / sma20d) * 100. Price as percentage of 20-day SMA.'
+  binds:
+    column: price_vs_sma20
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_vs_52w_low
+  kind: concept
+  title: price vs 52w low
+  definition: 'Formula: (close / low_52w) * 100. Price as percentage of 52-week low.'
+  binds:
+    column: price_vs_52w_low
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.volume_sma20_vs_sma50
+  kind: concept
+  title: volume sma20 vs sma50
+  definition: 'Formula: (avg_vol_20d / avg_vol_50d) * 100. 20-day volume SMA as percentage of 50-day volume
+    SMA.'
+  binds:
+    column: volume_sma20_vs_sma50
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.volume_trend_pct
+  kind: concept
+  title: volume trend pct
+  definition: 'Formula: ((avg_vol_20d / avg_vol_50d) - 1) * 100. Volume trend percentage change.'
+  binds:
+    column: volume_trend_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_range_52w_pct
+  kind: concept
+  title: price range 52w pct
+  definition: 'Formula: ((high_52w - low_52w) / close) * 100. 52-week range as percentage of current
+    price.'
+  binds:
+    column: price_range_52w_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_to_52w_low_pct
+  kind: concept
+  title: price to 52w low pct
+  definition: 'Formula: (close / low_52w) - 1. Percentage distance of current price from its 52-week
+    low.'
+  binds:
+    column: price_to_52w_low_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_to_52w_high_pct
+  kind: concept
+  title: price to 52w high pct
+  definition: 'Formula: (close / high_52w) - 1. Percentage distance of current price from its 52-week
+    high.'
+  binds:
+    column: price_to_52w_high_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_tightness_5d_90d
+  kind: concept
+  title: vcp tightness 5d 90d
+  definition: 'Formula: (high_5d - low_5d) / high_90d. VCP: Volatility Contraction Pattern, measures 5-day
+    range vs 90-day high.'
+  binds:
+    column: vcp_tightness_5d_90d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_volume_dryup_5d_90d
+  kind: concept
+  title: vcp volume dryup 5d 90d
+  definition: 'Formula: avg_vol_5d / avg_vol_90d. VCP: Compares recent volume to longer-term average volume.'
+  binds:
+    column: vcp_volume_dryup_5d_90d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_proximity_90d
+  kind: concept
+  title: vcp proximity 90d
+  definition: 'Formula: close / high_90d. VCP: Proximity of current price to the 90-day high.'
+  binds:
+    column: vcp_proximity_90d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_atr_compression_5d_90d
+  kind: concept
+  title: vcp atr compression 5d 90d
+  definition: 'Formula: (high_5d - low_5d) / (high_90d - low_90d). VCP: Compares 5-day vs 90-day Average
+    True Range.'
+  binds:
+    column: vcp_atr_compression_5d_90d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_max_drawdown_90d
+  kind: concept
+  title: vcp max drawdown 90d
+  definition: 'Formula: (high_90d - low_90d) / high_90d. VCP: 90-day range as fraction of 90d high (0–1),
+    not standard (trough−peak)/peak drawdown.'
+  binds:
+    column: vcp_max_drawdown_90d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.vcp_consolidation_days_5pct_30d
+  kind: concept
+  title: vcp consolidation days 5pct 30d
+  definition: 'VCP: Number of days in the last 30 where the daily range was less than 5% of the 30-day
+    high.'
+  binds:
+    column: vcp_consolidation_days_5pct_30d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.breakout_signal
+  kind: concept
+  title: breakout signal
+  definition: Signal (1/0) indicating if the current day high is a new 90-day high.
+  binds:
+    column: breakout_signal
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma200_lag_30d
+  kind: concept
+  title: sma200 lag 30d
+  definition: 200-day SMA lagged 30 sessions (soft TT rising).
+  binds:
+    column: sma200_lag_30d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma200d_rising_30d
+  kind: concept
+  title: sma200d rising 30d
+  definition: 1 when SMA200 is higher than 30 trading days ago.
+  binds:
+    column: sma200d_rising_30d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma200d_rising_150d
+  kind: concept
+  title: sma200d rising 150d
+  definition: 1 when SMA200 is higher than 150 trading days ago.
+  binds:
+    column: sma200d_rising_150d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma20d_crossover_up
+  kind: concept
+  title: sma20d crossover up
+  definition: 1 when price crosses up through the 20-day SMA.
+  binds:
+    column: sma20d_crossover_up
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_above_sma20d
+  kind: concept
+  title: price above sma20d
+  definition: 1 when price is above the 20-day SMA.
+  binds:
+    column: price_above_sma20d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_above_sma50d
+  kind: concept
+  title: price above sma50d
+  definition: 1 when price is above the 50-day SMA.
+  binds:
+    column: price_above_sma50d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_above_sma150d
+  kind: concept
+  title: price above sma150d
+  definition: 1 when price is above the 150-day SMA.
+  binds:
+    column: price_above_sma150d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_above_sma200d
+  kind: concept
+  title: price above sma200d
+  definition: 1 when price is above the 200-day SMA.
+  binds:
+    column: price_above_sma200d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma50d_above_sma150d
+  kind: concept
+  title: sma50d above sma150d
+  definition: 1 when SMA50 is above SMA150.
+  binds:
+    column: sma50d_above_sma150d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma50d_above_sma200d
+  kind: concept
+  title: sma50d above sma200d
+  definition: 1 when SMA50 is above SMA200.
+  binds:
+    column: sma50d_above_sma200d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sma150d_above_sma200d
+  kind: concept
+  title: sma150d above sma200d
+  definition: 1 when SMA150 is above SMA200.
+  binds:
+    column: sma150d_above_sma200d
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_30pct_above_52w_low
+  kind: concept
+  title: price 30pct above 52w low
+  definition: 1 when price is at least 30% above the 52-week low.
+  binds:
+    column: price_30pct_above_52w_low
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_70pct_above_52w_low
+  kind: concept
+  title: price 70pct above 52w low
+  definition: 1 when price is at least 70% above the 52-week low.
+  binds:
+    column: price_70pct_above_52w_low
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.price_within_25pct_52w_high
+  kind: concept
+  title: price within 25pct 52w high
+  definition: 1 when price is within 25% of the 52-week high.
+  binds:
+    column: price_within_25pct_52w_high
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.stage_code
+  kind: concept
+  title: daily stage code
+  definition: 'Exact daily stage token from the clean-room replay of the observed chart transition rules using daily close and SMA(50/150/200): 1A, 1B, 2A, 2B, 3A, 3B, 4A, or 4B. The 3A weekly-close criterion uses the session close available as of this daily observation; earlier rows are not rewritten with a later week close. Values are NULL until all three daily averages are available. Evidence and limitations: SigmaRail stage-calculation documentation and SigmaRail stage-calculation documentation.'
+  binds:
+    column: stage_code
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.stage_duration
+  kind: concept
+  title: daily stage duration
+  definition: Consecutive valid daily observations in the current detailed stage_code, counted from the full symbol history so populate chunk boundaries do not reset the duration.
+  binds:
+    column: stage_duration
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.stage_transition_state
+  kind: concept
+  title: daily stage transition checkpoint
+  definition: Internal state carried between daily populate chunks so the stage reducer resumes from the prior session instead of replaying the ticker's entire history. Stores only the 1A and 2A consecutive-session counters and the active 4A low watermark; not a user-facing stage metric.
+  binds:
+    column: stage_transition_state
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.stage_slope30_atr
+  kind: concept
+  title: normalized 150-day moving-average slope
+  definition: '(sma150d - sma150d_lag_30d) / (atr_14 * sqrt(30)): normalized 30-session slope diagnostic. It is not a stage classifier input.'
+  binds:
+    column: stage_slope30_atr
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.volatility_risk_pct
+  kind: concept
+  title: volatility risk pct
+  definition: Volatility risk score from ATR14/close percent bands (inline; SSOT atr is daily_metrics.atr_14_pct)
+  binds:
+    column: volatility_risk_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.liquidity_risk_pct
+  kind: concept
+  title: liquidity risk pct
+  definition: Liquidity risk percentage based on volume patterns and average volume
+  binds:
+    column: liquidity_risk_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.sector_risk_pct
+  kind: concept
+  title: sector risk pct
+  definition: Sector risk percentage based on sector volatility
+  binds:
+    column: sector_risk_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.technical_risk_pct
+  kind: concept
+  title: technical risk pct
+  definition: Technical risk percentage based on chart patterns and technical levels
+  binds:
+    column: technical_risk_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.fundamental_risk_pct
+  kind: concept
+  title: fundamental risk pct
+  definition: Fundamental risk percentage based on fundamental metrics
+  binds:
+    column: fundamental_risk_pct
+    table: daily_metrics_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics_derived.independent_risk_score
+  kind: concept
+  title: independent risk score
+  definition: Overall independent risk score (average of all risk factors)
+  binds:
+    column: independent_risk_score
+    table: daily_metrics_derived
+  computability: sigmarail_native

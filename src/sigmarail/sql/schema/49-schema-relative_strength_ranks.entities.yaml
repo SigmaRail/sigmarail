@@ -1,0 +1,123 @@
+version: 1
+source: 49-schema-relative_strength_ranks.sql
+entities:
+- id: sigmarail.mart.relative_strength_ranks.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.date
+  kind: concept
+  title: date
+  definition: Date of the relative strength calculation.
+  binds:
+    column: date
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.yearly_pct
+  kind: concept
+  title: yearly pct
+  definition: Percentile rank of yearly performance.
+  binds:
+    column: yearly_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_6m_pct
+  kind: concept
+  title: performance 6m pct
+  definition: Percentile rank of 6-month performance.
+  binds:
+    column: performance_6m_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_3m_pct
+  kind: concept
+  title: performance 3m pct
+  definition: Percentile rank of 3-month performance.
+  binds:
+    column: performance_3m_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_1m_pct
+  kind: concept
+  title: performance 1m pct
+  definition: Percentile rank of 1-month performance.
+  binds:
+    column: performance_1m_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_9m_pct
+  kind: concept
+  title: performance 9m pct
+  definition: Shared-universe percentile of 9-month performance per date (0-1).
+  binds:
+    column: performance_9m_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_q1_pct
+  kind: concept
+  title: performance q1 pct
+  definition: Shared-universe percentile of the oldest-quarter performance per date (0-1).
+  binds:
+    column: performance_q1_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_q2_pct
+  kind: concept
+  title: performance q2 pct
+  definition: Shared-universe percentile of the second-quarter-back performance per date (0-1).
+  binds:
+    column: performance_q2_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_q3_pct
+  kind: concept
+  title: performance q3 pct
+  definition: Shared-universe percentile of the third-quarter-back performance per date (0-1).
+  binds:
+    column: performance_q3_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.performance_q4_pct
+  kind: concept
+  title: performance q4 pct
+  definition: Shared-universe percentile of the most-recent-quarter performance per date (0-1).
+  binds:
+    column: performance_q4_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.blended_pct
+  kind: concept
+  title: blended pct
+  definition: Weighted composite percentile (40/20/20/20).
+  binds:
+    column: blended_pct
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.rs_rating
+  kind: concept
+  title: rs rating
+  definition: Final RS rating percentile scaled 0-100.
+  binds:
+    column: rs_rating
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.momentum_rank
+  kind: concept
+  title: momentum rank
+  definition: Rank by blended percentile (1 = highest momentum).
+  binds:
+    column: momentum_rank
+    table: relative_strength_ranks
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_ranks.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: relative_strength_ranks
+  computability: sigmarail_native

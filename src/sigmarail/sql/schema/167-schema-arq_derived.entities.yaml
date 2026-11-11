@@ -1,0 +1,145 @@
+source: 167-schema-arq_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.arq_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.date
+  kind: concept
+  title: date
+  definition: Calendar date of the quarter end (aligned with arq.date).
+  binds:
+    column: date
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.revenue_growth_yoy
+  kind: concept
+  title: revenue growth yoy
+  definition: kind=sigmarail_derived. YoY Revenue growth (ARQ vs 4Q ago).
+  binds:
+    column: revenue_growth_yoy
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.eps_growth_yoy
+  kind: concept
+  title: eps growth yoy
+  definition: kind=sigmarail_derived. YoY EPS growth (ARQ vs 4Q ago).
+  binds:
+    column: eps_growth_yoy
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.fcf_growth_yoy
+  kind: concept
+  title: fcf growth yoy
+  definition: kind=sigmarail_derived. YoY FCF growth (ARQ vs 4Q ago).
+  binds:
+    column: fcf_growth_yoy
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.netincome_growth_yoy
+  kind: concept
+  title: netincome growth yoy
+  definition: kind=sigmarail_derived. YoY Net Income growth (ARQ vs 4Q ago).
+  binds:
+    column: netincome_growth_yoy
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.eps_growth_qoq
+  kind: concept
+  title: eps growth qoq
+  definition: kind=sigmarail_derived. QoQ EPS growth.
+  binds:
+    column: eps_growth_qoq
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.eps_acceleration_qoq
+  kind: concept
+  title: eps acceleration qoq
+  definition: kind=sigmarail_derived. 1 if current QoQ EPS growth > prior QoQ EPS growth.
+  binds:
+    column: eps_acceleration_qoq
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.revenue_growth_qoq
+  kind: concept
+  title: revenue growth qoq
+  definition: kind=sigmarail_derived. QoQ Revenue growth.
+  binds:
+    column: revenue_growth_qoq
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.revenue_acceleration_qoq
+  kind: concept
+  title: revenue acceleration qoq
+  definition: kind=sigmarail_derived. 1 if current QoQ Revenue growth > prior QoQ Revenue growth.
+  binds:
+    column: revenue_acceleration_qoq
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.eps_acceleration_q2
+  kind: concept
+  title: eps acceleration q2
+  definition: 'kind=sigmarail_derived. ChartMill s_epsaQ2: 1 iff YoY EPS growth increased for 2 consecutive
+    quarters; NULL if fewer than 3 YoY values.'
+  binds:
+    column: eps_acceleration_q2
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.eps_acceleration_q3
+  kind: concept
+  title: eps acceleration q3
+  definition: 'kind=sigmarail_derived. ChartMill s_epsaQ3: 1 iff YoY EPS growth increased for 3 consecutive
+    quarters; NULL if fewer than 4 YoY values.'
+  binds:
+    column: eps_acceleration_q3
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.revenue_acceleration_q2
+  kind: concept
+  title: revenue acceleration q2
+  definition: 'kind=sigmarail_derived. ChartMill s_revaQ2: 1 iff YoY revenue growth increased for 2 consecutive
+    quarters; NULL if fewer than 3 YoY values.'
+  binds:
+    column: revenue_acceleration_q2
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.revenue_acceleration_q3
+  kind: concept
+  title: revenue acceleration q3
+  definition: 'kind=sigmarail_derived. ChartMill s_revaQ3: 1 iff YoY revenue growth increased for 3 consecutive
+    quarters; NULL if fewer than 4 YoY values.'
+  binds:
+    column: revenue_acceleration_q3
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.pmi_up_q2
+  kind: concept
+  title: pmi up q2
+  definition: 'kind=sigmarail_derived. ChartMill s_pmiQ2: 1 iff ARQ net margin increased for 2 consecutive
+    quarters; NULL if incomplete window.'
+  binds:
+    column: pmi_up_q2
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.pmi_up_q3
+  kind: concept
+  title: pmi up q3
+  definition: 'kind=sigmarail_derived. ChartMill s_pmiQ3: 1 iff ARQ net margin increased for 3 consecutive
+    quarters; NULL if incomplete window.'
+  binds:
+    column: pmi_up_q3
+    table: arq_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.arq_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: arq_derived
+  computability: sigmarail_native

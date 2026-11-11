@@ -1,0 +1,83 @@
+version: 1
+source: 008-schema-daily_valuation.sql
+entities:
+- id: sigmarail.mart.daily_valuation.ticker
+  kind: concept
+  title: ticker
+  definition: kind=vendor_copy layer=L1
+  binds:
+    column: ticker
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.date
+  kind: concept
+  title: date
+  definition: kind=vendor_copy layer=L1
+  binds:
+    column: date
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: 'TODO: define lastupdated'
+  binds:
+    column: lastupdated
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.ev
+  kind: concept
+  title: ev
+  definition: 'TODO: define ev'
+  binds:
+    column: ev
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.evebit
+  kind: concept
+  title: evebit
+  definition: 'TODO: define evebit'
+  binds:
+    column: evebit
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.evebitda
+  kind: concept
+  title: evebitda
+  definition: 'TODO: define evebitda'
+  binds:
+    column: evebitda
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.marketcap
+  kind: concept
+  title: marketcap
+  definition: 'TODO: define marketcap'
+  binds:
+    column: marketcap
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.pb
+  kind: concept
+  title: pb
+  definition: 'TODO: define pb'
+  binds:
+    column: pb
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.pe
+  kind: concept
+  title: pe
+  definition: 'TODO: define pe'
+  binds:
+    column: pe
+    table: daily_valuation
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_valuation.ps
+  kind: concept
+  title: ps
+  definition: 'TODO: define ps'
+  binds:
+    column: ps
+    table: daily_valuation
+  computability: sigmarail_native

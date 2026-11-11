@@ -1,0 +1,19 @@
+version: 1
+source: 06-schema-daily_price-sequence.sql
+entities:
+- id: sigmarail.mart.daily_price_sequence.date
+  kind: concept
+  title: date
+  definition: Trading session date
+  binds:
+    column: date
+    table: daily_price_sequence
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_price_sequence.trade_day_num
+  kind: concept
+  title: trade day num
+  definition: Monotonic trading-day index (used for closed-week tests and windowing)
+  binds:
+    column: trade_day_num
+    table: daily_price_sequence
+  computability: sigmarail_native

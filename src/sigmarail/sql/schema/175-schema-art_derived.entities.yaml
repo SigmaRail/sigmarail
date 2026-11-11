@@ -1,0 +1,126 @@
+source: 175-schema-art_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.art_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.date
+  kind: concept
+  title: date
+  definition: ART calendar date (aligned with art.date).
+  binds:
+    column: date
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.ocf_margin
+  kind: concept
+  title: ocf margin
+  definition: kind=sigmarail_derived. ncfo / nullIf(revenue, 0).
+  binds:
+    column: ocf_margin
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.fcf_margin
+  kind: concept
+  title: fcf margin
+  definition: kind=sigmarail_derived. fcf / nullIf(revenue, 0).
+  binds:
+    column: fcf_margin
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_to_ocf
+  kind: concept
+  title: capex to ocf
+  definition: kind=sigmarail_derived. capex_abs / nullIf(ncfo, 0).
+  binds:
+    column: capex_to_ocf
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.fcf_to_ocf
+  kind: concept
+  title: fcf to ocf
+  definition: kind=sigmarail_derived. fcf / nullIf(ncfo, 0).
+  binds:
+    column: fcf_to_ocf
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_to_da
+  kind: concept
+  title: capex to da
+  definition: kind=sigmarail_derived. capex_abs / nullIf(abs(depamor), 0).
+  binds:
+    column: capex_to_da
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.fcf_recon_gap
+  kind: concept
+  title: fcf recon gap
+  definition: kind=sigmarail_derived. fcf - (ncfo + capex); expect ~0 when SF1 fields present.
+  binds:
+    column: fcf_recon_gap
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_yoy_growth
+  kind: concept
+  title: capex yoy growth
+  definition: kind=sigmarail_derived. (capex_abs - lag4(capex_abs)) / nullIf(abs(lag4(capex_abs)), 0) when
+    >=5 TTM points.
+  binds:
+    column: capex_yoy_growth
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_vs_5y
+  kind: concept
+  title: capex vs 5y
+  definition: kind=sigmarail_derived. capex_abs / nullIf(avg(capex_abs) over prior 20 TTM rows, 0) when >=20
+    points.
+  binds:
+    column: capex_vs_5y
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_to_ocf_industry_rank
+  kind: concept
+  title: capex to ocf industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for capex_to_ocf (0-100).
+  binds:
+    column: capex_to_ocf_industry_rank
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.capex_to_ocf_sector_rank
+  kind: concept
+  title: capex to ocf sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for capex_to_ocf (0-100).
+  binds:
+    column: capex_to_ocf_sector_rank
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.cash_posture
+  kind: concept
+  title: cash posture
+  definition: kind=sigmarail_derived. 2=high_reinvestment; 1=moderate; 0=low_capex; NULL if ncfo null/<=0.
+  binds:
+    column: cash_posture
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.cash_posture_disagree
+  kind: concept
+  title: cash posture disagree
+  definition: kind=sigmarail_derived. 1 when ART cash_posture != MRT cash_posture (both non-null on same date);
+    else 0; NULL if either missing.
+  binds:
+    column: cash_posture_disagree
+    table: art_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.art_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: art_derived
+  computability: sigmarail_native

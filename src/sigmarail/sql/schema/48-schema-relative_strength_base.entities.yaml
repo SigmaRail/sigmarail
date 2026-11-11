@@ -1,0 +1,117 @@
+version: 1
+source: 48-schema-relative_strength_base.sql
+entities:
+- id: sigmarail.mart.relative_strength_base.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.date
+  kind: concept
+  title: date
+  definition: Date of the relative strength calculation.
+  binds:
+    column: date
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.yearly_performance
+  kind: concept
+  title: yearly performance
+  definition: 12-month price performance.
+  binds:
+    column: yearly_performance
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_6m
+  kind: concept
+  title: performance 6m
+  definition: 6-month price performance.
+  binds:
+    column: performance_6m
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_3m
+  kind: concept
+  title: performance 3m
+  definition: 3-month price performance.
+  binds:
+    column: performance_3m
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_1m
+  kind: concept
+  title: performance 1m
+  definition: 1-month price performance.
+  binds:
+    column: performance_1m
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_9m
+  kind: concept
+  title: performance 9m
+  definition: 9-month price performance.
+  binds:
+    column: performance_9m
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_q1
+  kind: concept
+  title: performance q1
+  definition: Oldest quarter of the trailing year, days 190-252 back.
+  binds:
+    column: performance_q1
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_q2
+  kind: concept
+  title: performance q2
+  definition: Second quarter back, days 127-189.
+  binds:
+    column: performance_q2
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_q3
+  kind: concept
+  title: performance q3
+  definition: Third quarter back, days 64-126.
+  binds:
+    column: performance_q3
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.performance_q4
+  kind: concept
+  title: performance q4
+  definition: Most recent quarter, days 1-63 (equals performance_3m).
+  binds:
+    column: performance_q4
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.price_relative_ratio
+  kind: concept
+  title: price relative ratio
+  definition: Price relative ratio versus SPY (closeadj / spy_closeadj).
+  binds:
+    column: price_relative_ratio
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.pool
+  kind: concept
+  title: pool
+  definition: 'Instrument classification provenance (tickers.table: stocks or funds). relative_strength_ranks
+    percentiles are a single shared universe (the shared Sharadar universe); pool is informational for a future fund-segmented
+    RS.'
+  binds:
+    column: pool
+    table: relative_strength_base
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength_base.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: relative_strength_base
+  computability: sigmarail_native

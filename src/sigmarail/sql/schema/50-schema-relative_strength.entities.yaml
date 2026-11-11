@@ -1,0 +1,169 @@
+version: 1
+source: 50-schema-relative_strength.sql
+entities:
+- id: sigmarail.mart.relative_strength.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.date
+  kind: concept
+  title: date
+  definition: Date of the relative strength calculation.
+  binds:
+    column: date
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.yearly_performance
+  kind: concept
+  title: yearly performance
+  definition: '12-month price performance: (current_price / price_12_months_ago) - 1. IBD method.'
+  binds:
+    column: yearly_performance
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.performance_6m
+  kind: concept
+  title: performance 6m
+  definition: 6-month price performance.
+  binds:
+    column: performance_6m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.performance_3m
+  kind: concept
+  title: performance 3m
+  definition: 3-month price performance.
+  binds:
+    column: performance_3m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.performance_1m
+  kind: concept
+  title: performance 1m
+  definition: 1-month price performance.
+  binds:
+    column: performance_1m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.composite_performance
+  kind: concept
+  title: composite performance
+  definition: Weighted composite performance (40/20/20/20 across 12m/6m/3m/1m).
+  binds:
+    column: composite_performance
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.rs_rating
+  kind: concept
+  title: rs rating
+  definition: Relative strength rating (0-100 percentile of the blended 1y/6m/3m/1m momentum score within
+    the shared instrument universe — stocks and ETFs ranked together).
+  binds:
+    column: rs_rating
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.rs_rating_12m
+  kind: concept
+  title: rs rating 12m
+  definition: 'RS Rating for the 12-month horizon (0-100): yearly_pct * 100 within the shared instrument
+    universe.'
+  binds:
+    column: rs_rating_12m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.rs_rating_6m
+  kind: concept
+  title: rs rating 6m
+  definition: 'RS Rating for the 6-month horizon (0-100): performance_6m_pct * 100 within the shared instrument
+    universe.'
+  binds:
+    column: rs_rating_6m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.rs_rating_3m
+  kind: concept
+  title: rs rating 3m
+  definition: 'RS Rating for the 3-month horizon (0-100): performance_3m_pct * 100 within the shared instrument
+    universe.'
+  binds:
+    column: rs_rating_3m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.rs_rating_1m
+  kind: concept
+  title: rs rating 1m
+  definition: 'RS Rating for the 1-month horizon (0-100): performance_1m_pct * 100 within the shared instrument
+    universe.'
+  binds:
+    column: rs_rating_1m
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.sma10d_rs_rating
+  kind: concept
+  title: sma10d rs rating
+  definition: 10-day simple moving average of the rs_rating.
+  binds:
+    column: sma10d_rs_rating
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.sma21d_rs_rating
+  kind: concept
+  title: sma21d rs rating
+  definition: 21-day simple moving average of the rs_rating.
+  binds:
+    column: sma21d_rs_rating
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.sma50d_rs_rating
+  kind: concept
+  title: sma50d rs rating
+  definition: 50-day simple moving average of the rs_rating.
+  binds:
+    column: sma50d_rs_rating
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.sma200d_rs_rating
+  kind: concept
+  title: sma200d rs rating
+  definition: 200-day simple moving average of the rs_rating.
+  binds:
+    column: sma200d_rs_rating
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.momentum_rank
+  kind: concept
+  title: momentum rank
+  definition: Rank by blended_pct within the shared universe for the date (1 = highest momentum; rows
+    with no performance history rank last).
+  binds:
+    column: momentum_rank
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.price_relative_ratio
+  kind: concept
+  title: price relative ratio
+  definition: Price relative ratio versus SPY (closeadj / spy_closeadj).
+  binds:
+    column: price_relative_ratio
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.price_relative_ratio_rebased
+  kind: concept
+  title: price relative ratio rebased
+  definition: Price relative ratio rebased to 100 using the first available value.
+  binds:
+    column: price_relative_ratio_rebased
+    table: relative_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.relative_strength.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: relative_strength
+  computability: sigmarail_native

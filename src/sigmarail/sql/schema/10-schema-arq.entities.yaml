@@ -1,0 +1,190 @@
+version: 1
+source: 10-schema-arq.sql
+entities:
+- id: sigmarail.mart.arq.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.date
+  kind: concept
+  title: date
+  definition: Calendar date of the quarter end for which ARQ data is reported.
+  binds:
+    column: date
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.revenue
+  kind: concept
+  title: revenue
+  definition: Revenues (ARQ). Amount of Revenue recognised for the quarter.
+  binds:
+    column: revenue
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.gp
+  kind: concept
+  title: gp
+  definition: 'Gross Profit (ARQ): Revenue - CostOfRevenue for the quarter.'
+  binds:
+    column: gp
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.ebit
+  kind: concept
+  title: ebit
+  definition: Earnings Before Interest & Taxes (EBIT) (ARQ) for the quarter.
+  binds:
+    column: ebit
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.ebitda
+  kind: concept
+  title: ebitda
+  definition: Earnings Before Interest, Taxes, Depreciation & Amortization (EBITDA) (ARQ) for the quarter.
+  binds:
+    column: ebitda
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: Net Income Common Stock (ARQ) for the quarter.
+  binds:
+    column: netinccmn
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.epsdil
+  kind: concept
+  title: epsdil
+  definition: Earnings per Diluted Share (ARQ) for the quarter.
+  binds:
+    column: epsdil
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.fcf
+  kind: concept
+  title: fcf
+  definition: 'Free Cash Flow (ARQ): NetCashFlowFromOperations - CapitalExpenditures for the quarter.'
+  binds:
+    column: fcf
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: 'Gross Margin (ARQ): GrossProfit / Revenue for the quarter.'
+  binds:
+    column: grossmargin
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.netmargin
+  kind: concept
+  title: netmargin
+  definition: 'Net Profit Margin (ARQ): NetIncomeCommon / Revenue for the quarter.'
+  binds:
+    column: netmargin
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.ebitdamargin
+  kind: concept
+  title: ebitdamargin
+  definition: 'EBITDA Margin (ARQ): EBITDA / Revenue for the quarter.'
+  binds:
+    column: ebitdamargin
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.currentratio
+  kind: concept
+  title: currentratio
+  definition: 'Current Ratio (ARQ): CurrentAssets / CurrentLiabilities at quarter end.'
+  binds:
+    column: currentratio
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.de
+  kind: concept
+  title: de
+  definition: 'Debt to Equity Ratio (ARQ): TotalLiabilities / ShareholdersEquity at quarter end.'
+  binds:
+    column: de
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.revenue_growth_yoy
+  kind: concept
+  title: revenue growth yoy
+  definition: Year over year Revenue growth (Current ARQ Revenue vs ARQ Revenue from 4 quarters ago).
+  binds:
+    column: revenue_growth_yoy
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.eps_growth_yoy
+  kind: concept
+  title: eps growth yoy
+  definition: Year over year EPS growth (Current ARQ EPS vs ARQ EPS from 4 quarters ago).
+  binds:
+    column: eps_growth_yoy
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.fcf_growth_yoy
+  kind: concept
+  title: fcf growth yoy
+  definition: Year over year FCF growth (Current ARQ FCF vs ARQ FCF from 4 quarters ago).
+  binds:
+    column: fcf_growth_yoy
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.netincome_growth_yoy
+  kind: concept
+  title: netincome growth yoy
+  definition: Year over year Net Income growth (Current ARQ Net Income vs ARQ Net Income from 4 quarters
+    ago).
+  binds:
+    column: netincome_growth_yoy
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.eps_growth_qoq
+  kind: concept
+  title: eps growth qoq
+  definition: Quarter-over-Quarter EPS Growth (Current ARQ EPS vs Previous ARQ EPS).
+  binds:
+    column: eps_growth_qoq
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.eps_acceleration_qoq
+  kind: concept
+  title: eps acceleration qoq
+  definition: 'EPS Growth Acceleration QoQ: 1 if current QoQ EPS growth > previous QoQ EPS growth, 0 otherwise,
+    NULL if not determinable.'
+  binds:
+    column: eps_acceleration_qoq
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.revenue_growth_qoq
+  kind: concept
+  title: revenue growth qoq
+  definition: Quarter-over-Quarter Revenue Growth (Current ARQ Revenue vs Previous ARQ Revenue).
+  binds:
+    column: revenue_growth_qoq
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.revenue_acceleration_qoq
+  kind: concept
+  title: revenue acceleration qoq
+  definition: 'Revenue Growth Acceleration QoQ: 1 if current QoQ Revenue growth > previous QoQ Revenue
+    growth, 0 otherwise, NULL if not determinable.'
+  binds:
+    column: revenue_acceleration_qoq
+    table: arq
+  computability: sigmarail_native
+- id: sigmarail.mart.arq.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: arq
+  computability: sigmarail_native

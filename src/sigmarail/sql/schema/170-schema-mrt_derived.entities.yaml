@@ -1,0 +1,190 @@
+source: 170-schema-mrt_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.mrt_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.date
+  kind: concept
+  title: date
+  definition: TTM calendar date (aligned with mrt.date).
+  binds:
+    column: date
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roa_yoy_growth
+  kind: concept
+  title: roa yoy growth
+  definition: kind=sigmarail_derived. YoY ROA growth (TTM vs 4Q ago).
+  binds:
+    column: roa_yoy_growth
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roe_yoy_growth
+  kind: concept
+  title: roe yoy growth
+  definition: kind=sigmarail_derived. YoY ROE growth (TTM vs 4Q ago).
+  binds:
+    column: roe_yoy_growth
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roic_yoy_growth
+  kind: concept
+  title: roic yoy growth
+  definition: kind=sigmarail_derived. YoY ROIC growth (TTM vs 4Q ago).
+  binds:
+    column: roic_yoy_growth
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roa_industry_rank
+  kind: concept
+  title: roa industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for TTM ROA (0-100).
+  binds:
+    column: roa_industry_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roe_industry_rank
+  kind: concept
+  title: roe industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for TTM ROE (0-100).
+  binds:
+    column: roe_industry_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roic_industry_rank
+  kind: concept
+  title: roic industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for TTM ROIC (0-100).
+  binds:
+    column: roic_industry_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roa_sector_rank
+  kind: concept
+  title: roa sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for TTM ROA (0-100).
+  binds:
+    column: roa_sector_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roe_sector_rank
+  kind: concept
+  title: roe sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for TTM ROE (0-100).
+  binds:
+    column: roe_sector_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.roic_sector_rank
+  kind: concept
+  title: roic sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for TTM ROIC (0-100).
+  binds:
+    column: roic_sector_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.ocf_margin
+  kind: concept
+  title: ocf margin
+  definition: kind=sigmarail_derived. ncfo / nullIf(revenue, 0).
+  binds:
+    column: ocf_margin
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.fcf_margin
+  kind: concept
+  title: fcf margin
+  definition: kind=sigmarail_derived. fcf / nullIf(revenue, 0).
+  binds:
+    column: fcf_margin
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_to_ocf
+  kind: concept
+  title: capex to ocf
+  definition: kind=sigmarail_derived. capex_abs / nullIf(ncfo, 0).
+  binds:
+    column: capex_to_ocf
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.fcf_to_ocf
+  kind: concept
+  title: fcf to ocf
+  definition: kind=sigmarail_derived. fcf / nullIf(ncfo, 0).
+  binds:
+    column: fcf_to_ocf
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_to_da
+  kind: concept
+  title: capex to da
+  definition: kind=sigmarail_derived. capex_abs / nullIf(abs(depamor), 0).
+  binds:
+    column: capex_to_da
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.fcf_recon_gap
+  kind: concept
+  title: fcf recon gap
+  definition: kind=sigmarail_derived. fcf - (ncfo + capex); expect ~0 when SF1 fields present.
+  binds:
+    column: fcf_recon_gap
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_yoy_growth
+  kind: concept
+  title: capex yoy growth
+  definition: kind=sigmarail_derived. (capex_abs - lag4(capex_abs)) / nullIf(abs(lag4(capex_abs)), 0) when
+    >=5 TTM points.
+  binds:
+    column: capex_yoy_growth
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_vs_5y
+  kind: concept
+  title: capex vs 5y
+  definition: kind=sigmarail_derived. capex_abs / nullIf(avg(capex_abs) over prior 20 TTM rows, 0) when >=20
+    points.
+  binds:
+    column: capex_vs_5y
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_to_ocf_industry_rank
+  kind: concept
+  title: capex to ocf industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for capex_to_ocf (0-100).
+  binds:
+    column: capex_to_ocf_industry_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.capex_to_ocf_sector_rank
+  kind: concept
+  title: capex to ocf sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for capex_to_ocf (0-100).
+  binds:
+    column: capex_to_ocf_sector_rank
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.cash_posture
+  kind: concept
+  title: cash posture
+  definition: kind=sigmarail_derived. 2=high_reinvestment (capex_to_ocf>=0.5 & ncfo>0); 1=moderate (0.2<=ratio<0.5);
+    0=low_capex (ratio<0.2 & ncfo>0); NULL if ncfo null/<=0.
+  binds:
+    column: cash_posture
+    table: mrt_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mrt_derived
+  computability: sigmarail_native

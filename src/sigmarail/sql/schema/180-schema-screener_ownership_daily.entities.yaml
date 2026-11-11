@@ -1,0 +1,171 @@
+version: 1
+source: 180-schema-screener_ownership_daily.sql
+entities:
+- id: sigmarail.mart.screener_ownership_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_calendardate
+  kind: concept
+  title: inst calendardate
+  definition: 13F holdings as-of quarter end
+  binds:
+    column: inst_calendardate
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_public_asof_date
+  kind: concept
+  title: inst public asof date
+  definition: First public session for 13F quarter
+  binds:
+    column: inst_public_asof_date
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_calendardate_complete
+  kind: concept
+  title: inst calendardate complete
+  definition: 1 when 13F quarter passes quality gate
+  binds:
+    column: inst_calendardate_complete
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_data_lag_days
+  kind: concept
+  title: inst data lag days
+  definition: Session date minus inst_public_asof_date
+  binds:
+    column: inst_data_lag_days
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_holdings_lag_days
+  kind: concept
+  title: inst holdings lag days
+  definition: Session date minus inst_calendardate
+  binds:
+    column: inst_holdings_lag_days
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_shrholders
+  kind: concept
+  title: inst shrholders
+  definition: Institutional holder count
+  binds:
+    column: inst_shrholders
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_shrholders_qoq_delta
+  kind: concept
+  title: inst shrholders qoq delta
+  definition: QoQ change in holders
+  binds:
+    column: inst_shrholders_qoq_delta
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_shrholders_qoq_pct
+  kind: concept
+  title: inst shrholders qoq pct
+  definition: QoQ pct change in holders
+  binds:
+    column: inst_shrholders_qoq_pct
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.inst_sponsor_trend
+  kind: concept
+  title: inst sponsor trend
+  definition: Sponsorship trend
+  binds:
+    column: inst_sponsor_trend
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_open_buys_90d
+  kind: concept
+  title: insider open buys 90d
+  definition: Open-market insider buys 90d
+  binds:
+    column: insider_open_buys_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_open_sells_90d
+  kind: concept
+  title: insider open sells 90d
+  definition: Open-market insider sells 90d
+  binds:
+    column: insider_open_sells_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_net_buy_value_90d
+  kind: concept
+  title: insider net buy value 90d
+  definition: Net insider buy value 90d
+  binds:
+    column: insider_net_buy_value_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_officer_buys_90d
+  kind: concept
+  title: insider officer buys 90d
+  definition: Officer buys 90d
+  binds:
+    column: insider_officer_buys_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_officer_sells_90d
+  kind: concept
+  title: insider officer sells 90d
+  definition: Officer sells 90d
+  binds:
+    column: insider_officer_sells_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_cluster_buy_flag
+  kind: concept
+  title: insider cluster buy flag
+  definition: Cluster buy flag
+  binds:
+    column: insider_cluster_buy_flag
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_days_since_open_buy
+  kind: concept
+  title: insider days since open buy
+  definition: Days since last buy; 65535 if none
+  binds:
+    column: insider_days_since_open_buy
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_sentiment_90d
+  kind: concept
+  title: insider sentiment 90d
+  definition: Insider sentiment 90d
+  binds:
+    column: insider_sentiment_90d
+    table: screener_ownership_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ownership_daily.insider_last_filingdate
+  kind: concept
+  title: insider last filingdate
+  definition: Latest Form 4 filingdate in window
+  binds:
+    column: insider_last_filingdate
+    table: screener_ownership_daily
+  computability: sigmarail_native

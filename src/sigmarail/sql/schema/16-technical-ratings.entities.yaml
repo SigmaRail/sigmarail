@@ -1,0 +1,139 @@
+version: 1
+source: 16-technical-ratings.sql
+entities:
+- id: sigmarail.mart.technical_ratings.ticker
+  kind: concept
+  title: ticker
+  definition: Equity ticker symbol
+  binds:
+    column: ticker
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.date
+  kind: concept
+  title: date
+  definition: Trading session date
+  binds:
+    column: date
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.rs_component
+  kind: concept
+  title: rs component
+  definition: Relative Strength component (O'Neil) - 25 points max
+  binds:
+    column: rs_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.long_term_trend_component
+  kind: concept
+  title: long term trend component
+  definition: Long-term trend vs 200d MA (Weinstein) - 25 points max
+  binds:
+    column: long_term_trend_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.short_term_trend_component
+  kind: concept
+  title: short term trend component
+  definition: Short-term momentum vs 50d MA - 20 points max
+  binds:
+    column: short_term_trend_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.ma_alignment_component
+  kind: concept
+  title: ma alignment component
+  definition: MA hierarchy alignment (50d>150d>200d) - 15 points max
+  binds:
+    column: ma_alignment_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.position_in_range_component
+  kind: concept
+  title: position in range component
+  definition: Position in 52-week range - 10 points max
+  binds:
+    column: position_in_range_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.volume_component
+  kind: concept
+  title: volume component
+  definition: Volume confirmation - 5 points max
+  binds:
+    column: volume_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.consolidation_component
+  kind: concept
+  title: consolidation component
+  definition: Price consolidation quality (Minervini) - 30 points max
+  binds:
+    column: consolidation_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.volatility_compression_component
+  kind: concept
+  title: volatility compression component
+  definition: ATR compression - 25 points max
+  binds:
+    column: volatility_compression_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.volume_dryup_component
+  kind: concept
+  title: volume dryup component
+  definition: Volume decreasing in consolidation - 20 points max
+  binds:
+    column: volume_dryup_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.support_quality_component
+  kind: concept
+  title: support quality component
+  definition: Number of consolidation days - 15 points max
+  binds:
+    column: support_quality_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.breakout_proximity_component
+  kind: concept
+  title: breakout proximity component
+  definition: Proximity to 90d high - 10 points max
+  binds:
+    column: breakout_proximity_component
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.technical_rating
+  kind: concept
+  title: technical rating
+  definition: Overall technical health (0-100) - RS, trend, MA alignment
+  binds:
+    column: technical_rating
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.setup_quality_rating
+  kind: concept
+  title: setup quality rating
+  definition: Entry pattern quality (0-100) - VCP, consolidation
+  binds:
+    column: setup_quality_rating
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.technical_composite
+  kind: concept
+  title: technical composite
+  definition: Average of technical + setup ratings (0-100)
+  binds:
+    column: technical_composite
+    table: technical_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.technical_ratings.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: lastupdated
+    table: technical_ratings
+  computability: sigmarail_native

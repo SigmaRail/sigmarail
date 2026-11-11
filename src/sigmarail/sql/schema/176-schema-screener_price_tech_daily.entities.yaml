@@ -1,0 +1,897 @@
+version: 1
+source: 176-schema-screener_price_tech_daily.sql
+entities:
+- id: sigmarail.mart.screener_price_tech_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.company_name
+  kind: concept
+  title: company name
+  definition: Company name (from tickers)
+  binds:
+    column: company_name
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sector
+  kind: concept
+  title: sector
+  definition: Sector (from tickers)
+  binds:
+    column: sector
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.industry
+  kind: concept
+  title: industry
+  definition: Industry (from tickers)
+  binds:
+    column: industry
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.exchange
+  kind: concept
+  title: exchange
+  definition: Primary exchange (from tickers)
+  binds:
+    column: exchange
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.currency
+  kind: concept
+  title: currency
+  definition: Trading currency (from tickers)
+  binds:
+    column: currency
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.category
+  kind: concept
+  title: category
+  definition: Security category (from tickers)
+  binds:
+    column: category
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.open
+  kind: concept
+  title: open
+  definition: Open - split adjusted (daily_metrics.open)
+  binds:
+    column: open
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.high
+  kind: concept
+  title: high
+  definition: High - split adjusted (daily_metrics.high)
+  binds:
+    column: high
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.low
+  kind: concept
+  title: low
+  definition: Low - split adjusted (daily_metrics.low)
+  binds:
+    column: low
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.close
+  kind: concept
+  title: close
+  definition: Close - split adjusted (daily_metrics.close)
+  binds:
+    column: close
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.volume
+  kind: concept
+  title: volume
+  definition: Volume - split adjusted (daily_metrics.volume)
+  binds:
+    column: volume
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.openadj
+  kind: concept
+  title: openadj
+  definition: Open - fully adjusted
+  binds:
+    column: openadj
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.highadj
+  kind: concept
+  title: highadj
+  definition: High - fully adjusted
+  binds:
+    column: highadj
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.lowadj
+  kind: concept
+  title: lowadj
+  definition: Low - fully adjusted
+  binds:
+    column: lowadj
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.closeadj
+  kind: concept
+  title: closeadj
+  definition: Close - fully adjusted (daily_metrics.closeadj)
+  binds:
+    column: closeadj
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma10d
+  kind: concept
+  title: sma10d
+  definition: 10-day SMA
+  binds:
+    column: sma10d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma20d
+  kind: concept
+  title: sma20d
+  definition: 20-day SMA
+  binds:
+    column: sma20d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d
+  kind: concept
+  title: sma50d
+  definition: 50-day SMA
+  binds:
+    column: sma50d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma150d
+  kind: concept
+  title: sma150d
+  definition: 150-day SMA
+  binds:
+    column: sma150d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d
+  kind: concept
+  title: sma200d
+  definition: 200-day SMA
+  binds:
+    column: sma200d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200_lag_30d
+  kind: concept
+  title: sma200 lag 30d
+  definition: 200-day SMA lagged 30 sessions (soft TT rising)
+  binds:
+    column: sma200_lag_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.ema21d
+  kind: concept
+  title: ema21d
+  definition: 21-day EMA
+  binds:
+    column: ema21d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.ema30d
+  kind: concept
+  title: ema30d
+  definition: 30-day EMA
+  binds:
+    column: ema30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.ema130d
+  kind: concept
+  title: ema130d
+  definition: 130-day EMA
+  binds:
+    column: ema130d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.high_5d
+  kind: concept
+  title: high 5d
+  definition: Highest closeadj over last 5d
+  binds:
+    column: high_5d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.high_30d
+  kind: concept
+  title: high 30d
+  definition: Highest closeadj over last 30d
+  binds:
+    column: high_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.high_90d
+  kind: concept
+  title: high 90d
+  definition: Highest closeadj over last 90d
+  binds:
+    column: high_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.high_52w
+  kind: concept
+  title: high 52w
+  definition: 52-week high (daily_metrics.high_52w)
+  binds:
+    column: high_52w
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.low_5d
+  kind: concept
+  title: low 5d
+  definition: Lowest closeadj over last 5d
+  binds:
+    column: low_5d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.low_30d
+  kind: concept
+  title: low 30d
+  definition: Lowest closeadj over last 30d
+  binds:
+    column: low_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.low_90d
+  kind: concept
+  title: low 90d
+  definition: Lowest closeadj over last 90d
+  binds:
+    column: low_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.low_52w
+  kind: concept
+  title: low 52w
+  definition: 52-week low (daily_metrics.low_52w)
+  binds:
+    column: low_52w
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_5d
+  kind: concept
+  title: avg vol 5d
+  definition: Average volume 5d
+  binds:
+    column: avg_vol_5d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_20d
+  kind: concept
+  title: avg vol 20d
+  definition: Average volume 20d
+  binds:
+    column: avg_vol_20d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_30d
+  kind: concept
+  title: avg vol 30d
+  definition: Average volume 30d
+  binds:
+    column: avg_vol_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_50d
+  kind: concept
+  title: avg vol 50d
+  definition: Average volume 50d
+  binds:
+    column: avg_vol_50d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_60d
+  kind: concept
+  title: avg vol 60d
+  definition: Average volume 60d
+  binds:
+    column: avg_vol_60d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_vol_90d
+  kind: concept
+  title: avg vol 90d
+  definition: Average volume 90d
+  binds:
+    column: avg_vol_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.true_range
+  kind: concept
+  title: true range
+  definition: True range
+  binds:
+    column: true_range
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.atr_5
+  kind: concept
+  title: atr 5
+  definition: ATR 5
+  binds:
+    column: atr_5
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.atr_14
+  kind: concept
+  title: atr 14
+  definition: ATR 14
+  binds:
+    column: atr_14
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.atr_21
+  kind: concept
+  title: atr 21
+  definition: ATR 21
+  binds:
+    column: atr_21
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.atr_14_pct
+  kind: concept
+  title: atr 14 pct
+  definition: ATR_14 as percentage of closing price (e.g. 1.54 = 1.54%)
+  binds:
+    column: atr_14_pct
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma10d_trend
+  kind: concept
+  title: sma10d trend
+  definition: From daily_metrics_derived
+  binds:
+    column: sma10d_trend
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma20d_trend
+  kind: concept
+  title: sma20d trend
+  definition: From daily_metrics_derived
+  binds:
+    column: sma20d_trend
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d_trend
+  kind: concept
+  title: sma50d trend
+  definition: From daily_metrics_derived
+  binds:
+    column: sma50d_trend
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma150d_trend
+  kind: concept
+  title: sma150d trend
+  definition: From daily_metrics_derived
+  binds:
+    column: sma150d_trend
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d_trend
+  kind: concept
+  title: sma200d trend
+  definition: From daily_metrics_derived.sma200d_trend
+  binds:
+    column: sma200d_trend
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d_slope_20d
+  kind: concept
+  title: sma50d slope 20d
+  definition: From daily_metrics_derived.sma50d_slope_20d
+  binds:
+    column: sma50d_slope_20d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d_slope_20d
+  kind: concept
+  title: sma200d slope 20d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma200d_slope_20d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_5d
+  kind: concept
+  title: perf 5d
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_5d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_10d
+  kind: concept
+  title: perf 10d
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_10d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_1m
+  kind: concept
+  title: perf 1m
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_1m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_3m
+  kind: concept
+  title: perf 3m
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_3m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_6m
+  kind: concept
+  title: perf 6m
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_6m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.perf_1y
+  kind: concept
+  title: perf 1y
+  definition: From daily_metrics_derived
+  binds:
+    column: perf_1y
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_5d
+  kind: concept
+  title: total return 5d
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_5d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_10d
+  kind: concept
+  title: total return 10d
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_10d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_1m
+  kind: concept
+  title: total return 1m
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_1m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_3m
+  kind: concept
+  title: total return 3m
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_3m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_6m
+  kind: concept
+  title: total return 6m
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_6m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.total_return_1y
+  kind: concept
+  title: total return 1y
+  definition: Dividend-adjusted total return projected from daily_metrics_derived.
+  binds:
+    column: total_return_1y
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_sma50
+  kind: concept
+  title: price vs sma50
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_sma50
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_sma150
+  kind: concept
+  title: price vs sma150
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_sma150
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_sma200
+  kind: concept
+  title: price vs sma200
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_sma200
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_sma20
+  kind: concept
+  title: price vs sma20
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_sma20
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_52w_high
+  kind: concept
+  title: price vs 52w high
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_52w_high
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_vs_52w_low
+  kind: concept
+  title: price vs 52w low
+  definition: From daily_metrics_derived
+  binds:
+    column: price_vs_52w_low
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d_rising_30d
+  kind: concept
+  title: sma200d rising 30d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma200d_rising_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d_rising_150d
+  kind: concept
+  title: sma200d rising 150d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma200d_rising_150d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma20d_crossover_up
+  kind: concept
+  title: sma20d crossover up
+  definition: From daily_metrics_derived
+  binds:
+    column: sma20d_crossover_up
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_above_sma20d
+  kind: concept
+  title: price above sma20d
+  definition: From daily_metrics_derived
+  binds:
+    column: price_above_sma20d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_above_sma50d
+  kind: concept
+  title: price above sma50d
+  definition: From daily_metrics_derived
+  binds:
+    column: price_above_sma50d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_above_sma150d
+  kind: concept
+  title: price above sma150d
+  definition: From daily_metrics_derived
+  binds:
+    column: price_above_sma150d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_above_sma200d
+  kind: concept
+  title: price above sma200d
+  definition: From daily_metrics_derived
+  binds:
+    column: price_above_sma200d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d_above_sma150d
+  kind: concept
+  title: sma50d above sma150d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma50d_above_sma150d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d_above_sma200d
+  kind: concept
+  title: sma50d above sma200d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma50d_above_sma200d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma150d_above_sma200d
+  kind: concept
+  title: sma150d above sma200d
+  definition: From daily_metrics_derived
+  binds:
+    column: sma150d_above_sma200d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_30pct_above_52w_low
+  kind: concept
+  title: price 30pct above 52w low
+  definition: From daily_metrics_derived
+  binds:
+    column: price_30pct_above_52w_low
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_70pct_above_52w_low
+  kind: concept
+  title: price 70pct above 52w low
+  definition: From daily_metrics_derived
+  binds:
+    column: price_70pct_above_52w_low
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.price_within_25pct_52w_high
+  kind: concept
+  title: price within 25pct 52w high
+  definition: From daily_metrics_derived
+  binds:
+    column: price_within_25pct_52w_high
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.stage_code
+  kind: concept
+  title: daily stage code
+  definition: 'Canonical detailed daily stage token projected from daily_metrics_derived.stage_code: 1A, 1B, 2A, 2B, 3A, 3B, 4A, or 4B. NULL until the required daily moving averages are available.'
+  binds:
+    column: stage_code
+    table: screener_price_tech_daily
+  related:
+    - sigmarail.mart.daily_metrics_derived.stage_code
+  narrative: 'One row per ticker and trading date. This L7 field is a projection; daily_metrics_derived owns the calculation and its causal session-close/as-of semantics. The calculation is owned by daily_metrics_derived; this screener field is a projection.'
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.stage_duration
+  kind: concept
+  title: daily stage duration
+  definition: 'Consecutive valid daily observations in the current detailed stage_code, projected from daily_metrics_derived.stage_duration. The source counts across full symbol history, so populate chunk boundaries do not reset the duration; NULL when stage_code is NULL.'
+  binds:
+    column: stage_duration
+    table: screener_price_tech_daily
+  related:
+    - sigmarail.mart.daily_metrics_derived.stage_duration
+    - sigmarail.mart.daily_metrics_derived.stage_code
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.stage_slope30_atr
+  kind: concept
+  title: normalized 150-day moving-average slope
+  definition: Normalized 30-session slope diagnostic from daily_metrics_derived.stage_slope30_atr; it is not a stage classifier.
+  binds:
+    column: stage_slope30_atr
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.breakout_signal
+  kind: concept
+  title: breakout signal
+  definition: From daily_metrics_derived
+  binds:
+    column: breakout_signal
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_consolidation_days_5pct_30d
+  kind: concept
+  title: vcp consolidation days 5pct 30d
+  definition: From daily_metrics_derived
+  binds:
+    column: vcp_consolidation_days_5pct_30d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_atr_compression_5d_90d
+  kind: concept
+  title: vcp atr compression 5d 90d
+  definition: From daily_metrics_derived.vcp_atr_compression_5d_90d
+  binds:
+    column: vcp_atr_compression_5d_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_volume_dryup_5d_90d
+  kind: concept
+  title: vcp volume dryup 5d 90d
+  definition: From daily_metrics_derived.vcp_volume_dryup_5d_90d
+  binds:
+    column: vcp_volume_dryup_5d_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_tightness_5d_90d
+  kind: concept
+  title: vcp tightness 5d 90d
+  definition: From daily_metrics_derived.vcp_tightness_5d_90d
+  binds:
+    column: vcp_tightness_5d_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_proximity_90d
+  kind: concept
+  title: vcp proximity 90d
+  definition: From daily_metrics_derived.vcp_proximity_90d
+  binds:
+    column: vcp_proximity_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.vcp_max_drawdown_90d
+  kind: concept
+  title: vcp max drawdown 90d
+  definition: From daily_metrics_derived.vcp_max_drawdown_90d
+  binds:
+    column: vcp_max_drawdown_90d
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.rs_rating
+  kind: concept
+  title: rs rating
+  definition: From relative_strength.rs_rating
+  binds:
+    column: rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.rs_rating_1m
+  kind: concept
+  title: rs rating 1m
+  definition: From relative_strength.rs_rating_1m (1-month horizon RS rating, shared universe)
+  binds:
+    column: rs_rating_1m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.rs_rating_3m
+  kind: concept
+  title: rs rating 3m
+  definition: From relative_strength.rs_rating_3m (3-month horizon RS rating, shared universe)
+  binds:
+    column: rs_rating_3m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.rs_rating_6m
+  kind: concept
+  title: rs rating 6m
+  definition: From relative_strength.rs_rating_6m (6-month horizon RS rating, shared universe)
+  binds:
+    column: rs_rating_6m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.rs_rating_12m
+  kind: concept
+  title: rs rating 12m
+  definition: From relative_strength.rs_rating_12m (12-month horizon RS rating, shared universe)
+  binds:
+    column: rs_rating_12m
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma10d_rs_rating
+  kind: concept
+  title: sma10d rs rating
+  definition: From relative_strength
+  binds:
+    column: sma10d_rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma21d_rs_rating
+  kind: concept
+  title: sma21d rs rating
+  definition: From relative_strength
+  binds:
+    column: sma21d_rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma50d_rs_rating
+  kind: concept
+  title: sma50d rs rating
+  definition: From relative_strength
+  binds:
+    column: sma50d_rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.sma200d_rs_rating
+  kind: concept
+  title: sma200d rs rating
+  definition: From relative_strength
+  binds:
+    column: sma200d_rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.avg_rs_rating
+  kind: concept
+  title: avg rs rating
+  definition: From industry_group_strength
+  binds:
+    column: avg_rs_rating
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.industry_group_rank
+  kind: concept
+  title: industry group rank
+  definition: From industry_group_strength
+  binds:
+    column: industry_group_rank
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_score_full
+  kind: concept
+  title: minervini tt score full
+  definition: From minervini_trend_template.tt_score_full
+  binds:
+    column: minervini_tt_score_full
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_score_light
+  kind: concept
+  title: minervini tt score light
+  definition: From minervini_trend_template.tt_score_light
+  binds:
+    column: minervini_tt_score_light
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_score_enhanced
+  kind: concept
+  title: minervini tt score enhanced
+  definition: From minervini_trend_template.tt_score_enhanced
+  binds:
+    column: minervini_tt_score_enhanced
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_full
+  kind: concept
+  title: minervini tt all conditions full
+  definition: From minervini_trend_template.tt_all_conditions_full
+  binds:
+    column: minervini_tt_all_conditions_full
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_light
+  kind: concept
+  title: minervini tt all conditions light
+  definition: From minervini_trend_template.tt_all_conditions_light
+  binds:
+    column: minervini_tt_all_conditions_light
+    table: screener_price_tech_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_enhanced
+  kind: concept
+  title: minervini tt all conditions enhanced
+  definition: From minervini_trend_template.tt_all_conditions_enhanced
+  binds:
+    column: minervini_tt_all_conditions_enhanced
+    table: screener_price_tech_daily
+  computability: sigmarail_native

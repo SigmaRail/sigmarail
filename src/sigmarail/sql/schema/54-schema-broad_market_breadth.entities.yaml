@@ -1,0 +1,99 @@
+version: 1
+source: 54-schema-broad_market_breadth.sql
+entities:
+- id: sigmarail.mart.broad_market_breadth.date
+  kind: concept
+  title: date
+  definition: Trading date for which the breadth metrics are calculated
+  binds:
+    column: date
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma20d
+  kind: concept
+  title: pct above sma20d
+  definition: Percentage of stocks in the custom universe above their 20-day SMA
+  binds:
+    column: pct_above_sma20d
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma50d
+  kind: concept
+  title: pct above sma50d
+  definition: Percentage of stocks in the custom universe above their 50-day SMA
+  binds:
+    column: pct_above_sma50d
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma200d
+  kind: concept
+  title: pct above sma200d
+  definition: Percentage of stocks in the custom universe above their 200-day SMA
+  binds:
+    column: pct_above_sma200d
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma20d_sma5
+  kind: concept
+  title: pct above sma20d sma5
+  definition: 5-day average of pct_above_sma20d
+  binds:
+    column: pct_above_sma20d_sma5
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma50d_sma5
+  kind: concept
+  title: pct above sma50d sma5
+  definition: 5-day average of pct_above_sma50d
+  binds:
+    column: pct_above_sma50d_sma5
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_above_sma200d_sma5
+  kind: concept
+  title: pct above sma200d sma5
+  definition: 5-day average of pct_above_sma200d
+  binds:
+    column: pct_above_sma200d_sma5
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_new_highs
+  kind: concept
+  title: pct new highs
+  definition: Percentage of stocks in the custom universe making new 52-week highs
+  binds:
+    column: pct_new_highs
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_new_lows
+  kind: concept
+  title: pct new lows
+  definition: Percentage of stocks in the custom universe making new 52-week lows
+  binds:
+    column: pct_new_lows
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_near_52w_low
+  kind: concept
+  title: pct near 52w low
+  definition: Percentage of stocks in the custom universe making new 52-week lows
+  binds:
+    column: pct_near_52w_low
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.pct_near_52w_high
+  kind: concept
+  title: pct near 52w high
+  definition: Percentage of stocks in the custom universe making new 52-week highs
+  binds:
+    column: pct_near_52w_high
+    table: broad_market_breadth
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth.last_populated
+  kind: concept
+  title: last populated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: last_populated
+    table: broad_market_breadth
+  computability: sigmarail_native

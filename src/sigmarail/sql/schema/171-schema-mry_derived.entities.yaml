@@ -1,0 +1,83 @@
+source: 171-schema-mry_derived.sql
+version: 1
+entities:
+- id: sigmarail.mart.mry_derived.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.date
+  kind: concept
+  title: date
+  definition: Fiscal year end date (aligned with mry.date).
+  binds:
+    column: date
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.revenue_yoy_growth
+  kind: concept
+  title: revenue yoy growth
+  definition: kind=sigmarail_derived. YoY Revenue growth (MRY).
+  binds:
+    column: revenue_yoy_growth
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.revenue_yoy_growth_industry_rank
+  kind: concept
+  title: revenue yoy growth industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_industry_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.revenue_yoy_growth_sector_rank
+  kind: concept
+  title: revenue yoy growth sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRY Revenue YoY Growth (0-100).
+  binds:
+    column: revenue_yoy_growth_sector_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.netmargin_industry_rank
+  kind: concept
+  title: netmargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRY Net Margin (0-100).
+  binds:
+    column: netmargin_industry_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.netmargin_sector_rank
+  kind: concept
+  title: netmargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRY Net Margin (0-100).
+  binds:
+    column: netmargin_sector_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.ebitdamargin_industry_rank
+  kind: concept
+  title: ebitdamargin industry rank
+  definition: kind=sigmarail_derived. Industry percentile rank for MRY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_industry_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.ebitdamargin_sector_rank
+  kind: concept
+  title: ebitdamargin sector rank
+  definition: kind=sigmarail_derived. Sector percentile rank for MRY EBITDA Margin (0-100).
+  binds:
+    column: ebitdamargin_sector_rank
+    table: mry_derived
+  computability: sigmarail_native
+- id: sigmarail.mart.mry_derived.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mry_derived
+  computability: sigmarail_native

@@ -1,0 +1,275 @@
+version: 1
+source: 13-schema-mrt.sql
+entities:
+- id: sigmarail.mart.mrt.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.date
+  kind: concept
+  title: date
+  definition: Calendar Date (e.g., end of quarter) for which TTM data is reported.
+  binds:
+    column: date
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roa
+  kind: concept
+  title: roa
+  definition: 'Return on Average Assets (TTM): NetIncomeCommon / AverageTotalAssets.'
+  binds:
+    column: roa
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roe
+  kind: concept
+  title: roe
+  definition: 'Return on Average Equity (TTM): NetIncomeCommon / AverageShareholdersEquity.'
+  binds:
+    column: roe
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roic
+  kind: concept
+  title: roic
+  definition: 'Return on Invested Capital (TTM): EBIT / AverageInvestedCapital.'
+  binds:
+    column: roic
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.revenue
+  kind: concept
+  title: revenue
+  definition: Revenues (TTM). The amount of Revenue recognised from goods sold or services rendered.
+  binds:
+    column: revenue
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.gp
+  kind: concept
+  title: gp
+  definition: 'Gross Profit (TTM): Revenue - CostOfRevenue.'
+  binds:
+    column: gp
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.ebit
+  kind: concept
+  title: ebit
+  definition: 'Earnings Before Interest & Taxes (EBIT) (TTM): Revenue - COGS - OperatingExpenses.'
+  binds:
+    column: ebit
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.ebitda
+  kind: concept
+  title: ebitda
+  definition: 'Earnings Before Interest, Taxes, Depreciation & Amortization (EBITDA) (TTM): EBIT + DepreciationAndAmortization.'
+  binds:
+    column: ebitda
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: 'Net Income Common Stock (TTM): Net income available to common shareholders.'
+  binds:
+    column: netinccmn
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.epsdil
+  kind: concept
+  title: epsdil
+  definition: 'Earnings per Diluted Share (TTM): NetIncomeCommon / WeightedAverageSharesDiluted.'
+  binds:
+    column: epsdil
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.fcf
+  kind: concept
+  title: fcf
+  definition: 'Free Cash Flow (TTM): NetCashFlowFromOperations - CapitalExpenditures.'
+  binds:
+    column: fcf
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.ncfo
+  kind: concept
+  title: ncfo
+  definition: kind=vendor_copy. Net Cash Flow from Operations (TTM) from SF1 MRT.
+  binds:
+    column: ncfo
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.capex
+  kind: concept
+  title: capex
+  definition: kind=vendor_copy. Capital Expenditures (TTM) from SF1 MRT. Typically negative (cash outflow).
+  binds:
+    column: capex
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.depamor
+  kind: concept
+  title: depamor
+  definition: kind=vendor_copy. Depreciation, Amortization & Accretion (TTM) from SF1 MRT.
+  binds:
+    column: depamor
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.fxusd
+  kind: concept
+  title: fxusd
+  definition: kind=vendor_copy. Foreign currency to USD exchange rate from SF1 MRT (1.0 for USD reporters).
+  binds:
+    column: fxusd
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.capex_abs
+  kind: concept
+  title: capex abs
+  definition: 'kind=vendor_copy. Absolute CapEx spend: abs(capex).'
+  binds:
+    column: capex_abs
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.assetsavg
+  kind: concept
+  title: assetsavg
+  definition: Average Total Assets (TTM). Used in ROA calculation.
+  binds:
+    column: assetsavg
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.equityavg
+  kind: concept
+  title: equityavg
+  definition: Average Shareholders Equity (TTM). Used in ROE calculation.
+  binds:
+    column: equityavg
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.invcapavg
+  kind: concept
+  title: invcapavg
+  definition: Average Invested Capital (TTM). Used in ROIC calculation.
+  binds:
+    column: invcapavg
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.currentratio
+  kind: concept
+  title: currentratio
+  definition: 'Current Ratio (TTM): CurrentAssets / CurrentLiabilities.'
+  binds:
+    column: currentratio
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.de
+  kind: concept
+  title: de
+  definition: 'Debt to Equity Ratio (TTM): TotalLiabilities / ShareholdersEquity.'
+  binds:
+    column: de
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: 'Gross Margin (TTM): GrossProfit / Revenue.'
+  binds:
+    column: grossmargin
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.netmargin
+  kind: concept
+  title: netmargin
+  definition: 'Net Profit Margin (TTM): NetIncomeCommon / Revenue.'
+  binds:
+    column: netmargin
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roa_yoy_growth
+  kind: concept
+  title: roa yoy growth
+  definition: Year over year ROA growth (Current TTM ROA vs Prior Year TTM ROA).
+  binds:
+    column: roa_yoy_growth
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roe_yoy_growth
+  kind: concept
+  title: roe yoy growth
+  definition: Year over year ROE growth (Current TTM ROE vs Prior Year TTM ROE).
+  binds:
+    column: roe_yoy_growth
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roic_yoy_growth
+  kind: concept
+  title: roic yoy growth
+  definition: Year over year ROIC growth (Current TTM ROIC vs Prior Year TTM ROIC).
+  binds:
+    column: roic_yoy_growth
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roa_industry_rank
+  kind: concept
+  title: roa industry rank
+  definition: Industry percentile rank for TTM ROA (0-100).
+  binds:
+    column: roa_industry_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roe_industry_rank
+  kind: concept
+  title: roe industry rank
+  definition: Industry percentile rank for TTM ROE (0-100).
+  binds:
+    column: roe_industry_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roic_industry_rank
+  kind: concept
+  title: roic industry rank
+  definition: Industry percentile rank for TTM ROIC (0-100).
+  binds:
+    column: roic_industry_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roa_sector_rank
+  kind: concept
+  title: roa sector rank
+  definition: Sector percentile rank for TTM ROA (0-100).
+  binds:
+    column: roa_sector_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roe_sector_rank
+  kind: concept
+  title: roe sector rank
+  definition: Sector percentile rank for TTM ROE (0-100).
+  binds:
+    column: roe_sector_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.roic_sector_rank
+  kind: concept
+  title: roic sector rank
+  definition: Sector percentile rank for TTM ROIC (0-100).
+  binds:
+    column: roic_sector_rank
+    table: mrt
+  computability: sigmarail_native
+- id: sigmarail.mart.mrt.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: mrt
+  computability: sigmarail_native

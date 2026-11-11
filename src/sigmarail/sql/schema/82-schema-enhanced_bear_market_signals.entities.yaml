@@ -1,0 +1,59 @@
+version: 1
+source: 82-schema-enhanced_bear_market_signals.sql
+entities:
+- id: sigmarail.mart.enhanced_bear_market_signals.date
+  kind: concept
+  title: date
+  definition: Trading date for bear market signals
+  binds:
+    column: date
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.is_bear_market_enhanced
+  kind: concept
+  title: is bear market enhanced
+  definition: 1 if enhanced bear market conditions are met, 0 otherwise
+  binds:
+    column: is_bear_market_enhanced
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.bear_severity
+  kind: concept
+  title: bear severity
+  definition: 'Bear market severity: severe_bear, moderate_bear, mild_bear, not_bear'
+  binds:
+    column: bear_severity
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.bear_market_score
+  kind: concept
+  title: bear market score
+  definition: Bear market severity score (0-100, higher = more severe)
+  binds:
+    column: bear_market_score
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.primary_condition
+  kind: concept
+  title: primary condition
+  definition: Primary condition that triggered bear market detection
+  binds:
+    column: primary_condition
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.confirmation_conditions
+  kind: concept
+  title: confirmation conditions
+  definition: Additional conditions that confirmed bear market
+  binds:
+    column: confirmation_conditions
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.enhanced_bear_market_signals.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: lastupdated
+    table: enhanced_bear_market_signals
+  computability: sigmarail_native

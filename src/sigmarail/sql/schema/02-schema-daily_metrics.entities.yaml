@@ -1,0 +1,331 @@
+version: 1
+source: 02-schema-daily_metrics.sql
+entities:
+- id: sigmarail.ema.21d.closeadj
+  kind: concept
+  title: 21-day EMA (closeadj)
+  definition: 'Exponential moving average of split-and-dividend-adjusted close (closeadj), span 21 sessions.
+    This is the house default for "21 EMA" in SigmaRail derived tables.
+
+    '
+  binds:
+    column: ema21d
+    role: canonical
+  aliases:
+  - ema21
+  - 21_ema
+  - ema_21d
+  narrative: 'Why closeadj (not close): dividend/split continuity so backtests and moving averages do
+    not jump on corporate actions. Why span 21: ~one trading month, the standard swing-trade trend reference
+    used across IBD/Minervini-style screening in this stack.
+
+    '
+  related:
+  - sigmarail.setup.near_21d
+  falsifiers:
+  - universe_v1.sma21d resolves to sma20d, NOT this 21d EMA (see that file's sidecar).
+  - ema30d / ema130d are separate spans; do not conflate.
+- id: sigmarail.mart.daily_metrics.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record
+  binds:
+    column: lastupdated
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.open
+  kind: concept
+  title: open
+  definition: Open Price - Split Adjusted (from sep.open and sfp.open)
+  binds:
+    column: open
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.high
+  kind: concept
+  title: high
+  definition: High Price - Split Adjusted (from sep.high and sfp.high)
+  binds:
+    column: high
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.low
+  kind: concept
+  title: low
+  definition: Low Price - Split Adjusted (from sep.low and sfp.low)
+  binds:
+    column: low
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.close
+  kind: concept
+  title: close
+  definition: Close Price - Split Adjusted (from sep.close and sfp.close)
+  binds:
+    column: close
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.volume
+  kind: concept
+  title: volume
+  definition: Volume - Split Adjusted (from sep.volume and sfp.volume)
+  binds:
+    column: volume
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.openadj
+  kind: concept
+  title: openadj
+  definition: Open Price - Fully Adjusted (derived using closeadj/close ratio)
+  binds:
+    column: openadj
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.highadj
+  kind: concept
+  title: highadj
+  definition: High Price - Fully Adjusted (derived using closeadj/close ratio)
+  binds:
+    column: highadj
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.lowadj
+  kind: concept
+  title: lowadj
+  definition: Low Price - Fully Adjusted (derived using closeadj/close ratio)
+  binds:
+    column: lowadj
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.closeadj
+  kind: concept
+  title: closeadj
+  definition: Close Price - Fully Adjusted (from sep.closeadj)
+  binds:
+    column: closeadj
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.sma10d
+  kind: concept
+  title: sma10d
+  definition: 10-day Simple Moving Average of split-adjusted close
+  binds:
+    column: sma10d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.sma20d
+  kind: concept
+  title: sma20d
+  definition: 20-day Simple Moving Average of split-adjusted close
+  binds:
+    column: sma20d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.sma50d
+  kind: concept
+  title: sma50d
+  definition: 50-day Simple Moving Average of split-adjusted close
+  binds:
+    column: sma50d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.sma150d
+  kind: concept
+  title: sma150d
+  definition: 150-day Simple Moving Average of split-adjusted close
+  binds:
+    column: sma150d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.sma200d
+  kind: concept
+  title: sma200d
+  definition: 200-day Simple Moving Average of split-adjusted close
+  binds:
+    column: sma200d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.ema30d
+  kind: concept
+  title: ema30d
+  definition: 30-day Exponential Moving Average of split-adjusted close
+  binds:
+    column: ema30d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.ema130d
+  kind: concept
+  title: ema130d
+  definition: 130-day Exponential Moving Average of split-adjusted close
+  binds:
+    column: ema130d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.high_5d
+  kind: concept
+  title: high 5d
+  definition: Highest high price over last 5 trading days
+  binds:
+    column: high_5d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.high_30d
+  kind: concept
+  title: high 30d
+  definition: Highest high price over last 30 trading days
+  binds:
+    column: high_30d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.high_90d
+  kind: concept
+  title: high 90d
+  definition: Highest high price over last 90 trading days
+  binds:
+    column: high_90d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.high_52w
+  kind: concept
+  title: high 52w
+  definition: Highest high price over last 252 trading days
+  binds:
+    column: high_52w
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.low_5d
+  kind: concept
+  title: low 5d
+  definition: Lowest low price over last 5 trading days
+  binds:
+    column: low_5d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.low_30d
+  kind: concept
+  title: low 30d
+  definition: Lowest low price over last 30 trading days
+  binds:
+    column: low_30d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.low_90d
+  kind: concept
+  title: low 90d
+  definition: Lowest low price over last 90 trading days
+  binds:
+    column: low_90d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.low_52w
+  kind: concept
+  title: low 52w
+  definition: Lowest low price over last 252 trading days
+  binds:
+    column: low_52w
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_5d
+  kind: concept
+  title: avg vol 5d
+  definition: 5-day average volume
+  binds:
+    column: avg_vol_5d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_20d
+  kind: concept
+  title: avg vol 20d
+  definition: 20-day average volume
+  binds:
+    column: avg_vol_20d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_30d
+  kind: concept
+  title: avg vol 30d
+  definition: 30-day average volume
+  binds:
+    column: avg_vol_30d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_50d
+  kind: concept
+  title: avg vol 50d
+  definition: 50-day average volume
+  binds:
+    column: avg_vol_50d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_60d
+  kind: concept
+  title: avg vol 60d
+  definition: 60-day average volume
+  binds:
+    column: avg_vol_60d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.avg_vol_90d
+  kind: concept
+  title: avg vol 90d
+  definition: 90-day average volume
+  binds:
+    column: avg_vol_90d
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.true_range
+  kind: concept
+  title: true range
+  definition: 'True Range: max(high-low, |high-prev_close|, |low-prev_close|)'
+  binds:
+    column: true_range
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.atr_5
+  kind: concept
+  title: atr 5
+  definition: '5-day Average True Range: simple moving average of True Range for short-term volatility'
+  binds:
+    column: atr_5
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.atr_14
+  kind: concept
+  title: atr 14
+  definition: '14-day Average True Range: simple moving average of True Range (not Wilder RMA)'
+  binds:
+    column: atr_14
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.atr_21
+  kind: concept
+  title: atr 21
+  definition: '21-day Average True Range: simple moving average of True Range for monthly behavior'
+  binds:
+    column: atr_21
+    table: daily_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_metrics.atr_14_pct
+  kind: concept
+  title: atr 14 pct
+  definition: ATR_14 as percentage of closing price (normalized volatility), based on SMA(TR)
+  binds:
+    column: atr_14_pct
+    table: daily_metrics
+  computability: sigmarail_native

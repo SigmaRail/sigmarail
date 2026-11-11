@@ -1,0 +1,27 @@
+version: 1
+source: 56-schema-broad-market-breadth-weekly.sql
+entities:
+- id: sigmarail.mart.broad_market_breadth_weekly.date
+  kind: concept
+  title: date
+  definition: The start date of the week (Monday)
+  binds:
+    column: date
+    table: broad_market_breadth_weekly
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth_weekly.pct_sp500_above_sma40w
+  kind: concept
+  title: pct sp500 above sma40w
+  definition: Percentage of S&P 500 stocks with price above their 40-week SMA.
+  binds:
+    column: pct_sp500_above_sma40w
+    table: broad_market_breadth_weekly
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_breadth_weekly.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: broad_market_breadth_weekly
+  computability: sigmarail_native

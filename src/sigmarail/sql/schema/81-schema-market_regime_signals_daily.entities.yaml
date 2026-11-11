@@ -1,0 +1,349 @@
+version: 1
+source: 81-schema-market_regime_signals_daily.sql
+entities:
+- id: sigmarail.mart.market_regime_signals_daily.date
+  kind: concept
+  title: date
+  definition: Trading session date (daily grain)
+  binds:
+    column: date
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.weekly_date
+  kind: concept
+  title: weekly date
+  definition: Prior closed weekly regime Monday (toMonday(d) - 7 days); join key into market_regime_signals
+  binds:
+    column: weekly_date
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.weekly_allocation_fraction
+  kind: concept
+  title: weekly allocation fraction
+  definition: v3 weekly allocation_fraction from market_regime_signals for weekly_date (0..1)
+  binds:
+    column: weekly_allocation_fraction
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.weekly_allocation_tier
+  kind: concept
+  title: weekly allocation tier
+  definition: v3 weekly allocation_tier from market_regime_signals for weekly_date (0/33/67/100)
+  binds:
+    column: weekly_allocation_tier
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth_200d_raw
+  kind: concept
+  title: breadth 200d raw
+  definition: Raw breadth from broad_market_breadth JOIN before staleness guard (0.0 on miss)
+  binds:
+    column: breadth_200d_raw
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth_200d
+  kind: concept
+  title: breadth 200d
+  definition: 'Guarded breadth: fraction above 200d SMA; last-good-value fallback when raw is 0 or NULL'
+  binds:
+    column: breadth_200d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth_200d_stale_flag
+  kind: concept
+  title: breadth 200d stale flag
+  definition: 1 when breadth_200d was filled from prior non-zero day (populate-order staleness)
+  binds:
+    column: breadth_200d_stale_flag
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth_50d
+  kind: concept
+  title: breadth 50d
+  definition: 'Guarded breadth: fraction above 50d SMA (0..1)'
+  binds:
+    column: breadth_50d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_close
+  kind: concept
+  title: spy close
+  definition: SPY official close for the session.
+  binds:
+    column: spy_close
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_sma50d
+  kind: concept
+  title: spy sma50d
+  definition: SPY 50-day simple moving average (daily_metrics.sma50d)
+  binds:
+    column: spy_sma50d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_sma200d
+  kind: concept
+  title: spy sma200d
+  definition: SPY 200-day simple moving average (daily_metrics.sma200d)
+  binds:
+    column: spy_sma200d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_below200d
+  kind: concept
+  title: spy below200d
+  definition: 1 if SPY close < SPY 200d SMA
+  binds:
+    column: spy_below200d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_below200d_3d
+  kind: concept
+  title: spy below200d 3d
+  definition: 1 if SPY below 200d for 3 consecutive days
+  binds:
+    column: spy_below200d_3d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth55_days15
+  kind: concept
+  title: breadth55 days15
+  definition: Count of days in last 15 with breadth>=0.55
+  binds:
+    column: breadth55_days15
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.clamp_risk_off
+  kind: concept
+  title: clamp risk off
+  definition: 'v3: 1 if any daily clamp forces 0% AFTER 2-of-2 persistence on the twitchy arms and 3-of-3
+    asymmetric release'
+  binds:
+    column: clamp_risk_off
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.breadth_thrust
+  kind: concept
+  title: breadth thrust
+  definition: Breadth thrust signal (10D breadth_50d_sma5 change >= 0.18 OR cross above 0.60 from <0.45)
+  binds:
+    column: breadth_thrust
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.ftd
+  kind: concept
+  title: ftd
+  definition: 'Follow-through day proxy: SPY daily return >= 1.7% and volume > 20d avg'
+  binds:
+    column: ftd
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.distribution_count_25d
+  kind: concept
+  title: distribution count 25d
+  definition: Count of distribution days in last 25 sessions (ret<=-0.2% and volume > prior day)
+  binds:
+    column: distribution_count_25d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_above50d
+  kind: concept
+  title: spy above50d
+  definition: 1 if SPY close > SPY 50d SMA
+  binds:
+    column: spy_above50d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.spy_above200d
+  kind: concept
+  title: spy above200d
+  definition: 1 if SPY close > SPY 200d SMA
+  binds:
+    column: spy_above200d
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.ma50_gt_ma200
+  kind: concept
+  title: ma50 gt ma200
+  definition: 1 if SPY 50d SMA > SPY 200d SMA
+  binds:
+    column: ma50_gt_ma200
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.ma50_slope_pos
+  kind: concept
+  title: ma50 slope pos
+  definition: 1 if SPY 50d SMA slope over last ~5 sessions is positive
+  binds:
+    column: ma50_slope_pos
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.ma200_slope_pos
+  kind: concept
+  title: ma200 slope pos
+  definition: 1 if SPY 200d SMA slope over last ~5 sessions is positive
+  binds:
+    column: ma200_slope_pos
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.ma_stack_score
+  kind: concept
+  title: ma stack score
+  definition: '0..5 score: sum of (price>50d, price>200d, 50d>200d, 50d slope+, 200d slope+)'
+  binds:
+    column: ma_stack_score
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.risk_on_fast_flags
+  kind: concept
+  title: risk on fast flags
+  definition: 0..4 count of fast risk-on diagnostics (trend+breadth+volatility signals)
+  binds:
+    column: risk_on_fast_flags
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.risk_off_fast_flags
+  kind: concept
+  title: risk off fast flags
+  definition: 0..4 count of fast risk-off diagnostics (breadth deterioration / SPY<200d / volatility stress)
+  binds:
+    column: risk_off_fast_flags
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.allocation_fraction
+  kind: concept
+  title: allocation fraction
+  definition: Daily-only checklist fraction (0..1) from clamp/risk-on/intermediate/cautious/risk-off cascade
+  binds:
+    column: allocation_fraction
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.allocation_tier
+  kind: concept
+  title: allocation tier
+  definition: Daily allocation_fraction scaled to percent (0/33/67/100)
+  binds:
+    column: allocation_tier
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.allocation_reason
+  kind: concept
+  title: allocation reason
+  definition: Human-readable explanation for daily allocation_fraction/tier decision
+  binds:
+    column: allocation_reason
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.weekly_allocation_fraction_v3
+  kind: concept
+  title: weekly allocation fraction v3
+  definition: 'v3-only: forward-filled smoothed weekly fraction from market_regime_signals (alias of weekly_allocation_fraction;
+    kept for clarity in joined v1/v2/v3 reports)'
+  binds:
+    column: weekly_allocation_fraction_v3
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.weekly_allocation_tier_v3
+  kind: concept
+  title: weekly allocation tier v3
+  definition: 'v3-only: forward-filled smoothed weekly tier from market_regime_signals (alias of weekly_allocation_tier)'
+  binds:
+    column: weekly_allocation_tier_v3
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.effective_allocation_tier
+  kind: concept
+  title: effective allocation tier
+  definition: 'v3: round(effective_allocation_fraction*100) computed from the CTE column (fixes v2 query-time
+    self-reference).'
+  binds:
+    column: effective_allocation_tier
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.effective_source
+  kind: concept
+  title: effective source
+  definition: 'v3: which arm of the blend won - clamp | daily_demote | daily_promote | early_promote |
+    weekly'
+  binds:
+    column: effective_source
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.daily_demote_streak
+  kind: concept
+  title: daily demote streak
+  definition: 'v3-only: count of consecutive days (0..N, capped) where daily_fraction < weekly_allocation_fraction.
+    demote_persistence_days (=3) required to fire.'
+  binds:
+    column: daily_demote_streak
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.early_promote_flag
+  kind: concept
+  title: early promote flag
+  definition: 'v3-only: 1 iff the early-promote path fired on this day (ma_stack>=4 + spy_above200d +
+    breadth_200d_sma5>=0.50 with 2-of-3 persistence AND weekly<0.67). Diagnostic for promote-gate sensitivity.'
+  binds:
+    column: early_promote_flag
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.clamp_release_streak
+  kind: concept
+  title: clamp release streak
+  definition: 'v3-only: count of consecutive days where ALL clamp conditions are failing (ie. the market
+    looks healthy again). clamp_release_persistence_days (=3) required to release a latched clamp.'
+  binds:
+    column: clamp_release_streak
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.clamp_release_eligible
+  kind: concept
+  title: clamp release eligible
+  definition: 'v3-only: 1 iff clamp_release_streak >= clamp_release_persistence_days. Clamp only releases
+    on days where this is 1 (asymmetric release).'
+  binds:
+    column: clamp_release_eligible
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.tuning_bands
+  kind: concept
+  title: tuning bands
+  definition: 'v3-only: JSON snapshot of the daily tuning CTE constants in effect for this row. compare_regime.py
+    fails loudly if uniqExact(tuning_bands) > 1 per track over the scorecard window.'
+  binds:
+    column: tuning_bands
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: market_regime_signals_daily
+  computability: sigmarail_native
+- id: sigmarail.regime.effective_allocation_fraction
+  kind: concept
+  title: Effective allocation fraction (regime)
+  definition: 'The blended target equity allocation (0.0-1.0) emitted by the v3 daily
+    market-regime model. Combines the forward-filled weekly regime with two-speed
+    daily promotes and persistence-gated clamps.
+
+    '
+  binds:
+    column: effective_allocation_fraction
+    table: market_regime_signals_daily
+    role: canonical
+  aliases:
+  - effective_alloc
+  - target_equity_fraction
+  narrative: 'Computed in a dedicated `blends` CTE (not a self-referencing final SELECT)
+    so effective_allocation_tier derives from a stable value. EARLY promote uses min(0.67,
+    weekly+0.33) for earlier bull turns; clamps require 2-of-2 / 3-of-3 persistence
+    so a single volatile day never moves the regime. This is the number that maps
+    to account equity/cash targets.
+
+    '
+  falsifiers:
+  - weekly_allocation_fraction is the upstream weekly input, not this blended output.
+  - allocation_fraction (no 'effective_') is the pre-blend daily arm.

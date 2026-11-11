@@ -1,0 +1,19 @@
+database:
+  host: localhost
+  port: 9001
+  http_port: 8134
+  user: default
+  password: ""
+  database: sigmarail_test
+  production_database: sigmarail
+  connect_timeout: 30
+  send_receive_timeout: 300
+
+data:
+  root: data/test
+  test: data/test
+  backups: null
+
+sharadar:
+  api_key: ""
+  base_url: https://api.sharadar.com/v1.0

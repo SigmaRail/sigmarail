@@ -1,0 +1,223 @@
+version: 1
+source: 17-screener-ratings.sql
+entities:
+- id: sigmarail.mart.screener_ratings.ticker
+  kind: concept
+  title: ticker
+  definition: Equity ticker symbol
+  binds:
+    column: ticker
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.date
+  kind: concept
+  title: date
+  definition: Trading session date
+  binds:
+    column: date
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.growth_rating
+  kind: concept
+  title: growth rating
+  definition: Long-term steady growth rating (0-100) - 3-year EPS/Revenue CAGR, YoY acceleration [O'Neil
+    CAN SLIM "E" & "S"]
+  binds:
+    column: growth_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.valuation_rating
+  kind: concept
+  title: valuation rating
+  definition: Valuation rating (0-100) - P/E, PEG, Price/Book ratios vs industry
+  binds:
+    column: valuation_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.health_rating
+  kind: concept
+  title: health rating
+  definition: Financial health rating (0-100) - Balance sheet, debt/equity, liquidity
+  binds:
+    column: health_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.profitability_rating
+  kind: concept
+  title: profitability rating
+  definition: Profitability rating (0-100) - ROE, ROA, ROIC, margins
+  binds:
+    column: profitability_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.dividend_rating
+  kind: concept
+  title: dividend rating
+  definition: Dividend quality rating (0-100) - Yield, payout ratio, growth consistency
+  binds:
+    column: dividend_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.high_growth_momentum_rating
+  kind: concept
+  title: high growth momentum rating
+  definition: High-growth momentum (0-100) - SigmaRail blend of ARQ YoY/QoQ growth, 3y CAGR, and TTM margins
+    [CAN SLIM / Minervini oriented]
+  binds:
+    column: high_growth_momentum_rating
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.fundamental_composite
+  kind: concept
+  title: fundamental composite
+  definition: Average of 5 core ratings (0-100) - growth, valuation, health, profitability, dividend;
+    excludes high_growth_momentum (specialty rating)
+  binds:
+    column: fundamental_composite
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.weinstein_score
+  kind: concept
+  title: weinstein score
+  definition: Weinstein Stage Analysis quality (0-100) - Stage 2 advancing strength [Stan Weinstein 1988]
+  binds:
+    column: weinstein_score
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.oneil_score
+  kind: concept
+  title: oneil score
+  definition: O'Neil CAN SLIM score (0-100) - Growth + RS rating quality [William O'Neil 1988]
+  binds:
+    column: oneil_score
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.minervini_score
+  kind: concept
+  title: minervini score
+  definition: Minervini SEPA score (0-100) - (Weinstein + O'Neil + VCP setup) / 3 [Mark Minervini 2013]
+  binds:
+    column: minervini_score
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.overall_score
+  kind: concept
+  title: overall score
+  definition: Overall quality score (0-100); NULL if non-finite (NaN/Inf)
+  binds:
+    column: overall_score
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.classification
+  kind: concept
+  title: classification
+  definition: Overall classification based on composite scores
+  binds:
+    column: classification
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_eps_yearly
+  kind: concept
+  title: screen eps yearly
+  definition: Passes yearly EPS growth screen (25%+ 3-year) [O'Neil "A"]
+  binds:
+    column: screen_eps_yearly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_eps_quarterly
+  kind: concept
+  title: screen eps quarterly
+  definition: Passes quarterly EPS growth screen (25%+ QoQ) [O'Neil "C"]
+  binds:
+    column: screen_eps_quarterly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_revenue_yearly
+  kind: concept
+  title: screen revenue yearly
+  definition: Passes yearly revenue growth screen (25%+ 3-year) [O'Neil "S"]
+  binds:
+    column: screen_revenue_yearly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_revenue_quarterly
+  kind: concept
+  title: screen revenue quarterly
+  definition: Passes quarterly revenue growth screen (25%+ QoQ)
+  binds:
+    column: screen_revenue_quarterly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_combo_yearly
+  kind: concept
+  title: screen combo yearly
+  definition: Passes both EPS + Revenue yearly screens [Minervini]
+  binds:
+    column: screen_combo_yearly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screen_combo_quarterly
+  kind: concept
+  title: screen combo quarterly
+  definition: Passes both EPS + Revenue quarterly screens [Minervini]
+  binds:
+    column: screen_combo_quarterly
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.screens_passed
+  kind: concept
+  title: screens passed
+  definition: Count of fundamental screens passed (0-6)
+  binds:
+    column: screens_passed
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.has_vcp_setup
+  kind: concept
+  title: has vcp setup
+  definition: Has Volatility Contraction Pattern forming [Minervini]
+  binds:
+    column: has_vcp_setup
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.has_vcp_breakout
+  kind: concept
+  title: has vcp breakout
+  definition: Has VCP breakout signal [Minervini]
+  binds:
+    column: has_vcp_breakout
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.is_bull_market
+  kind: concept
+  title: is bull market
+  definition: Market in bull regime (from market_regime_signals)
+  binds:
+    column: is_bull_market
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.is_leading_industry
+  kind: concept
+  title: is leading industry
+  definition: Industry in top quartile (industry_group_rank >= 75; percent_rank of industry avg RS, higher
+    = stronger)
+  binds:
+    column: is_leading_industry
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.is_stage_2_advancing
+  kind: concept
+  title: is stage 2 advancing
+  definition: In Weinstein Stage 2 [Stan Weinstein]
+  binds:
+    column: is_stage_2_advancing
+    table: screener_ratings
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: lastupdated
+    table: screener_ratings
+  computability: sigmarail_native

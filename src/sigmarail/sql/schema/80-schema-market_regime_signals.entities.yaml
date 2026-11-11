@@ -1,0 +1,156 @@
+version: 1
+source: 80-schema-market_regime_signals.sql
+entities:
+- id: sigmarail.mart.market_regime_signals.date
+  kind: concept
+  title: date
+  definition: ISO week start (Monday); closed weeks only
+  binds:
+    column: date
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.pct_stocks_above_sma200
+  kind: concept
+  title: pct stocks above sma200
+  definition: S&P 500 pct above 40w SMA (from broad_market_breadth_weekly)
+  binds:
+    column: pct_stocks_above_sma200
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.market_sma200_trend_strength
+  kind: concept
+  title: market sma200 trend strength
+  definition: Weekly trend_score from market_trend_template
+  binds:
+    column: market_sma200_trend_strength
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.composite_score_raw
+  kind: concept
+  title: composite score raw
+  definition: Weighted composite (0..1) from trend_score, price-vs-40w distance, 40w slope, and breadth
+    participation
+  binds:
+    column: composite_score_raw
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.composite_score_normalized
+  kind: concept
+  title: composite score normalized
+  definition: composite_score_raw * 100 (0..100); identical to v1/v2
+  binds:
+    column: composite_score_normalized
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.is_bear_market_active
+  kind: concept
+  title: is bear market active
+  definition: 1 if weekly bear regime is active; wired from enhanced_bear_market_signals (severe/moderate)
+    when available, else inline price<40w AND slope<0
+  binds:
+    column: is_bear_market_active
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.market_regime_signal
+  kind: concept
+  title: market regime signal
+  definition: 0 / 50 / 100 regime bucket (kept for v1 parity)
+  binds:
+    column: market_regime_signal
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.allocation_fraction
+  kind: concept
+  title: allocation fraction
+  definition: v3 weekly target allocation fraction (0..1) AFTER asymmetric hysteresis + true min-dwell
+  binds:
+    column: allocation_fraction
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.allocation_tier
+  kind: concept
+  title: allocation tier
+  definition: v3 weekly allocation_fraction scaled to percent (0/33/67/100)
+  binds:
+    column: allocation_tier
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.allocation_note
+  kind: concept
+  title: allocation note
+  definition: Short explanation of the v3 weekly regime/allocation decision
+  binds:
+    column: allocation_note
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.composite_score_ema
+  kind: concept
+  title: composite score ema
+  definition: 'v3: normalized 8-tap EMA (alpha=0.5, weights summed to 1.0) of composite_score_normalized;
+    basis for hysteresis decisions'
+  binds:
+    column: composite_score_ema
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.regime_state_age_weeks
+  kind: concept
+  title: regime state age weeks
+  definition: 'v3: weeks since current allocation_tier value started (resets on each tier change)'
+  binds:
+    column: regime_state_age_weeks
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.flip_blocked_by_dwell
+  kind: concept
+  title: flip blocked by dwell
+  definition: 'v3 redefined: 1 iff asymmetric hysteresis would have flipped the tier this week but the
+    dwell_min_weeks window blocked it. 0 otherwise (including weeks where the smoother simply moved within
+    the same tier).'
+  binds:
+    column: flip_blocked_by_dwell
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.allocation_fraction_raw
+  kind: concept
+  title: allocation fraction raw
+  definition: 'v3: what the v1 hard-threshold policy on composite_score_normalized would have produced
+    this week (no smoothing, no hysteresis); for comparison only'
+  binds:
+    column: allocation_fraction_raw
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.bear_source
+  kind: concept
+  title: bear source
+  definition: 'v3-only: which source populated is_bear_market_active - enhanced (joined on enhanced_bear_market_signals)
+    | inline_fallback (no enhanced coverage, used price<40w AND slope<0)'
+  binds:
+    column: bear_source
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.dwell_min_weeks
+  kind: concept
+  title: dwell min weeks
+  definition: 'v3-only: min-dwell window applied this week (reflects the tuning CTE constant at backfill
+    time; allows auditing band/dwell re-tunes)'
+  binds:
+    column: dwell_min_weeks
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.tuning_bands
+  kind: concept
+  title: tuning bands
+  definition: 'v3-only: JSON snapshot of the tuning CTE constants in effect for this row. compare_regime.py
+    fails loudly if uniqExact(tuning_bands) > 1 per track over the scorecard window.'
+  binds:
+    column: tuning_bands
+    table: market_regime_signals
+  computability: sigmarail_native
+- id: sigmarail.mart.market_regime_signals.last_populated
+  kind: concept
+  title: last populated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: last_populated
+    table: market_regime_signals
+  computability: sigmarail_native

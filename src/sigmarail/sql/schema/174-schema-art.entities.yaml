@@ -1,0 +1,203 @@
+source: 174-schema-art.sql
+version: 1
+entities:
+- id: sigmarail.mart.art.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol. Unique identifier for a security.
+  binds:
+    column: ticker
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.date
+  kind: concept
+  title: date
+  definition: Calendar Date (e.g., end of quarter) for which ART data is reported.
+  binds:
+    column: date
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.roa
+  kind: concept
+  title: roa
+  definition: kind=vendor_copy. Return on Average Assets (ART).
+  binds:
+    column: roa
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.roe
+  kind: concept
+  title: roe
+  definition: kind=vendor_copy. Return on Average Equity (ART).
+  binds:
+    column: roe
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.roic
+  kind: concept
+  title: roic
+  definition: kind=vendor_copy. Return on Invested Capital (ART).
+  binds:
+    column: roic
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.revenue
+  kind: concept
+  title: revenue
+  definition: kind=vendor_copy. Revenues (ART).
+  binds:
+    column: revenue
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.gp
+  kind: concept
+  title: gp
+  definition: kind=vendor_copy. Gross Profit (ART).
+  binds:
+    column: gp
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.ebit
+  kind: concept
+  title: ebit
+  definition: kind=vendor_copy. EBIT (ART).
+  binds:
+    column: ebit
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.ebitda
+  kind: concept
+  title: ebitda
+  definition: kind=vendor_copy. EBITDA (ART).
+  binds:
+    column: ebitda
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.netinccmn
+  kind: concept
+  title: netinccmn
+  definition: kind=vendor_copy. Net Income Common Stock (ART).
+  binds:
+    column: netinccmn
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.epsdil
+  kind: concept
+  title: epsdil
+  definition: kind=vendor_copy. Earnings per Diluted Share (ART).
+  binds:
+    column: epsdil
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.fcf
+  kind: concept
+  title: fcf
+  definition: 'kind=vendor_copy. Free Cash Flow (ART): typically NCFO + CapEx (CapEx signed negative).'
+  binds:
+    column: fcf
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.assetsavg
+  kind: concept
+  title: assetsavg
+  definition: kind=vendor_copy. Average Total Assets (ART).
+  binds:
+    column: assetsavg
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.equityavg
+  kind: concept
+  title: equityavg
+  definition: kind=vendor_copy. Average Shareholders Equity (ART).
+  binds:
+    column: equityavg
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.invcapavg
+  kind: concept
+  title: invcapavg
+  definition: kind=vendor_copy. Average Invested Capital (ART).
+  binds:
+    column: invcapavg
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.currentratio
+  kind: concept
+  title: currentratio
+  definition: kind=vendor_copy. Current Ratio (ART).
+  binds:
+    column: currentratio
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.de
+  kind: concept
+  title: de
+  definition: kind=vendor_copy. Debt to Equity Ratio (ART).
+  binds:
+    column: de
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.grossmargin
+  kind: concept
+  title: grossmargin
+  definition: kind=vendor_copy. Gross Margin (ART).
+  binds:
+    column: grossmargin
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.netmargin
+  kind: concept
+  title: netmargin
+  definition: kind=vendor_copy. Net Profit Margin (ART).
+  binds:
+    column: netmargin
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.ncfo
+  kind: concept
+  title: ncfo
+  definition: kind=vendor_copy. Net Cash Flow from Operations (ART) from SF1.
+  binds:
+    column: ncfo
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.capex
+  kind: concept
+  title: capex
+  definition: kind=vendor_copy. Capital Expenditures (ART) from SF1. Typically negative (cash outflow).
+  binds:
+    column: capex
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.depamor
+  kind: concept
+  title: depamor
+  definition: kind=vendor_copy. Depreciation, Amortization & Accretion (ART) from SF1.
+  binds:
+    column: depamor
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.fxusd
+  kind: concept
+  title: fxusd
+  definition: kind=vendor_copy. Foreign currency to USD exchange rate from SF1 ART.
+  binds:
+    column: fxusd
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.capex_abs
+  kind: concept
+  title: capex abs
+  definition: 'kind=vendor_copy. Absolute CapEx spend: abs(capex).'
+  binds:
+    column: capex_abs
+    table: art
+  computability: sigmarail_native
+- id: sigmarail.mart.art.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: art
+  computability: sigmarail_native

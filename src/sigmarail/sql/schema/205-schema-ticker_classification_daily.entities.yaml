@@ -1,0 +1,68 @@
+version: 1
+source: 205-schema-ticker_classification_daily.sql
+entities:
+- id: sigmarail.mart.ticker_classification_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker symbol.
+  binds:
+    column: ticker
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.date
+  kind: concept
+  title: date
+  definition: Snapshot date. The 1970-01-01 seed row carries the earliest known classification (current-state
+    backfill); daily snapshots from deployment onward are true point-in-time.
+  binds:
+    column: date
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.sector
+  kind: concept
+  title: sector
+  definition: 'Sector: SIC-based classification approximating GICS (from tickers.sector).'
+  binds:
+    column: sector
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.industry
+  kind: concept
+  title: industry
+  definition: 'Industry: SIC-based classification approximating GICS (from tickers.industry).'
+  binds:
+    column: industry
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.famaindustry
+  kind: concept
+  title: famaindustry
+  definition: Fama-French industry classification (from tickers.famaindustry).
+  binds:
+    column: famaindustry
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.sicsector
+  kind: concept
+  title: sicsector
+  definition: SIC sector (from tickers.sicsector).
+  binds:
+    column: sicsector
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.sicindustry
+  kind: concept
+  title: sicindustry
+  definition: SIC industry (from tickers.sicindustry).
+  binds:
+    column: sicindustry
+    table: ticker_classification_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.ticker_classification_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: ticker_classification_daily
+  computability: sigmarail_native

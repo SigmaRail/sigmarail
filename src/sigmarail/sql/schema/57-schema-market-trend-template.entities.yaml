@@ -1,0 +1,107 @@
+version: 1
+source: 57-schema-market-trend-template.sql
+entities:
+- id: sigmarail.mart.market_trend_template.date
+  kind: concept
+  title: date
+  definition: The start date of the week (Monday)
+  binds:
+    column: date
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.price_vs_sma30w_pct
+  kind: concept
+  title: price vs sma30w pct
+  definition: 'Price distance from 30w SMA: (close/sma30w) - 1'
+  binds:
+    column: price_vs_sma30w_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.price_vs_sma40w_pct
+  kind: concept
+  title: price vs sma40w pct
+  definition: 'Price distance from 40w SMA: (close/sma40w) - 1'
+  binds:
+    column: price_vs_sma40w_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.sma30w_vs_sma40w_pct
+  kind: concept
+  title: sma30w vs sma40w pct
+  definition: 'Distance between 30w and 40w SMAs: (sma30w/sma40w) - 1'
+  binds:
+    column: sma30w_vs_sma40w_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.sma40w_slope_pct
+  kind: concept
+  title: sma40w slope pct
+  definition: 4-week slope of the 40-week SMA as a percentage
+  binds:
+    column: sma40w_slope_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.price_vs_52w_high_pct
+  kind: concept
+  title: price vs 52w high pct
+  definition: 'Price distance from 52w high: (close/high_52w) - 1'
+  binds:
+    column: price_vs_52w_high_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.price_vs_52w_low_pct
+  kind: concept
+  title: price vs 52w low pct
+  definition: 'Price distance from 52w low: (close/low_52w) - 1'
+  binds:
+    column: price_vs_52w_low_pct
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.is_price_above_sma30w_duration
+  kind: concept
+  title: is price above sma30w duration
+  definition: Consecutive weeks price is above/below 30w SMA
+  binds:
+    column: is_price_above_sma30w_duration
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.is_price_above_sma40w_duration
+  kind: concept
+  title: is price above sma40w duration
+  definition: Consecutive weeks price is above/below 40w SMA
+  binds:
+    column: is_price_above_sma40w_duration
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.is_sma30w_above_sma40w_duration
+  kind: concept
+  title: is sma30w above sma40w duration
+  definition: Consecutive weeks 30w SMA is above/below 40w SMA
+  binds:
+    column: is_sma30w_above_sma40w_duration
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.is_sma40w_trending_up_duration
+  kind: concept
+  title: is sma40w trending up duration
+  definition: Consecutive weeks 40w SMA is trending up/down
+  binds:
+    column: is_sma40w_trending_up_duration
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.trend_score
+  kind: concept
+  title: trend score
+  definition: The total score (0-6) based on how many criteria are met.
+  binds:
+    column: trend_score
+    table: market_trend_template
+  computability: sigmarail_native
+- id: sigmarail.mart.market_trend_template.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update.
+  binds:
+    column: lastupdated
+    table: market_trend_template
+  computability: sigmarail_native

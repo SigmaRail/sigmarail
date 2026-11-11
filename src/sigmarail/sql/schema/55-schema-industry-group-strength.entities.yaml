@@ -1,0 +1,44 @@
+version: 1
+source: 55-schema-industry-group-strength.sql
+entities:
+- id: sigmarail.mart.industry_group_strength.date
+  kind: concept
+  title: date
+  definition: Date of the calculation.
+  binds:
+    column: date
+    table: industry_group_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.industry_group_strength.industry
+  kind: concept
+  title: industry
+  definition: The industry group name, derived from tickers.sicindustry.
+  binds:
+    column: industry
+    table: industry_group_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.industry_group_strength.avg_rs_rating
+  kind: concept
+  title: avg rs rating
+  definition: The average rs_rating of all stocks in the industry group for that day.
+  binds:
+    column: avg_rs_rating
+    table: industry_group_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.industry_group_strength.industry_group_rank
+  kind: concept
+  title: industry group rank
+  definition: The percentile rank of the industry group's avg_rs_rating against all other groups for that
+    day (0-100).
+  binds:
+    column: industry_group_rank
+    table: industry_group_strength
+  computability: sigmarail_native
+- id: sigmarail.mart.industry_group_strength.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update to this record.
+  binds:
+    column: lastupdated
+    table: industry_group_strength
+  computability: sigmarail_native

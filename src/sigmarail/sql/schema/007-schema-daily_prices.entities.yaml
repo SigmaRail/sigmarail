@@ -1,0 +1,91 @@
+version: 1
+source: 007-schema-daily_prices.sql
+entities:
+- id: sigmarail.mart.daily_prices.ticker
+  kind: concept
+  title: ticker
+  definition: kind=vendor_copy layer=L1 ticker
+  binds:
+    column: ticker
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.date
+  kind: concept
+  title: date
+  definition: kind=vendor_copy layer=L1 session date
+  binds:
+    column: date
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: 'TODO: define lastupdated'
+  binds:
+    column: lastupdated
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.source_table
+  kind: concept
+  title: source table
+  definition: SEP or SFP
+  binds:
+    column: source_table
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.open
+  kind: concept
+  title: open
+  definition: Split-adjusted open
+  binds:
+    column: open
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.high
+  kind: concept
+  title: high
+  definition: Split-adjusted high
+  binds:
+    column: high
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.low
+  kind: concept
+  title: low
+  definition: Split-adjusted low
+  binds:
+    column: low
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.close
+  kind: concept
+  title: close
+  definition: Split-adjusted close
+  binds:
+    column: close
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.volume
+  kind: concept
+  title: volume
+  definition: Split-adjusted volume
+  binds:
+    column: volume
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.closeadj
+  kind: concept
+  title: closeadj
+  definition: Fully adjusted close
+  binds:
+    column: closeadj
+    table: daily_prices
+  computability: sigmarail_native
+- id: sigmarail.mart.daily_prices.closeunadj
+  kind: concept
+  title: closeunadj
+  definition: Unadjusted close
+  binds:
+    column: closeunadj
+    table: daily_prices
+  computability: sigmarail_native

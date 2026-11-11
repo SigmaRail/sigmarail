@@ -1,0 +1,283 @@
+version: 1
+source: 178-schema-screener_ratings_daily.sql
+entities:
+- id: sigmarail.mart.screener_ratings_daily.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.date
+  kind: concept
+  title: date
+  definition: Trading date
+  binds:
+    column: date
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: ReplacingMergeTree version column
+  binds:
+    column: lastupdated
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.technical_rating
+  kind: concept
+  title: technical rating
+  definition: From technical_ratings
+  binds:
+    column: technical_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.setup_quality_rating
+  kind: concept
+  title: setup quality rating
+  definition: From technical_ratings
+  binds:
+    column: setup_quality_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.technical_composite
+  kind: concept
+  title: technical composite
+  definition: From technical_ratings
+  binds:
+    column: technical_composite
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.growth_rating
+  kind: concept
+  title: growth rating
+  definition: From screener_ratings
+  binds:
+    column: growth_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.valuation_rating
+  kind: concept
+  title: valuation rating
+  definition: From screener_ratings
+  binds:
+    column: valuation_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.health_rating
+  kind: concept
+  title: health rating
+  definition: From screener_ratings
+  binds:
+    column: health_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.profitability_rating
+  kind: concept
+  title: profitability rating
+  definition: From screener_ratings
+  binds:
+    column: profitability_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.dividend_rating
+  kind: concept
+  title: dividend rating
+  definition: From screener_ratings
+  binds:
+    column: dividend_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.high_growth_momentum_rating
+  kind: concept
+  title: high growth momentum rating
+  definition: From screener_ratings
+  binds:
+    column: high_growth_momentum_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.fundamental_composite
+  kind: concept
+  title: fundamental composite
+  definition: From screener_ratings
+  binds:
+    column: fundamental_composite
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.weinstein_score
+  kind: concept
+  title: weinstein score
+  definition: From screener_ratings
+  binds:
+    column: weinstein_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.oneil_score
+  kind: concept
+  title: oneil score
+  definition: From screener_ratings
+  binds:
+    column: oneil_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.minervini_score
+  kind: concept
+  title: minervini score
+  definition: From screener_ratings
+  binds:
+    column: minervini_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.overall_score
+  kind: concept
+  title: overall score
+  definition: From screener_ratings
+  binds:
+    column: overall_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.classification
+  kind: concept
+  title: classification
+  definition: From screener_ratings
+  binds:
+    column: classification
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_eps_yearly
+  kind: concept
+  title: screen eps yearly
+  definition: From screener_ratings
+  binds:
+    column: screen_eps_yearly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_eps_quarterly
+  kind: concept
+  title: screen eps quarterly
+  definition: From screener_ratings
+  binds:
+    column: screen_eps_quarterly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_revenue_yearly
+  kind: concept
+  title: screen revenue yearly
+  definition: From screener_ratings
+  binds:
+    column: screen_revenue_yearly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_revenue_quarterly
+  kind: concept
+  title: screen revenue quarterly
+  definition: From screener_ratings
+  binds:
+    column: screen_revenue_quarterly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_combo_yearly
+  kind: concept
+  title: screen combo yearly
+  definition: From screener_ratings
+  binds:
+    column: screen_combo_yearly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screen_combo_quarterly
+  kind: concept
+  title: screen combo quarterly
+  definition: From screener_ratings
+  binds:
+    column: screen_combo_quarterly
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.screens_passed
+  kind: concept
+  title: screens passed
+  definition: From screener_ratings
+  binds:
+    column: screens_passed
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.has_vcp_setup
+  kind: concept
+  title: has vcp setup
+  definition: From screener_ratings
+  binds:
+    column: has_vcp_setup
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.has_vcp_breakout
+  kind: concept
+  title: has vcp breakout
+  definition: From screener_ratings
+  binds:
+    column: has_vcp_breakout
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.is_bull_market
+  kind: concept
+  title: is bull market
+  definition: From screener_ratings
+  binds:
+    column: is_bull_market
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.is_leading_industry
+  kind: concept
+  title: is leading industry
+  definition: From screener_ratings
+  binds:
+    column: is_leading_industry
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.is_stage_2_advancing
+  kind: concept
+  title: is stage 2 advancing
+  definition: From screener_ratings
+  binds:
+    column: is_stage_2_advancing
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.accumulation_distribution_rating
+  kind: concept
+  title: accumulation distribution rating
+  definition: From accumulation_distribution_rating
+  binds:
+    column: accumulation_distribution_rating
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.volume_score
+  kind: concept
+  title: volume score
+  definition: ADR volume_score
+  binds:
+    column: volume_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.pocket_pivot_score
+  kind: concept
+  title: pocket pivot score
+  definition: ADR pocket_pivot_score
+  binds:
+    column: pocket_pivot_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.volume_ratio_score
+  kind: concept
+  title: volume ratio score
+  definition: ADR volume_ratio_score
+  binds:
+    column: volume_ratio_score
+    table: screener_ratings_daily
+  computability: sigmarail_native
+- id: sigmarail.mart.screener_ratings_daily.obv_score
+  kind: concept
+  title: obv score
+  definition: ADR obv_score
+  binds:
+    column: obv_score
+    table: screener_ratings_daily
+  computability: sigmarail_native

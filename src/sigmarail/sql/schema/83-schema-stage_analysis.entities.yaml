@@ -1,0 +1,397 @@
+version: 1
+source: 83-schema-stage_analysis.sql
+entities:
+- id: sigmarail.mart.stage_analysis.ticker
+  kind: concept
+  title: ticker
+  definition: Equity ticker symbol
+  binds:
+    column: ticker
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.date
+  kind: concept
+  title: date
+  definition: Trading session date
+  binds:
+    column: date
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp when this record was calculated and inserted
+  binds:
+    column: lastupdated
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.stage_code
+  kind: concept
+  title: canonical daily stage code
+  definition: 'Canonical detailed daily stage token, including the observed substage (for example 2B), projected from daily_metrics_derived.stage_code. The weekly stage remains owned at weekly_metrics_derived grain.'
+  binds:
+    column: stage_code
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.stage_duration
+  kind: concept
+  title: canonical daily stage duration
+  definition: Consecutive valid daily observations in the current detailed stage_code, projected from daily_metrics_derived.stage_duration.
+  binds:
+    column: stage_duration
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.stage_primary
+  kind: concept
+  title: deprecated primary-stage alias
+  definition: 'Temporary broad-stage compatibility alias derived from the leading character of the canonical daily stage_code. Allocation-policy migration is separate.'
+  binds:
+    column: stage_primary
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.allocation_fraction
+  kind: concept
+  title: allocation fraction
+  definition: Allocation fraction (0..1) implied by stage_primary
+  binds:
+    column: allocation_fraction
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.smoothed_allocation
+  kind: concept
+  title: smoothed allocation
+  definition: Smoothed allocation fraction (0..1) for stability
+  binds:
+    column: smoothed_allocation
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma30w
+  kind: concept
+  title: sma30w
+  definition: SPY-equivalent 30-week simple moving average (primary trend)
+  binds:
+    column: sma30w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma50w
+  kind: concept
+  title: sma50w
+  definition: 50-week simple moving average (long-term trend filter)
+  binds:
+    column: sma50w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma50d
+  kind: concept
+  title: sma50d
+  definition: 50-day simple moving average
+  binds:
+    column: sma50d
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma10w
+  kind: concept
+  title: sma10w
+  definition: 10-week simple moving average
+  binds:
+    column: sma10w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma200d
+  kind: concept
+  title: sma200d
+  definition: 200-day simple moving average (long-term trend)
+  binds:
+    column: sma200d
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma30w_slope
+  kind: concept
+  title: sma30w slope
+  definition: 30-week SMA slope
+  binds:
+    column: sma30w_slope
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma50w_slope
+  kind: concept
+  title: sma50w slope
+  definition: 50-week SMA slope
+  binds:
+    column: sma50w_slope
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma50d_slope_20d
+  kind: concept
+  title: sma50d slope 20d
+  definition: 50-day SMA slope over ~20 trading days
+  binds:
+    column: sma50d_slope_20d
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma10w_slope
+  kind: concept
+  title: sma10w slope
+  definition: 10-week SMA slope
+  binds:
+    column: sma10w_slope
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.sma200d_trend
+  kind: concept
+  title: sma200d trend
+  definition: 200-day SMA trend metric
+  binds:
+    column: sma200d_trend
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.price_vs_sma30w
+  kind: concept
+  title: price vs sma30w
+  definition: Price distance from 30-week SMA (ratio or percent, transform-defined)
+  binds:
+    column: price_vs_sma30w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.price_vs_sma50w
+  kind: concept
+  title: price vs sma50w
+  definition: Price distance from 50-week SMA (ratio or percent, transform-defined)
+  binds:
+    column: price_vs_sma50w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.price_vs_sma50d
+  kind: concept
+  title: price vs sma50d
+  definition: Price distance from 50-day SMA (ratio or percent, transform-defined)
+  binds:
+    column: price_vs_sma50d
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.price_vs_sma10w
+  kind: concept
+  title: price vs sma10w
+  definition: Price distance from 10-week SMA (ratio or percent, transform-defined)
+  binds:
+    column: price_vs_sma10w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_trend
+  kind: concept
+  title: volume trend
+  definition: Volume trend metric (accumulation/distribution proxy)
+  binds:
+    column: volume_trend
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_sma_ratio
+  kind: concept
+  title: volume sma ratio
+  definition: Current volume vs its moving average
+  binds:
+    column: volume_sma_ratio
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_breakout_ratio
+  kind: concept
+  title: volume breakout ratio
+  definition: Volume on breakout days vs baseline
+  binds:
+    column: volume_breakout_ratio
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_accumulation
+  kind: concept
+  title: volume accumulation
+  definition: Volume accumulation score
+  binds:
+    column: volume_accumulation
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_divergence
+  kind: concept
+  title: volume divergence
+  definition: Volume divergence vs price trend
+  binds:
+    column: volume_divergence
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume_breakout_strength
+  kind: concept
+  title: volume breakout strength
+  definition: Strength of volume breakout confirmation
+  binds:
+    column: volume_breakout_strength
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.relative_strength_vs_spy
+  kind: concept
+  title: relative strength vs spy
+  definition: Relative strength vs SPY benchmark
+  binds:
+    column: relative_strength_vs_spy
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.relative_strength_vs_sector
+  kind: concept
+  title: relative strength vs sector
+  definition: Percentile rank (0-100) of the tickers 3m performance within its PIT sector (ticker_classification_daily).
+    NULL when unclassified, when fewer than 5 sector members have perf_3m, or when the tickers own perf_3m
+    is NULL.
+  binds:
+    column: relative_strength_vs_sector
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.days_in_stage
+  kind: concept
+  title: days in stage
+  definition: Days in the current primary stage
+  binds:
+    column: days_in_stage
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.days_in_substage
+  kind: concept
+  title: days in substage
+  definition: Days in the current substage
+  binds:
+    column: days_in_substage
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.stage_transition
+  kind: concept
+  title: stage transition
+  definition: Transition type (NEW, CONTINUING, CHANGING)
+  binds:
+    column: stage_transition
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.trend_duration_weeks
+  kind: concept
+  title: trend duration weeks
+  definition: Weeks in the current trend direction
+  binds:
+    column: trend_duration_weeks
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.ma_alignment_score
+  kind: concept
+  title: ma alignment score
+  definition: Moving-average alignment score (0-100)
+  binds:
+    column: ma_alignment_score
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.trend_consistency
+  kind: concept
+  title: trend consistency
+  definition: Trend consistency score
+  binds:
+    column: trend_consistency
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.momentum_4w
+  kind: concept
+  title: momentum 4w
+  definition: 4-week momentum metric
+  binds:
+    column: momentum_4w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.momentum_12w
+  kind: concept
+  title: momentum 12w
+  definition: 12-week momentum metric
+  binds:
+    column: momentum_12w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.momentum_26w
+  kind: concept
+  title: momentum 26w
+  definition: 26-week momentum metric
+  binds:
+    column: momentum_26w
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.risk_level
+  kind: concept
+  title: risk level
+  definition: Risk level classification (enum; transform-defined mapping)
+  binds:
+    column: risk_level
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volatility_regime
+  kind: concept
+  title: volatility regime
+  definition: Volatility regime classification (enum; transform-defined mapping)
+  binds:
+    column: volatility_regime
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.trend_regime
+  kind: concept
+  title: trend regime
+  definition: Trend regime classification (enum; based on long-term trend filter)
+  binds:
+    column: trend_regime
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.stage_quality
+  kind: concept
+  title: stage quality
+  definition: Quality score for current stage (0-100)
+  binds:
+    column: stage_quality
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.breakout_strength
+  kind: concept
+  title: breakout strength
+  definition: Strength of breakout (if applicable)
+  binds:
+    column: breakout_strength
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.closeadj
+  kind: concept
+  title: closeadj
+  definition: Split-adjusted close
+  binds:
+    column: closeadj
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.volume
+  kind: concept
+  title: volume
+  definition: Share volume
+  binds:
+    column: volume
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.high
+  kind: concept
+  title: high
+  definition: Session high
+  binds:
+    column: high
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.low
+  kind: concept
+  title: low
+  definition: Session low
+  binds:
+    column: low
+    table: stage_analysis
+  computability: sigmarail_native
+- id: sigmarail.mart.stage_analysis.open
+  kind: concept
+  title: open
+  definition: Session open
+  binds:
+    column: open
+    table: stage_analysis
+  computability: sigmarail_native

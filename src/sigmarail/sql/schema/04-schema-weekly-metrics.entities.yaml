@@ -1,0 +1,291 @@
+version: 1
+source: 04-schema-weekly-metrics.sql
+entities:
+- id: sigmarail.mart.weekly_metrics.ticker
+  kind: concept
+  title: ticker
+  definition: Stock ticker symbol
+  binds:
+    column: ticker
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.date
+  kind: concept
+  title: date
+  definition: The start date of the week (Monday)
+  binds:
+    column: date
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.lastupdated
+  kind: concept
+  title: lastupdated
+  definition: Timestamp of the last update
+  binds:
+    column: lastupdated
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.open
+  kind: concept
+  title: open
+  definition: Opening price for the week, split-adjusted
+  binds:
+    column: open
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.high
+  kind: concept
+  title: high
+  definition: Highest price for the week, split-adjusted
+  binds:
+    column: high
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.low
+  kind: concept
+  title: low
+  definition: Lowest price for the week, split-adjusted
+  binds:
+    column: low
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.close
+  kind: concept
+  title: close
+  definition: Closing price for the week, split-adjusted
+  binds:
+    column: close
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.openadj
+  kind: concept
+  title: openadj
+  definition: Opening price for the week, adjusted for splits and dividends
+  binds:
+    column: openadj
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.highadj
+  kind: concept
+  title: highadj
+  definition: Highest price for the week, adjusted for splits and dividends
+  binds:
+    column: highadj
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.lowadj
+  kind: concept
+  title: lowadj
+  definition: Lowest price for the week, adjusted for splits and dividends
+  binds:
+    column: lowadj
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.closeadj
+  kind: concept
+  title: closeadj
+  definition: Closing price for the week, adjusted for splits and dividends
+  binds:
+    column: closeadj
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.volume
+  kind: concept
+  title: volume
+  definition: Total volume for the week
+  binds:
+    column: volume
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.sma10w
+  kind: concept
+  title: sma10w
+  definition: 10-week simple moving average of split-adjusted close
+  binds:
+    column: sma10w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.sma20w
+  kind: concept
+  title: sma20w
+  definition: 20-week simple moving average of split-adjusted close
+  binds:
+    column: sma20w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.sma30w
+  kind: concept
+  title: sma30w
+  definition: 30-week simple moving average of split-adjusted close
+  binds:
+    column: sma30w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.sma40w
+  kind: concept
+  title: sma40w
+  definition: 40-week simple moving average of split-adjusted close
+  binds:
+    column: sma40w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.sma50w
+  kind: concept
+  title: sma50w
+  definition: 50-week simple moving average of split-adjusted close
+  binds:
+    column: sma50w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.ema12w
+  kind: concept
+  title: ema12w
+  definition: 12-week exponential moving average of split-adjusted close
+  binds:
+    column: ema12w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.ema20w
+  kind: concept
+  title: ema20w
+  definition: 20-week exponential moving average of split-adjusted close
+  binds:
+    column: ema20w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.ema26w
+  kind: concept
+  title: ema26w
+  definition: 26-week exponential moving average of split-adjusted close
+  binds:
+    column: ema26w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.weekly_tr
+  kind: concept
+  title: weekly tr
+  definition: Weekly True Range
+  binds:
+    column: weekly_tr
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.week_volume_sma50
+  kind: concept
+  title: week volume sma50
+  definition: 50-week simple moving average of volume
+  binds:
+    column: week_volume_sma50
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.high_4w
+  kind: concept
+  title: high 4w
+  definition: Highest high price over last 4 weeks
+  binds:
+    column: high_4w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.high_13w
+  kind: concept
+  title: high 13w
+  definition: Highest high price over last 13 weeks (1 quarter)
+  binds:
+    column: high_13w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.high_26w
+  kind: concept
+  title: high 26w
+  definition: Highest high price over last 26 weeks (6 months)
+  binds:
+    column: high_26w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.high_52w
+  kind: concept
+  title: high 52w
+  definition: Highest high price over last 52 weeks (1 year)
+  binds:
+    column: high_52w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.low_4w
+  kind: concept
+  title: low 4w
+  definition: Lowest low price over last 4 weeks
+  binds:
+    column: low_4w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.low_13w
+  kind: concept
+  title: low 13w
+  definition: Lowest low price over last 13 weeks (1 quarter)
+  binds:
+    column: low_13w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.low_26w
+  kind: concept
+  title: low 26w
+  definition: Lowest low price over last 26 weeks (6 months)
+  binds:
+    column: low_26w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.low_52w
+  kind: concept
+  title: low 52w
+  definition: Lowest low price over last 52 weeks (1 year)
+  binds:
+    column: low_52w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.avg_vol_4w
+  kind: concept
+  title: avg vol 4w
+  definition: 4-week average trading volume
+  binds:
+    column: avg_vol_4w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.avg_vol_10w
+  kind: concept
+  title: avg vol 10w
+  definition: 10-week average trading volume
+  binds:
+    column: avg_vol_10w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.avg_vol_30w
+  kind: concept
+  title: avg vol 30w
+  definition: 30-week average trading volume
+  binds:
+    column: avg_vol_30w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.atr_10w
+  kind: concept
+  title: atr 10w
+  definition: 10-week Average True Range for intermediate volatility
+  binds:
+    column: atr_10w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.atr_20w
+  kind: concept
+  title: atr 20w
+  definition: 20-week Average True Range for position sizing
+  binds:
+    column: atr_20w
+    table: weekly_metrics
+  computability: sigmarail_native
+- id: sigmarail.mart.weekly_metrics.atr_10w_pct
+  kind: concept
+  title: atr 10w pct
+  definition: ATR_10w as percentage of closing price (normalized weekly volatility)
+  binds:
+    column: atr_10w_pct
+    table: weekly_metrics
+  computability: sigmarail_native

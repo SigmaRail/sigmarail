@@ -1,0 +1,19 @@
+version: 1
+source: 20-schema-broad_market_constituents.sql
+entities:
+- id: sigmarail.mart.broad_market_constituents.date
+  kind: concept
+  title: date
+  definition: The specific date the ticker met the criteria.
+  binds:
+    column: date
+    table: broad_market_constituents
+  computability: sigmarail_native
+- id: sigmarail.mart.broad_market_constituents.ticker
+  kind: concept
+  title: ticker
+  definition: Ticker Symbol.
+  binds:
+    column: ticker
+    table: broad_market_constituents
+  computability: sigmarail_native

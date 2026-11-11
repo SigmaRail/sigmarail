@@ -1,0 +1,4 @@
+version: 1
+source: 01-schema-data-tables.sql
+coverage: skip
+entities: []
