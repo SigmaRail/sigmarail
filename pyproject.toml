@@ -20,15 +20,22 @@ dependencies = [
   "PyYAML>=6.0.1",
   "requests>=2.28.0",
   "tqdm>=4.65.0",
+  "sigmarail-spec>=0.2.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-docker>=1.0", "pytest-cov>=4.0"]
+dev = [
+  "pytest>=7.0",
+  "pytest-django>=4.5",
+  "pytest-docker>=1.0",
+  "pytest-cov>=4.0",
+]
 
 [project.scripts]
 sigmarail-load = "sigmarail.load:main"
 sigmarail-populate = "sigmarail.populate:main"
 sigmarail-schema = "sigmarail.schema:main"
+sigmarail-test-data = "sigmarail.testing.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -41,8 +48,9 @@ where = ["src"]
 sigmarail = ["sql/schema/*.sql", "sql/schema/*.entities.yaml", "sql/schema-manifest.json", "spec/*.json"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "."]
-testpaths = ["tests"]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["src", ".", "studio"]
+testpaths = ["tests", "studio/tests"]
 markers = [
   "integration: requires ClickHouse test database",
   "metrics: validates populated metric outputs",

@@ -25,6 +25,12 @@ outside the SigmaRail core contract are not inspected or modified.
 
 ## Core boundary
 
+This repository also contains the SigmaRail Studio application. Its Django REST API,
+React/Vite frontend, and consolidated Studio MCP live under `studio/`; the core Python
+package and its SQL remain under `src/sigmarail/` and `sql/`. These are separate code
+areas in one repository and share the same root test harness. The lightweight
+`sigmarail-spec` contract and the LEAN execution project remain separate repositories.
+
 The schema includes the 13 Sharadar source tables and the complete SQL
 dependency closure for these primary screener outputs:
 
@@ -51,6 +57,11 @@ allocations, and policy-composed regime/backtest views remain outside the
 schema. The excluded fields and tables are enumerated in the lineage spec. The
 external-overlay `gic_*` fields are omitted from `ticker_classification_daily`.
 
+The core module also exposes a bounded, read-only query API for schema-declared tables.
+Its dataset and join catalog is generated from the packaged lineage manifest plus reviewed
+grain annotations; it does not modify core tables or load optional provider data. See
+[`docs/QUERY_API.md`](docs/QUERY_API.md) for the query contract and supported joins.
+
 ## Initial setup
 
 1. Install ClickHouse and create the database with `sql/init.sql`.
@@ -59,11 +70,13 @@ external-overlay `gic_*` fields are omitted from `ticker_classification_daily`.
    `~/.config/sigmarail` on Linux, `~/Library/Application Support/sigmarail` on macOS,
    and `%APPDATA%\sigmarail` on Windows. For an isolated test database, copy
    `config-test.yaml.example` to `config-test.yaml` in the same directory.
-3. Install SigmaRail with `python -m pip install -e .`.
+3. Install the Core and Studio Python packages from the repository root:
+   `python -m pip install -e ../sigmarail-spec -e ".[dev]" -e "./studio[dev]"`.
 4. Review the schema plan with `sigmarail-schema`, then apply it with
    `sigmarail-schema --apply`.
-5. Download and load Sharadar sources with `sigmarail-load --download`.
-6. Build the derived screening tables with `sigmarail-populate --metrics all`.
+5. Install Studio-owned application tables with `sigmarail-studio-schema`.
+6. Download and load Sharadar sources with `sigmarail-load --download`.
+7. Build the derived screening tables with `sigmarail-populate --metrics all`.
 
 Installed settings use the OS-specific user config directory above. Existing
 project-local `config.yaml` files are still honored, and `SIGMARAIL_HOME` can point
@@ -91,17 +104,19 @@ generated values are shaped to exercise the source schema and transforms; they
 are not Sharadar observations and do not claim to represent market statistics.
 No provider test files are needed in the checkout or CI.
 
-Database-free checks run with `python -m pytest`. To run the complete suite
-against a disposable ClickHouse container, use:
+Database-free checks run with `python -m pytest`. This single suite collects both
+Core tests under `tests/` and Django API tests under `studio/tests/`. To run the
+complete suite against the shared disposable ClickHouse container, use:
 
 ```bash
 python -m pytest --sigmarail-clickhouse
 ```
 
-Pytest uses Docker Compose to start the pinned ClickHouse image once for the
-whole test session, waits for its health check, creates `sigmarail_test`, loads
-synthetic source rows, and populates the shared baseline. Tests share that
-database so they can add test data during the run. Pytest then captures the
+The root pytest fixtures use Docker Compose to start the pinned ClickHouse image
+once for the whole Core-and-Studio test session, wait for its health check, create
+`sigmarail_test`, load synthetic source rows, and populate the shared baseline.
+Core and Studio integration tests use that same database and may add test data
+during the run. Pytest then captures the
 container log under `logs/` and removes the test service. The database uses
 ephemeral storage and is discarded at the end of the run; generated CSVs live
 in a temporary directory and are deleted after the session. The first run
@@ -110,7 +125,14 @@ already be installed and running; SigmaRail does not install or start Docker its
 
 GitHub Actions runs the same `python -m pytest --sigmarail-clickhouse` command on a
 GitHub-hosted Linux runner. It generates the same temporary synthetic profile,
-so private Sharadar fixture files and local database state are not uploaded.
+so private Sharadar fixture files and local database state are not uploaded. After
+that suite passes, a separate self-hosted Apple Silicon job generates the same
+deterministic synthetic profile in its own disposable ClickHouse container and
+runs the full SigmaRail API-to-LEAN smoke against the private platform engine
+image. For private strategy/image access, configure the
+`SIGMARAIL_PLATFORM_READ_TOKEN` repository secret with read access to the strategy
+repository and the GHCR package, or grant the SigmaRail repository access to both.
+Fork pull requests do not run on the self-hosted runner.
 
 If you already have an isolated, populated `sigmarail_test` database, the legacy
 manual path remains available with `SIGMARAIL_RUN_POPULATE_TESTS=1`. Schema-only

@@ -12,6 +12,28 @@ from pathlib import Path
 import pytest
 
 
+def pytest_sessionstart(session):
+    """Make every test session fail closed against non-test databases."""
+    os.environ["SIGMARAIL_MODE"] = "test"
+    from sigmarail import config as config_module
+
+    config_module.app_config.mode = "test"
+    config_module.app_config._config_cache = {
+        "database": {
+            "host": "127.0.0.1",
+            "port": 19000,
+            "http_port": 18123,
+            "user": "default",
+            "password": "",
+            "database": "sigmarail_test",
+            "production_database": "sigmarail",
+        },
+        "data": {"root": tempfile.gettempdir(), "test": tempfile.gettempdir(), "backups": None},
+        "sharadar": {"api_key": "", "base_url": "https://api.sharadar.com/v1.0"},
+    }
+    config_module._root_config_cache = None
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--sigmarail-clickhouse",
@@ -28,7 +50,7 @@ def sigmarail_synthetic_dataset(pytestconfig):
         yield None
         return
 
-    from tests.support.synthetic_sharadar import generate_synthetic_dataset
+    from sigmarail.testing import generate_synthetic_dataset
 
     temp_dir = tempfile.TemporaryDirectory(prefix="sigmarail-synthetic-")
     fixture_dir = Path(temp_dir.name)
@@ -38,6 +60,11 @@ def sigmarail_synthetic_dataset(pytestconfig):
         "SIGMARAIL_TEST_SYNTHETIC_MANIFEST": str(fixture_dir / "synthetic-manifest.json"),
         "SIGMARAIL_TEST_POPULATE_START": "2021-01-01",
         "SIGMARAIL_TEST_POPULATE_END": manifest["end_date"],
+        # Ephemeral CI containers are discarded after the session; do not spend
+        # the populate command's production-oriented 300s waiting for background
+        # merges between every synthetic transform.
+        "SIGMARAIL_POPULATE_MERGE_WAIT_SEC": "0",
+        "SIGMARAIL_POPULATE_INTER_CHUNK_SLEEP_SEC": "0",
     }
     previous_generated = {key: os.environ.get(key) for key in generated_env}
     os.environ.update(generated_env)
@@ -220,6 +247,9 @@ def sigmarail_test_database(request, pytestconfig, sigmarail_clickhouse_service)
         if not initialize_database_command():
             client.close()
             pytest.fail("Could not initialize the sigmarail_test schema")
+        from screens.schema import apply_studio_schema
+
+        apply_studio_schema(client)
         if not DataLoader().load_csv_files():
             client.close()
             pytest.fail("Could not load generated synthetic source fixtures")

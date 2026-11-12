@@ -1,0 +1,1138 @@
+{
+  "contract_version": 1,
+  "module_id": "sigmarail.core",
+  "version": "0.1.0",
+  "kind": "core_data",
+  "package": {
+    "distribution": "sigmarail"
+  },
+  "dependencies": [],
+  "datasets": [
+    {
+      "dataset_id": "sigmarail.core.accumulation_distribution_rating",
+      "table": "accumulation_distribution_rating",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.actions",
+      "table": "actions",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "actions"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.arq",
+      "table": "arq",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.arq_derived",
+      "table": "arq_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.art",
+      "table": "art",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.art_derived",
+      "table": "art_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.ary",
+      "table": "ary",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.ary_derived",
+      "table": "ary_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.asset_returns_daily",
+      "table": "asset_returns_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.broad_market_breadth",
+      "table": "broad_market_breadth",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.broad_market_breadth_weekly",
+      "table": "broad_market_breadth_weekly",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.broad_market_constituents",
+      "table": "broad_market_constituents",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily",
+      "table": "daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "daily"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_fundamentals",
+      "table": "daily_fundamentals",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_metrics",
+      "table": "daily_metrics",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_metrics_derived",
+      "table": "daily_metrics_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_price_sequence",
+      "table": "daily_price_sequence",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_prices",
+      "table": "daily_prices",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.daily_valuation",
+      "table": "daily_valuation",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "daily"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.enhanced_bear_market_signals",
+      "table": "enhanced_bear_market_signals",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.events",
+      "table": "events",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "events"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.factor_residuals",
+      "table": "factor_residuals",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.group_strength_daily",
+      "table": "group_strength_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.industry_group_strength",
+      "table": "industry_group_strength",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.market_context_daily",
+      "table": "market_context_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.market_regime_signals",
+      "table": "market_regime_signals",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.market_regime_signals_daily",
+      "table": "market_regime_signals_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.market_trend_template",
+      "table": "market_trend_template",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.metrics",
+      "table": "metrics",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "metrics"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.minervini_trend_template",
+      "table": "minervini_trend_template",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mrq",
+      "table": "mrq",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mrq_derived",
+      "table": "mrq_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mrt",
+      "table": "mrt",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mrt_derived",
+      "table": "mrt_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mry",
+      "table": "mry",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.mry_derived",
+      "table": "mry_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.ownership_signals_daily",
+      "table": "ownership_signals_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.regime_signals_canonical",
+      "table": "regime_signals_canonical",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.relative_strength",
+      "table": "relative_strength",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.relative_strength_base",
+      "table": "relative_strength_base",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.relative_strength_ranks",
+      "table": "relative_strength_ranks",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sata_score",
+      "table": "sata_score",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_factor_daily",
+      "table": "screener_factor_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_forecast_models_daily",
+      "table": "screener_forecast_models_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_forward_returns_daily",
+      "table": "screener_forward_returns_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_fundamentals_daily",
+      "table": "screener_fundamentals_daily",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_ownership_daily",
+      "table": "screener_ownership_daily",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_price_tech_daily",
+      "table": "screener_price_tech_daily",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_ratings",
+      "table": "screener_ratings",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "daily",
+        "sep",
+        "sf1",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_ratings_daily",
+      "table": "screener_ratings_daily",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "daily",
+        "sep",
+        "sf1",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_stage_weekly_daily",
+      "table": "screener_stage_weekly_daily",
+      "frequency": "daily",
+      "entity_grain": [
+        "ticker",
+        "date"
+      ],
+      "time_key": "date",
+      "as_of_semantics": "observation_time",
+      "completion": "completed",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.screener_vcp_pivot_daily",
+      "table": "screener_vcp_pivot_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sector_factor_residuals_daily",
+      "table": "sector_factor_residuals_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sep",
+      "table": "sep",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sf1",
+      "table": "sf1",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf1"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sf2",
+      "table": "sf2",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf2"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sf3",
+      "table": "sf3",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf3"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sf3a",
+      "table": "sf3a",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf3a"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sf3b",
+      "table": "sf3b",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sf3b"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sfp",
+      "table": "sfp",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sfp"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sp500",
+      "table": "sp500",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sp500"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.sp500_membership_periods",
+      "table": "sp500_membership_periods",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": null,
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sp500"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.stage_analysis",
+      "table": "stage_analysis",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.symbol_technical_features_daily",
+      "table": "symbol_technical_features_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.technical_ratings",
+      "table": "technical_ratings",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.ticker_classification_daily",
+      "table": "ticker_classification_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.ticker_rvab_daily",
+      "table": "ticker_rvab_daily",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.tickers",
+      "table": "tickers",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": null,
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.weekly_metrics",
+      "table": "weekly_metrics",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "dataset_id": "sigmarail.core.weekly_metrics_derived",
+      "table": "weekly_metrics_derived",
+      "frequency": "unspecified",
+      "entity_grain": [],
+      "time_key": "date",
+      "as_of_semantics": "unspecified",
+      "completion": "unspecified",
+      "source_ids": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "schema_ref": "sigmarail-spec://v1/data/schema"
+    }
+  ],
+  "joins": [
+    {
+      "id": "sigmarail.core.join.screener_price_tech_daily_to_screener_fundamentals_daily",
+      "from_dataset": "sigmarail.core.screener_price_tech_daily",
+      "to_dataset": "sigmarail.core.screener_fundamentals_daily",
+      "keys": [
+        {
+          "from": "ticker",
+          "to": "ticker"
+        },
+        {
+          "from": "date",
+          "to": "date"
+        }
+      ],
+      "cardinality": "one_to_one",
+      "temporal_alignment": "exact",
+      "max_staleness": null
+    },
+    {
+      "id": "sigmarail.core.join.screener_price_tech_daily_to_screener_ratings_daily",
+      "from_dataset": "sigmarail.core.screener_price_tech_daily",
+      "to_dataset": "sigmarail.core.screener_ratings_daily",
+      "keys": [
+        {
+          "from": "ticker",
+          "to": "ticker"
+        },
+        {
+          "from": "date",
+          "to": "date"
+        }
+      ],
+      "cardinality": "one_to_one",
+      "temporal_alignment": "exact",
+      "max_staleness": null
+    },
+    {
+      "id": "sigmarail.core.join.screener_price_tech_daily_to_screener_stage_weekly_daily",
+      "from_dataset": "sigmarail.core.screener_price_tech_daily",
+      "to_dataset": "sigmarail.core.screener_stage_weekly_daily",
+      "keys": [
+        {
+          "from": "ticker",
+          "to": "ticker"
+        },
+        {
+          "from": "date",
+          "to": "date"
+        }
+      ],
+      "cardinality": "one_to_one",
+      "temporal_alignment": "exact",
+      "max_staleness": null
+    },
+    {
+      "id": "sigmarail.core.join.screener_price_tech_daily_to_screener_ownership_daily",
+      "from_dataset": "sigmarail.core.screener_price_tech_daily",
+      "to_dataset": "sigmarail.core.screener_ownership_daily",
+      "keys": [
+        {
+          "from": "ticker",
+          "to": "ticker"
+        },
+        {
+          "from": "date",
+          "to": "date"
+        }
+      ],
+      "cardinality": "one_to_one",
+      "temporal_alignment": "exact",
+      "max_staleness": null
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "core.data.query",
+      "kind": "query",
+      "contract_ref": "sigmarail-spec://v1/data/query/v1",
+      "mcp_resource_uris": [
+        "sigmarail-spec://v1/data/schema",
+        "sigmarail-spec://v1/data/fields"
+      ],
+      "mcp_tool_names": [
+        "core_list_datasets",
+        "core_describe_dataset",
+        "core_query_dataset"
+      ]
+    }
+  ],
+  "settings": []
+}

@@ -1,0 +1,230 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ratings_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "close",
+    "high",
+    "sma50d",
+    "sma150d",
+    "sma200d",
+    "sma200d_rising_30d",
+    "high_52w",
+    "low_52w",
+    "avg_vol_50d",
+    "rs_rating",
+    "technical_rating",
+    "setup_quality_rating",
+    "high_growth_momentum_rating",
+    "minervini_score",
+    "overall_score",
+    "classification"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma150d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma150d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma150d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "sma200d_rising_30d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "high",
+          "offset": 0
+        },
+        "right": {
+          "type": "formula",
+          "op": "*",
+          "args": [
+            {
+              "type": "col",
+              "name": "high_52w",
+              "offset": 0
+            },
+            {
+              "type": "lit",
+              "value": 0.75
+            }
+          ]
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "formula",
+          "op": "*",
+          "args": [
+            {
+              "type": "col",
+              "name": "low_52w",
+              "offset": 0
+            },
+            {
+              "type": "lit",
+              "value": 1.3
+            }
+          ]
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 70
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "setup_quality_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 70
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "high_growth_momentum_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 60
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "avg_vol_50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 100000
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "technical_rating",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 50
+}

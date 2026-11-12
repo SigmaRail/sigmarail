@@ -14,6 +14,8 @@ SCHEMA_DIR = ROOT / "src" / "sigmarail" / "sql" / "schema"
 SCHEMA_MANIFEST = ROOT / "src" / "sigmarail" / "sql" / "schema-manifest.json"
 OUTPUT = ROOT / "spec" / "lineage-manifest.json"
 PACKAGE_OUTPUT = ROOT / "src" / "sigmarail" / "spec" / "lineage-manifest.json"
+MODULE_OUTPUT = ROOT / "spec" / "module-manifest.json"
+PACKAGE_MODULE_OUTPUT = ROOT / "src" / "sigmarail" / "spec" / "module-manifest.json"
 RAW_SCHEMA_FILE = "01-schema-data-tables.sql"
 
 CORE_OUTPUTS = [
@@ -305,6 +307,68 @@ def _columns_from_create(sql: str, table: str) -> list[dict[str, str]]:
     return columns
 
 
+def _core_module_manifest(tables: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build the built-in core module catalog from SQL lineage plus reviewed query metadata."""
+    daily_query_tables = set(CORE_OUTPUTS) | {"daily_prices"}
+    by_name = {table["name"]: table for table in tables}
+    datasets: list[dict[str, Any]] = []
+    for name in sorted(by_name):
+        table = by_name[name]
+        column_names = {column["name"] for column in table["columns"]}
+        daily = name in daily_query_tables
+        datasets.append(
+            {
+                "dataset_id": f"sigmarail.core.{name}",
+                "table": name,
+                "frequency": "daily" if daily else "unspecified",
+                "entity_grain": ["ticker", "date"] if daily else [],
+                "time_key": "date" if "date" in column_names else None,
+                "as_of_semantics": "observation_time" if daily else "unspecified",
+                "completion": "completed" if daily else "unspecified",
+                "source_ids": table["sharadar_roots"],
+                "schema_ref": "sigmarail-spec://v1/data/schema",
+            }
+        )
+
+    spine = "sigmarail.core.screener_price_tech_daily"
+    joins = [
+        {
+            "id": f"sigmarail.core.join.screener_price_tech_daily_to_{table}",
+            "from_dataset": spine,
+            "to_dataset": f"sigmarail.core.{table}",
+            "keys": [{"from": "ticker", "to": "ticker"}, {"from": "date", "to": "date"}],
+            "cardinality": "one_to_one",
+            "temporal_alignment": "exact",
+            "max_staleness": None,
+        }
+        for table in CORE_OUTPUTS
+        if table != "screener_price_tech_daily"
+    ]
+    return {
+        "contract_version": 1,
+        "module_id": "sigmarail.core",
+        "version": "0.1.0",
+        "kind": "core_data",
+        "package": {"distribution": "sigmarail"},
+        "dependencies": [],
+        "datasets": datasets,
+        "joins": joins,
+        "capabilities": [
+            {
+                "id": "core.data.query",
+                "kind": "query",
+                "contract_ref": "sigmarail-spec://v1/data/query/v1",
+                "mcp_resource_uris": [
+                    "sigmarail-spec://v1/data/schema",
+                    "sigmarail-spec://v1/data/fields",
+                ],
+                "mcp_tool_names": ["core_list_datasets", "core_describe_dataset", "core_query_dataset"],
+            }
+        ],
+        "settings": [],
+    }
+
+
 def _load_objects() -> tuple[set[str], dict[str, dict[str, Any]], dict[str, Path]]:
     known: set[str] = set()
     tables: dict[str, dict[str, Any]] = {}
@@ -432,6 +496,7 @@ def main() -> int:
         if not columns:
             raise ValueError(f"No CREATE TABLE columns parsed for {name} in {path.name}")
         for column in columns:
+            column["id"] = f"sigmarail.field.{name}.{column['name']}.{column['name']}"
             if column["name"] == "lastupdated":
                 column["classification"] = "operational_metadata"
                 column["lineage_roots"] = []
@@ -483,10 +548,15 @@ def main() -> int:
         "deferred_sharadar_features": DEFERRED_SHARADAR_FEATURES,
         "deferred_application_layers": DEFERRED_APPLICATION_LAYERS,
     }
+    module_manifest = _core_module_manifest(manifest_tables)
     rendered = json.dumps(result, indent=2, sort_keys=False) + "\n"
     for output in (OUTPUT, PACKAGE_OUTPUT):
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(rendered, encoding="utf-8")
+    module_rendered = json.dumps(module_manifest, indent=2, sort_keys=False) + "\n"
+    for output in (MODULE_OUTPUT, PACKAGE_MODULE_OUTPUT):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(module_rendered, encoding="utf-8")
     print(f"Wrote {OUTPUT.relative_to(ROOT)}: {len(manifest_tables)} tables, {sum(len(t['columns']) for t in manifest_tables)} columns")
     return 0
 

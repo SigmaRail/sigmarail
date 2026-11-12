@@ -1,0 +1,217 @@
+{
+  "schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lean framework Type registry (Phase 1 allowlist)",
+  "description": "Maps JSON Framework.*.Type to QuantConnect Lean Python classes. Only these ids may be used in LeanFrameworkV1 documents. No dynamic imports from user JSON.",
+  "version": 1,
+  "slots": [
+    {
+      "slot": "UniverseSelection",
+      "entries": [
+        {
+          "Type": "VeraScreenerUniverseSelectionModel",
+          "module_hint": "vera_lab / VeraScreenerUniverseSelectionModel",
+          "description": "Dynamic universe driven by Vera Screener AST / ClickHouse queries.",
+          "example_parameters": {}
+        },
+        {
+          "Type": "ManualUniverseSelectionModel",
+          "module_hint": "AlgorithmImports / ManualUniverseSelectionModel",
+          "description": "Fixed list of equity symbols (USA). Parameters.symbols: string[] ticker symbols.",
+          "example_parameters": { "symbols": ["SPY", "QQQ"] }
+        }
+      ]
+    },
+    {
+      "slot": "Alpha",
+      "entries": [
+        {
+          "Type": "VeraScreenerAlphaModel",
+          "module_hint": "vera_lab / VeraScreenerAlphaModel",
+          "description": "Screener entry/exit signals with top-N ranking and stop-loss logic.",
+          "example_parameters": { "max_positions": 10, "stop_loss_pct": 0.08 }
+        },
+        {
+          "Type": "RsiAlphaModel",
+          "module_hint": "AlgorithmImports / RsiAlphaModel",
+          "description": "RSI-based mean reversion or trend insights.",
+          "example_parameters": { "period": 14, "resolution": "Daily" }
+        },
+        {
+          "Type": "MacdAlphaModel",
+          "module_hint": "AlgorithmImports / MacdAlphaModel",
+          "description": "MACD signal crossover insights.",
+          "example_parameters": { "fast_period": 12, "slow_period": 26, "signal_period": 9, "resolution": "Daily" }
+        },
+        {
+          "Type": "EmaCrossAlphaModel",
+          "module_hint": "AlgorithmImports / EmaCrossAlphaModel",
+          "description": "Exponential moving average golden cross / death cross insights.",
+          "example_parameters": { "fast_period": 12, "slow_period": 26, "resolution": "Daily" }
+        },
+        {
+          "Type": "ConstantAlphaModel",
+          "module_hint": "AlgorithmImports / ConstantAlphaModel",
+          "description": "Constant directional insight generator.",
+          "example_parameters": { "period_days": 30, "magnitude": 0.02 }
+        }
+      ]
+    },
+    {
+      "slot": "PortfolioConstruction",
+      "entries": [
+        {
+          "Type": "VeraScreenerPortfolioConstructionModel",
+          "module_hint": "vera_lab / VeraScreenerPortfolioConstructionModel",
+          "description": "ATR volatility risk-adjusted position sizing with max weight caps.",
+          "example_parameters": { "max_positions": 10, "max_weight": 0.1, "target_atr_risk": 0.004 }
+        },
+        {
+          "Type": "EqualWeightingPortfolioConstructionModel",
+          "module_hint": "AlgorithmImports / EqualWeightingPortfolioConstructionModel",
+          "description": "Equal weight per active insight.",
+          "example_parameters": { "rebalance": "Daily" }
+        },
+        {
+          "Type": "InsightWeightingPortfolioConstructionModel",
+          "module_hint": "AlgorithmImports / InsightWeightingPortfolioConstructionModel",
+          "description": "Weights proportional to insight magnitude and confidence.",
+          "example_parameters": { "rebalance": "Daily" }
+        },
+        {
+          "Type": "ConfidenceWeightedPortfolioConstructionModel",
+          "module_hint": "AlgorithmImports / ConfidenceWeightedPortfolioConstructionModel",
+          "description": "Weights strictly proportional to insight confidence level.",
+          "example_parameters": { "rebalance": "Daily" }
+        },
+        {
+          "Type": "RiskParityPortfolioConstructionModel",
+          "module_hint": "AlgorithmImports / RiskParityPortfolioConstructionModel",
+          "description": "Inverse volatility risk parity asset allocation.",
+          "example_parameters": { "rebalance": "Daily" }
+        },
+        {
+          "Type": "SectorWeightingPortfolioConstructionModel",
+          "module_hint": "AlgorithmImports / SectorWeightingPortfolioConstructionModel",
+          "description": "Equal allocation across active industry sectors.",
+          "example_parameters": { "rebalance": "Daily" }
+        }
+      ]
+    },
+    {
+      "slot": "RiskManagement",
+      "entries": [
+        {
+          "Type": "MaximumDrawdownPercentPerSecurity",
+          "module_hint": "AlgorithmImports / MaximumDrawdownPercentPerSecurity",
+          "description": "Flatten position when unrealized loss exceeds fixed drawdown threshold.",
+          "example_parameters": { "maximum_drawdown_percent": 0.08 }
+        },
+        {
+          "Type": "TrailingStopRiskManagementModel",
+          "module_hint": "AlgorithmImports / TrailingStopRiskManagementModel",
+          "description": "Dynamic trailing stop loss from peak high-watermark profit.",
+          "example_parameters": { "maximum_drawdown_percent": 0.05 }
+        },
+        {
+          "Type": "MaximumSectorExposureRiskManagementModel",
+          "module_hint": "AlgorithmImports / MaximumSectorExposureRiskManagementModel",
+          "description": "Limits aggregate portfolio exposure to any single sector.",
+          "example_parameters": { "maximum_sector_exposure": 0.25 }
+        },
+        {
+          "Type": "MaximumUnrealizedProfitPercentPerSecurity",
+          "module_hint": "AlgorithmImports / MaximumUnrealizedProfitPercentPerSecurity",
+          "description": "Takes profit when position gain hits target percentage threshold.",
+          "example_parameters": { "maximum_unrealized_profit_percent": 0.25 }
+        },
+        {
+          "Type": "NullRiskManagementModel",
+          "module_hint": "AlgorithmImports / NullRiskManagementModel",
+          "description": "No additional risk management constraints.",
+          "example_parameters": {}
+        }
+      ]
+    },
+    {
+      "slot": "Execution",
+      "entries": [
+        {
+          "Type": "ImmediateExecutionModel",
+          "module_hint": "AlgorithmImports / ImmediateExecutionModel",
+          "description": "Submit market orders immediately for target portfolio deltas.",
+          "example_parameters": {}
+        },
+        {
+          "Type": "VolumeWeightedAveragePriceExecutionModel",
+          "module_hint": "AlgorithmImports / VolumeWeightedAveragePriceExecutionModel",
+          "description": "VWAP execution slicing orders across intraday volume distribution.",
+          "example_parameters": {}
+        },
+        {
+          "Type": "StandardDeviationExecutionModel",
+          "module_hint": "AlgorithmImports / StandardDeviationExecutionModel",
+          "description": "Limits execution order sizes based on recent price standard deviations.",
+          "example_parameters": { "deviations": 2.0, "period": 60 }
+        },
+        {
+          "Type": "VeraScreenerExecutionModel",
+          "module_hint": "vera_lab / VeraScreenerExecutionModel",
+          "description": "Market-on-Open execution for screener rebalance orders.",
+          "example_parameters": {}
+        }
+      ]
+    }
+  ],
+  "related_schemas": {
+    "LeanFrameworkV1": "ir/lean_framework_v1.schema.json",
+    "VeraLabV1": "ir/vera_lab_v1.schema.json",
+    "legacy_pipeline": "ir/schema.json"
+  },
+  "framework_presets": [
+    {
+      "id": "institutional_momentum",
+      "label": "Institutional Momentum",
+      "description": "VeraScreener universe, ATR risk-adjusted PCM, Trailing Stop (5%), and VWAP execution."
+    },
+    {
+      "id": "risk_managed_trend",
+      "label": "Risk-Managed Trend",
+      "description": "VeraScreener universe with Sector Exposure Cap (25%) and Fixed 8% Stop Loss."
+    },
+    {
+      "id": "hybrid_multi_factor",
+      "label": "Hybrid Multi-Factor",
+      "description": "VeraScreener universe with RSI(14) Alpha and Risk Parity Portfolio Construction."
+    },
+    {
+      "id": "minimal_rsi_spy_qqq",
+      "label": "Minimal RSI Benchmark",
+      "description": "Manual SPY+QQQ universe, RSI(14) daily alpha, equal weight, immediate execution, 10% max drawdown per security."
+    }
+  ],
+  "vera_store_runner_framework": {
+    "description": "Framework.Type values for main.py with VeraFrameworkStore and wire_framework_bundle_v1(store=..., registry=None). Canonical VeraScreener* plugins in vera_lab/qc_vera_screener_framework.py; legacy ScreenerStore* and ClickHouse* strings remain accepted.",
+    "entries": [
+      {
+        "slot": "UniverseSelection",
+        "Type": "VeraScreenerUniverseSelectionModel",
+        "parameters": {}
+      },
+      {
+        "slot": "Alpha",
+        "Type": "VeraScreenerAlphaModel",
+        "parameters_note": "Same fields as vera_lab.models.AlphaSpec"
+      },
+      {
+        "slot": "PortfolioConstruction",
+        "Type": "VeraScreenerPortfolioConstructionModel",
+        "parameters_note": "Same fields as vera_lab.models.PortfolioSpec"
+      },
+      {
+        "slot": "Execution",
+        "Type": "VeraScreenerExecutionModel",
+        "parameters": {}
+      }
+    ]
+  }
+}
