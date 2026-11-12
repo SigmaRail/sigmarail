@@ -1,0 +1,80 @@
+{
+  "catalog_version": 1,
+  "activation_environment_variable": "SIGMARAIL_STUDIO_MODULES",
+  "always_enabled": ["core"],
+  "default_enabled": ["core", "studio"],
+  "modules": [
+    {
+      "name": "core",
+      "module_id": "sigmarail.core",
+      "owner": "sigmarail",
+      "domains": ["core"],
+      "default_enabled": true,
+      "compatibility": false,
+      "requires": ["sigmarail", "sigmarail-spec"]
+    },
+    {
+      "name": "studio",
+      "module_id": "sigmarail.studio",
+      "owner": "sigmarail-studio",
+      "domains": ["studio"],
+      "default_enabled": true,
+      "compatibility": false,
+      "requires": ["sigmarail-spec"]
+    },
+    {
+      "name": "screening",
+      "module_id": "sigmarail.screening",
+      "owner": "sigmarail-studio",
+      "domains": ["catalog", "screen", "chart"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core"]
+    },
+    {
+      "name": "strategy",
+      "module_id": "sigmarail.strategy_authoring",
+      "owner": "sigmarail-studio",
+      "domains": ["strategy"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core"]
+    },
+    {
+      "name": "backtesting",
+      "module_id": "sigmarail.backtesting",
+      "owner": "sigmarail-lean",
+      "domains": ["backtest", "regime", "optimize"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core", "vera_lab"]
+    },
+    {
+      "name": "portfolio",
+      "module_id": "sigmarail.portfolio",
+      "owner": "sigmarail-portfolio",
+      "domains": ["portfolio"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core"]
+    },
+    {
+      "name": "deployment",
+      "module_id": "sigmarail.deployment",
+      "owner": "sigmarail-lean",
+      "domains": ["deploy", "lean"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core", "vera_lab"]
+    },
+    {
+      "name": "knowledge",
+      "module_id": "sigmarail.knowledge",
+      "owner": "knowledge-base",
+      "domains": ["research", "kb"],
+      "default_enabled": false,
+      "compatibility": true,
+      "requires": ["vera_query_core", "knowledge-base"]
+    }
+  ]
+}
