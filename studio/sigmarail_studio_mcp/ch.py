@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from vera_query_core.ch_settings import connect_clickhouse, resolve_clickhouse_settings_unified
+from screens.ch import get_ch_client
 
 
 def get_client() -> Any:
-    settings = resolve_clickhouse_settings_unified(require_password=False)
-    return connect_clickhouse(settings)
+    """Use SigmaRail's configured client and safety checks."""
+    return get_ch_client()
 
 
 def call(fn: Callable[..., Any], **kwargs: Any) -> dict[str, Any]:

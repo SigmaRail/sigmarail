@@ -12,10 +12,6 @@ from screens.lineage import (
     STUDIO_SPEC_HASH_KEY,
     universe_spec_hash,
 )
-from vera_query_core.backtest_report import get_backtest_report
-from vera_query_core.live_report import get_live_status, list_live_deployments as list_live_deployments_core
-
-
 def _row_dict(columns: list[str], row: tuple) -> dict[str, Any]:
     return dict(zip(columns, row))
 
@@ -273,9 +269,30 @@ def list_live_deployments(client: Any, *, limit: int = 20) -> dict[str, Any]:
     return list_live_deployments_core(client, limit=limit)
 
 
+def list_live_deployments_core(client: Any, *, limit: int = 20) -> dict[str, Any]:
+    """Compatibility report adapter; requires the optional Vera runtime."""
+    from vera_query_core.live_report import list_live_deployments as _list_live_deployments
+
+    return _list_live_deployments(client, limit=limit)
+
+
 def get_live_deployment_status(client: Any, deployment_id: str) -> dict[str, Any]:
     """Deployment status digest via ``vera_query_core.live_report.get_live_status``."""
     return get_live_status(client, deployment_id)
+
+
+def get_live_status(client: Any, deployment_id: str) -> dict[str, Any]:
+    """Compatibility report adapter; requires the optional Vera runtime."""
+    from vera_query_core.live_report import get_live_status as _get_live_status
+
+    return _get_live_status(client, deployment_id)
+
+
+def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
+    """Compatibility report adapter; requires the optional Vera runtime."""
+    from vera_query_core.backtest_report import get_backtest_report
+
+    return get_backtest_report(client, run_id)
 
 
 def update_deployment_status(client: Any, deployment_id: str, new_status: str) -> dict[str, Any]:

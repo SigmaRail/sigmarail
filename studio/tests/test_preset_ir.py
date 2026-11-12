@@ -7,6 +7,11 @@ import json
 import pytest
 from django.test import Client
 
+pytest.importorskip(
+    "vera_query_core",
+    reason="preset IR compatibility tests require the optional Vera runtime",
+)
+
 from screens.adapter import ALL_SCREEN_PRESETS, preset_to_universe_spec
 from screens.ir_preview import validate_universe_ir_spec
 from vera_query_core.screen_preset_ir import list_preset_ir_ids, preset_to_universe_query_v1

@@ -4,15 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from screens.ch import _ensure_verabasel_path
-
-_ensure_verabasel_path()
-from vera_query_core.platform_tools import screen_stocks  # noqa: E402
-from vera_query_core.screen_preset_ir import (  # noqa: E402
-    list_preset_ir_ids,
-    preset_to_universe_query_v1,
-)
-from screens.exchange import enrich_rows_with_exchange  # noqa: E402
+from screens.exchange import enrich_rows_with_exchange
 
 # Equity presets first (include canslim for Screening Studio Phase 1).
 EQUITY_SCREEN_PRESETS: tuple[str, ...] = (
@@ -72,7 +64,14 @@ def list_screen_presets() -> list[dict[str, str]]:
         "capex_disciplined": "Capex disciplined",
         "capex_mrt_art_disagree": "Capex MRT/ART disagree",
     }
-    ir_ids = set(list_preset_ir_ids())
+    try:
+        from vera_query_core.screen_preset_ir import list_preset_ir_ids
+
+        ir_ids = set(list_preset_ir_ids())
+    except ModuleNotFoundError as exc:
+        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
+            raise
+        ir_ids = set()
     return [
         {
             "id": p,
@@ -88,6 +87,12 @@ def preset_to_universe_spec(preset: str) -> dict[str, Any]:
     preset_key = (preset or "").strip().lower()
     if preset_key not in ALL_SCREEN_PRESETS:
         raise ValueError(f"unknown screen preset {preset_key!r}")
+    try:
+        from vera_query_core.screen_preset_ir import preset_to_universe_query_v1
+    except ModuleNotFoundError as exc:
+        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
+            raise
+        raise RuntimeError("screen preset compilation requires the optional Vera compatibility runtime") from exc
     return preset_to_universe_query_v1(preset_key)
 
 
@@ -103,6 +108,13 @@ def preview_screen(
     preset_key = (preset or "leaders").strip().lower()
     if preset_key not in ALL_SCREEN_PRESETS:
         raise ValueError(f"unknown screen preset {preset_key!r}")
+
+    try:
+        from vera_query_core.platform_tools import screen_stocks
+    except ModuleNotFoundError as exc:
+        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
+            raise
+        raise RuntimeError("screen preview requires the optional Vera compatibility runtime") from exc
 
     raw = screen_stocks(client, date=as_of, preset=preset_key, limit=min(max(int(limit), 1), 100))
     hits = list(raw.get("hits") or [])

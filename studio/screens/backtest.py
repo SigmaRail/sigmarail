@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from vera_query_core.backtest_report import get_backtest_report, list_runs_by_ir_id
-
 from screens.spec_save import hash_algorithm_json, run_revision_stale
 
 
@@ -333,6 +331,20 @@ def list_backtest_runs(
 def get_run_report(client: Any, run_id: str) -> dict[str, Any]:
     """Agent-friendly backtest digest for one run."""
     return get_backtest_report(client, run_id)
+
+
+def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
+    """Compatibility report adapter; requires the optional Vera runtime."""
+    from vera_query_core.backtest_report import get_backtest_report
+
+    return get_backtest_report(client, run_id)
+
+
+def list_runs_by_ir_id(ir_id: str, *, limit: int = 50) -> dict[str, Any]:
+    """List compatibility backtest runs; requires the optional Vera runtime."""
+    from vera_query_core.backtest_report import list_runs_by_ir_id as _list_runs
+
+    return _list_runs(ir_id, limit=limit)
 
 
 def get_run_context(client: Any, run_id: str, *, trades_limit: int = 50) -> dict[str, Any]:
