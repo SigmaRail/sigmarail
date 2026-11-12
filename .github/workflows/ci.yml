@@ -19,6 +19,8 @@ jobs:
         with:
           repository: SigmaRail/sigmarail-spec
           path: sigmarail-spec
+          # Integration branches until the prerequisite Spec PR is merged.
+          ref: codex/module-contract
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -62,6 +64,8 @@ jobs:
         with:
           repository: SigmaRail/sigmarail-spec
           path: sigmarail-spec
+          # Integration branches until the prerequisite PRs are merged.
+          ref: codex/module-contract
           persist-credentials: false
 
       - name: Check out SigmaRail Lean strategy
@@ -69,6 +73,7 @@ jobs:
         with:
           repository: mdiggory/VeraTradingLab
           path: LeanProjects/VeraTradingLab
+          ref: codex/vtl-sigmarail-spec
           # Set this repository secret when the strategy repository is private.
           token: ${{ secrets.SIGMARAIL_PLATFORM_READ_TOKEN || github.token }}
           persist-credentials: false
