@@ -8,7 +8,7 @@ FINANCE_PROJECTS="${SIGMARAIL_WORKSPACE_ROOT:-}"
 if [[ -z "${FINANCE_PROJECTS}" ]]; then
   candidate="${REPO_ROOT}"
   while [[ "${candidate}" != "/" ]]; do
-    if [[ -d "${candidate}/sigmarail-spec/src" ]]; then
+    if [[ -d "${candidate}/packages/sigmarail-spec/src" ]]; then
       FINANCE_PROJECTS="${candidate}"
       break
     fi
@@ -16,7 +16,7 @@ if [[ -z "${FINANCE_PROJECTS}" ]]; then
   done
 fi
 FINANCE_PROJECTS="${FINANCE_PROJECTS:-${REPO_ROOT}}"
-SIGMARAIL_SPEC_SOURCE="${SIGMARAIL_SPEC_SOURCE:-${FINANCE_PROJECTS}/sigmarail-spec/src}"
+SIGMARAIL_SPEC_SOURCE="${SIGMARAIL_SPEC_SOURCE:-${REPO_ROOT}/packages/sigmarail-spec/src}"
 SIGMARAIL_CORE_SOURCE="${SIGMARAIL_CORE_SOURCE:-${REPO_ROOT}/src}"
 export SIGMARAIL_WORKSPACE_ROOT="${SIGMARAIL_WORKSPACE_ROOT:-${FINANCE_PROJECTS}}"
 

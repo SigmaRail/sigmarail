@@ -28,8 +28,9 @@ outside the SigmaRail core contract are not inspected or modified.
 This repository also contains the SigmaRail Studio application. Its Django REST API,
 React/Vite frontend, and consolidated Studio MCP live under `studio/`; the core Python
 package and its SQL remain under `src/sigmarail/` and `sql/`. These are separate code
-areas in one repository and share the same root test harness. The lightweight
-`sigmarail-spec` contract and the LEAN execution project remain separate repositories.
+areas in one repository and share the same root test harness. The versioned
+`sigmarail-spec` contract is maintained in `packages/sigmarail-spec/` as an
+independently versioned Python distribution. The custom LEAN engine remains a separate repository.
 
 The schema includes the 13 Sharadar source tables and the complete SQL
 dependency closure for these primary screener outputs:
@@ -70,8 +71,8 @@ grain annotations; it does not modify core tables or load optional provider data
    `~/.config/sigmarail` on Linux, `~/Library/Application Support/sigmarail` on macOS,
    and `%APPDATA%\sigmarail` on Windows. For an isolated test database, copy
    `config-test.yaml.example` to `config-test.yaml` in the same directory.
-3. Install the Core and Studio Python packages from the repository root:
-   `python -m pip install -e ../sigmarail-spec -e ".[dev]" -e "./studio[dev]"`.
+3. Install Core, Spec, and Studio together from the repository root:
+   `python -m pip install -e 'packages/sigmarail-spec[build,test]' -e ".[dev]" -e "./studio[dev]"`.
 4. Review the schema plan with `sigmarail-schema`, then apply it with
    `sigmarail-schema --apply`.
 5. Install Studio-owned application tables with `sigmarail-studio-schema`.

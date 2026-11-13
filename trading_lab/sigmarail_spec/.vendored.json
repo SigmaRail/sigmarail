@@ -17,9 +17,9 @@
     "strategy/regime_gate.py": "8ec5ded044f20c04e66c235be21bba510f36a416ecf94c1b9e07d221f30c7919",
     "strategy/risk_ladder.py": "94e69e6ef40b0883bcf7d0b565710575645b7e26bb9b19d9aa0376452263f68b",
     "strategy/setup_recipes.py": "e31785d20cbdffa2313c6a4c5e9f39ff67131867f2f1f74c0ed708361394c13b",
-    "universe_query.py": "a01211f027a23e34b28465bc9369c8258c3a738545509a916efd712dffe42415"
+    "universe_query.py": "1d466d23a7010a99cb0518613ccf6e3fea599a5533d11240adf7b5c32aff5134"
   },
-  "generated_by": "sigmarail-spec/tools/sync_lean_vendor.py",
-  "note": "generated artifact; edit sigmarail-spec runtime, then sync this copy",
-  "source": "sigmarail-spec/src/sigmarail_spec"
+  "generated_by": "packages/sigmarail-spec/tools/sync_lean_vendor.py",
+  "note": "generated artifact; edit packages/sigmarail-spec runtime, then sync this copy",
+  "source": "packages/sigmarail-spec/src/sigmarail_spec"
 }

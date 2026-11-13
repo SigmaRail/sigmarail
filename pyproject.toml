@@ -51,7 +51,7 @@ sigmarail = ["sql/schema/*.sql", "sql/schema/*.entities.yaml", "sql/schema-manif
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 pythonpath = ["src", ".", "studio"]
-testpaths = ["tests", "studio/tests"]
+testpaths = ["tests", "studio/tests", "packages/sigmarail-spec/tests"]
 markers = [
   "integration: requires ClickHouse test database",
   "metrics: validates populated metric outputs",

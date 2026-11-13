@@ -1,8 +1,8 @@
 """Row-level evaluators re-exported from the generated LEAN-local runtime package.
 
-The evaluator and expression dialect are authored in SigmaRail Spec. The `sigmarail_spec/` directory is
-generated there because QuantConnect cloud runs the uploaded project tree without installing
-sibling packages. `tests/test_vendored_sigmarail_spec.py` fails if this copy drifts.
+The evaluator and expression dialect are authored in `packages/sigmarail-spec/`. The
+`sigmarail_spec/` directory is generated into the backtest template because the LEAN runtime runs
+the uploaded project tree without installing sibling packages. Tests fail if this copy drifts.
 
 This module remains a compatibility re-export. New local code should import from `sigmarail_spec`;
 the LEAN project uses the vendored `sigmarail_spec` namespace.

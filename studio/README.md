@@ -11,7 +11,8 @@ remains to be adapted.
 ## Intended project boundaries
 
 - **SigmaRail Core** owns the financial data schema, transformations, loading, database population, and the root test database lifecycle.
-- **SigmaRail Spec** owns the versioned data, expression, Studio-authoring, and strategy contracts.
+- **SigmaRail Spec** owns the versioned data, expression, Studio-authoring, and strategy contracts as
+  an independently versioned distribution in `packages/sigmarail-spec/`.
 - **SigmaRail Studio** owns the Django REST API, React/Vite interface, MCP host, query orchestration, and authoring workflow. It shares the SigmaRail repository and pytest suite with Core.
 - **SigmaRail Lean** will own strategy execution and LEAN integration when that project is migrated.
 
@@ -30,11 +31,10 @@ project source trees. Core query access requires the
 SigmaRail database configuration. Additional domain modules will be exposed only after
 their SigmaRail-owned implementations are available.
 
-From the SigmaRail repository root, install the separate Spec distribution and both
-local packages in one command:
+From the SigmaRail repository root, install the three local distributions in one command:
 
 ```bash
-python -m pip install -e ../sigmarail-spec -e ".[dev]" -e "./studio[dev]"
+python -m pip install -e 'packages/sigmarail-spec[build,test]' -e ".[dev]" -e "./studio[dev]"
 ```
 
 Run the combined Python suite from the repository root with

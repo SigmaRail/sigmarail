@@ -14,19 +14,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Check out SigmaRail Spec
-        uses: actions/checkout@v4
-        with:
-          repository: SigmaRail/sigmarail-spec
-          path: sigmarail-spec
-          # Integration branches until the prerequisite Spec PR is merged.
-          ref: codex/module-contract
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
       - name: Install SigmaRail and Studio test dependencies
-        run: python -m pip install -e ./sigmarail-spec -e ".[dev]" -e "./studio[dev]"
+        run: python -m pip install -e 'packages/sigmarail-spec[build,test]' -e ".[dev]" -e "./studio[dev]"
+      - name: Build the standalone Spec distribution
+        run: |
+          python -m pip install build
+          python -m build packages/sigmarail-spec --outdir /tmp/sigmarail-spec-dist
       - name: Run unified Core and Studio suite with one synthetic ClickHouse
         run: python -m pytest --sigmarail-clickhouse
       - uses: actions/setup-node@v4
@@ -59,13 +56,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check out SigmaRail Spec
+      - name: Read custom LEAN revision pinned by Spec
+        id: lean-revision
+        run: python3 -c 'import json; print("revision=" + json.load(open("packages/sigmarail-spec/spec/sources.lock.json"))["sources"]["lean"]["revision"])' >> "$GITHUB_OUTPUT"
+
+      - name: Check out the pinned custom LEAN source
         uses: actions/checkout@v4
         with:
-          repository: SigmaRail/sigmarail-spec
-          path: sigmarail-spec
-          # Integration branches until the prerequisite PRs are merged.
-          ref: codex/module-contract
+          repository: mdiggory/Lean
+          path: custom-lean
+          ref: ${{ steps.lean-revision.outputs.revision }}
+          token: ${{ secrets.SIGMARAIL_PLATFORM_READ_TOKEN || github.token }}
           persist-credentials: false
 
       - name: Set up Python 3.11
@@ -78,7 +79,7 @@ jobs:
       - name: Install SigmaRail, Studio, and LEAN CLI dependencies
         run: >-
           python -m pip install
-          -e ./sigmarail-spec
+          -e 'packages/sigmarail-spec[build,test]'
           -e ".[dev]"
           -e "./studio[dev]"
           -r trading_lab/requirements.txt
@@ -86,7 +87,8 @@ jobs:
 
       - name: Check generated SigmaRail Spec runtime in the lab template
         run: >-
-          python sigmarail-spec/tools/sync_lean_vendor.py
+          python packages/sigmarail-spec/tools/build.py --check --lean-source custom-lean
+          && python packages/sigmarail-spec/tools/sync_lean_vendor.py
           --destination trading_lab/sigmarail_spec
 
       - name: Log in to private LEAN image registry
@@ -105,8 +107,47 @@ jobs:
         env:
           SIGMARAIL_LEAN_SMOKE: "1"
           SIGMARAIL_TRADING_LAB_SOURCE: ${{ github.workspace }}/trading_lab
-          SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/sigmarail-spec/src
+          SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/packages/sigmarail-spec/src
           SIGMARAIL_STUDIO_PYTHON: ${{ steps.setup-python.outputs.python-path }}
           SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-python.outputs.python-path }}
           SIGMARAIL_LEAN_IMAGE: ghcr.io/mdiggory/lean-clickhouse:arm64-latest
         run: python -m pytest -s -q tests/test_lean_smoke.py --sigmarail-clickhouse
+
+  publish-spec:
+    if: startsWith(github.ref, 'refs/tags/sigmarail-spec-v')
+    needs: [test, lean-smoke]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify tag matches the Spec package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          project = tomllib.loads(Path('packages/sigmarail-spec/pyproject.toml').read_text())['project']
+          if not Path('packages/sigmarail-spec/LICENSE').is_file() or 'license' not in project:
+              raise SystemExit('Add the selected open-source LICENSE and project.license metadata before publishing')
+          version = project['version']
+          expected = f'sigmarail-spec-v{version}'
+          actual = os.environ['RELEASE_TAG']
+          if actual != expected:
+              raise SystemExit(f'tag {actual!r} does not match package version {version!r}')
+          PY
+      - name: Build SigmaRail Spec
+        run: |
+          python -m pip install build
+          python -m build packages/sigmarail-spec --outdir dist
+      - name: Publish SigmaRail Spec with PyPI trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
