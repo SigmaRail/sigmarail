@@ -133,7 +133,7 @@ def test_project_snapshot_includes_lean_config_without_unselected_secrets(tmp_pa
         "docker": {"image": "lean:local", "environment": {
             "KEEP": "yes", "ALPACA-API-SECRET": "unselected",
             "CLICKHOUSE_PASSWORD": "container-clickhouse-password",
-            "VERA_LAB_ID": "stale-env-ir", "VERA_LAB_PATH": "stale/path.json",
+            "SIGMARAIL_STRATEGY_ID": "stale-env-ir", "SIGMARAIL_STRATEGY_PATH": "stale/path.json",
         }},
     }), encoding="utf-8")
     destination = tmp_path / "isolated"
@@ -554,7 +554,7 @@ def test_start_passes_secrets_only_in_temporary_config_and_registers_after_conta
         "algorithm-language": "Python",
         "clickhouse-password": "db-secret",
         "parameters": {"vera-lab-id": "stale-ir"},
-        "docker": {"environment": {"CLICKHOUSE_PASSWORD": "container-db-secret", "VERA_LAB_PATH": "wrong.json"}},
+        "docker": {"environment": {"CLICKHOUSE_PASSWORD": "container-db-secret", "SIGMARAIL_STRATEGY_PATH": "wrong.json"}},
     }), encoding="utf-8")
     (tmp_path / "lean.json").write_text('{"safe-setting":"preserved"}\n', encoding="utf-8")
     mounted_config = tmp_path / "lean-cli-secret" / "config.json"
@@ -636,8 +636,8 @@ def test_start_passes_secrets_only_in_temporary_config_and_registers_after_conta
     assert isolated_config["parameters"] == {}
     assert isolated_config["docker"]["environment"] == {"CLICKHOUSE_PASSWORD": "container-db-secret"}
     docker_config = json.loads(commands[-1][commands[-1].index("--extra-docker-config") + 1])
-    assert docker_config["environment"]["VERA_LAB_ID"] == "ir-test"
-    assert "VERA_LAB_PATH" not in docker_config["environment"]
+    assert docker_config["environment"]["SIGMARAIL_STRATEGY_ID"] == "ir-test"
+    assert "SIGMARAIL_STRATEGY_PATH" not in docker_config["environment"]
     register.assert_called_once()
     assert ch_client.close.call_count == 3
 

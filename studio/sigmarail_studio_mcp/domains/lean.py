@@ -12,8 +12,8 @@ def discover_types(
     lean_root: str | None = None,
     include_vera_screener_ids: bool = True,
 ) -> dict[str, Any]:
-    """List Lean framework `Type` ids, slots, init parameters, and `vera_lab` flags."""
-    from vera_lab.ir.lean_framework_discovery import discover_lean_framework_types
+    """List LEAN framework types and SigmaRail wiring metadata."""
+    from sigmarail_lab.ir.lean_framework_discovery import discover_lean_framework_types
 
     return try_call(
         discover_lean_framework_types,

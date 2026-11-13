@@ -1,0 +1,15 @@
+version: 1
+# Co-located entity sidecar for the universe_v1 logical column registry.
+# Documents a known alias hazard right where the override is defined.
+source: universe_v1_column_registry.py
+entities:
+  - id: vera.ir.universe_v1.sma21d
+    kind: alias_warning
+    title: "universe_v1 sma21d alias hazard"
+    binds:
+      symbol: sma21d
+    points_to: vera.ema.21d.closeadj
+    note: >
+      In universe_v1, the logical column `sma21d` maps to `ifNull(sma20d, 0)`
+      (a 20-day SMA), NOT the 21-day EMA. Do not treat universe_v1.sma21d as
+      vera.ema.21d.closeadj. Legacy/stakeholder naming kept for back-compat.

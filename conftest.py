@@ -55,6 +55,12 @@ def sigmarail_synthetic_dataset(pytestconfig):
     temp_dir = tempfile.TemporaryDirectory(prefix="sigmarail-synthetic-")
     fixture_dir = Path(temp_dir.name)
     manifest = generate_synthetic_dataset(fixture_dir)
+    # ClickHouse's container entrypoint changes ownership of user_files to its
+    # service account. Keep the generated files readable by both that account
+    # and the host test process after the bind mount is prepared.
+    for path in fixture_dir.rglob("*"):
+        path.chmod(0o755 if path.is_dir() else 0o644)
+    fixture_dir.chmod(0o755)
     generated_env = {
         "SIGMARAIL_TEST_FIXTURE_DIR": str(fixture_dir),
         "SIGMARAIL_TEST_SYNTHETIC_MANIFEST": str(fixture_dir / "synthetic-manifest.json"),

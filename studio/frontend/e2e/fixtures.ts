@@ -10,7 +10,12 @@ const python = path.join(studioRoot, '.venv/bin/python');
 export const test = base.extend<{ testEnv: { testId: string } }>({
   testEnv: async ({}, use) => {
     const testId = `e2e-${Date.now()}`;
-    const env = { ...process.env, PYTHONPATH: `${studioRoot}/../VeraBase/src:${studioRoot}` };
+    const env = {
+      ...process.env,
+      PYTHONPATH: [path.resolve(studioRoot, '../src'), studioRoot, process.env.PYTHONPATH]
+        .filter(Boolean)
+        .join(path.delimiter),
+    };
     execSync(`${python} scripts/seed_e2e_fixtures.py --test-id ${testId}`, {
       cwd: studioRoot,
       env,

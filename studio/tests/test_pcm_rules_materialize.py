@@ -1,14 +1,11 @@
 """Save-time PCM-ladder materialization (C-FW-RULES Phase 2 spec-truth contract).
 
-``screens/pcm_rules`` bridges to ``vera_lab.ir.pcm_ladder`` — the single
-source of truth for the generated RiskBudgeted allocation table. When the
-VeraTradingLab sibling tree is absent the helpers must degrade to no-ops
-rather than fail (runtime regenerates the identical table internally).
+``screens/pcm_rules`` uses the SigmaRail Spec-owned generated allocation table
+and remains fully testable without a LEAN or VeraBase checkout.
 """
 
 from __future__ import annotations
 
-import pytest
 
 from screens.pcm_rules import (
     generate_pcm_ladder,
@@ -20,9 +17,6 @@ from screens.pcm_rules import (
 )
 
 _LADDER = generate_pcm_ladder()
-requires_vera_lab = pytest.mark.skipif(
-    _LADDER is None, reason="vera_lab not importable from this environment"
-)
 
 
 def _spec(rules=None, size_expr=None, params=None):
@@ -41,7 +35,6 @@ def _spec(rules=None, size_expr=None, params=None):
     }
 
 
-@requires_vera_lab
 def test_generate_default_ladder_shape():
     names = [r["name"] for r in _LADDER]
     assert "new_entry" in names
@@ -52,7 +45,6 @@ def test_generate_default_ladder_shape():
         assert {a["type"] for a in r["then"]}.isdisjoint(risk_only)
 
 
-@requires_vera_lab
 def test_materialize_injects_rules_and_size_expr():
     spec = _spec(params={"max_position_weight": 0.20})
     assert materialize_pcm_rules(spec) is True
@@ -64,7 +56,6 @@ def test_materialize_injects_rules_and_size_expr():
     assert "0.2" in str(params["size_expr"]) or "0.2" in str(rules)
 
 
-@requires_vera_lab
 def test_materialize_preserves_authored_rules():
     authored = [{"name": "mine", "priority": 0,
                  "when": {"type": "all", "items": []},
@@ -77,7 +68,6 @@ def test_materialize_preserves_authored_rules():
     assert params["size_expr"] is not None
 
 
-@requires_vera_lab
 def test_materialize_preserves_authored_size_expr():
     authored_expr = {"type": "lit", "value": 0.05}
     spec = _spec(size_expr=authored_expr)
@@ -118,7 +108,6 @@ def test_seed_pipeline_pcm_rules_noop_without_spec_rules():
     assert "rules" not in doc["sizing"]
 
 
-@requires_vera_lab
 def test_hydrate_pcm_rule_descriptions_fills_canonical_rules():
     spec = _spec()
     assert materialize_pcm_rules(spec) is True
@@ -132,7 +121,6 @@ def test_hydrate_pcm_rule_descriptions_fills_canonical_rules():
     assert all(r.get("description") for r in doc["sizing"]["rules"])
 
 
-@requires_vera_lab
 def test_hydrate_pcm_rule_descriptions_never_clobbers_authored():
     spec = _spec(rules=[{"name": "my_custom_rule",
                          "when": {"type": "all", "items": []},
@@ -152,7 +140,6 @@ def test_hydrate_pcm_rule_descriptions_noop_without_rules():
     assert hydrate_pcm_rule_descriptions(_spec(), None) == 0
 
 
-@requires_vera_lab
 def test_pcm_bindings_catalog_namespaces():
     catalog = pcm_bindings_catalog()
     assert catalog is not None
@@ -162,7 +149,6 @@ def test_pcm_bindings_catalog_namespaces():
     assert ("cand", "is_new") in fields or any(b["field"] == "is_new" for b in catalog["cand"])
 
 
-@requires_vera_lab
 def test_materialize_injects_book_exprs():
     """Phase 3: scale/slots/order exprs materialize alongside rules+size_expr."""
     spec = _spec(params={"use_regime_scaling": True, "scaled_max_positions_floor": 3})
@@ -174,7 +160,6 @@ def test_materialize_injects_book_exprs():
     assert params["order_expr"] == {"type": "ref", "ns": "cand", "field": "rank"}
 
 
-@requires_vera_lab
 def test_materialize_preserves_authored_book_exprs():
     authored = {"type": "lit", "value": 0.5}
     spec = _spec(params={"scale_expr": authored})
@@ -184,7 +169,6 @@ def test_materialize_preserves_authored_book_exprs():
     assert "slots_expr" in params  # siblings still seed independently
 
 
-@requires_vera_lab
 def test_displacement_cooldown_flows_into_ladder():
     """displacement_cooldown_days is a real knob now — it lands in the
     displace action args, not just a description string."""

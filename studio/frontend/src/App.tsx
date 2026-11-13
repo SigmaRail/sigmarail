@@ -893,7 +893,7 @@ function StudioApp() {
 
       {bootError ? (
         <div className="border-b border-danger/30 bg-danger-soft px-4 py-2 text-[12px] text-danger">
-          API bootstrap failed: {bootError}. Is Django running on :8001?
+          Studio startup data could not be loaded: {bootError}. Check the SigmaRail API and ClickHouse connection.
         </div>
       ) : null}
 

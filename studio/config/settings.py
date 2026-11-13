@@ -4,29 +4,9 @@ Django settings for SigmaRail Studio (Phase 1).
 
 from __future__ import annotations
 
-import os
-import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-def _ensure_verabasel_path() -> None:
-    """Prefer monorepo VeraBase/src over any stale installed package."""
-    configured = os.environ.get("VERA_BASE_SOURCE", "").strip()
-    candidates = [Path(configured).expanduser()] if configured else [
-        parent / "VeraBase" / "src" for parent in BASE_DIR.parents
-    ]
-    vb_src = next((path for path in candidates if path.is_dir()), None)
-    if vb_src is None:
-        return
-    path = str(vb_src)
-    if path in sys.path:
-        sys.path.remove(path)
-    sys.path.insert(0, path)
-
-
-_ensure_verabasel_path()
 
 SECRET_KEY = "django-insecure-sigmarail-studio-phase1-dev-only"
 DEBUG = True

@@ -13,7 +13,7 @@ def _rows(client: Any, sql: str, params: dict[str, Any] | None = None) -> list[d
 
 def report(run_id: str) -> dict[str, Any]:
     """Agent-friendly digest for one run (metrics/highlights/warnings)."""
-    from vera_query_core.backtest_report import get_backtest_report
+    from sigmarail.features.backtest_report import get_backtest_report
 
     if not run_id or not run_id.strip():
         return {"error": "run_id is required", "code": "invalid_argument"}
@@ -21,13 +21,13 @@ def report(run_id: str) -> dict[str, Any]:
 
 
 def list_runs_by_ir_id(ir_id: str, limit: int = 20) -> dict[str, Any]:
-    from vera_query_core.backtest_report import list_runs_by_ir_id as _list
+    from sigmarail.features.backtest_report import list_runs_by_ir_id as _list
 
     return call(_list, ir_id=ir_id, limit=limit)
 
 
 def wait(job_id: str, timeout_sec: int = 3600, poll_interval_sec: float = 5) -> dict[str, Any]:
-    from vera_query_core.backtest_report import wait_for_backtest
+    from sigmarail.features.backtest_report import wait_for_backtest
 
     return call(wait_for_backtest, job_id=job_id, timeout_sec=timeout_sec, poll_interval_sec=poll_interval_sec)
 
@@ -272,7 +272,7 @@ def run_attribution(run_id: str) -> dict[str, Any]:
     """Per-trade loss-cause attribution for one run (fees / stops / drawdown exits)."""
     client = get_client()
     try:
-        from vera_query_core.backtest_report import get_backtest_report
+        from sigmarail.features.backtest_report import get_backtest_report
 
         rep = get_backtest_report(client, run_id)
         if isinstance(rep, dict) and "error" in rep:

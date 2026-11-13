@@ -16,6 +16,7 @@ dependencies = [
   "clickhouse-connect",
   "PyYAML>=6.0",
   "pydantic>=2.0",
+  "jsonschema>=4.21,<5",
   "python-dotenv>=0.19",
   "keyring>=25.0",
   "mcp>=1.0.0,<2.0.0",
@@ -35,8 +36,7 @@ sigmarail-studio-schema = "screens.schema:main"
 
 [tool.sigmarail.studio]
 default-modules = ["core", "studio"]
-optional-modules = ["screening", "strategy", "backtesting", "portfolio", "deployment", "knowledge"]
-legacy-runtime = "VeraBase (local sibling checkout; required only by optional compatibility modules)"
+available-modules = ["core", "studio", "screening", "strategy", "backtesting", "portfolio", "deployment", "knowledge"]
 
 [tool.setuptools.packages.find]
 where = ["."]

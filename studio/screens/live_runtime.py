@@ -66,7 +66,7 @@ def account_profile_is_in_use(profile_id: str) -> bool:
 
 
 def controls_enabled() -> bool:
-    return os.environ.get("VERA_ENABLE_LOCAL_LEAN_CONTROL", "").strip().lower() in {
+    return os.environ.get("SIGMARAIL_ENABLE_LOCAL_LEAN_CONTROL", "").strip().lower() in {
         "1", "true", "yes", "on"
     }
 
@@ -581,7 +581,7 @@ def runtime_status() -> dict[str, Any]:
 
 def _assert_control_allowed(remote_addr: str | None, origin: str | None, host: str | None) -> None:
     if not controls_enabled():
-        raise RuntimeErrorDetail("Local LEAN controls are disabled; set VERA_ENABLE_LOCAL_LEAN_CONTROL=1 and restart Studio")
+        raise RuntimeErrorDetail("Local LEAN controls are disabled; set SIGMARAIL_ENABLE_LOCAL_LEAN_CONTROL=1 and restart Studio")
     if not request_is_local_control(remote_addr, origin, host):
         raise RuntimeErrorDetail("Trading controls require an allowed Studio origin on the local machine")
 
@@ -703,7 +703,7 @@ def start_deployment(
 
         # The project config supplies local ClickHouse Docker environment settings. Only
         # non-secret correlation IDs are passed via this CLI argument.
-        extra_docker = json.dumps({"environment": {"DEPLOYMENT_ID": deployment_id, "VERA_LAB_ID": ir_id}})
+        extra_docker = json.dumps({"environment": {"DEPLOYMENT_ID": deployment_id, "SIGMARAIL_STRATEGY_ID": ir_id}})
         command = [
             binary, "live", "deploy", str(isolated_project),
             "--lean-config", str(runtime_config_path),

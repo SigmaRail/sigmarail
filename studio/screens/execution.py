@@ -35,9 +35,9 @@ except ImportError as _exc:
 
 _DEFAULT_PROJECTS: list[dict[str, Any]] = [
     {
-        "id": "VeraTradingLab",
-        "label": "Vera Trading Lab",
-        "lean_cli_name": "VeraTradingLab",
+        "id": "SigmaRailTradingLab",
+        "label": "SigmaRail Trading Lab",
+        "lean_cli_name": "sigmarail-run",
         "spec_kinds": ["VeraLabV1"],
         "enabled": True,
     },
@@ -87,15 +87,20 @@ def list_lean_projects() -> dict[str, Any]:
             }
         projects = raw.get("projects") if isinstance(raw, dict) else raw
         if isinstance(projects, list) and projects:
-            enabled = [p for p in projects if isinstance(p, dict) and p.get("enabled", True)]
+            enabled = [
+                p for p in projects
+                if isinstance(p, dict)
+                and p.get("enabled", True)
+                and p.get("id") not in {"VeraTradingLab", "SigmaRailTradingLab"}
+            ]
             return {
-                "projects": enabled or _DEFAULT_PROJECTS,
+                "projects": [*_DEFAULT_PROJECTS, *enabled],
                 "registry_path": str(registry_path),
             }
     return {
         "projects": _DEFAULT_PROJECTS,
         "registry_path": str(registry_path),
-        "note": "lean_projects.yaml not found — using default VeraTradingLab entry",
+        "note": "lean_projects.yaml not found — using SigmaRail's generated Trading Lab project",
     }
 
 
@@ -294,7 +299,7 @@ def submit_backtest_job(
     ir_id: str,
     start_date: str,
     end_date: str,
-    lean_project: str = "VeraTradingLab",
+    lean_project: str = "SigmaRailTradingLab",
     immediate: bool = False,
     extra_env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
@@ -302,7 +307,7 @@ def submit_backtest_job(
     if not runner_available():
         raise RuntimeError(runner_unavailable_detail())
 
-    lean_project = (lean_project or "VeraTradingLab").strip()
+    lean_project = (lean_project or "SigmaRailTradingLab").strip()
     job_id = _call_submit_job(
         ir_id=ir_id,
         start_date=start_date,
@@ -410,7 +415,7 @@ def _resolve_log_path(job_id: str) -> Path | None:
             return log_path
     root = lean_projects_root()
     for candidate in (
-        root / "VeraTradingLab" / "results" / job_id / "lean-backtest.log",
+        root / ".sigmarail" / "runs" / job_id / "project" / "results" / job_id / "lean-backtest.log",
         root / "results" / job_id / "lean-backtest.log",
     ):
         if candidate.is_file():

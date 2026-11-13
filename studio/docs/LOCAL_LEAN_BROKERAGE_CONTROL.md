@@ -47,7 +47,7 @@ live-data provider; the Deploy form shows the broker and data provider separatel
 ## Enable local controls
 
 Install Studio dependencies (`pip install -e .`), run `python manage.py migrate`,
-and start the Studio API with `VERA_ENABLE_LOCAL_LEAN_CONTROL=1`. Control requests
+and start the Studio API with `SIGMARAIL_ENABLE_LOCAL_LEAN_CONTROL=1`. Control requests
 must originate from an allowed same-origin browser on the local machine. Do not
 expose this unauthenticated API through a public or Tailscale reverse proxy.
 

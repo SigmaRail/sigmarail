@@ -1,14 +1,4 @@
-"""Save-time materialization of the SwingProgressive risk ladder (C-FW-RULES).
-
-The ladder's single source of truth is ``vera_lab.ir.risk_ladder`` — the LEAN
-container carries ``vera_lab`` but never ``vera_query_core``, and VeraBase
-deliberately never imports ``vera_lab`` (see ``spec_lint``'s module note).
-Studio is the composition root, so the bridge lives here: the same
-sibling-tree ``sys.path`` convention as ``screens/ch._ensure_verabasel_path``.
-
-When ``vera_lab`` is not reachable the helpers degrade to no-ops — the runtime
-regenerates the identical ladder internally (``rules=None`` → ctor defaults),
-so skipping materialization costs stored-spec *visibility*, never behavior.
+"""Save-time materialization of the SigmaRail Spec-owned risk ladder.
 
 Two surfaces:
 
@@ -23,8 +13,6 @@ Two surfaces:
 from __future__ import annotations
 
 import copy
-import sys
-from pathlib import Path
 from typing import Any
 
 __all__ = [
@@ -37,54 +25,29 @@ __all__ = [
 _SWING_RISK_TYPE = "SwingProgressiveRiskManagementModel"
 
 
-def _ensure_veralab_path() -> None:
-    """Put the sibling VeraTradingLab tree on sys.path (mirrors ch.py)."""
-    root = Path(__file__).resolve().parents[2]  # FinanceProjects
-    vtl = root / "LeanProjects" / "VeraTradingLab"
-    if vtl.is_dir():
-        path = str(vtl)
-        if path not in sys.path:
-            sys.path.insert(0, path)
-
-
-def generate_swing_risk_ladder(params: dict[str, Any] | None = None) -> list[dict] | None:
+def generate_swing_risk_ladder(params: dict[str, Any] | None = None) -> list[dict]:
     """Generate the canonical ladder for the given risk ``Parameters``.
 
-    Returns ``None`` when vera_lab is unreachable; callers treat that as
-    "leave the spec as-is" — the runtime regenerates the identical table.
+    The same generator is included in SigmaRail Spec and LEAN vendors.
     """
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.risk_ladder import generate_swing_risk_ladder as _gen
-    except Exception:
-        return None
-    try:
-        return _gen(**(params or {}))
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.risk_ladder import generate_swing_risk_ladder as _gen
+    return _gen(**(params or {}))
 
 
-def generate_default_init_stop(params: dict[str, Any] | None = None) -> dict | None:
+def generate_default_init_stop(params: dict[str, Any] | None = None) -> dict:
     """Generate the default ``init_stop`` Operand AST for the given Parameters.
 
     Only the init-stop knobs matter — ``use_atr_stops``,
     ``atr_stop_multiplier``, ``max_stop_loss_pct``. Returns ``None`` when
-    vera_lab is unreachable (runtime regenerates the identical AST).
+    The same generator is included in SigmaRail Spec and LEAN vendors.
     """
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.risk_ladder import generate_default_init_stop as _gen
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.risk_ladder import generate_default_init_stop as _gen
     params = params or {}
-    try:
-        return _gen(
-            use_atr_stops=bool(params.get("use_atr_stops", True)),
-            atr_stop_multiplier=float(params.get("atr_stop_multiplier", 2.0)),
-            max_stop_loss_pct=float(params.get("max_stop_loss_pct", 0.05)),
-        )
-    except Exception:
-        return None
+    return _gen(
+        use_atr_stops=bool(params.get("use_atr_stops", True)),
+        atr_stop_multiplier=float(params.get("atr_stop_multiplier", 2.0)),
+        max_stop_loss_pct=float(params.get("max_stop_loss_pct", 0.05)),
+    )
 
 
 def materialize_swing_risk_rules(spec: dict[str, Any]) -> bool:

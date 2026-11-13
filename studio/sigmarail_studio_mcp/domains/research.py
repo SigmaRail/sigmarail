@@ -13,19 +13,19 @@ def narrative_search(
     date_to: str | None = None,
     limit: int = 10,
 ) -> dict[str, Any]:
-    from vera_query_core.kb_search import kb_narrative_search
+    from sigmarail.features.kb_search import kb_narrative_search
 
     return call(kb_narrative_search, query=query, ticker=ticker, date_from=date_from, date_to=date_to, limit=limit)
 
 
 def sentiment_timeline(ticker: str, date_from: str | None = None, date_to: str | None = None, limit: int = 50) -> dict[str, Any]:
-    from vera_query_core.kb_search import kb_ticker_sentiment_timeline
+    from sigmarail.features.kb_search import kb_ticker_sentiment_timeline
 
     return call(kb_ticker_sentiment_timeline, ticker=ticker, date_from=date_from, date_to=date_to, limit=limit)
 
 
 def context(ticker: str, as_of_date: str | None = None, narrative_query: str | None = None, narrative_limit: int = 5) -> dict[str, Any]:
-    from vera_query_core.kb_search import research_context
+    from sigmarail.features.kb_search import research_context
 
     return call(research_context, ticker=ticker, as_of_date=as_of_date, narrative_query=narrative_query, narrative_limit=narrative_limit)
 
@@ -38,7 +38,7 @@ def anchored_research(
     narrative_limit: int = 5,
     include_regime: bool = True,
 ) -> dict[str, Any]:
-    from vera_query_core.kb_search import timeseries_anchored_research
+    from sigmarail.features.kb_search import timeseries_anchored_research
 
     return call(
         timeseries_anchored_research,
@@ -52,7 +52,7 @@ def anchored_research(
 
 
 def influencer_index_posture(as_of_date: str, lookback_days: int = 2) -> dict[str, Any]:
-    from vera_query_core.kb_search import get_influencer_index_posture
+    from sigmarail.features.kb_search import get_influencer_index_posture
 
     return call(get_influencer_index_posture, as_of_date=as_of_date, lookback_days=lookback_days)
 
@@ -65,7 +65,7 @@ def influencer_action_rollups(
     min_confidence: float = 0,
     limit: int = 100,
 ) -> dict[str, Any]:
-    from vera_query_core.kb_search import get_influencer_action_rollups
+    from sigmarail.features.kb_search import get_influencer_action_rollups
 
     return call(
         get_influencer_action_rollups,

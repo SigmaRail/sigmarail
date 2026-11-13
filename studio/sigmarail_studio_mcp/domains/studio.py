@@ -30,19 +30,3 @@ def navigate(
     if query:
         url += "?" + "&".join(query)
     return {"url": url}
-
-
-def run_context(run_id: str, trades_limit: int = 50) -> dict[str, Any]:
-    """Context-pack for one backtest run (report + closed trades + equity summary + spec + warnings)."""
-    from screens.backtest import get_run_context
-    from sigmarail_studio_mcp.ch import get_client
-
-    if not run_id or not run_id.strip():
-        return {"error": "run_id is required", "code": "invalid_argument"}
-    client = get_client()
-    try:
-        return get_run_context(client, run_id.strip(), trades_limit=trades_limit)
-    except Exception as exc:  # noqa: BLE001
-        return {"error": str(exc), "code": "query_failed"}
-    finally:
-        client.close()

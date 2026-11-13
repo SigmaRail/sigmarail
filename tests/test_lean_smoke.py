@@ -10,14 +10,16 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 import pytest
 import requests
+
+from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
 
 
 pytestmark = pytest.mark.skipif(
@@ -77,37 +79,30 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
     """Exercise the real API handshake, computed SQL, LEAN HTTP client, and CH bar provider."""
     root = Path(pytestconfig.rootpath)
     studio_root = root / "studio"
-    strategy_root = Path(
+    trading_lab_root = Path(
         os.environ.get(
-            "SIGMARAIL_STRATEGY_ROOT",
-            str(root.parent.parent / "LeanProjects" / "VeraTradingLab"),
+            "SIGMARAIL_TRADING_LAB_SOURCE",
+            str(root / "trading_lab"),
         )
     )
     studio_python = Path(
         os.environ.get(
             "SIGMARAIL_STUDIO_PYTHON",
-            str(root.parent.parent / "VeraScreeningStudio" / ".venv" / "bin" / "python"),
+            sys.executable,
         )
     )
     lean_python = Path(
         os.environ.get(
             "SIGMARAIL_LEAN_PYTHON",
-            str(root.parent.parent / "LeanProjects" / ".venv-backtest" / "bin" / "python"),
+            sys.executable,
         )
     )
-    spec_source = Path(
-        os.environ.get(
-            "SIGMARAIL_SPEC_SOURCE",
-            str(root.parent / "sigmarail-spec-modules" / "src"),
-        )
-    )
-    core_site_root = root.parent.parent / "sigmarail" / ".venv" / "lib"
-    core_site_packages = sorted(core_site_root.glob("python*/site-packages"))
+    spec_source_raw = (os.environ.get("SIGMARAIL_SPEC_SOURCE") or "").strip()
+    spec_source = Path(spec_source_raw).resolve() if spec_source_raw else None
     image = os.environ.get("SIGMARAIL_LEAN_IMAGE", "lean-local:latest")
     assert studio_python.is_file(), f"Studio Python not found: {studio_python}"
     assert lean_python.is_file(), f"LEAN CLI Python not found: {lean_python}"
-    assert spec_source.is_dir(), f"SigmaRail Spec source not found: {spec_source}"
-    assert strategy_root.is_dir(), f"LEAN strategy checkout not found: {strategy_root}"
+    assert trading_lab_root.is_dir(), f"SigmaRail Trading Lab source not found: {trading_lab_root}"
 
     ch = request.getfixturevalue("sigmarail_clickhouse_service")
     assert ch is not None
@@ -135,13 +130,11 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
             "SIGMARAIL_TEST_CLICKHOUSE_NATIVE_PORT": str(ch["native_port"]),
             "SIGMARAIL_TEST_CLICKHOUSE_USER": "default",
             "SIGMARAIL_TEST_CLICKHOUSE_PASSWORD": "",
-            "VERA_BASE_SOURCE": str(root / "src"),
             "PYTHONPATH": os.pathsep.join(
                 [
                     str(studio_root),
                     str(root / "src"),
-                    str(spec_source),
-                    *(str(path) for path in core_site_packages),
+                    *([str(spec_source)] if spec_source and spec_source.is_dir() else []),
                 ]
             ),
             "DJANGO_SETTINGS_MODULE": "config.settings",
@@ -189,8 +182,7 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
         assert api_row["minervini_tt_all_conditions_full"] == 1
 
         workspace = tmp_path / "lean-workspace"
-        project = workspace / "VeraTradingLab"
-        project.mkdir(parents=True)
+        workspace.mkdir()
         (workspace / "data").mkdir()
         (workspace / "lean.json").write_text(
             json.dumps(
@@ -202,15 +194,14 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
             ),
             encoding="utf-8",
         )
-        shutil.copy2(strategy_root / "main.py", project / "main.py")
-        shutil.copytree(strategy_root / "vera_lab", project / "vera_lab")
-        shutil.copytree(strategy_root / "sigmarail_spec", project / "sigmarail_spec")
-        (project / "config.json").write_text(
-            json.dumps({"algorithm-language": "Python", "parameters": {}}),
-            encoding="utf-8",
+        staged = stage_lean_project(
+            workspace,
+            job_id="sigmarail-smoke",
+            strategy_id="strategy-smoke",
         )
+        project = staged.root
         smoke_ir = json.loads(
-            (strategy_root / "tests/fixtures/ir/vera_lab_v1_minimal_hybrid.json").read_text(
+            (trading_lab_root / "fixtures/ir/minimal_hybrid.json").read_text(
                 encoding="utf-8"
             )
         )
@@ -221,6 +212,7 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
 
         lean_config = {
             "data-folder": "data",
+            "python-additional-paths": ["/LeanCLI"],
             "initialization-timeout": 1800,
             "clickhouse-host": "host.docker.internal",
             "clickhouse-http-port": ch["http_port"],
@@ -248,16 +240,16 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
                 "CLICKHOUSE_USER": "default",
                 "CLICKHOUSE_PASSWORD": "",
                 "CLICKHOUSE_DATABASE": "sigmarail_test",
-                "VERA_LAB_PATH": "sigmarail-smoke.json",
-                "VERA_LAB_PROJECT_ROOT": "/LeanCLI",
+                "SIGMARAIL_STRATEGY_PATH": "sigmarail-smoke.json",
+                "SIGMARAIL_STRATEGY_ROOT": "/LeanCLI",
                 "PYTHONPATH": "/LeanCLI",
-                "VERA_QUERY_URL": f"http://host.docker.internal:{port}",
+                "SIGMARAIL_API_URL": f"http://host.docker.internal:{port}",
             }
         }
         output = workspace / "backtests" / "sigmarail-smoke"
         command = [
             str(lean_python),
-            str(strategy_root / "scripts/lean_backtest_composite.py"),
+            str(trading_lab_root / "scripts/lean_backtest_composite.py"),
             str(project),
             "--output",
             str(output),
@@ -292,9 +284,9 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
         engine_log = output / "log.txt"
         assert engine_log.is_file(), f"LEAN engine log missing; CLI log:\n{log[-12000:]}"
         engine_text = engine_log.read_text(encoding="utf-8", errors="replace")
-        assert "VeraDailyScreener: dialect=C-VERA-EXPR-V1" in engine_text, engine_text[-12000:]
+        assert "SigmaRailDailyScreener: dialect=C-VERA-EXPR-V1" in engine_text, engine_text[-12000:]
         assert re.search(r"daily_screener loaded: [1-9][0-9]* rows", engine_text), engine_text[-12000:]
-        assert "VeraLab resolution failed" not in engine_text, engine_text[-12000:]
+        assert "SigmaRail strategy resolution failed" not in engine_text, engine_text[-12000:]
         summaries = list(output.glob("*-summary.json"))
         assert len(summaries) == 1, f"expected one LEAN summary, found {summaries}"
         summary = json.loads(summaries[0].read_text(encoding="utf-8"))

@@ -7,19 +7,19 @@ from sigmarail_studio_mcp.ch import call, get_client
 
 
 def list_deployments(status: str | None = None, limit: int = 20) -> dict[str, Any]:
-    from vera_query_core.live_report import list_live_deployments
+    from sigmarail.features.live_report import list_live_deployments
 
     return call(list_live_deployments, status=status, limit=limit)
 
 
 def status(deployment_id: str) -> dict[str, Any]:
-    from vera_query_core.live_report import get_live_status
+    from sigmarail.features.live_report import get_live_status
 
     return call(get_live_status, deployment_id=deployment_id)
 
 
 def performance(deployment_id: str, days: int = 30) -> dict[str, Any]:
-    from vera_query_core.live_report import get_live_performance
+    from sigmarail.features.live_report import get_live_performance
 
     return call(get_live_performance, deployment_id=deployment_id, days=days)
 

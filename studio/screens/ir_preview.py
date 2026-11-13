@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from importlib.resources import files as package_files
 import math
 import re
 from datetime import date, datetime
@@ -10,11 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from screens.ch import _ensure_verabasel_path
-
-_ensure_verabasel_path()
-
-from screens.exchange import enrich_rows_with_exchange  # noqa: E402
+from screens.exchange import enrich_rows_with_exchange
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
@@ -307,47 +304,28 @@ def _humanize_label(name: str) -> str:
 
 
 def _load_ch_column_meta() -> dict[str, dict[str, str]]:
-    """Unique physical columns from ClickHouse ``system.columns`` (first table wins)."""
-    from vera_query_core.ir.l7_from import l7_physical_tables, l7_table_prefixes
+    """Field metadata from SigmaRail's SQL-generated core universe registry."""
+    from sigmarail.universe import field_catalog
 
-    from screens.ch import get_ch_client
-
-    tables = l7_physical_tables()
-    in_list = ", ".join(f"'{t}'" for t in tables)
-    client = get_ch_client()
-    res = client.query(
-        f"""
-        SELECT table, name, type, comment
-        FROM system.columns
-        WHERE database = currentDatabase()
-          AND table IN ({in_list})
-        ORDER BY table, position
-        """
-    )
-    prefix_by_table = l7_table_prefixes()
     meta: dict[str, dict[str, str]] = {}
-    for table, name, col_type, comment in res.result_rows:
-        col_name = str(name)
+    for field in field_catalog():
+        col_name = str(field["name"])
         if col_name in ("lastupdated",) or col_name in meta:
             continue
-        tbl = str(table)
         meta[col_name] = {
-            "table": tbl,
-            "type": str(col_type),
-            "comment": str(comment or ""),
-            "prefix": prefix_by_table.get(tbl, "px"),
+            "table": str(field["table"]),
+            "type": str(field["type"]),
+            "comment": str(field.get("description") or ""),
+            "prefix": str(field["prefix"]),
         }
     if not meta:
-        raise RuntimeError("ClickHouse system.columns returned no L7 screener columns")
+        raise RuntimeError("SigmaRail core registry returned no universe fields")
     return meta
 
 
 def list_screen_fields() -> list[dict[str, Any]]:
-    """Field catalog from live ClickHouse table schemas (``system.columns`` + COMMENT)."""
-    from vera_query_core.ir.universe_v1_column_registry import get_universe_v1_col_sql_map
-
+    """Field catalog from the SQL-generated SigmaRail universe contract."""
     ch_meta = _load_ch_column_meta()
-    col_sql_map = get_universe_v1_col_sql_map()
     keys = set(ch_meta)
 
     selected: list[str] = []
@@ -369,13 +347,6 @@ def list_screen_fields() -> list[dict[str, Any]]:
         meta = ch_meta[name]
         comment = (meta.get("comment") or "").strip()
         desc = comment or _FIELD_DESCRIPTIONS.get(name) or f"{meta['type']} on {meta['table']}"
-        raw_expr = col_sql_map.get(name)
-        if isinstance(raw_expr, (tuple, list)):
-            sql_expr = raw_expr[0]
-        elif raw_expr:
-            sql_expr = raw_expr
-        else:
-            sql_expr = f"{meta['prefix']}.{name}"
         prefix = meta["prefix"]
         prefixed_name = f"{prefix}.{name}"
 
@@ -389,7 +360,7 @@ def list_screen_fields() -> list[dict[str, Any]]:
                 "category_label": _CATEGORY_LABELS.get(cat, cat.title()),
                 "type": meta["type"],
                 "table": meta["table"],
-                "sql_expr": sql_expr,
+                "sql_expr": f"{prefix}.`{name}`",
                 "description": desc,
             }
         )
@@ -479,14 +450,6 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
-def _rows_from_result(result: Any) -> list[dict[str, Any]]:
-    cols = list(result.column_names)
-    out: list[dict[str, Any]] = []
-    for row in result.result_rows:
-        out.append({c: _json_safe(v) for c, v in zip(cols, row)})
-    return out
-
-
 def _shape_preview_rows(raw_rows: list[dict[str, Any]], as_of: str) -> list[dict[str, Any]]:
     """Align IR rows with preset preview shape when columns are present."""
     shaped: list[dict[str, Any]] = []
@@ -517,27 +480,18 @@ def _shape_preview_rows(raw_rows: list[dict[str, Any]], as_of: str) -> list[dict
 
 
 def validate_universe_ir_spec(spec_dict: dict[str, Any]) -> Any:
-    """Parse + compile ``universe_query_v1`` (no ClickHouse). Raises ``ValueError`` on bad specs."""
-    from pydantic import ValidationError
-
-    from vera_query_core.ir.universe_query_v1 import (
-        UniverseQueryV1,
-        compile_universe_query_v1_single_day_param,
-    )
-
+    """Validate and compile a universe query with the SigmaRail query compiler."""
     if not isinstance(spec_dict, dict):
         raise ValueError("spec must be an object")
     try:
-        spec = UniverseQueryV1.model_validate(spec_dict)
-    except ValidationError as exc:
-        raise ValueError(str(exc)) from exc
-    try:
-        sql, params = compile_universe_query_v1_single_day_param(spec)
+        from sigmarail.universe import compile_universe_spec
+
+        sql, params = compile_universe_spec(spec_dict)
     except ValueError:
         raise
     except Exception as exc:
-        raise ValueError(f"failed to compile universe_query_v1: {exc}") from exc
-    return spec, sql, params
+        raise ValueError(f"failed to compile SigmaRail universe query: {exc}") from exc
+    return spec_dict, sql, params
 
 
 def preview_universe_ir(
@@ -551,22 +505,33 @@ def preview_universe_ir(
     if not as_of_s:
         raise ValueError("as_of is required")
 
-    spec, sql, params = validate_universe_ir_spec(spec_dict)
-    params = dict(params)
-    params["day"] = as_of_s
-    result = client.query(sql, parameters=params, settings={"allow_experimental_analyzer": 0})
-    raw_rows = _rows_from_result(result)
-    rows = _shape_preview_rows(raw_rows, as_of_s)
+    from sigmarail.universe import compile_universe_spec, universe_run
+
+    sql, params = compile_universe_spec(spec_dict, start_date=as_of_s, end_date=as_of_s)
+
+    result = universe_run(
+        {
+            "start_date": as_of_s,
+            "end_date": as_of_s,
+            "limit": 500_000,
+            "spec": spec_dict,
+        },
+        client=client,
+    )
+    if result.get("error"):
+        raise ValueError(result["error"])
+    rows = _shape_preview_rows(list(result.get("rows") or []), as_of_s)
     enrich_rows_with_exchange(client, rows)
     return {
         "as_of": as_of_s,
         "count": len(rows),
         "rows": rows,
         "screen_ir": "universe_query_v1",
-        "spec": spec.model_dump(by_alias=True),
+        "spec": spec_dict,
         "sql": sql.strip(),
         "params": {k: params[k] for k in sorted(params)},
-        "limit": int(spec.limit_per_day),
+        "columns": list(rows[0]) if rows else [],
+        "limit": int(spec_dict.get("limit_per_day", 5000)),
     }
 
 
@@ -575,6 +540,11 @@ def list_templates() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for path in sorted(TEMPLATES_DIR.glob("*.json")):
         template_id = path.stem
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            _normalize_core_template(raw)
+        except (OSError, json.JSONDecodeError, ValueError):
+            continue
         rows.append(
             {
                 "id": template_id,
@@ -589,8 +559,8 @@ def list_templates() -> list[dict[str, str]]:
             }
         )
     for alias, target in _TEMPLATE_ALIASES.items():
-        if (TEMPLATES_DIR / f"{target}.json").is_file():
-            target_row = next(r for r in rows if r["id"] == target)
+        target_row = next((r for r in rows if r["id"] == target), None)
+        if target_row is not None:
             rows.append(
                 {
                     "id": alias,
@@ -624,17 +594,7 @@ def load_template(name: str) -> dict[str, Any]:
     if local_path.is_file():
         raw = json.loads(local_path.read_text(encoding="utf-8"))
     else:
-        try:
-            from vera_query_core.screen_templates import load_template_json
-
-            raw = load_template_json(file_stem)
-        except Exception:
-            try:
-                from vera_query_core.screen_preset_ir import preset_to_universe_query_v1
-
-                raw = preset_to_universe_query_v1(file_stem)
-            except Exception:
-                raise ValueError(f"unknown template {tid!r}")
+        raise ValueError(f"unknown template {tid!r}")
 
     if (
         isinstance(raw, dict)
@@ -642,6 +602,7 @@ def load_template(name: str) -> dict[str, Any]:
         and isinstance(raw.get("select"), list)
         and raw.get("where") is not None
     ):
+        raw = _normalize_core_template(raw)
         return {
             "id": tid,
             "label": _TEMPLATE_LABELS.get(tid, _humanize_label(tid)),
@@ -651,13 +612,26 @@ def load_template(name: str) -> dict[str, Any]:
     raise ValueError(f"template {tid!r} missing universe_query_v1 spec")
 
 
+def _normalize_core_template(raw: dict[str, Any]) -> dict[str, Any]:
+    """Resolve declared joins through SigmaRail's registry and reject non-core fields."""
+    from sigmarail.universe import compile_universe_spec, field_catalog
+
+    spec = json.loads(json.dumps(raw))
+    allowed_tables = {item["table"] for item in field_catalog()}
+    for join in spec.get("joins") or []:
+        if not isinstance(join, dict) or join.get("table") not in allowed_tables:
+            raise ValueError("template declares a join outside SigmaRail core datasets")
+    # SigmaRail infers the approved join path from registered fields; client join
+    # declarations are not passed to the query compiler.
+    spec.pop("joins", None)
+    compile_universe_spec(spec)
+    return spec
+
+
 def get_universe_ir_schema() -> dict[str, Any]:
     """Return the JSON schema for the universe_query_v1 specification.
 
-    This returns the Pydantic-generated JSON schema for the UniverseQueryV1
-    specification, including the full `where` expression tree structure with
-    support for bar offsets (`offset` on column operands).
+    The published SigmaRail Spec owns this wire schema.
     """
-    from vera_query_core.ir.universe_query_v1 import UniverseQueryV1
-
-    return UniverseQueryV1.model_json_schema()
+    path = package_files("sigmarail_spec").joinpath("data", "strategy", "universe-query.json")
+    return json.loads(path.read_text(encoding="utf-8"))

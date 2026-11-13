@@ -15,7 +15,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'PYTHONPATH="../VeraBase/src" .venv/bin/python manage.py runserver 0.0.0.0:8001 --noreload',
+      command: 'PYTHONPATH="../src:." .venv/bin/python manage.py runserver 0.0.0.0:8001 --noreload',
       cwd: '..',
       port: 8001,
       reuseExistingServer: !process.env.CI,

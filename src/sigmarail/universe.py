@@ -162,17 +162,24 @@ def _expression(raw: Any, field_ids: dict[str, str], aliases: set[str]) -> Any:
     raise UniverseRequestError(f"expression node type {kind!r} is not supported")
 
 
-def _predicate(raw: Any, field_ids: dict[str, str], aliases: set[str]) -> QueryPredicate:
+def _predicate(raw: Any, field_ids: dict[str, str], aliases: set[str]) -> QueryPredicate | None:
     if not isinstance(raw, dict):
         raise UniverseRequestError("predicate nodes must be JSON objects")
     op = raw.get("type")
     if op in {"all", "any"}:
         items = raw.get("items")
-        if not isinstance(items, list) or not items:
+        if not isinstance(items, list):
             raise UniverseRequestError(f"{op} predicates require a non-empty items list")
+        if not items and op == "all":
+            return None
+        if not items:
+            raise UniverseRequestError("any predicates require a non-empty items list")
         return QueryPredicate(op=op, items=[_predicate(item, field_ids, aliases) for item in items])
     if op == "not":
-        return QueryPredicate(op="not", item=_predicate(raw.get("item"), field_ids, aliases))
+        item = _predicate(raw.get("item"), field_ids, aliases)
+        if item is None:
+            raise UniverseRequestError("not cannot wrap an empty all predicate")
+        return QueryPredicate(op="not", item=item)
     if op in _COMPARISONS:
         return QueryPredicate(
             op=op,
@@ -272,7 +279,8 @@ def _adapt_universe_request(body: dict[str, Any]) -> tuple[DataQueryV1, dict[str
         computed.append(QueryComputedField.model_validate(args))
         aliases.add(alias)
 
-    where = _predicate(spec["where"], field_ids, set())
+    where_raw = spec["where"]
+    where = _predicate(where_raw, field_ids, set())
     post_where = _predicate(spec["post_where"], field_ids, aliases) if spec.get("post_where") else None
     selected_or_computed = set(select) | aliases | {"ticker", "date"}
     requested_order: list[QueryOrder] = []
@@ -349,6 +357,212 @@ def registry_digest() -> str:
     return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def compile_universe_spec(
+    spec: dict[str, Any],
+    *,
+    start_date: str = "1970-01-01",
+    end_date: str = "1970-01-01",
+    total_limit: int = 500_000,
+) -> tuple[str, dict[str, Any]]:
+    """Validate a universe spec and compile it with the SigmaRail query compiler."""
+    request = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "limit": total_limit,
+        "spec": spec,
+    }
+    query, envelope = _adapt_universe_request(request)
+    return compile_query(
+        query,
+        total_limit=envelope["limit"],
+        limit_per_date=envelope["limit_per_day"],
+    )
+
+
+def universe_membership_counts(
+    spec: dict[str, Any],
+    *,
+    start_date: str,
+    end_date: str,
+    client: Any | None = None,
+) -> list[dict[str, Any]]:
+    """Aggregate schema-validated universe membership by date without row truncation."""
+    body = {"start_date": start_date, "end_date": end_date, "limit": 500_000, "spec": spec}
+    query, _ = _adapt_universe_request(body)
+    source_sql, params = compile_query(query, include_ordering=False, include_limits=False)
+    if client is None:
+        from sigmarail.database import get_client
+
+        client = get_client()
+    result = client.query(
+        f"""
+        SELECT toString(q.`date`) AS day, count() AS member_count
+        FROM ({source_sql}) AS q
+        GROUP BY q.`date`
+        ORDER BY q.`date`
+        SETTINGS max_execution_time = 30,
+          max_rows_to_read = 500000000,
+          timeout_before_checking_execution_speed = 0
+        """,
+        parameters=params,
+    )
+    return [{"date": str(row[0]), "count": int(row[1])} for row in result.result_rows]
+
+
+def universe_measure_series(
+    spec: dict[str, Any],
+    *,
+    start_date: str,
+    end_date: str,
+    aliases: list[str],
+    screens_hit: bool = False,
+    funnel_aliases: list[str] | None = None,
+    client: Any | None = None,
+) -> dict[str, list[float]]:
+    """Aggregate validated computed measures by date for Studio's stage probe."""
+    computed_kinds = {
+        str(item.get("alias")): str(item.get("kind", ""))
+        for item in spec.get("computed", [])
+        if isinstance(item, dict) and item.get("alias")
+    }
+    computed_names = set(computed_kinds)
+    requested = list(dict.fromkeys(str(name) for name in aliases if name))
+    funnel = list(dict.fromkeys(str(name) for name in (funnel_aliases or []) if name and name != "screens_hit"))
+    needs_screens_hit = screens_hit and "screens_hit" in computed_names
+    if any(name not in computed_names for name in [*requested, *funnel]):
+        raise UniverseRequestError("measure aliases must be declared in spec.computed")
+    if not requested and not needs_screens_hit and not funnel:
+        return {}
+
+    body = {"start_date": start_date, "end_date": end_date, "limit": 500_000, "spec": spec}
+    query, _ = _adapt_universe_request(body)
+    source_sql, params = compile_query(query, include_ordering=False, include_limits=False)
+    from sigmarail.query import _quote_identifier
+
+    projections = ["toString(q.`date`) AS day"]
+    out_names: list[str] = []
+    for alias in requested:
+        aggregate = (
+            f"sum(toUInt8(u.{_quote_identifier(alias)}))"
+            if computed_kinds.get(alias) == "bool"
+            else f"sum(toFloat64(u.{_quote_identifier(alias)}))"
+        )
+        projections.append(f"{aggregate} AS {_quote_identifier('sum_' + alias)}")
+        out_names.append("sum_" + alias)
+    if needs_screens_hit:
+        projections.append(f"avg(toFloat64(q.{_quote_identifier('screens_hit')})) AS avg_screens_hit")
+        out_names.append("screens_hit")
+    if funnel:
+        predicate = " AND ".join(f"u.{_quote_identifier(alias)} = 1" for alias in funnel)
+        projections.append(f"sum(if(({predicate}), 1, 0)) AS sum_funnel")
+        out_names.append("funnel")
+    if client is None:
+        from sigmarail.database import get_client
+        client = get_client()
+    result = client.query(
+        f"""
+        SELECT {', '.join(projections)}
+        FROM ({source_sql}) AS u
+        GROUP BY u.`date`
+        ORDER BY u.`date`
+        LIMIT 1000
+        SETTINGS max_execution_time = 30,
+          max_rows_to_read = 500000000,
+          timeout_before_checking_execution_speed = 0
+        """,
+        parameters=params,
+    )
+    series: dict[str, list[float]] = {name: [] for name in out_names}
+    for row in result.result_rows:
+        for index, name in enumerate(out_names, start=1):
+            try:
+                value = float(row[index])
+                series[name].append(round(value, 4) if value == value and abs(value) != float("inf") else 0.0)
+            except (TypeError, ValueError, IndexError):
+                series[name].append(0.0)
+    # Consumers expect one pass-count series for each requested bool alias and
+    # one cumulative funnel series, plus the optional screens_hit measure.
+    return {
+        **{alias: series.get("sum_" + alias, []) for alias in requested},
+        **({"screens_hit": series.get("screens_hit", [])} if needs_screens_hit else {}),
+        **({"funnel": series.get("funnel", [])} if funnel else {}),
+    }
+
+
+def universe_membership_by_ticker(
+    spec: dict[str, Any],
+    *,
+    start_date: str,
+    end_date: str,
+    tickers: list[str] | None = None,
+    client: Any | None = None,
+) -> dict[str, int]:
+    """Aggregate membership duration by ticker using the same validated universe query."""
+    body = {"start_date": start_date, "end_date": end_date, "limit": 500_000, "spec": spec}
+    query, _ = _adapt_universe_request(body)
+    source_sql, params = compile_query(query, include_ordering=False, include_limits=False)
+    if client is None:
+        from sigmarail.database import get_client
+
+        client = get_client()
+    ticker_filter = ""
+    if tickers:
+        clean = list(dict.fromkeys(str(ticker).strip().upper() for ticker in tickers if str(ticker).strip()))[:5000]
+        if clean:
+            params["membership_tickers"] = clean
+            ticker_filter = "WHERE q.`ticker` IN {membership_tickers:Array(String)}"
+    result = client.query(
+        f"""
+        SELECT q.`ticker` AS ticker, count() AS days_in_universe
+        FROM ({source_sql}) AS q
+        {ticker_filter}
+        GROUP BY q.`ticker`
+        ORDER BY q.`ticker`
+        LIMIT 10000
+        SETTINGS max_execution_time = 30,
+          max_rows_to_read = 500000000,
+          timeout_before_checking_execution_speed = 0
+        """,
+        parameters=params,
+    )
+    return {str(row[0]).upper(): int(row[1]) for row in result.result_rows}
+
+
+def universe_membership_samples(
+    spec: dict[str, Any],
+    *,
+    start_date: str,
+    end_date: str,
+    sample_dates: list[str],
+    client: Any | None = None,
+) -> list[dict[str, str]]:
+    """Return a bounded ticker sample for selected dates from the validated universe."""
+    if not sample_dates:
+        return []
+    body = {"start_date": start_date, "end_date": end_date, "limit": 500_000, "spec": spec}
+    query, _ = _adapt_universe_request(body)
+    source_sql, params = compile_query(query, include_ordering=False, include_limits=False)
+    if client is None:
+        from sigmarail.database import get_client
+
+        client = get_client()
+    params["sample_dates"] = sample_dates
+    result = client.query(
+        f"""
+        SELECT toString(q.`date`) AS day, q.`ticker` AS ticker
+        FROM ({source_sql}) AS q
+        WHERE toString(q.`date`) IN {{sample_dates:Array(String)}}
+        ORDER BY q.`date`, q.`ticker`
+        LIMIT 500
+        SETTINGS max_execution_time = 30,
+          max_rows_to_read = 500000000,
+          timeout_before_checking_execution_speed = 0
+        """,
+        parameters=params,
+    )
+    return [{"date": str(row[0]), "ticker": str(row[1]).upper()} for row in result.result_rows]
+
+
 def metadata() -> dict[str, Any]:
     tables, _, by_table = _catalog()
     field_count = sum(len(tables[table]["columns"]) for table in UNIVERSE_TABLES)
@@ -391,6 +605,32 @@ def source_fields(source: str) -> dict[str, Any]:
         "field_count": len(fields),
         "fields": fields,
     }
+
+
+def field_catalog() -> list[dict[str, Any]]:
+    """Return registered fields usable by the SigmaRail universe query API."""
+    tables, _, by_table = _catalog()
+    rows: list[dict[str, Any]] = []
+    for prefix, table_name in sorted(LEGACY_PREFIX_TABLE.items()):
+        registered = by_table.get(table_name)
+        if registered is None:
+            continue
+        dataset_id, _ = registered
+        for column in tables[table_name]["columns"]:
+            rows.append(
+                {
+                    "field_id": column["id"],
+                    "name": column["name"],
+                    "prefix": prefix,
+                    "table": table_name,
+                    "dataset_id": dataset_id,
+                    "type": column["type"],
+                    "description": column.get("comment", ""),
+                    "classification": column.get("classification", ""),
+                    "lineage_roots": column.get("lineage_roots", []),
+                }
+            )
+    return rows
 
 
 def universe_run(body: dict[str, Any], client: Any | None = None) -> dict[str, Any]:

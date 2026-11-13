@@ -97,6 +97,32 @@ def describe_dataset(dataset_id: str) -> dict[str, Any]:
     }
 
 
+def explain_field(table_name: str, field_name: str) -> dict[str, Any]:
+    """Explain a declared field using the SQL-generated table lineage manifest."""
+    table = _core_tables().get(str(table_name).strip())
+    if table is None:
+        raise ValueError(f"unknown core table: {table_name!r}")
+    field = next((row for row in table["columns"] if row["name"] == field_name), None)
+    if field is None:
+        raise ValueError(f"unknown field {field_name!r} on {table_name!r}")
+    return {
+        "table": table["name"],
+        "schema_file": table["schema_file"],
+        "direct_inputs": table["direct_inputs"],
+        "table_lineage_roots": table["sharadar_roots"],
+        "column_lineage_roots": field.get("lineage_roots", []),
+        "column_lineage_method": field.get("lineage_method", ""),
+        "column_lineage_basis": table.get("column_lineage_basis", ""),
+        "field": {
+            "field_id": field["id"],
+            "name": field["name"],
+            "type": field["type"],
+            "description": field.get("comment", ""),
+            "classification": field.get("classification", ""),
+        },
+    }
+
+
 def _column_index() -> dict[str, tuple[str, str, dict[str, Any]]]:
     out: dict[str, tuple[str, str, dict[str, Any]]] = {}
     tables = _core_tables()
@@ -222,6 +248,8 @@ def compile_query(
     *,
     total_limit: int | None = None,
     limit_per_date: int | None = None,
+    include_ordering: bool = True,
+    include_limits: bool = True,
 ) -> tuple[str, dict[str, Any]]:
     """Validate IDs against the generated core module catalog and compile bounded SELECT SQL."""
     query = request if isinstance(request, DataQueryV1) else DataQueryV1.model_validate(request)
@@ -365,15 +393,16 @@ def compile_query(
             else:
                 expression_sql = f"{aliases[dataset_id]}.{_quote_identifier(physical)}"
         order.append(f"{expression_sql} {item.direction.upper()}")
-    if order:
+    if order and include_ordering:
         sql += " ORDER BY " + ", ".join(order)
-    limit = min(total_limit if total_limit is not None else query.limit, 500_000 if total_limit is not None else _MAX_QUERY_LIMIT)
-    if limit_per_date is not None:
-        if not 1 <= limit_per_date <= 5000:
-            raise ValueError("limit_per_date must be between 1 and 5000")
-        sql += f" LIMIT {limit_per_date} BY {_quote_identifier('date')} LIMIT {limit}"
-    else:
-        sql += f" LIMIT {limit}"
+    if include_limits:
+        limit = min(total_limit if total_limit is not None else query.limit, 500_000 if total_limit is not None else _MAX_QUERY_LIMIT)
+        if limit_per_date is not None:
+            if not 1 <= limit_per_date <= 5000:
+                raise ValueError("limit_per_date must be between 1 and 5000")
+            sql += f" LIMIT {limit_per_date} BY {_quote_identifier('date')} LIMIT {limit}"
+        else:
+            sql += f" LIMIT {limit}"
     return sql, params
 
 

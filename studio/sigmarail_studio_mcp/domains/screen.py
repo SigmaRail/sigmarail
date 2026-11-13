@@ -8,10 +8,15 @@ from sigmarail_studio_mcp.http_client import studio_post
 
 
 def stocks(date: str, preset: str = "leaders", limit: int = 25) -> dict[str, Any]:
-    """Run an L7 screener preset (leaders / minervini_tt / vcp_tight / high_rs / …)."""
-    from vera_query_core.platform_tools import screen_stocks
+    """Run a SigmaRail core screener preset for one date."""
+    from screens.adapter import preview_screen
 
-    return call(screen_stocks, date=date, preset=preset, limit=limit)
+    return call(
+        preview_screen,
+        as_of=date,
+        preset=preset,
+        limit=limit,
+    )
 
 
 def _probe(body: dict[str, Any]) -> dict[str, Any]:

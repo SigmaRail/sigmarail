@@ -1,7 +1,7 @@
 """Alpha-performance endpoint tests (mocked — no ClickHouse required).
 
 Covers VeraProjects#74: GET /api/screens/fields/<name>/alpha-performance
-delegates to vera_query_core.alpha_evaluation.evaluate_factor_performance.
+delegates to sigmarail.features.alpha_evaluation.evaluate_factor_performance.
 """
 
 from __future__ import annotations

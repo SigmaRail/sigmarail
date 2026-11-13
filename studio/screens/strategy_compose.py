@@ -1,8 +1,8 @@
-"""Compose VeraLabV1 documents from universe_query_v1 + strategy templates.
+"""Compose the current SigmaRail strategy wire document from a universe query.
 
 Studio Browse seeds from the git catalog (``minervini_sepa``) only.
 Legacy built-in framework JSON templates under ``strategy_templates/`` were removed.
-``compose_vera_lab_v1`` still accepts an explicit ``framework`` assembly, or a
+``compose_strategy_v1`` accepts an explicit ``framework`` assembly, or a
 ``template_id`` when a test/fixture registers meta + a JSON file.
 """
 
@@ -121,7 +121,7 @@ def compose_assembled_ensemble_v1(
     return spec
 
 
-def compose_vera_lab_v1(
+def compose_strategy_v1(
     *,
     universe_spec: dict[str, Any],
     template_id: str | None = None,
@@ -201,23 +201,34 @@ def _merge_framework_slot(slot_obj: dict[str, Any], override: dict[str, Any]) ->
 
 
 def validate_composed_spec(spec: dict[str, Any]) -> tuple[bool, str | None]:
-    """Validate composed VeraLabV1 via vera_lab when installed."""
+    """Validate the executable strategy against the canonical SigmaRail Spec schema."""
     try:
-        from vera_lab.ir.vera_lab_v1_json import VeraLabV1Document
-    except ImportError:
-        return True, "vera_lab not installed; validation skipped"
+        from jsonschema import Draft202012Validator
+        from sigmarail_spec import get_document
 
-    try:
-        VeraLabV1Document.model_validate(spec)
+        schema_document = get_document("strategy/execution.json")
+        schema = schema_document["executable_strategy_schema"]
+        errors = sorted(
+            Draft202012Validator(schema).iter_errors(spec),
+            key=lambda error: tuple(str(part) for part in error.absolute_path),
+        )
     except Exception as exc:
-        return False, str(exc)
+        return False, f"SigmaRail strategy schema could not be loaded: {exc}"
+    if errors:
+        detail = "; ".join(
+            f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
+            for error in errors[:8]
+        )
+        if len(errors) > 8:
+            detail += f"; and {len(errors) - 8} more validation error(s)"
+        return False, detail
     return True, None
 
 
 __all__ = [
     "STRATEGY_TEMPLATES_DIR",
     "compose_assembled_ensemble_v1",
-    "compose_vera_lab_v1",
+    "compose_strategy_v1",
     "list_strategy_templates",
     "load_framework_catalog",
     "suggest_ir_id",

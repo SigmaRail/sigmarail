@@ -1,0 +1,37 @@
+{
+  "SchemaVersion": 2,
+  "Kind": "LeanFrameworkV1",
+  "Algorithm": {
+    "StartCash": 100000,
+    "BenchmarkSymbol": "SPY"
+  },
+  "Framework": {
+    "UniverseSelection": {
+      "Type": "ManualUniverseSelectionModel",
+      "Parameters": {
+        "symbols": ["SPY", "QQQ"]
+      }
+    },
+    "Alpha": {
+      "Type": "RsiAlphaModel",
+      "Parameters": {
+        "period": 14,
+        "resolution": "Daily"
+      }
+    },
+    "PortfolioConstruction": {
+      "Type": "EqualWeightingPortfolioConstructionModel",
+      "Parameters": {}
+    },
+    "Execution": {
+      "Type": "ImmediateExecutionModel",
+      "Parameters": {}
+    },
+    "RiskManagement": {
+      "Type": "MaximumDrawdownPercentPerSecurity",
+      "Parameters": {
+        "maximum_drawdown_percent": 0.1
+      }
+    }
+  }
+}

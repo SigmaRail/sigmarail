@@ -30,7 +30,7 @@ Move the existing Studio application into the SigmaRail project family while ret
 
 ## Verified source-to-target gaps
 
-- The source Studio imports `vera_query_core` across 27 Python files for screen execution, field/column registries, query compilation, templates, ClickHouse configuration, strategy validation, and runtime reports.
+- The source Studio imports `sigmarail.features` across 27 Python files for screen execution, field/column registries, query compilation, templates, ClickHouse configuration, strategy validation, and runtime reports.
 - SigmaRail Core owns SQL schema, transforms, loading/population, configuration, and low-level ClickHouse access. The query/screener runtime is being added alongside Studio in this repository.
 - SigmaRail Spec publishes machine-readable data/field/lineage documents and expression/strategy contracts. It describes capabilities; it does not execute ClickHouse queries or run strategies.
 - The current strategy payload includes a `VeraBase` section and the versioned `VeraLabV1` executable shape. Keep these wire keys accepted during the first migration. Rename or replace them only through a separately versioned compatibility change.
@@ -46,7 +46,7 @@ Move the existing Studio application into the SigmaRail project family while ret
 - The default MCP module set is `core,studio`. Vera-backed screening, strategy, backtest,
   portfolio, deployment, and knowledge tool groups require explicit selection through
   `SIGMARAIL_STUDIO_MODULES`. The server refuses to start those groups without local
-  `vera_query_core`.
+  `sigmarail.features`.
 - This is an activation boundary, not completion of those migrations. Their implementations
   remain in compatibility adapters, and the web application's corresponding endpoints are
   still being migrated separately.

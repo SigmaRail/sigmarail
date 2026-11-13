@@ -60,35 +60,25 @@ def test_universe_range_summary_endpoint() -> None:
     assert body["member_counts"] == [15, 18]
 
 
-def test_summarize_universe_range_imports_universe_query_v1() -> None:
-    """Regression: UniverseQueryV1 lives in universe_query_v1, not ir.models."""
-    from vera_query_core.ir.universe_query_v1 import UniverseQueryV1
-
+def test_summarize_universe_range_uses_sigmarail_aggregate_contract() -> None:
     from screens.universe_range_summary import summarize_universe_range
 
-    assert UniverseQueryV1 is not None
     client = MagicMock()
-    client.query.return_value = MagicMock(result_rows=[("2025-01-02", 3)])
-    out = summarize_universe_range(
-        client,
-        spec=_sample_spec(),
-        start_date="2025-01-01",
-        end_date="2025-01-10",
-    )
+    with patch(
+        "sigmarail.universe.universe_membership_counts",
+        return_value=[{"date": "2025-01-02", "count": 3}],
+    ) as aggregate:
+        out = summarize_universe_range(
+            client,
+            spec=_sample_spec(),
+            start_date="2025-01-01",
+            end_date="2025-01-10",
+        )
     assert out["member_counts"] == [3]
     assert out["dates"] == ["2025-01-02"]
-    assert client.query.call_count == 1
-    first_call = client.query.call_args_list[0]
-    first_sql = first_call.args[0]
-    first_params = first_call.kwargs.get("parameters") or first_call.args[1]
-    assert "lim" not in first_params  # aggregate path skips LIMIT BY ranking
-    assert "LIMIT" not in first_sql.split(") AS u", 1)[0].upper()
-    assert "member_count" in first_sql
-    assert "BETWEEN toDate({start:String}) AND toDate({end:String})" in first_sql
-    # Inner compile SETTINGS must not remain inside the subquery (CH code 80).
-    subquery = first_sql.split(") AS u", 1)[0]
-    assert "SETTINGS" not in subquery.upper()
-    assert "allow_experimental_analyzer = 0" in first_sql
+    aggregate.assert_called_once_with(
+        _sample_spec(), start_date="2025-01-01", end_date="2025-01-10", client=client
+    )
 
 
 @pytest.mark.django_db

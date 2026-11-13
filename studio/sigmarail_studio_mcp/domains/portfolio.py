@@ -14,7 +14,7 @@ def status(
     include_performance: bool = True,
     include_drift: bool = False,
 ) -> dict[str, Any]:
-    from vera_query_core.portfolio_status import get_portfolio_status
+    from sigmarail.features.portfolio_status import get_portfolio_status
 
     return call(
         get_portfolio_status,
@@ -28,7 +28,7 @@ def status(
 
 
 def household_summary() -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_household_broker_summary
+    from sigmarail.features.broker_tools import get_household_broker_summary
 
     return call(get_household_broker_summary)
 
@@ -40,7 +40,7 @@ def rvab_position_size(
     reference_rvab: float | None = None,
     account_id: str | None = None,
 ) -> dict[str, Any]:
-    from vera_query_core.risk_sizing import compute_rvab_position_size
+    from sigmarail.features.risk_sizing import compute_rvab_position_size
 
     kwargs: dict[str, Any] = {"ticker": ticker, "as_of_date": as_of_date, "account_id": account_id}
     if slot_weight is not None:
@@ -51,7 +51,7 @@ def rvab_position_size(
 
 
 def balance_at_risk(account_id: str | None = None, bar_budget_pct: float | None = None) -> dict[str, Any]:
-    from vera_query_core.risk_sizing import compute_balance_at_risk
+    from sigmarail.features.risk_sizing import compute_balance_at_risk
 
     kwargs: dict[str, Any] = {"account_id": account_id}
     if bar_budget_pct is not None:
@@ -60,7 +60,7 @@ def balance_at_risk(account_id: str | None = None, bar_budget_pct: float | None 
 
 
 def accounts(include_paper: bool = False, include_simulated: bool = False, execution_tier: str | None = None) -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_broker_accounts
+    from sigmarail.features.broker_tools import get_broker_accounts
 
     return call(get_broker_accounts, include_paper=include_paper, include_simulated=include_simulated, execution_tier=execution_tier)
 
@@ -73,7 +73,7 @@ def positions(
     include_cash_equivalents: bool = False,
     limit: int = 500,
 ) -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_broker_positions
+    from sigmarail.features.broker_tools import get_broker_positions
 
     return call(
         get_broker_positions,
@@ -94,7 +94,7 @@ def trades(
     date_to: str | None = None,
     limit: int = 50,
 ) -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_broker_trades
+    from sigmarail.features.broker_tools import get_broker_trades
 
     return call(
         get_broker_trades,
@@ -108,12 +108,12 @@ def trades(
 
 
 def allocation_drift() -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_broker_allocation_drift
+    from sigmarail.features.broker_tools import get_broker_allocation_drift
 
     return call(get_broker_allocation_drift)
 
 
 def performance(account_id: str | None = None) -> dict[str, Any]:
-    from vera_query_core.broker_tools import get_broker_performance
+    from sigmarail.features.broker_tools import get_broker_performance
 
     return call(get_broker_performance, account_id=account_id)

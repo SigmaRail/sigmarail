@@ -162,8 +162,8 @@ def apply_pipeline_ops(
 
 
 def compile_and_hash(pipeline: dict[str, Any]) -> tuple[dict[str, Any], str]:
-    from vera_query_core.strategy import compile_pipeline
-    from vera_query_core.strategy.pipeline import PipelineDocument
+    from sigmarail_spec.strategy import compile_pipeline
+    from sigmarail_spec.strategy.pipeline import PipelineDocument
 
     doc = PipelineDocument.model_validate(pipeline)
     spec = compile_pipeline(doc)

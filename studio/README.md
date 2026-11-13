@@ -19,18 +19,16 @@ Studio should consume the published contracts and call explicit data/runtime ser
 
 ## Current migration status
 
-The repository currently contains the migrated Django API, React application, charting and authoring surfaces, and domain-oriented MCP server. Its screener, field catalog, strategy, backtest, deployment, portfolio, and knowledge-base adapters still include source-project integrations. These are being replaced by SigmaRail-owned interfaces in bounded steps; unsupported capabilities must not be advertised as available in the meantime.
+The repository contains the Django API, React application, and domain-oriented MCP server. The standalone MCP currently exposes only SigmaRail Core data queries and SigmaRail Spec resources. Other copied Studio surfaces are being reviewed individually; they must be migrated to SigmaRail-owned APIs or removed before release.
 
 No production database or hosted service is configured by this repository. Local development here does not change any existing hosted service.
 
 ## MCP modules and local setup
 
-The MCP starts with `core` and `studio`. Core provides the SQL-derived dataset catalog,
-field descriptions, and bounded read-only queries. Vera-derived screening, strategy,
-backtesting, portfolio, deployment, and knowledge tools are optional compatibility modules
-while their SigmaRail-owned replacements are migrated. Enable only the groups needed with
-`SIGMARAIL_STUDIO_MODULES=core,studio,screening`; enabling a compatibility group requires the
-local VeraBase package. Core query access requires the SigmaRail database configuration.
+The MCP provides `core` data tools and `studio` Spec resources. It does not load sibling
+project source trees. Core query access requires the
+SigmaRail database configuration. Additional domain modules will be exposed only after
+their SigmaRail-owned implementations are available.
 
 From the SigmaRail repository root, install the separate Spec distribution and both
 local packages in one command:
@@ -44,7 +42,4 @@ Run the combined Python suite from the repository root with
 ClickHouse service and `sigmarail_test` database. For the frontend, run
 `npm ci && npm test && npm run build` from `studio/frontend/`.
 
-The Studio default MCP modules are `core` and `studio`. Incomplete compatibility
-modules stay opt-in until their SigmaRail implementations are ready. The local
-launcher and optional adapters can still use the legacy VeraBase checkout where
-those compatibility modules require it.
+The Studio MCP launcher uses only the installed SigmaRail Core, Spec, and Studio paths.

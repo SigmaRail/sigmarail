@@ -18,10 +18,7 @@ class _OptionalApiKeyView(APIView):
 
     @staticmethod
     def _api_key_error(request: Request) -> Response | None:
-        expected = os.environ.get("SIGMARAIL_QUERY_API_KEY", "").strip()
-        if not expected:
-            # Keep existing LEAN deployments working during the service rename.
-            expected = os.environ.get("VERA_QUERY_API_KEY", "").strip()
+        expected = os.environ.get("SIGMARAIL_API_KEY", "").strip()
         supplied = request.headers.get("X-API-Key", "")
         if expected and not hmac.compare_digest(supplied, expected):
             return Response({"detail": "invalid or missing API key"}, status=status.HTTP_401_UNAUTHORIZED)

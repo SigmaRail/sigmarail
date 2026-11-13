@@ -10,7 +10,7 @@ import pytest
 
 import screens.strategy_compose as strategy_compose
 from screens.strategy_compose import (
-    compose_vera_lab_v1,
+    compose_strategy_v1,
     list_strategy_templates,
     load_framework_catalog,
     suggest_ir_id,
@@ -91,7 +91,7 @@ def test_load_framework_catalog() -> None:
 
 
 def test_compose_replaces_universe() -> None:
-    spec = compose_vera_lab_v1(
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         framework=_STUB_FRAMEWORK,
     )
@@ -101,7 +101,7 @@ def test_compose_replaces_universe() -> None:
 
 
 def test_compose_framework_overrides(stub_template: str) -> None:
-    spec = compose_vera_lab_v1(
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         template_id=stub_template,
         framework_overrides={
@@ -114,7 +114,7 @@ def test_compose_framework_overrides(stub_template: str) -> None:
 
 
 def test_compose_framework_overrides_deep_merge(stub_template: str) -> None:
-    spec = compose_vera_lab_v1(
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         template_id=stub_template,
         framework_overrides={
@@ -134,7 +134,7 @@ def test_compose_framework_overrides_deep_merge(stub_template: str) -> None:
 
 def test_compose_rejects_flat_framework_overrides(stub_template: str) -> None:
     with pytest.raises(ValueError, match="unknown framework slot"):
-        compose_vera_lab_v1(
+        compose_strategy_v1(
             universe_spec=_SAMPLE_UNIVERSE,
             template_id=stub_template,
             framework_overrides={"max_positions": 10},
@@ -143,11 +143,11 @@ def test_compose_rejects_flat_framework_overrides(stub_template: str) -> None:
 
 def test_compose_requires_template_or_framework() -> None:
     with pytest.raises(ValueError, match="template_id is required"):
-        compose_vera_lab_v1(universe_spec=_SAMPLE_UNIVERSE)
+        compose_strategy_v1(universe_spec=_SAMPLE_UNIVERSE)
 
 
 def test_compose_algorithm_parameters(stub_template: str) -> None:
-    spec = compose_vera_lab_v1(
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         template_id=stub_template,
         algorithm_parameters={"exit-mode": "custom"},
@@ -160,12 +160,12 @@ def test_compose_invalid_universe_version() -> None:
     bad = copy.deepcopy(_SAMPLE_UNIVERSE)
     bad.pop("version")
     with pytest.raises(ValueError, match="universe_query_v1"):
-        compose_vera_lab_v1(universe_spec=bad, framework=_STUB_FRAMEWORK)
+        compose_strategy_v1(universe_spec=bad, framework=_STUB_FRAMEWORK)
 
 
 def test_compose_unknown_template() -> None:
     with pytest.raises(ValueError, match="unknown strategy template"):
-        compose_vera_lab_v1(universe_spec=_SAMPLE_UNIVERSE, template_id="missing")
+        compose_strategy_v1(universe_spec=_SAMPLE_UNIVERSE, template_id="missing")
 
 
 def test_suggest_ir_id_format() -> None:
@@ -174,15 +174,20 @@ def test_suggest_ir_id_format() -> None:
     assert len(ir_id.split("-")[-1]) == 6
 
 
-def test_validate_composed_spec_without_vera_lab() -> None:
-    spec = compose_vera_lab_v1(
+def test_validate_composed_spec_uses_sigma_rail_schema() -> None:
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         framework=_STUB_FRAMEWORK,
     )
     ok, err = validate_composed_spec(spec)
-    assert ok is True
+    assert ok is True, err
+
+    invalid = copy.deepcopy(spec)
+    invalid["unexpected"] = True
+    ok, err = validate_composed_spec(invalid)
+    assert ok is False
     assert err is not None
-    assert "skipped" in err.lower()
+    assert "unexpected" in err
 
 
 def test_compose_custom_assembled_ensemble() -> None:
@@ -231,7 +236,7 @@ def test_compose_custom_assembled_ensemble() -> None:
         },
     }
 
-    spec = compose_vera_lab_v1(
+    spec = compose_strategy_v1(
         universe_spec=_SAMPLE_UNIVERSE,
         framework=assembled_fw,
     )
@@ -310,7 +315,7 @@ def test_compose_all_qc_framework_permutations() -> None:
                             "RiskManagement": risk,
                             "Execution": exe,
                         }
-                        spec = compose_vera_lab_v1(
+                        spec = compose_strategy_v1(
                             universe_spec=_SAMPLE_UNIVERSE,
                             framework=fw,
                         )

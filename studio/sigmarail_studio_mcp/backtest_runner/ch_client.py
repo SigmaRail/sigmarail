@@ -18,7 +18,7 @@ def _get_settings() -> dict[str, Any]:
         "port": int(os.environ.get("CLICKHOUSE_HTTP_PORT", os.environ.get("CLICKHOUSE_PORT", "8123"))),
         "username": os.environ.get("CLICKHOUSE_USER", "testuser").strip(),
         "password": os.environ.get("CLICKHOUSE_PASSWORD", "testanalysis").strip(),
-        "database": os.environ.get("CLICKHOUSE_DATABASE", "vera").strip(),
+        "database": os.environ.get("CLICKHOUSE_DATABASE", "sigmarail").strip(),
     }
 
 

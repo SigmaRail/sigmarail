@@ -176,7 +176,7 @@ def test_decompile_portfolio_endpoint() -> None:
 
 
 def test_golden_minervini_round_trip() -> None:
-    from vera_query_core.strategy.presets import get_preset
+    from sigmarail_spec.strategy.presets import get_preset
 
     c = Client()
     preset = get_preset("minervini_sepa").model_dump(mode="json", exclude_none=True)
@@ -221,7 +221,7 @@ def test_golden_minervini_round_trip() -> None:
 
 def test_pipeline_schema_contract() -> None:
     """Verify that exported Pydantic schema for PipelineDocument matches expected fields in TS."""
-    from vera_query_core.strategy.pipeline import PipelineDocument
+    from sigmarail_spec.strategy.pipeline import PipelineDocument
 
     schema = PipelineDocument.model_json_schema()
     expected_top_fields = {

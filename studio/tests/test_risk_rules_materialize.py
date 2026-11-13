@@ -1,14 +1,11 @@
 """Save-time risk-ladder materialization (C-FW-RULES spec-truth contract).
 
-``screens/risk_rules`` bridges to ``vera_lab.ir.risk_ladder`` — the single
-source of truth for the generated SwingProgressive ladder. When the
-VeraTradingLab sibling tree is absent the helpers must degrade to no-ops
-rather than fail (runtime regenerates the identical table internally).
+``screens/risk_rules`` uses the SigmaRail Spec-owned generated ladder and remains
+fully testable without a LEAN or VeraBase checkout.
 """
 
 from __future__ import annotations
 
-import pytest
 
 from screens.risk_rules import (
     generate_swing_risk_ladder,
@@ -18,9 +15,6 @@ from screens.risk_rules import (
 )
 
 _LADDER = generate_swing_risk_ladder()
-requires_vera_lab = pytest.mark.skipif(
-    _LADDER is None, reason="vera_lab not importable from this environment"
-)
 
 
 def _spec(rules=None, params=None):
@@ -37,14 +31,12 @@ def _spec(rules=None, params=None):
     }
 
 
-@requires_vera_lab
 def test_generate_default_ladder_shape():
     names = [r["name"] for r in _LADDER]
     assert "hard_stop" in names and "tranche1" in names and "breakeven_trigger" in names
     assert all(isinstance(r.get("then"), list) and r["then"] for r in _LADDER)
 
 
-@requires_vera_lab
 def test_materialize_injects_rules_into_knobs_only_spec():
     spec = _spec(params={"take_profit_r": 3.0, "trailing_stop_pct": 0.12})
     assert materialize_swing_risk_rules(spec) is True
@@ -57,7 +49,6 @@ def test_materialize_injects_rules_into_knobs_only_spec():
     assert "3.0" in str(t1["when"])  # spec's own knob embedded in the literal
 
 
-@requires_vera_lab
 def test_materialize_preserves_authored_rules():
     authored = [{"name": "mine", "priority": 0,
                  "when": {"type": "all", "items": []},
@@ -72,7 +63,6 @@ def test_materialize_preserves_authored_rules():
     assert params["init_stop"]["type"] == "cond"
 
 
-@requires_vera_lab
 def test_materialize_preserves_authored_init_stop():
     authored_stop = {
         "type": "formula",
@@ -89,7 +79,6 @@ def test_materialize_preserves_authored_init_stop():
     assert len(params["rules"]) >= 8
 
 
-@requires_vera_lab
 def test_materialize_init_stop_reflects_knobs():
     spec = _spec(params={"use_atr_stops": False, "max_stop_loss_pct": 0.08})
     assert materialize_swing_risk_rules(spec) is True
@@ -129,7 +118,6 @@ def test_seed_pipeline_risk_rules_noop_without_spec_rules():
     assert "rules" not in doc["stages"][0]
 
 
-@requires_vera_lab
 def test_hydrate_rule_descriptions_fills_canonical_rules():
     spec = _spec()
     assert materialize_swing_risk_rules(spec) is True
@@ -143,7 +131,6 @@ def test_hydrate_rule_descriptions_fills_canonical_rules():
     assert all(r.get("description") for r in doc["stages"][0]["rules"])
 
 
-@requires_vera_lab
 def test_hydrate_rule_descriptions_never_clobbers_authored():
     spec = _spec(rules=[{"name": "my_custom_rule",
                          "when": {"type": "all", "items": []},

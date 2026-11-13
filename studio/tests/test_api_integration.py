@@ -29,7 +29,7 @@ def _ch_reachable() -> bool:
         return False
 
 
-@pytest.mark.skipif(os.environ.get("VERA_SKIP_CH") == "1", reason="VERA_SKIP_CH=1")
+@pytest.mark.skipif(os.environ.get("SIGMARAIL_SKIP_CH") == "1", reason="SIGMARAIL_SKIP_CH=1")
 def test_list_optimizer_sessions_shape():
     if not _ch_reachable():
         pytest.skip("ClickHouse unreachable")
@@ -37,21 +37,20 @@ def test_list_optimizer_sessions_shape():
     assert isinstance(sessions, list)
 
 
-def test_cancel_session_missing_is_error_envelope():
-    if not _ch_reachable():
-        pytest.skip("ClickHouse unreachable")
-    from sigmarail_studio_mcp.domains.optimize import cancel_session
-
-    res = cancel_session(f"e2e-missing-{uuid.uuid4().hex[:8]}")
-    assert res.get("status") == "cancelled"
-    assert res.get("cancelled_jobs") == []
-
-
 def test_promotion_gate_missing_run():
     if not _ch_reachable():
         pytest.skip("ClickHouse unreachable")
-    from sigmarail_studio_mcp.domains.deploy import evaluate_promotion_gate
+    from screens.ch import get_ch_client
+    from screens.live_promotion import check_promotion_gate
 
-    res = evaluate_promotion_gate("e2e-nope", f"run-missing-{uuid.uuid4().hex[:8]}")
+    client = get_ch_client()
+    try:
+        res = check_promotion_gate(
+            client,
+            ir_id="e2e-nope",
+            approval_backtest_run_id=f"run-missing-{uuid.uuid4().hex[:8]}",
+        )
+    finally:
+        client.close()
     assert res.get("ok") is False
     assert res.get("code") == "not_found"

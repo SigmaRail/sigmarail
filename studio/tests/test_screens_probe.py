@@ -271,7 +271,7 @@ def test_probe_diff_mocked() -> None:
 
 def test_probe_default_through_includes_computed_measures() -> None:
     """Alpha-bottom default cut must include authored number measures (hit_count)."""
-    from vera_query_core.strategy.pipeline import PipelineDocument, Stage, StageType
+    from sigmarail_spec.strategy.pipeline import PipelineDocument, Stage, StageType
     from screens.probe import run_probe
 
     doc = PipelineDocument(
@@ -340,7 +340,7 @@ def test_probe_default_through_includes_computed_measures() -> None:
 
 def test_probe_order_by_computed_not_stuffed_into_select() -> None:
     """order_by hit_count must not land in select (unknown L7 column)."""
-    from vera_query_core.strategy.pipeline import PipelineDocument, Stage, StageType
+    from sigmarail_spec.strategy.pipeline import PipelineDocument, Stage, StageType
     from screens.probe import run_probe
 
     doc = PipelineDocument(

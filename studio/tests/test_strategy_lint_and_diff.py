@@ -10,13 +10,13 @@ import json
 import pytest
 
 pytest.importorskip(
-    "vera_query_core",
+    "sigmarail.features",
     reason="strategy compatibility tests require the optional Vera runtime",
 )
 
 from sigmarail_studio_mcp.domains.strategy import strategy_diff, strategy_lint
 
-from vera_query_core.strategy import PipelineDocument
+from sigmarail_spec.strategy import PipelineDocument
 
 
 def _minimal_pipeline() -> dict:

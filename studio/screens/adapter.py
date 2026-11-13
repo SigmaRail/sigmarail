@@ -1,33 +1,28 @@
-"""Screen preview adapter — Vera ``screen_stocks`` presets (L7)."""
+"""Screen preview adapter over SigmaRail's schema-bound universe API."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from screens.exchange import enrich_rows_with_exchange
+from screens.ir_preview import list_templates, load_template
 
-# Equity presets first (include canslim for Screening Studio Phase 1).
-EQUITY_SCREEN_PRESETS: tuple[str, ...] = (
-    "leaders",
-    "minervini_tt",
-    "canslim",
-    "julian_komar",
-    "vcp_triad_coiling",
-    "setup_quality_leaders",
-    "vcp_tight",
-    "high_rs",
-)
-
-ALL_SCREEN_PRESETS: tuple[str, ...] = EQUITY_SCREEN_PRESETS + (
-    "inst_accumulating",
-    "inst_accumulating_strong",
-    "insider_cluster_buy",
-    "insider_net_buy",
-    "insider_selling",
-    "capex_reinvesting",
-    "capex_disciplined",
-    "capex_mrt_art_disagree",
-)
+_PRESET_TARGETS = {
+    "leaders": "minervini_trend_template",
+    "minervini_tt": "minervini_trend_template",
+    "canslim": "canslim_template",
+    "vcp_triad_coiling": "minervini_vcp_breakout",
+    "setup_quality_leaders": "breakout_quality_setups",
+    "high_rs": "minervini_momentum_leaders",
+}
+_PRESET_LABELS = {
+    "leaders": "Leaders",
+    "minervini_tt": "Minervini TT",
+    "canslim": "CANSLIM",
+    "vcp_triad_coiling": "VCP triad coiling",
+    "setup_quality_leaders": "Setup quality leaders",
+    "high_rs": "High relative strength",
+}
 
 _CORE_ROW_KEYS = {
     "ticker",
@@ -44,56 +39,31 @@ _CORE_ROW_KEYS = {
 
 
 def list_screen_presets() -> list[dict[str, str]]:
-    """UI catalog — equity presets first."""
-    labels = {
-        "fair_value_discount": "Fair Value Discount Compounders",
-        "leaders": "Leaders",
-        "minervini_tt": "Minervini TT",
-        "canslim": "CANSLIM",
-        "julian_komar": "Julian Komar Best Winners",
-        "vcp_triad_coiling": "VCP triad coiling",
-        "setup_quality_leaders": "Setup quality leaders",
-        "vcp_tight": "VCP tight (deprecated)",
-        "high_rs": "High RS",
-        "inst_accumulating": "Inst. accumulating",
-        "inst_accumulating_strong": "Inst. accumulating (strong)",
-        "insider_cluster_buy": "Insider cluster buy",
-        "insider_net_buy": "Insider net buy",
-        "insider_selling": "Insider selling",
-        "capex_reinvesting": "Capex reinvesting",
-        "capex_disciplined": "Capex disciplined",
-        "capex_mrt_art_disagree": "Capex MRT/ART disagree",
-    }
-    try:
-        from vera_query_core.screen_preset_ir import list_preset_ir_ids
-
-        ir_ids = set(list_preset_ir_ids())
-    except ModuleNotFoundError as exc:
-        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
-            raise
-        ir_ids = set()
+    """List only local templates that compile against SigmaRail core fields."""
+    supported = {row["id"] for row in list_templates()}
     return [
         {
-            "id": p,
-            "label": labels.get(p, p),
-            "backtestable": p in ir_ids,
+            "id": preset,
+            "label": _PRESET_LABELS[preset],
+            "backtestable": True,
         }
-        for p in ALL_SCREEN_PRESETS
+        for preset, target in _PRESET_TARGETS.items()
+        if target in supported
     ]
 
 
+ALL_SCREEN_PRESETS: tuple[str, ...] = tuple(_PRESET_TARGETS)
+
+
 def preset_to_universe_spec(preset: str) -> dict[str, Any]:
-    """Convert a screen_stocks preset id to universe_query_v1 (deep copy)."""
+    """Resolve a supported preset to a local SigmaRail universe template."""
     preset_key = (preset or "").strip().lower()
     if preset_key not in ALL_SCREEN_PRESETS:
         raise ValueError(f"unknown screen preset {preset_key!r}")
-    try:
-        from vera_query_core.screen_preset_ir import preset_to_universe_query_v1
-    except ModuleNotFoundError as exc:
-        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
-            raise
-        raise RuntimeError("screen preset compilation requires the optional Vera compatibility runtime") from exc
-    return preset_to_universe_query_v1(preset_key)
+    spec = load_template(_PRESET_TARGETS[preset_key])["spec"]
+    if preset_key == "leaders":
+        spec["order_by"] = [{"field": "overall_score", "direction": "desc"}]
+    return spec
 
 
 def preview_screen(
@@ -104,20 +74,17 @@ def preview_screen(
     limit: int = 50,
     tickers: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Run a named ``screen_stocks`` preset; optional post-filter by ticker set."""
+    """Run a named SigmaRail universe template; optionally filter by ticker set."""
     preset_key = (preset or "leaders").strip().lower()
     if preset_key not in ALL_SCREEN_PRESETS:
         raise ValueError(f"unknown screen preset {preset_key!r}")
 
-    try:
-        from vera_query_core.platform_tools import screen_stocks
-    except ModuleNotFoundError as exc:
-        if exc.name != "vera_query_core" and not (exc.name or "").startswith("vera_query_core."):
-            raise
-        raise RuntimeError("screen preview requires the optional Vera compatibility runtime") from exc
+    from screens.ir_preview import preview_universe_ir
 
-    raw = screen_stocks(client, date=as_of, preset=preset_key, limit=min(max(int(limit), 1), 100))
-    hits = list(raw.get("hits") or [])
+    spec = preset_to_universe_spec(preset_key)
+    spec["limit_per_day"] = min(max(int(limit), 1), 100)
+    raw = preview_universe_ir(client, as_of=as_of, spec_dict=spec)
+    hits = list(raw.get("rows") or [])
 
     if tickers:
         allow = {t.strip().upper() for t in tickers if t and str(t).strip()}
@@ -145,14 +112,14 @@ def preview_screen(
     enrich_rows_with_exchange(client, rows)
 
     return {
-        "as_of": raw.get("date") or as_of,
+        "as_of": raw.get("as_of") or as_of,
         "preset": preset_key,
         "limit": int(raw.get("limit") or limit),
-        "table": raw.get("table"),
+        "table": "screener_price_tech_daily",
         "count": len(rows),
         "rows": rows,
-        "screen_ir": "screen_stocks_preset",
-        "note": "Preset expands via vera_query_core.screen_stocks (L7). Canonical long-term IR is universe_query_v1.",
+        "screen_ir": "universe_query_v1",
+        "note": "Preset expands from a local SigmaRail template and runs through the schema-bound core universe query.",
     }
 
 

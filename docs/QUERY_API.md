@@ -47,4 +47,4 @@ selected fields, computed aliases, ordering, and required frame fields so LEAN c
 closed if the returned frame does not match its request. The metadata route keeps the
 current dialect ID for wire compatibility while SigmaRail Spec becomes the canonical
 query contract. Set `SIGMARAIL_QUERY_API_KEY` to require `X-API-Key`; during migration,
-`VERA_QUERY_API_KEY` remains an accepted fallback.
+`SIGMARAIL_API_KEY` remains an accepted fallback.

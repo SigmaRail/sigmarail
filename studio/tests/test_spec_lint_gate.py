@@ -1,6 +1,6 @@
 """Spec lint gate on the guarded save path.
 
-The gate wraps `VeraBase`'s `spec_lint` at the single server-side choke point that the
+The gate wraps the published SigmaRail Spec linter at the single server-side choke point that the
 REST view, the MCP tool and the Studio UI all funnel through, so an agent cannot dodge it
 by calling the API directly.
 
@@ -23,13 +23,13 @@ from screens import spec_save
 def test_lint_mode_defaults_to_enforce(monkeypatch: pytest.MonkeyPatch) -> None:
     """Default is enforcing. Flipped only after a corpus precision audit
     (2026-10-02-spec-lint-gate): 40 flagged specs all genuine, 0 false positives."""
-    monkeypatch.delenv("VERA_SPEC_LINT", raising=False)
+    monkeypatch.delenv("SIGMARAIL_SPEC_LINT", raising=False)
     assert spec_save._lint_mode() == "enforce"
 
 
 @pytest.mark.parametrize("value", ["off", "warn", "enforce", "ENFORCE", " enforce "])
 def test_lint_mode_accepts_known_values(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
-    monkeypatch.setenv("VERA_SPEC_LINT", value)
+    monkeypatch.setenv("SIGMARAIL_SPEC_LINT", value)
     assert spec_save._lint_mode() == value.strip().lower()
 
 
@@ -38,7 +38,7 @@ def test_lint_mode_rejects_unknown_values_to_enforce(
     monkeypatch: pytest.MonkeyPatch, value: str
 ) -> None:
     """A typo'd mode must never silently disable the gate."""
-    monkeypatch.setenv("VERA_SPEC_LINT", value)
+    monkeypatch.setenv("SIGMARAIL_SPEC_LINT", value)
     assert spec_save._lint_mode() == "enforce"
 
 
@@ -126,7 +126,7 @@ def _patch_runner(monkeypatch: pytest.MonkeyPatch) -> list:
 
 
 def test_enforce_blocks_save_before_the_insert(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("VERA_SPEC_LINT", "enforce")
+    monkeypatch.setenv("SIGMARAIL_SPEC_LINT", "enforce")
     calls = _patch_runner(monkeypatch)
     with pytest.raises(spec_save.SpecGuardError):
         spec_save.save_spec_guarded(
@@ -136,7 +136,7 @@ def test_enforce_blocks_save_before_the_insert(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_warn_still_saves_and_reports_findings(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("VERA_SPEC_LINT", "warn")
+    monkeypatch.setenv("SIGMARAIL_SPEC_LINT", "warn")
     calls = _patch_runner(monkeypatch)
     result = spec_save.save_spec_guarded(
         ir_id="brand-new-spec", title="t", spec_json=BAD_SPEC, client=object()
@@ -147,7 +147,7 @@ def test_warn_still_saves_and_reports_findings(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_off_skips_the_linter(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("VERA_SPEC_LINT", "off")
+    monkeypatch.setenv("SIGMARAIL_SPEC_LINT", "off")
     calls = _patch_runner(monkeypatch)
     result = spec_save.save_spec_guarded(
         ir_id="brand-new-spec", title="t", spec_json=BAD_SPEC, client=object()

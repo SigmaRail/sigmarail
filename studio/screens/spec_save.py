@@ -44,7 +44,7 @@ __all__ = [
 ]
 
 # --- spec lint gate -------------------------------------------------------------------
-# ``VERA_SPEC_LINT`` = ``off`` | ``warn`` | ``enforce``
+# ``SIGMARAIL_SPEC_LINT`` = ``off`` | ``warn`` | ``enforce``
 #   off     — skip the linter entirely
 #   warn    — run it, return findings, never block
 #   enforce — refuse the save on any error-severity finding. **Default.**
@@ -62,7 +62,9 @@ LINT_MODES = ("off", "warn", "enforce")
 
 
 def _lint_mode() -> str:
-    mode = (os.environ.get("VERA_SPEC_LINT") or "enforce").strip().lower()
+    mode = (
+        os.environ.get("SIGMARAIL_SPEC_LINT", "enforce")
+    ).strip().lower()
     return mode if mode in LINT_MODES else "enforce"
 
 
@@ -89,8 +91,8 @@ def lint_spec_json(spec_json: str, client: Any | None = None) -> list[dict[str, 
     gate exists to prevent.
     """
     try:
-        from vera_query_core.ir import spec_lint
-    except Exception as exc:  # pragma: no cover - depends on the host environment
+        from sigmarail_spec import strategy_lint as spec_lint
+    except Exception as exc:  # pragma: no cover - package installation failure
         return [
             {
                 "severity": "warning",
@@ -102,9 +104,8 @@ def lint_spec_json(spec_json: str, client: Any | None = None) -> list[dict[str, 
 
     kwargs = None
     try:
-        # `resolve_runtime_kwargs` prefers live introspection (fresher — only possible in
-        # the VeraTradingLab tree) and falls back to the committed artifact, so this gate
-        # checks E200/E201 in the Studio process too, where `vera_lab` is not importable.
+        # The generated Lean runtime catalog is packaged with Spec and checked for drift
+        # in the Lean/Spec build, so save-time lint does not import the runtime.
         kwargs = spec_lint.resolve_runtime_kwargs()
         findings = spec_lint.lint_spec_json(
             spec_json,
@@ -136,8 +137,8 @@ def lint_spec_json(spec_json: str, client: Any | None = None) -> list[dict[str, 
                 "severity": "warning",
                 "code": "LINT002",
                 "path": "-",
-                "message": "no runtime parameter table available (neither live introspection "
-                "nor the packaged data/runtime_param_table.json) — E200/E201 skipped",
+                "message": "no runtime parameter table available in the packaged Spec "
+                "capabilities — E200/E201 skipped",
             }
         )
     return out

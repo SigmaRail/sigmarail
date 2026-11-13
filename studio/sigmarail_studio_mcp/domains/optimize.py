@@ -8,13 +8,13 @@ from sigmarail_studio_mcp.ch import call, get_client
 
 
 def list_runs(limit: int = 50, policy_source: str | None = "search") -> dict[str, Any]:
-    from vera_query_core.platform_tools import list_optimizer_runs
+    from sigmarail.features.platform_tools import list_optimizer_runs
 
     return call(list_optimizer_runs, limit=limit, policy_source=policy_source)
 
 
 def policy_scorecard(policy_name: str, asset_ticker: str = "SPY", window: str | None = None) -> dict[str, Any]:
-    from vera_query_core.platform_tools import get_policy_scorecard
+    from sigmarail.features.platform_tools import get_policy_scorecard
 
     return call(get_policy_scorecard, policy_name=policy_name, asset_ticker=asset_ticker, window=window)
 

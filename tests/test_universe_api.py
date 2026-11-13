@@ -106,6 +106,80 @@ def test_universe_adapter_auto_resolves_only_declared_core_joins() -> None:
     assert "screener_fundamentals_daily" in query.joins[0].relationship_id
 
 
+def test_universe_membership_aggregate_compiles_without_detail_limits() -> None:
+    from sigmarail.universe import universe_membership_counts
+
+    class AggregateClient:
+        sql = ""
+        parameters = {}
+
+        def query(self, sql: str, parameters: dict) -> _FakeResult:
+            self.sql = sql
+            self.parameters = parameters
+            result = _FakeResult()
+            result.column_names = ["day", "member_count"]
+            result.result_rows = [(date(2024, 12, 31), 1)]
+            return result
+
+    client = AggregateClient()
+    result = universe_membership_counts(
+        _request()["spec"],
+        start_date="2024-12-01",
+        end_date="2024-12-31",
+        client=client,
+    )
+
+    assert result == [{"date": "2024-12-31", "count": 1}]
+    assert "GROUP BY q.`date`" in client.sql
+    assert "LIMIT" not in client.sql.upper()
+    assert client.parameters["start_date"] == "2024-12-01"
+    assert client.parameters["end_date"] == "2024-12-31"
+
+
+def test_universe_measure_series_compiles_registered_computed_aliases() -> None:
+    from sigmarail.universe import universe_measure_series
+
+    class MeasureClient:
+        sql = ""
+        parameters = {}
+
+        def query(self, sql: str, parameters: dict) -> _FakeResult:
+            self.sql = sql
+            self.parameters = parameters
+            result = _FakeResult()
+            result.column_names = ["day", "score", "above_50"]
+            result.result_rows = [(date(2024, 12, 31), 2.0, 1.0)]
+            return result
+
+    client = MeasureClient()
+    result = universe_measure_series(
+        _request()["spec"],
+        aliases=["score", "above_50"],
+        start_date="2024-12-01",
+        end_date="2024-12-31",
+        client=client,
+    )
+
+    assert result == {"score": [2.0], "above_50": [1.0]}
+    assert "GROUP BY u.`date`" in client.sql
+    assert "AAPL" not in client.sql
+    assert client.parameters["start_date"] == "2024-12-01"
+    assert client.parameters["end_date"] == "2024-12-31"
+
+
+def test_universe_measure_series_rejects_unregistered_alias() -> None:
+    from sigmarail.universe import UniverseRequestError, universe_measure_series
+
+    with pytest.raises(UniverseRequestError, match="declared in spec.computed"):
+        universe_measure_series(
+            _request()["spec"],
+            aliases=["arbitrary_sql"],
+            start_date="2024-12-01",
+            end_date="2024-12-31",
+            client=_FakeClient(),
+        )
+
+
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [
@@ -129,10 +203,10 @@ def test_lean_compatibility_routes_publish_registry_and_reject_unsafe_sql(monkey
     from sigmarail import universe as universe_module
 
     client = Client()
-    monkeypatch.setenv("SIGMARAIL_QUERY_API_KEY", "test-secret")
+    monkeypatch.setenv("SIGMARAIL_API_KEY", "test-secret")
     assert client.get("/v1/meta").status_code == 401
     assert client.get("/v1/meta", HTTP_X_API_KEY="test-secret").status_code == 200
-    monkeypatch.delenv("SIGMARAIL_QUERY_API_KEY")
+    monkeypatch.delenv("SIGMARAIL_API_KEY")
     meta = client.get("/v1/meta")
     sources = client.get("/v1/schema/sources")
     source_fields = client.get("/v1/schema/sources/px/fields")

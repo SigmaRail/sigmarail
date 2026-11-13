@@ -213,7 +213,7 @@ def register_paper_deployment(
     started_dt = datetime.now(timezone.utc).replace(tzinfo=None)
     started_str = started_dt.strftime("%Y-%m-%d %H:%M:%S")
     parameter_values = {
-        "VERA_LAB_ID": ir_id,
+        "SIGMARAIL_STRATEGY_ID": ir_id,
         "deployment_id": deployment_id,
         "approval_backtest_run_id": approval_backtest_run_id,
     }
@@ -271,26 +271,26 @@ def list_live_deployments(client: Any, *, limit: int = 20) -> dict[str, Any]:
 
 def list_live_deployments_core(client: Any, *, limit: int = 20) -> dict[str, Any]:
     """Compatibility report adapter; requires the optional Vera runtime."""
-    from vera_query_core.live_report import list_live_deployments as _list_live_deployments
+    from sigmarail.features.live_report import list_live_deployments as _list_live_deployments
 
     return _list_live_deployments(client, limit=limit)
 
 
 def get_live_deployment_status(client: Any, deployment_id: str) -> dict[str, Any]:
-    """Deployment status digest via ``vera_query_core.live_report.get_live_status``."""
+    """Deployment status digest via ``sigmarail.features.live_report.get_live_status``."""
     return get_live_status(client, deployment_id)
 
 
 def get_live_status(client: Any, deployment_id: str) -> dict[str, Any]:
     """Compatibility report adapter; requires the optional Vera runtime."""
-    from vera_query_core.live_report import get_live_status as _get_live_status
+    from sigmarail.features.live_report import get_live_status as _get_live_status
 
     return _get_live_status(client, deployment_id)
 
 
 def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
     """Compatibility report adapter; requires the optional Vera runtime."""
-    from vera_query_core.backtest_report import get_backtest_report
+    from sigmarail.features.backtest_report import get_backtest_report
 
     return get_backtest_report(client, run_id)
 

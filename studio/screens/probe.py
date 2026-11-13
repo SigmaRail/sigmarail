@@ -7,15 +7,10 @@ Django-owned domain logic. SPA and sigmarail-studio MCP both POST the same bodie
 from __future__ import annotations
 
 import copy
-import math
 from datetime import date, timedelta
 from typing import Any, Literal
 
-from screens.ch import _ensure_verabasel_path
-
-_ensure_verabasel_path()
-
-from screens.ir_preview import preview_universe_ir, validate_universe_ir_spec  # noqa: E402
+from screens.ir_preview import preview_universe_ir, validate_universe_ir_spec
 from screens.universe_range_summary import (  # noqa: E402
     default_range_end_start,
     membership_tenure_by_ticker,
@@ -25,14 +20,6 @@ from screens.universe_range_summary import (  # noqa: E402
 _ASOF_DEFAULT_LIMIT = 500
 _ASOF_HARD_LIMIT = 5000
 _DIFF_NAME_CAP = 20
-_QUERY_SETTINGS = (
-    " SETTINGS allow_experimental_analyzer = 0,"
-    " join_algorithm = 'grace_hash',"
-    " max_execution_time = 30,"
-    " max_rows_to_read = 500000000,"
-    " timeout_before_checking_execution_speed = 0"
-)
-
 ProbeMode = Literal["measures", "members"]
 ProbeView = Literal["layers", "asof", "range", "diff"]
 
@@ -62,7 +49,7 @@ def _resolve_source(body: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[s
             f"(got {sources or 'none'})"
         )
     if preset_id:
-        from vera_query_core.strategy.presets import get_preset
+        from sigmarail_spec.strategy.presets import get_preset
 
         doc = get_preset(preset_id)
         return doc.model_dump(mode="json"), None
@@ -136,8 +123,8 @@ def _compile_prefix(
         }
 
     assert pipeline is not None
-    from vera_query_core.strategy.compiler import compile_pipeline_prefix
-    from vera_query_core.strategy.pipeline import PipelineDocument
+    from sigmarail_spec.strategy.compiler import compile_pipeline_prefix
+    from sigmarail_spec.strategy.pipeline import PipelineDocument
 
     doc = PipelineDocument.model_validate(pipeline)
     through = through or {}
@@ -479,65 +466,17 @@ def _measure_series_range(
     Bool aliases use ``sum(toUInt8(alias))`` (absolute passers among hygiene rows),
     not ``avg`` hit-rate — same units as ``member_counts``.
     """
-    if not aliases and not screens_hit and not funnel_aliases:
-        return {}
-    from vera_query_core.ir.universe_query_v1 import (
-        UniverseQueryV1,
-        compile_universe_query_v1_range_param,
-        strip_trailing_sql_settings,
+    from sigmarail.universe import universe_measure_series
+
+    return universe_measure_series(
+        spec,
+        start_date=start_date,
+        end_date=end_date,
+        aliases=aliases,
+        screens_hit=screens_hit,
+        funnel_aliases=funnel_aliases,
+        client=client,
     )
-
-    count_spec = dict(spec)
-    count_spec["limit_per_day"] = 5000
-    uq = UniverseQueryV1.model_validate(count_spec)
-    inner_sql, params = compile_universe_query_v1_range_param(uq, for_aggregate=True)
-    inner_sql = strip_trailing_sql_settings(inner_sql)
-    params = dict(params)
-    params["start"] = start_date
-    params["end"] = end_date
-
-    select_parts = ["toString(u.date) AS day"]
-    keys: list[str] = []
-    for a in aliases:
-        # Safe: aliases already validated by UniverseQueryV1 / _STAGE_ID_RE.
-        select_parts.append(f"sum(toUInt8(u.`{a}`)) AS `sum_{a}`")
-        keys.append(a)
-    if screens_hit:
-        # screens_hit is a count column — report mean for diagnostics only.
-        select_parts.append("avg(toFloat64(u.`screens_hit`)) AS `avg_screens_hit`")
-        keys.append("screens_hit")
-    funnel = [a for a in (funnel_aliases or []) if a and a != "screens_hit"]
-    if funnel:
-        and_expr = " AND ".join(f"u.`{a}` = 1" for a in funnel)
-        select_parts.append(f"sum(if(({and_expr}), 1, 0)) AS `sum_funnel`")
-        keys.append("funnel")
-
-    sql = f"""
-        SELECT {", ".join(select_parts)}
-        FROM (
-            {inner_sql}
-        ) AS u
-        GROUP BY u.date
-        ORDER BY u.date
-        LIMIT 1000
-        {_QUERY_SETTINGS}
-    """
-    try:
-        rows = client.query(sql, parameters=params)
-    except Exception:
-        return {}
-    series: dict[str, list[float]] = {k: [] for k in keys}
-    for row in rows.result_rows:
-        for i, k in enumerate(keys):
-            try:
-                v = float(row[i + 1])
-                if math.isnan(v) or math.isinf(v):
-                    series[k].append(0.0)
-                else:
-                    series[k].append(round(v, 4))
-            except (TypeError, ValueError, IndexError):
-                series[k].append(0.0)
-    return series
 
 
 __all__ = ["run_probe"]

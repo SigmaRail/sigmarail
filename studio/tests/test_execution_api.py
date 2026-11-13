@@ -111,7 +111,7 @@ def test_submit_queue_mode_default() -> None:
     mock_submit.assert_called_once()
     _kwargs = mock_submit.call_args.kwargs
     assert _kwargs["immediate"] is False
-    assert _kwargs["lean_project"] == "VeraTradingLab"
+    assert _kwargs["lean_project"] == "SigmaRailTradingLab"
 
 
 @pytest.mark.django_db
@@ -153,7 +153,7 @@ def test_list_lean_projects_fallback() -> None:
         return_value=Path("/nonexistent/LeanProjects"),
     ):
         out = exec_adapter.list_lean_projects()
-    assert out["projects"][0]["id"] == "VeraTradingLab"
+    assert out["projects"][0]["id"] == "SigmaRailTradingLab"
     assert "note" in out
 
 

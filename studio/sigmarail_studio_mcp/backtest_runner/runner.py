@@ -29,6 +29,7 @@ from sigmarail_studio_mcp.backtest_runner.project_registry import (
     lean_projects_root,
     resolve_output_rel,
 )
+from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
 
 
 def _default_image(project: dict[str, Any] | None = None) -> str:
@@ -45,24 +46,24 @@ def _runner_id() -> str:
     return os.environ.get("RUNNER_ID", socket.gethostname())
 
 
-def _vera_query_url_for_container() -> str | None:
-    """Map host ``VERA_QUERY_URL`` to a URL reachable from Lean Docker.
+def _sigmarail_api_url_for_container() -> str | None:
+    """Map host ``SIGMARAIL_API_URL`` to a URL reachable from Lean Docker.
 
-    Immediate MCP submits often have no host ``VERA_QUERY_URL`` (workerctl does).
+    Immediate MCP submits often have no host ``SIGMARAIL_API_URL`` (workerctl does).
     Default to the local query service via ``host.docker.internal``.
     """
-    raw = (os.environ.get("VERA_QUERY_URL") or "").strip()
+    raw = (os.environ.get("SIGMARAIL_API_URL") or "").strip()
     if not raw:
-        docker_host = os.environ.get("VERA_QUERY_DOCKER_HOST", "host.docker.internal").strip()
-        port = int(os.environ.get("VERA_QUERY_PORT", "8088").strip() or "8088")
+        docker_host = os.environ.get("SIGMARAIL_API_DOCKER_HOST", "host.docker.internal").strip()
+        port = int(os.environ.get("SIGMARAIL_API_PORT", "8088").strip() or "8088")
         return f"http://{docker_host}:{port}"
     from urllib.parse import urlparse
 
     parsed = urlparse(raw if "://" in raw else f"http://{raw}")
     host = (parsed.hostname or "").lower()
     if host in ("localhost", "127.0.0.1", "::1"):
-        docker_host = os.environ.get("VERA_QUERY_DOCKER_HOST", "host.docker.internal").strip()
-        port = parsed.port or int(os.environ.get("VERA_QUERY_PORT", "8088").strip())
+        docker_host = os.environ.get("SIGMARAIL_API_DOCKER_HOST", "host.docker.internal").strip()
+        port = parsed.port or int(os.environ.get("SIGMARAIL_API_PORT", "8088").strip())
         scheme = parsed.scheme or "http"
         return f"{scheme}://{docker_host}:{port}".rstrip("/")
     return raw.rstrip("/")
@@ -89,12 +90,12 @@ def python_for_lean() -> str:
     ``lean_backtest_composite.py`` imports ``lean.components...``. Studio / MCP
     venvs often lack that package even when ``lean`` is on PATH. Prefer:
 
-    1. ``VERA_BACKTEST_PYTHON`` / ``LEAN_PYTHON``
+    1. ``SIGMARAIL_BACKTEST_PYTHON`` / ``LEAN_PYTHON``
     2. ``sys.executable`` if it can ``import lean``
     3. ``python`` next to ``shutil.which('lean')`` (pyenv shim layout)
     4. ``sys.executable`` as last resort (will fail clearly in the log)
     """
-    for key in ("VERA_BACKTEST_PYTHON", "LEAN_PYTHON"):
+    for key in ("SIGMARAIL_BACKTEST_PYTHON", "LEAN_PYTHON"):
         candidate = (os.environ.get(key) or "").strip()
         if candidate and Path(candidate).is_file() and _can_import_lean(candidate):
             return candidate
@@ -124,7 +125,7 @@ DEFAULT_WORKER_HEARTBEAT = Path("/tmp/vera-backtest-worker.heartbeat")
 
 
 def worker_heartbeat_path() -> Path:
-    raw = (os.environ.get("VERA_BACKTEST_WORKER_HEARTBEAT") or "").strip()
+    raw = (os.environ.get("SIGMARAIL_BACKTEST_WORKER_HEARTBEAT") or "").strip()
     return Path(raw) if raw else DEFAULT_WORKER_HEARTBEAT
 
 
@@ -525,7 +526,7 @@ def _insert_strategy_run(
     env.setdefault("CLICKHOUSE_PORT", "8123")
     env.setdefault("CLICKHOUSE_USER", "testuser")
     env.setdefault("CLICKHOUSE_PASSWORD", "testanalysis")
-    env.setdefault("CLICKHOUSE_DATABASE", "vera")
+    env.setdefault("CLICKHOUSE_DATABASE", "sigmarail")
     ir_schema_version, ir_content_hash = _ir_lineage_from_db(ir_id)
     repo_name = str(project.get("id") or lean_cli_name)
     commit_sha, git_branch = _engine_git_info(lean_root)
@@ -541,6 +542,7 @@ def _insert_strategy_run(
         "--period-end", end_date,
         "--image", image,
         "--ir-id", ir_id,
+        "--source-sha256", str(project.get("source_sha256") or ""),
     ]
     if commit_sha:
         cmd += ["--commit-sha", commit_sha]
@@ -590,8 +592,8 @@ def _build_lean_cmd(
     container_ch_database: str,
     data_mode: str | None = None,
     extra_env: dict[str, str] | None = None,
-    vera_query_url: str | None = None,
-    vera_query_api_key: str | None = None,
+    sigmarail_api_url: str | None = None,
+    sigmarail_api_key: str | None = None,
 ) -> list[str]:
     """Build argv for lean_backtest_composite.py (matches smoke_backtest_local.sh)."""
     wrapper = lean_root / str(project["composite_wrapper"])
@@ -612,7 +614,7 @@ def _build_lean_cmd(
         "--parameter", "start-date", start_date,
         "--parameter", "end-date", end_date,
         "--parameter", "run-id", job_id,
-        "--parameter", "vera-lab-id", ir_id,
+        "--parameter", "sigmarail-strategy-id", ir_id,
         "--parameter", "clickhouse-host", container_ch_host,
         "--parameter", "clickhouse-http-port", container_ch_port,
         "--parameter", "clickhouse-user", container_ch_user,
@@ -622,10 +624,10 @@ def _build_lean_cmd(
         "--parameter", "initialization-timeout", "1800",
         "--extra-docker-config", extra_docker_config,
     ]
-    if vera_query_url:
-        cmd.extend(["--parameter", "vera-query-url", vera_query_url])
-    if vera_query_api_key:
-        cmd.extend(["--parameter", "vera-query-api-key", vera_query_api_key])
+    if sigmarail_api_url:
+        cmd.extend(["--parameter", "sigmarail-api-url", sigmarail_api_url])
+    if sigmarail_api_key:
+        cmd.extend(["--parameter", "sigmarail-api-key", sigmarail_api_key])
     if data_mode:
         cmd.extend(["--parameter", "clickhouse-data-mode", data_mode])
     env = extra_env or {}
@@ -652,7 +654,7 @@ def submit_job(
     from sigmarail_studio_mcp.backtest_runner.ch_client import get_client
 
     lean_project = lean_project or default_project_id()
-    get_project(lean_project)  # validate registry entry
+    lean_project = str(get_project(lean_project)["id"])
     job_id = job_id or str(uuid.uuid4())
     now = datetime.utcnow()
     merged_env = _merge_extra_env(extra_env, lean_project=lean_project)
@@ -694,8 +696,17 @@ def run_job(
     if extra_env and extra_env.get("lean_project"):
         lean_project = str(extra_env["lean_project"])
     project = get_project(lean_project)
+    lean_project = str(project["id"])
 
     lean_root = lean_projects_root()
+    staged = stage_lean_project(lean_root, job_id=job_id, strategy_id=ir_id)
+    project = dict(project)
+    project["lean_cli_name"] = staged.project_name
+    project["config_json"] = str(staged.root / "config.json")
+    project["composite_wrapper"] = str(
+        staged.root / "scripts" / "lean_backtest_composite.py"
+    )
+    project["source_sha256"] = staged.source_sha256
     image = _default_image(project)
     runner_id = _runner_id()
     output_rel = resolve_output_rel(lean_project, job_id, root=lean_root)
@@ -706,24 +717,24 @@ def run_job(
     container_ch_port = os.environ.get("CLICKHOUSE_PORT", "8123")
     container_ch_user = os.environ.get("CLICKHOUSE_USER", "testuser")
     container_ch_password = os.environ.get("CLICKHOUSE_PASSWORD", "testanalysis")
-    container_ch_database = os.environ.get("CLICKHOUSE_DATABASE", "vera")
+    container_ch_database = os.environ.get("CLICKHOUSE_DATABASE", "sigmarail")
 
     merged_env = _merge_extra_env(extra_env, lean_project=lean_project)
     docker_env: dict[str, str] = {
-        "VERA_LAB_ID": ir_id,
-        "VERA_DEPLOYMENT_ID": merged_env.get("deployment-id", ""),
+        "SIGMARAIL_STRATEGY_ID": ir_id,
+        "SIGMARAIL_DEPLOYMENT_ID": merged_env.get("deployment-id", ""),
         "CLICKHOUSE_HOST": container_ch_host,
         "CLICKHOUSE_PORT": container_ch_port,
         "CLICKHOUSE_USER": container_ch_user,
         "CLICKHOUSE_PASSWORD": container_ch_password,
         "CLICKHOUSE_DATABASE": container_ch_database,
     }
-    query_url = _vera_query_url_for_container()
+    query_url = _sigmarail_api_url_for_container()
     if query_url:
-        docker_env["VERA_QUERY_URL"] = query_url
-    query_key = (os.environ.get("VERA_QUERY_API_KEY") or "").strip()
+        docker_env["SIGMARAIL_API_URL"] = query_url
+    query_key = (os.environ.get("SIGMARAIL_API_KEY") or "").strip()
     if query_key:
-        docker_env["VERA_QUERY_API_KEY"] = query_key
+        docker_env["SIGMARAIL_API_KEY"] = query_key
     docker_env.update({k: v for k, v in merged_env.items() if k != "lean_project"})
     extra_docker_config = json.dumps({"environment": docker_env})
 
@@ -744,8 +755,8 @@ def run_job(
         container_ch_database=container_ch_database,
         data_mode=merged_env.get("data_mode") or merged_env.get("data-mode") or merged_env.get("clickhouse-data-mode"),
         extra_env=merged_env,
-        vera_query_url=query_url,
-        vera_query_api_key=query_key or None,
+        sigmarail_api_url=query_url,
+        sigmarail_api_key=query_key or None,
     )
 
     log_path = output_path / "lean-backtest.log"
@@ -1114,7 +1125,7 @@ def investigate_job(
             err_lines = [ln for ln in log_tail if "error" in ln.lower() or "exception" in ln.lower()]
             hints.append(
                 "inspect log_tail (error lines: %d); typical causes: spec compile error, "
-                "missing VERA_QUERY_URL, docker image pull" % len(err_lines)
+                "missing SIGMARAIL_API_URL, docker image pull" % len(err_lines)
             )
         if st == "cancelled":
             hints.append("resubmit with submit_job when ready")
@@ -1161,25 +1172,26 @@ def _lint_guard(spec_json: str) -> None:
 
     ``save_spec_guarded`` already lints, but that is a *caller*; this function is the single
     write path to ``strategy_algorithm_specs`` and is reachable directly, so leaving it
-    ungated means one door stayed open. Honours the same ``VERA_SPEC_LINT`` setting
+    ungated means one door stayed open. Honours ``SIGMARAIL_SPEC_LINT``
     (``off`` | ``warn`` | ``enforce``, default ``enforce``).
 
     Skipped silently when the linter cannot be imported — this package deliberately does not
     depend on VeraBase, and the guarded path still enforces. A gate that cannot run must not
     pretend to have run, so the guarded caller reports the skip separately.
     """
-    mode = (os.environ.get("VERA_SPEC_LINT") or "enforce").strip().lower()
+    mode = (
+        os.environ.get("SIGMARAIL_SPEC_LINT", "enforce")
+    ).strip().lower()
     if mode == "off":
         return
     try:
-        from vera_query_core.ir import spec_lint
+        from sigmarail_spec import strategy_lint as spec_lint
     except Exception:
         return
     try:
         findings = spec_lint.lint_spec_json(
             spec_json,
             runtime_kwargs=spec_lint.resolve_runtime_kwargs(),
-            dialect_modules=spec_lint.dialect_modules_from_vera_lab(),
         )
     except Exception:
         return

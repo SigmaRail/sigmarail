@@ -66,7 +66,7 @@ from screens.live_promotion import (
     register_paper_deployment,
 )
 from screens.strategy_compose import (
-    compose_vera_lab_v1,
+    compose_strategy_v1,
     list_strategy_templates,
     load_framework_catalog,
     suggest_ir_id,
@@ -192,30 +192,20 @@ def _get_lineage_index() -> dict[str, dict[str, Any]]:
     if _LINEAGE_INDEX_CACHE is None:
         idx: dict[str, dict[str, Any]] = {}
         try:
-            from vera_query_core.lineage.reader import _repo_root
+            from sigmarail.query import describe_dataset, list_datasets
 
-            root = _repo_root()
-            lineage_dir = root / "sql/lineage"
-            if lineage_dir.is_dir():
-                for p in lineage_dir.glob("*.json"):
-                    try:
-                        data = json.loads(p.read_text(encoding="utf-8"))
-                        target = data.get("target_table") or p.stem
-                        for c_name, c_info in data.get("columns", {}).items():
-                            if isinstance(c_info, dict) and (
-                                c_info.get("caveats") or c_info.get("math")
-                            ):
-                                idx[f"{target}.{c_name}"] = {
-                                    "caveats": c_info.get("caveats", []),
-                                    "math": c_info.get("math"),
-                                }
-                                # Also index by bare column name for easy fallback
-                                if c_name not in idx:
-                                    idx[c_name] = idx[f"{target}.{c_name}"]
-                    except Exception:
-                        pass
+            for dataset in list_datasets()["datasets"]:
+                described = describe_dataset(dataset["dataset_id"])
+                for field in described["fields"]:
+                    record = {
+                        "lineage_roots": field.get("lineage_roots", []),
+                        "description": field.get("description", ""),
+                        "dataset_id": dataset["dataset_id"],
+                    }
+                    idx[f"{described['table']}.{field['name']}"] = record
+                    idx.setdefault(field["name"], record)
         except Exception:
-            pass
+            idx = {}
         _LINEAGE_INDEX_CACHE = idx
     return _LINEAGE_INDEX_CACHE
 
@@ -234,10 +224,8 @@ class ScreenFieldsView(APIView):
             info = lineage_idx.get(f"{tbl}.{col}") or lineage_idx.get(col)
             item = dict(f)
             if info:
-                if info.get("caveats"):
-                    item["caveats"] = info["caveats"]
-                if info.get("math"):
-                    item["math"] = info["math"]
+                item["lineage_roots"] = info.get("lineage_roots", [])
+                item["lineage_description"] = info.get("description", "")
             enriched_fields.append(item)
         return Response({"fields": enriched_fields, "count": len(enriched_fields)})
 
@@ -258,17 +246,33 @@ class ScreenFieldLineageView(APIView):
             table = "screener_price_tech_daily"
 
         try:
-            from vera_query_core.lineage.reader import explain_column_graph
+            from sigmarail.query import explain_field
 
-            graph_data = explain_column_graph(table, name)
+            graph_data = explain_field(table, name)
+            field = graph_data["field"]
+            direct_inputs = graph_data["direct_inputs"]
+            nodes = [
+                {"id": field["field_id"], "kind": "field", **field},
+                {"id": table, "kind": "table", "schema_file": graph_data["schema_file"]},
+                *({"id": item, "kind": "table"} for item in direct_inputs),
+            ]
+            edges = [
+                {"from": field["field_id"], "to": table, "kind": "defined_by"},
+                *({"from": table, "to": item, "kind": "direct_input"} for item in direct_inputs),
+            ]
             return Response(
                 {
                     "field": name,
                     "table": table,
-                    "found": bool(graph_data.get("nodes")),
-                    "caveats": graph_data.get("caveats", []),
-                    "math": graph_data.get("math"),
-                    "graph": graph_data,
+                    "found": True,
+                    "caveats": [graph_data["column_lineage_basis"]],
+                    "math": graph_data["field"].get("description"),
+                    "graph": {
+                        **graph_data,
+                        "nodes": nodes,
+                        "edges": edges,
+                        "exact_column_edges_available": False,
+                    },
                 }
             )
         except Exception as exc:
@@ -509,7 +513,7 @@ class ScreenFieldAlphaPerformanceView(APIView):
     """Pre-LEAN factor-performance evaluation (VeraProjects#70/#74).
 
     Delegates in-process to
-    ``vera_query_core.alpha_evaluation.evaluate_factor_performance`` — quantile
+    ``sigmarail.features.alpha_evaluation.evaluate_factor_performance`` — quantile
     forward-return spread, daily Spearman IC/ICIR, regime-partitioned top-bucket
     active spread, and a pass/fail/insufficient_data verdict.
     """
@@ -562,7 +566,7 @@ class ScreenFieldAlphaPerformanceView(APIView):
 
         client = get_ch_client()
         try:
-            from vera_query_core.alpha_evaluation import evaluate_factor_performance
+            from sigmarail.features.alpha_evaluation import evaluate_factor_performance
 
             return Response(
                 evaluate_factor_performance(
@@ -936,15 +940,17 @@ class CatalogTemplatesView(APIView):
     permission_classes: list[Any] = []
 
     def get(self, request: Request) -> Response:
-        from vera_query_core.template_catalog import list_templates, summary_row
-
         kind = request.query_params.get("kind") or None
         status_q = request.query_params.get("status") or None
         if kind not in (None, "screener", "strategy"):
             return Response({"detail": "kind must be screener or strategy"}, status=400)
         if status_q not in (None, "active", "deprecated", "draft"):
             return Response({"detail": "status must be active, deprecated, or draft"}, status=400)
-        rows = [summary_row(r) for r in list_templates(kind=kind, status=status_q)]
+        rows = list_templates()
+        if kind is not None:
+            rows = [row for row in rows if row.get("kind") == kind]
+        if status_q is not None:
+            rows = [row for row in rows if row.get("status") == status_q]
         return Response({"templates": rows})
 
 
@@ -953,10 +959,8 @@ class CatalogTemplateDetailView(APIView):
     permission_classes: list[Any] = []
 
     def get(self, request: Request, template_id: str) -> Response:
-        from vera_query_core.template_catalog import get_template
-
         try:
-            return Response(get_template(template_id))
+            return Response(load_template(template_id))
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_404_NOT_FOUND)
 
@@ -1171,7 +1175,7 @@ class BacktestComposeView(APIView):
                     algorithm_parameters if isinstance(algorithm_parameters, dict) else None,
                     lineage_params or build_lineage_parameters(universe_spec),
                 )
-                spec = compose_vera_lab_v1(
+                spec = compose_strategy_v1(
                     universe_spec=universe_spec,
                     template_id=template_id,
                     framework=framework if isinstance(framework, dict) else None,
@@ -2754,7 +2758,7 @@ class StrategyFrameworkTemplateDetailView(APIView):
         return Response({"deleted": True, "id": template_id})
 
 # --- Strategy pipeline endpoints -------------------------------------------
-# These delegate to vera_query_core.strategy (pure data transforms, no DB).
+# These delegate to sigmarail_spec.strategy (pure data transforms, no DB).
 
 
 class StrategyCompileView(APIView):
@@ -2762,7 +2766,7 @@ class StrategyCompileView(APIView):
     permission_classes: list[Any] = []
 
     def post(self, request: Request) -> Response:
-        from vera_query_core.strategy import PipelineDocument, compile_pipeline
+        from sigmarail_spec.strategy import PipelineDocument, compile_pipeline
 
         body = request.data if isinstance(request.data, dict) else {}
         try:
@@ -2784,7 +2788,7 @@ class StrategyDecompileView(APIView):
     permission_classes: list[Any] = []
 
     def post(self, request: Request) -> Response:
-        from vera_query_core.strategy import decompile_pipeline
+        from sigmarail_spec.strategy import decompile_pipeline
 
         body = request.data if isinstance(request.data, dict) else {}
         try:
@@ -2798,7 +2802,7 @@ class StrategyCompilePortfolioView(APIView):
     permission_classes: list[Any] = []
 
     def post(self, request: Request) -> Response:
-        from vera_query_core.strategy import PortfolioDocument, compile_portfolio
+        from sigmarail_spec.strategy import PortfolioDocument, compile_portfolio
 
         body = request.data if isinstance(request.data, dict) else {}
         try:
@@ -2813,7 +2817,7 @@ class StrategyDecompilePortfolioView(APIView):
     permission_classes: list[Any] = []
 
     def post(self, request: Request) -> Response:
-        from vera_query_core.strategy import decompile_portfolio
+        from sigmarail_spec.strategy import decompile_portfolio
 
         body = request.data if isinstance(request.data, dict) else {}
         try:
@@ -2827,7 +2831,7 @@ class StrategyValidateView(APIView):
     permission_classes: list[Any] = []
 
     def post(self, request: Request) -> Response:
-        from vera_query_core.strategy import PipelineDocument, compile_pipeline
+        from sigmarail_spec.strategy import PipelineDocument, compile_pipeline
 
         body = request.data if isinstance(request.data, dict) else {}
         try:
@@ -2843,7 +2847,7 @@ class StrategyFactorsView(APIView):
     permission_classes: list[Any] = []
 
     def get(self, request: Request) -> Response:
-        from vera_query_core.strategy import list_factors
+        from sigmarail_spec.strategy import list_factors
 
         return Response({"factors": list_factors()})
 
@@ -2851,21 +2855,14 @@ class StrategyFactorsView(APIView):
 class StrategyPositionFieldsView(APIView):
     """Runtime position bindings — the `pos` operand's vocabulary.
 
-    Served from ``vera_lab.ir.position_bindings`` (the registry lives beside the
-    runtime that supplies the context — single source, no frontend copy).
+    Served from the canonical SigmaRail Spec binding registry.
     """
 
     authentication_classes: list[Any] = []
     permission_classes: list[Any] = []
 
     def get(self, request: Request) -> Response:
-        from screens.risk_rules import _ensure_veralab_path
-
-        _ensure_veralab_path()
-        try:
-            from vera_lab.ir.position_bindings import POSITION_BINDINGS
-        except Exception:
-            return Response({"fields": [], "count": 0})
+        from sigmarail_spec.strategy.position_bindings import POSITION_BINDINGS
         return Response(
             {"fields": [dict(b) for b in POSITION_BINDINGS],
              "count": len(POSITION_BINDINGS)}
@@ -2875,8 +2872,7 @@ class StrategyPositionFieldsView(APIView):
 class StrategyPcmBindingsView(APIView):
     """PCM runtime bindings — the ``ref`` operand's namespaces (cand/hold/acct/pyr/regime).
 
-    Served from ``vera_lab.ir.pcm_bindings`` (the registry lives beside the
-    runtime that supplies the context — single source, no frontend copy).
+    Served from the canonical SigmaRail Spec binding registry.
     """
 
     authentication_classes: list[Any] = []
@@ -3017,7 +3013,7 @@ class StrategyPresetsView(APIView):
     permission_classes: list[Any] = []
 
     def get(self, request: Request) -> Response:
-        from vera_query_core.strategy.presets import list_presets
+        from sigmarail_spec.strategy.presets import list_presets
 
         return Response({"presets": list_presets()})
 
@@ -3027,7 +3023,7 @@ class StrategyPresetDetailView(APIView):
     permission_classes: list[Any] = []
 
     def get(self, request: Request, preset_id: str) -> Response:
-        from vera_query_core.strategy.presets import get_preset
+        from sigmarail_spec.strategy.presets import get_preset
 
         try:
             return Response(get_preset(preset_id).model_dump())

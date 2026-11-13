@@ -7,40 +7,66 @@ from typing import Any
 
 def list_factors() -> dict[str, Any]:
     """Semantic factor registry (name -> L7 column/table/direction)."""
-    from vera_query_core.strategy import list_factors as _list_factors
+    from sigmarail_spec.strategy import list_factors as _list_factors
 
     return {"factors": _list_factors()}
 
 
 def list_presets() -> dict[str, Any]:
     """Named strategy presets."""
-    from vera_query_core.strategy.presets import list_presets as _list_presets
+    from sigmarail_spec.strategy.presets import list_presets as _list_presets
 
     return {"presets": _list_presets()}
 
 
 def list_templates(kind: str | None = None, status: str | None = "active") -> dict[str, Any]:
-    """List screener and strategy templates (C-TEMPLATE-CATALOG-V1). Default status=active."""
-    from vera_query_core.template_catalog import list_templates as _list, summary_row
+    """List SigmaRail screener and strategy templates (C-TEMPLATE-CATALOG-V1)."""
+    from screens.ir_preview import list_templates as _list_screen_templates
+    from sigmarail_spec.strategy.presets import list_presets
 
     if kind not in (None, "", "screener", "strategy"):
         return {"error": "kind must be screener or strategy", "code": "invalid_argument"}
     if status not in (None, "", "active", "deprecated", "draft"):
         return {"error": "status must be active, deprecated, or draft", "code": "invalid_argument"}
-    kind_arg = kind or None
-    status_arg = status or None
-    rows = [summary_row(r) for r in _list(kind=kind_arg, status=status_arg)]
+    rows: list[dict[str, Any]] = []
+    if kind in (None, "", "screener"):
+        rows.extend(_list_screen_templates())
+    if kind in (None, "", "strategy"):
+        rows.extend(
+            {
+                "id": preset["id"],
+                "label": preset.get("name", preset["id"]),
+                "kind": "strategy",
+                "tags": preset.get("tags", []),
+                "description": preset.get("description", ""),
+                "status": preset.get("status", "active"),
+                "screener_template_id": preset.get("screener_template_id", ""),
+            }
+            for preset in list_presets()
+        )
+    if status not in (None, ""):
+        rows = [row for row in rows if row.get("status", "active") == status]
     return {"templates": rows}
 
 
 def get_template(template_id: str) -> dict[str, Any]:
-    """Load one catalog template (screener IR or strategy PipelineDocument)."""
-    from vera_query_core.template_catalog import get_template as _get
+    """Load a SigmaRail screener query or strategy preset by catalog id."""
+    from screens.ir_preview import load_template
+    from sigmarail_spec.strategy.presets import get_preset
 
     try:
-        return _get(template_id)
+        try:
+            template = load_template(template_id)
+            return {"id": template_id, "kind": "screener", **template}
+        except ValueError:
+            preset = get_preset(template_id)
+            return {
+                "id": template_id,
+                "kind": "strategy",
+                "pipeline": preset.model_dump(),
+            }
     except ValueError as exc:
-        return {"error": str(exc), "code": "invalid_argument"}
+        return {"error": str(exc), "code": "unknown_template"}
 
 
 def list_columns() -> dict[str, Any]:
@@ -62,14 +88,14 @@ def pipeline_schema() -> dict[str, Any]:
     are legible ONLY in graph-policy `if` conditions — spec_lint E113
     rejects them at save at any other site (they would silently dead-eval).
     """
-    from vera_query_core.strategy import PipelineDocument
+    from sigmarail_spec.strategy import PipelineDocument
 
     return PipelineDocument.model_json_schema()
 
 
 def validate_pipeline(pipeline_json: str) -> dict[str, Any]:
     """Validate a staged PipelineDocument JSON without compiling it."""
-    from vera_query_core.strategy import PipelineDocument
+    from sigmarail_spec.strategy import PipelineDocument
 
     try:
         data = json.loads(pipeline_json)
@@ -84,8 +110,8 @@ def validate_pipeline(pipeline_json: str) -> dict[str, Any]:
 
 def compile_preset(preset_id: str) -> dict[str, Any]:
     """Compile a named strategy preset into a VeraLabV1 spec dict."""
-    from vera_query_core.strategy import compile_pipeline as _compile
-    from vera_query_core.strategy.presets import get_preset
+    from sigmarail_spec.strategy import compile_pipeline as _compile
+    from sigmarail_spec.strategy.presets import get_preset
 
     try:
         doc = get_preset(preset_id)
@@ -98,7 +124,7 @@ def compile_preset(preset_id: str) -> dict[str, Any]:
 
 def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
     """Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict."""
-    from vera_query_core.strategy import PipelineDocument, compile_pipeline as _compile
+    from sigmarail_spec.strategy import PipelineDocument, compile_pipeline as _compile
 
     try:
         data = json.loads(pipeline_json)
@@ -113,7 +139,7 @@ def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
 
 def fork(spec_json: str) -> dict[str, Any]:
     """Decompile a VeraLabV1 spec JSON back into a PipelineDocument (for editing)."""
-    from vera_query_core.strategy import decompile_pipeline
+    from sigmarail_spec.strategy import decompile_pipeline
 
     try:
         data = json.loads(spec_json)
@@ -128,7 +154,7 @@ def fork(spec_json: str) -> dict[str, Any]:
 
 def compile_portfolio(portfolio_json: str) -> dict[str, Any]:
     """Compile a PortfolioDocument JSON (legs + allocation) into a VeraLabV1 spec."""
-    from vera_query_core.strategy import PortfolioDocument, compile_portfolio as _compile
+    from sigmarail_spec.strategy import PortfolioDocument, compile_portfolio as _compile
 
     try:
         data = json.loads(portfolio_json)
@@ -143,7 +169,7 @@ def compile_portfolio(portfolio_json: str) -> dict[str, Any]:
 
 def fork_portfolio(spec_json: str) -> dict[str, Any]:
     """Decompile a VeraLabV1 spec JSON back into a PortfolioDocument (for editing)."""
-    from vera_query_core.strategy import decompile_portfolio
+    from sigmarail_spec.strategy import decompile_portfolio
 
     try:
         data = json.loads(spec_json)
@@ -162,7 +188,7 @@ def list_setup_recipes() -> dict[str, Any]:
     ``champion_setup_or`` = volume_thrust_breakout OR vcp_compression OR pocket_pivot.
     Compose these instead of hand-typing expression trees — the thresholds live in one place.
     """
-    from vera_query_core.strategy.setup_recipes import list_setup_recipes as _list
+    from sigmarail_spec.strategy.setup_recipes import list_setup_recipes as _list
 
     return {"setup_recipes": _list()}
 
@@ -176,8 +202,8 @@ def compose_document(
     This is the *semantic* authoring entry: state the intent (preset + recipe ids), not the AST.
     Follow with ``save_pipeline`` (compile + save) and then a backtest submit.
     """
-    from vera_query_core.strategy.presets import get_preset
-    from vera_query_core.strategy.setup_recipes import apply_setup_recipe, list_setup_recipes
+    from sigmarail_spec.strategy.presets import get_preset
+    from sigmarail_spec.strategy.setup_recipes import apply_setup_recipe, list_setup_recipes
 
     try:
         doc = get_preset(preset_id)
@@ -206,7 +232,7 @@ def save_pipeline(
     The missing middle exit: turns a ``PipelineDocument`` (from ``compose_document`` or
     ``strategy_fork``) straight into a stored, runnable spec — no raw VeraLabV1 JSON to build.
     """
-    from vera_query_core.strategy import PipelineDocument, compile_pipeline as _compile
+    from sigmarail_spec.strategy import PipelineDocument, compile_pipeline as _compile
     from screens.spec_save import save_spec_guarded
 
     try:
@@ -272,7 +298,7 @@ def strategy_diff(spec_a_json: str, spec_b_json: str) -> dict[str, Any]:
     ``bindings``) or compiled VeraLabV1 (``Framework`` slots); the latter is
     decompiled first so both inputs compare in the same document space.
     """
-    from vera_query_core.strategy import PipelineDocument, decompile_pipeline
+    from sigmarail_spec.strategy import PipelineDocument, decompile_pipeline
 
     def _to_doc(raw: str, label: str) -> dict[str, Any]:
         try:
@@ -306,7 +332,7 @@ def strategy_lint(pipeline_json: str) -> dict[str, Any]:
     ``honor_insight_confidence``) and warns on insight tags attached to the
     ``SwingProgressiveRiskManagementModel`` risk slot (ignored at runtime).
     """
-    from vera_query_core.strategy import PipelineDocument
+    from sigmarail_spec.strategy import PipelineDocument
 
     try:
         data = json.loads(pipeline_json) if isinstance(pipeline_json, str) else pipeline_json

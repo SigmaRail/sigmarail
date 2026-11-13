@@ -63,33 +63,27 @@ def test_preview_unknown_preset_raises() -> None:
         preview_screen(_C(), as_of="2026-08-21", preset="not_a_real_preset")
 
 
-_L7_SYSTEM_COLUMNS = [
-    ("screener_price_tech_daily", "ticker", "String", "Stock ticker symbol"),
-    ("screener_price_tech_daily", "date", "Date", "Trading date"),
-    ("screener_price_tech_daily", "exchange", "LowCardinality(String)", "Primary exchange (from tickers)"),
-    ("screener_price_tech_daily", "close", "Nullable(Float64)", "Close - split adjusted"),
-    ("screener_price_tech_daily", "rs_rating", "UInt8", "1-year RS percentile"),
-    ("screener_ratings_daily", "overall_score", "Float64", "Master composite score"),
-    ("screener_price_tech_daily", "sector", "String", "Sector (from tickers)"),
-    ("screener_price_tech_daily", "industry", "String", "Industry (from tickers)"),
-    ("screener_estimates_daily", "eps_cq_mean", "Float64", "EPS current-quarter mean"),
-    ("screener_estimates_daily", "eps_ny_rev_pct_90d", "Float64", "NY EPS 90d revision %"),
-    ("screener_estimates_daily", "eps_last_surprise_pct", "Float64", "Latest reported EPS surprise vs estimate-at-print"),
-    ("screener_price_tech_daily", "lastupdated", "DateTime", "ReplacingMergeTree version column"),
+_CORE_FIELDS = [
+    {"name": "ticker", "prefix": "px", "table": "screener_price_tech_daily", "type": "String", "description": "Stock ticker symbol"},
+    {"name": "date", "prefix": "px", "table": "screener_price_tech_daily", "type": "Date", "description": "Trading date"},
+    {"name": "exchange", "prefix": "px", "table": "screener_price_tech_daily", "type": "LowCardinality(String)", "description": "Primary exchange (from reference data)"},
+    {"name": "close", "prefix": "px", "table": "screener_price_tech_daily", "type": "Nullable(Float64)", "description": "Split-adjusted close"},
+    {"name": "rs_rating", "prefix": "px", "table": "screener_price_tech_daily", "type": "UInt8", "description": "1-year RS percentile"},
+    {"name": "overall_score", "prefix": "rt", "table": "screener_ratings_daily", "type": "Float64", "description": "Master composite score"},
+    {"name": "sector", "prefix": "px", "table": "screener_price_tech_daily", "type": "String", "description": "Sector"},
+    {"name": "industry", "prefix": "px", "table": "screener_price_tech_daily", "type": "String", "description": "Industry"},
 ]
 
 
 def _patch_ch_schema():
-    client = MagicMock()
-    client.query.return_value.result_rows = list(_L7_SYSTEM_COLUMNS)
-    return patch("screens.ch.get_ch_client", return_value=client)
+    return patch("sigmarail.universe.field_catalog", return_value=list(_CORE_FIELDS))
 
 
-def test_list_screen_fields_from_ch_schema() -> None:
+def test_list_screen_fields_from_sigmarail_registry() -> None:
     with _patch_ch_schema():
         fields = list_screen_fields()
     names = {f["name"] for f in fields}
-    expected = {row[1] for row in _L7_SYSTEM_COLUMNS if row[1] != "lastupdated"}
+    expected = {row["name"] for row in _CORE_FIELDS}
     assert names == expected
     for f in fields:
         assert "name" in f and "label" in f and "category" in f
@@ -98,18 +92,13 @@ def test_list_screen_fields_from_ch_schema() -> None:
             "ratings",
             "fundamentals",
             "ownership",
-            "estimates",
-            "forecast",
             "other",
         }
     by_name = {f["name"]: f for f in fields}
     assert by_name["exchange"]["table"] == "screener_price_tech_daily"
     assert by_name["exchange"]["type"] == "LowCardinality(String)"
-    assert by_name["exchange"]["description"] == "Primary exchange (from tickers)"
-    assert by_name["eps_cq_mean"]["description"] == "EPS current-quarter mean"
-    assert by_name["eps_cq_mean"]["category"] == "estimates"
-    assert by_name["eps_ny_rev_pct_90d"]["category"] == "estimates"
-    assert by_name["eps_last_surprise_pct"]["category_label"] == "Estimates (street consensus)"
+    assert by_name["exchange"]["description"] == "Primary exchange (from reference data)"
+    assert not {"eps_cq_mean", "eps_ny_rev_pct_90d", "eps_last_surprise_pct"} & names
 
 
 @pytest.mark.django_db
@@ -124,7 +113,7 @@ def test_fields_endpoint() -> None:
     assert "exchange" in names
     assert "sector" in names
     exchange = next(f for f in body["fields"] if f["name"] == "exchange")
-    assert exchange["description"] == "Primary exchange (from tickers)"
+    assert exchange["description"] == "Primary exchange (from reference data)"
 
 
 def test_list_field_values_from_db() -> None:
@@ -234,19 +223,16 @@ def _valid_min_spec() -> dict[str, Any]:
 
 
 def test_preview_universe_ir_happy_mocked() -> None:
-    screen_result = MagicMock()
-    screen_result.column_names = ["date", "ticker", "close", "overall_score"]
-    screen_result.result_rows = [
-        ("2026-08-21", "AAPL", 200.0, 85.0),
-        ("2026-08-21", "MSFT", 400.0, 80.0),
+    rows = [
+        {"date": "2026-08-21", "ticker": "AAPL", "close": 200.0, "overall_score": 85.0},
+        {"date": "2026-08-21", "ticker": "MSFT", "close": 400.0, "overall_score": 80.0},
     ]
-    exch_result = MagicMock()
-    exch_result.column_names = ["ticker", "exchange"]
-    exch_result.result_rows = [("AAPL", "NASDAQ"), ("MSFT", "NASDAQ")]
     client = MagicMock()
-    client.query.side_effect = [screen_result, exch_result]
-
-    out = preview_universe_ir(client, as_of="2026-08-21", spec_dict=_valid_min_spec())
+    with (
+        patch("sigmarail.universe.universe_run", return_value={"rows": rows, "row_count": 2}),
+        patch("screens.ir_preview.enrich_rows_with_exchange", side_effect=lambda _client, data: data[0].update(exchange="NASDAQ")),
+    ):
+        out = preview_universe_ir(client, as_of="2026-08-21", spec_dict=_valid_min_spec())
     assert out["as_of"] == "2026-08-21"
     assert out["count"] == 2
     assert out["screen_ir"] == "universe_query_v1"
@@ -255,10 +241,8 @@ def test_preview_universe_ir_happy_mocked() -> None:
     assert out["rows"][0]["exchange"] == "NASDAQ"
     assert out["spec"]["from"] == "daily_screener"
     assert "SELECT" in out["sql"]
-    assert "params" in out and "day" in out["params"]
-    assert client.query.call_count == 2
-    _args, kwargs = client.query.call_args_list[0]
-    assert kwargs["parameters"]["day"] == "2026-08-21"
+    assert "params" in out and out["params"]["start_date"] == "2026-08-21"
+    assert client.query.call_count == 0
 
 
 @pytest.mark.django_db
@@ -273,20 +257,19 @@ def test_compile_sql_endpoint() -> None:
     body = resp.json()
     assert "SELECT" in body["sql"]
     assert "params" in body
-    assert "day" in body["params"]
+    assert body["params"]["start_date"] == "1970-01-01"
+    assert body["params"]["end_date"] == "1970-01-01"
 
 
 @pytest.mark.django_db
 def test_preview_ir_endpoint_happy() -> None:
-    screen_result = MagicMock()
-    screen_result.column_names = ["date", "ticker", "close", "overall_score"]
-    screen_result.result_rows = [("2026-08-21", "NVDA", 100.0, 90.0)]
-    exch_result = MagicMock()
-    exch_result.column_names = ["ticker", "exchange"]
-    exch_result.result_rows = [("NVDA", "NASDAQ")]
+    rows = [{"date": "2026-08-21", "ticker": "NVDA", "close": 100.0, "overall_score": 90.0}]
 
-    with patch("api.views.get_ch_client") as mock_ch:
-        mock_ch.return_value.query.side_effect = [screen_result, exch_result]
+    with (
+        patch("api.views.get_ch_client", return_value=MagicMock()),
+        patch("sigmarail.universe.universe_run", return_value={"rows": rows, "row_count": 1}),
+        patch("screens.ir_preview.enrich_rows_with_exchange", side_effect=lambda _client, data: data[0].update(exchange="NASDAQ")),
+    ):
         c = Client()
         resp = c.post(
             "/api/screens/preview-ir",

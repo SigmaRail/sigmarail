@@ -1,8 +1,8 @@
 """SigmaRail Studio MCP server (domain_verb tool naming)."""
 from __future__ import annotations
 
-import importlib.util
 import json
+import importlib.util
 import os
 from pathlib import Path
 from typing import Any
@@ -44,17 +44,24 @@ def _enabled_modules() -> set[str]:
     unknown = enabled - _MODULES_BY_NAME.keys()
     if unknown:
         raise ValueError(f"unknown SigmaRail Studio modules: {', '.join(sorted(unknown))}")
-    compatibility = {name for name in enabled if _MODULES_BY_NAME[name]["compatibility"]}
-    if compatibility and importlib.util.find_spec("vera_query_core") is None:
-        raise RuntimeError(
-            f"Compatibility modules {', '.join(sorted(compatibility))} were enabled but "
-            "vera_query_core is not installed. "
-            "Install the local VeraBase package or disable those modules in SIGMARAIL_STUDIO_MODULES."
+    # The catalog records current and target dependencies separately during
+    # migration. Fail at activation with an actionable message instead of
+    # registering tools that can only fail when first called.
+    unavailable: dict[str, list[str]] = {}
+    for name in sorted(enabled):
+        missing = [
+            package for package in _MODULES_BY_NAME[name].get("requires", [])
+            if importlib.util.find_spec(package) is None
+        ]
+        if missing:
+            unavailable[name] = missing
+    if unavailable:
+        details = "; ".join(
+            f"{name}: {', '.join(packages)}" for name, packages in unavailable.items()
         )
-    if compatibility & {"backtesting", "deployment"} and importlib.util.find_spec("vera_lab") is None:
         raise RuntimeError(
-            "The backtesting or deployment module requires the local VeraTradingLab package. "
-            "Install it or disable those modules in SIGMARAIL_STUDIO_MODULES."
+            "Requested SigmaRail Studio modules have unmet current runtime dependencies: "
+            f"{details}. Core and Studio modules remain available by default."
         )
     return enabled
 
@@ -74,8 +81,8 @@ def _build() -> FastMCP:
         name="sigmarail-studio",
         instructions=(
             "SigmaRail Studio MCP. Read the versioned SigmaRail Spec Resources first. "
-            "The core module is always available; other modules are explicitly enabled "
-            "through SIGMARAIL_STUDIO_MODULES. Vera-backed compatibility modules remain optional.\n\n"
+            "The core module is always available; additional SigmaRail capabilities are "
+            "enabled through SIGMARAIL_STUDIO_MODULES.\n\n"
             "core_*     — SQL-backed SigmaRail dataset catalog and bounded read-only queries.\n"
             "screening, strategy, backtesting, portfolio, deployment, knowledge — optional modules.\n"
         ),

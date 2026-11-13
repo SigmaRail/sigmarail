@@ -20,24 +20,7 @@ SIGMARAIL_SPEC_SOURCE="${SIGMARAIL_SPEC_SOURCE:-${FINANCE_PROJECTS}/sigmarail-sp
 SIGMARAIL_CORE_SOURCE="${SIGMARAIL_CORE_SOURCE:-${REPO_ROOT}/src}"
 export SIGMARAIL_WORKSPACE_ROOT="${SIGMARAIL_WORKSPACE_ROOT:-${FINANCE_PROJECTS}}"
 
-LEGACY_PATHS=""
-STUDIO_MODULES="${SIGMARAIL_STUDIO_MODULES:-core,studio}"
-case ",${STUDIO_MODULES}," in
-  *,screening,*|*,strategy,*|*,backtesting,*|*,portfolio,*|*,deployment,*|*,knowledge,*)
-    LEGACY_PATHS=":${FINANCE_PROJECTS}/VeraBase/src"
-    ;;
-esac
-case ",${STUDIO_MODULES}," in
-  *,strategy,*|*,backtesting,*|*,deployment,*)
-    LEGACY_PATHS="${LEGACY_PATHS}:${FINANCE_PROJECTS}/LeanProjects/VeraTradingLab"
-    ;;
-esac
-case ",${STUDIO_MODULES}," in
-  *,knowledge,*) LEGACY_PATHS="${LEGACY_PATHS}:${FINANCE_PROJECTS}/KnowledgeBase" ;;
-esac
-
-# Private compatibility source paths are available only for explicitly selected modules.
-export PYTHONPATH="${ROOT}:${SIGMARAIL_SPEC_SOURCE}:${SIGMARAIL_CORE_SOURCE}${LEGACY_PATHS}${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH="${ROOT}:${SIGMARAIL_SPEC_SOURCE}:${SIGMARAIL_CORE_SOURCE}${PYTHONPATH:+:${PYTHONPATH}}"
 export MCP_TRANSPORT="${MCP_TRANSPORT:-stdio}"
 
 # Use the repository environment by default; deployments may select a managed interpreter.

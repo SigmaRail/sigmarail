@@ -1,4 +1,4 @@
-"""Backtest run listing and report digests (strategy_runs via vera_query_core)."""
+"""Backtest run listing and report digests (strategy_runs via sigmarail.features)."""
 
 from __future__ import annotations
 
@@ -335,14 +335,14 @@ def get_run_report(client: Any, run_id: str) -> dict[str, Any]:
 
 def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
     """Compatibility report adapter; requires the optional Vera runtime."""
-    from vera_query_core.backtest_report import get_backtest_report
+    from sigmarail.features.backtest_report import get_backtest_report
 
     return get_backtest_report(client, run_id)
 
 
 def list_runs_by_ir_id(ir_id: str, *, limit: int = 50) -> dict[str, Any]:
     """List compatibility backtest runs; requires the optional Vera runtime."""
-    from vera_query_core.backtest_report import list_runs_by_ir_id as _list_runs
+    from sigmarail.features.backtest_report import list_runs_by_ir_id as _list_runs
 
     return _list_runs(ir_id, limit=limit)
 

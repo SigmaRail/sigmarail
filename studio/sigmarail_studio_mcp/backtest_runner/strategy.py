@@ -1,9 +1,4 @@
-"""MCP strategy composition helpers: build, compile, and inspect pipelines.
-
-Thin wrappers over ``vera_query_core.strategy`` so the ``vera-backtest`` MCP
-server can author staged pipelines and compile them to VeraLabV1 specs
-without the agent hand-writing framework JSON.
-"""
+"""MCP strategy composition helpers backed by the published SigmaRail Spec."""
 
 from __future__ import annotations
 
@@ -13,13 +8,13 @@ from typing import Any
 
 def _strategy_module():
     try:
-        from vera_query_core.strategy import (  # noqa: PLC0415
+        from sigmarail_spec.strategy import (  # noqa: PLC0415
             PipelineDocument,
             compile_pipeline,
             decompile_pipeline,
             list_factors,
         )
-        from vera_query_core.strategy.presets import get_preset, list_presets  # noqa: PLC0415
+        from sigmarail_spec.strategy.presets import get_preset, list_presets  # noqa: PLC0415
 
         return {
             "PipelineDocument": PipelineDocument,
@@ -31,7 +26,7 @@ def _strategy_module():
         }
     except ImportError as exc:
         raise RuntimeError(
-            "vera_query_core.strategy not importable; ensure VeraBase is on PYTHONPATH"
+            "SigmaRail Spec strategy support is unavailable; install a compatible sigmarail-spec"
         ) from exc
 
 
@@ -92,7 +87,8 @@ def decompile_spec(spec_json: str) -> dict[str, Any]:
 
 
 def list_templates(kind: str | None = None, status: str | None = "active") -> dict[str, Any]:
-    from vera_query_core.template_catalog import list_templates as _list, summary_row
+    from screens.ir_preview import list_templates as _list_screen_templates
+    from sigmarail_spec.strategy.presets import list_presets
 
     kind_arg = kind or None
     status_arg = status or None
@@ -100,15 +96,43 @@ def list_templates(kind: str | None = None, status: str | None = "active") -> di
         return {"error": "kind must be screener or strategy", "code": "invalid_argument"}
     if status_arg not in (None, "active", "deprecated", "draft"):
         return {"error": "status must be active, deprecated, or draft", "code": "invalid_argument"}
-    rows = [summary_row(r) for r in _list(kind=kind_arg, status=status_arg)]
+    rows: list[dict[str, Any]] = []
+    if kind_arg in (None, "screener"):
+        rows.extend(_list_screen_templates())
+    if kind_arg in (None, "strategy"):
+        rows.extend(
+            {
+                "id": preset["id"],
+                "name": preset.get("name", preset["id"]),
+                "label": preset.get("name", preset["id"]),
+                "kind": "strategy",
+                "tags": preset.get("tags", []),
+                "description": preset.get("description", ""),
+                "status": preset.get("status", "active"),
+                "screener_template_id": preset.get("screener_template_id", ""),
+            }
+            for preset in list_presets()
+        )
+    if status_arg:
+        rows = [row for row in rows if row.get("status", "active") == status_arg]
     return {"templates": rows}
 
 
 def get_template(template_id: str) -> dict[str, Any]:
-    from vera_query_core.template_catalog import get_template as _get
+    from screens.ir_preview import load_template
+    from sigmarail_spec.strategy.presets import get_preset
 
     try:
-        return _get(template_id)
+        try:
+            template = load_template(template_id)
+            return {"id": template_id, **template}
+        except ValueError:
+            preset = get_preset(template_id)
+            return {
+                "id": template_id,
+                "kind": "strategy",
+                "pipeline": preset.model_dump(),
+            }
     except ValueError as exc:
         return {"error": str(exc), "code": "unknown_template"}
 

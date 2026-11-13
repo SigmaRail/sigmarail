@@ -1,14 +1,4 @@
-"""Save-time materialization of the RiskBudgeted PCM allocation table (C-FW-RULES Phase 2).
-
-The ladder's single source of truth is ``vera_lab.ir.pcm_ladder`` — the LEAN
-container carries ``vera_lab`` but never ``vera_query_core``, and VeraBase
-deliberately never imports ``vera_lab``. Studio is the composition root, so the
-bridge lives here (same sibling-tree ``sys.path`` convention as
-``screens/ch._ensure_verabasel_path`` and ``screens.risk_rules``).
-
-When ``vera_lab`` is not reachable the helpers degrade to no-ops — the runtime
-regenerates the identical table internally (``rules=None`` → ctor defaults),
-so skipping materialization costs stored-spec *visibility*, never behavior.
+"""Save-time materialization of the Spec-owned RiskBudgeted PCM rule tables.
 
 Two surfaces:
 
@@ -25,8 +15,6 @@ Two surfaces:
 from __future__ import annotations
 
 import copy
-import sys
-from pathlib import Path
 from typing import Any
 
 __all__ = [
@@ -40,16 +28,6 @@ __all__ = [
 ]
 
 _PCM_TYPE = "RiskBudgetedPortfolioConstructionModel"
-
-
-def _ensure_veralab_path() -> None:
-    """Put the sibling VeraTradingLab tree on sys.path (mirrors ch.py)."""
-    root = Path(__file__).resolve().parents[2]  # FinanceProjects
-    vtl = root / "LeanProjects" / "VeraTradingLab"
-    if vtl.is_dir():
-        path = str(vtl)
-        if path not in sys.path:
-            sys.path.insert(0, path)
 
 
 def _ladder_kwargs(params: dict[str, Any]) -> dict[str, Any]:
@@ -74,40 +52,25 @@ def _ladder_kwargs(params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_pcm_ladder(params: dict[str, Any] | None = None) -> list[dict] | None:
+def generate_pcm_ladder(params: dict[str, Any] | None = None) -> list[dict]:
     """Generate the canonical PCM allocation table for the given Parameters.
 
-    Returns ``None`` when vera_lab is unreachable; callers treat that as
-    "leave the spec as-is" — the runtime regenerates the identical table.
+    The same generator is included in SigmaRail Spec and LEAN vendors.
     """
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.pcm_ladder import generate_pcm_ladder as _gen
-    except Exception:
-        return None
-    try:
-        return _gen(**_ladder_kwargs(params or {}))
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.pcm_ladder import generate_pcm_ladder as _gen
+    return _gen(**_ladder_kwargs(params or {}))
 
 
 def generate_pcm_size_expr(params: dict[str, Any] | None = None) -> dict | None:
     """Generate the default ``size_expr`` Operand AST for the given Parameters."""
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.pcm_ladder import generate_default_size_expr as _gen
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.pcm_ladder import generate_default_size_expr as _gen
     params = params or {}
-    try:
-        return _gen(
-            risk_per_trade_pct=float(params.get("risk_per_trade_pct") or 0.01),
-            max_position_weight=float(params.get("max_position_weight") or 0.15),
-            honor_insight_confidence=bool(params.get("honor_insight_confidence", False)),
-            pcm_scale_expr=params.get("pcm_scale_expr"),
-        )
-    except Exception:
-        return None
+    return _gen(
+        risk_per_trade_pct=float(params.get("risk_per_trade_pct") or 0.01),
+        max_position_weight=float(params.get("max_position_weight") or 0.15),
+        honor_insight_confidence=bool(params.get("honor_insight_confidence", False)),
+        pcm_scale_expr=params.get("pcm_scale_expr"),
+    )
 
 
 def generate_pcm_book_exprs(params: dict[str, Any] | None = None) -> dict[str, dict] | None:
@@ -116,43 +79,31 @@ def generate_pcm_book_exprs(params: dict[str, Any] | None = None) -> dict[str, d
     Evaluated once per PCM pass — ``scale_expr`` → ``regime.scale``,
     ``slots_expr`` → ``acct.scaled_max_positions``, ``order_expr`` → unit
     ordering. Same authored-or-generated contract as ``rules``/``size_expr``.
-    Returns ``None`` when vera_lab is unreachable.
     """
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.pcm_ladder import (
-            generate_order_expr,
-            generate_scale_expr,
-            generate_slots_expr,
-        )
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.pcm_ladder import (
+        generate_order_expr,
+        generate_scale_expr,
+        generate_slots_expr,
+    )
     params = params or {}
-    try:
-        use_regime = bool(params.get("use_regime_scaling", True))
-        return {
-            "scale_expr": generate_scale_expr(
-                use_regime_scaling=use_regime,
-                min_regime_fraction=float(params.get("min_regime_fraction") or 0.15),
-            ),
-            "slots_expr": generate_slots_expr(
-                use_regime_scaling=use_regime,
-                scaled_max_positions_floor=int(params.get("scaled_max_positions_floor") or 2),
-                max_positions=int(params.get("max_positions") or 8),
-            ),
-            "order_expr": generate_order_expr(),
-        }
-    except Exception:
-        return None
+    use_regime = bool(params.get("use_regime_scaling", True))
+    return {
+        "scale_expr": generate_scale_expr(
+            use_regime_scaling=use_regime,
+            min_regime_fraction=float(params.get("min_regime_fraction") or 0.15),
+        ),
+        "slots_expr": generate_slots_expr(
+            use_regime_scaling=use_regime,
+            scaled_max_positions_floor=int(params.get("scaled_max_positions_floor") or 2),
+            max_positions=int(params.get("max_positions") or 8),
+        ),
+        "order_expr": generate_order_expr(),
+    }
 
 
-def pcm_bindings_catalog() -> dict[str, list[dict]] | None:
+def pcm_bindings_catalog() -> dict[str, list[dict]]:
     """The PCM ``ref`` binding namespaces (cand/hold/acct/pyr/regime) for Studio."""
-    _ensure_veralab_path()
-    try:
-        from vera_lab.ir.pcm_bindings import PCM_BINDING_NAMESPACES
-    except Exception:
-        return None
+    from sigmarail_spec.strategy.pcm_bindings import PCM_BINDING_NAMESPACES
     return {ns: [dict(b) for b in items] for ns, items in PCM_BINDING_NAMESPACES.items()}
 
 
