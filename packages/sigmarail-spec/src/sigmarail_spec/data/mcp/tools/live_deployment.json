@@ -1,0 +1,158 @@
+{
+  "domain": "live_deployment",
+  "tools": [
+    {
+      "description": "Pre-flight eligibility checks for paper promotion (Sharpe/DD/job/IR).",
+      "id": "studio.mcp.tool.deploy_evaluate_promotion_gate",
+      "input_schema": {
+        "properties": {
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "title": "deploy_evaluate_promotion_gateArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "deploy_evaluate_promotion_gate",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "deploy_evaluate_promotion_gateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List live trading deployments.",
+      "id": "studio.mcp.tool.deploy_list_deployments",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "deploy_list_deploymentsArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "deploy_list_deployments",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "deploy_list_deploymentsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Equity snapshot time series for a live deployment.",
+      "id": "studio.mcp.tool.deploy_performance",
+      "input_schema": {
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "deployment_id": {
+            "title": "Deployment Id",
+            "type": "string"
+          }
+        },
+        "title": "deploy_performanceArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "deploy_performance",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "deploy_performanceDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Gate-then-register a paper deployment in live_deployments.",
+      "id": "studio.mcp.tool.deploy_register_paper_deployment",
+      "input_schema": {
+        "properties": {
+          "brokerage": {
+            "title": "Brokerage",
+            "type": "string"
+          },
+          "deployment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Id"
+          },
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "lean_environment": {
+            "title": "Lean Environment",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "title": "deploy_register_paper_deploymentArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "deploy_register_paper_deployment",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "deploy_register_paper_deploymentDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Deployment registry row + latest account snapshot + spec summary.",
+      "id": "studio.mcp.tool.deploy_status",
+      "input_schema": {
+        "properties": {
+          "deployment_id": {
+            "title": "Deployment Id",
+            "type": "string"
+          }
+        },
+        "title": "deploy_statusArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "deploy_status",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "deploy_statusDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}

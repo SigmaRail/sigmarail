@@ -1,0 +1,4276 @@
+{
+  "domain": "price_technical",
+  "fields": [
+    {
+      "column": "atr_14",
+      "description": "ATR 14",
+      "id": "sigmarail.field.screener_price_tech_daily.atr_14.atr_14",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ATR 14",
+        "id": "sigmarail.mart.screener_price_tech_daily.atr_14",
+        "kind": "concept",
+        "title": "atr 14"
+      },
+      "name": "atr_14",
+      "sql": "screener_price_tech_daily.atr_14",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "atr_14_pct",
+      "description": "ATR_14 as percentage of closing price (e.g. 1.54 = 1.54%)",
+      "id": "sigmarail.field.screener_price_tech_daily.atr_14_pct.atr_14_pct",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ATR_14 as percentage of closing price (e.g. 1.54 = 1.54%)",
+        "id": "sigmarail.mart.screener_price_tech_daily.atr_14_pct",
+        "kind": "concept",
+        "title": "atr 14 pct"
+      },
+      "name": "atr_14_pct",
+      "sql": "screener_price_tech_daily.atr_14_pct",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "atr_21",
+      "description": "ATR 21",
+      "id": "sigmarail.field.screener_price_tech_daily.atr_21.atr_21",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ATR 21",
+        "id": "sigmarail.mart.screener_price_tech_daily.atr_21",
+        "kind": "concept",
+        "title": "atr 21"
+      },
+      "name": "atr_21",
+      "sql": "screener_price_tech_daily.atr_21",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "atr_5",
+      "description": "ATR 5",
+      "id": "sigmarail.field.screener_price_tech_daily.atr_5.atr_5",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ATR 5",
+        "id": "sigmarail.mart.screener_price_tech_daily.atr_5",
+        "kind": "concept",
+        "title": "atr 5"
+      },
+      "name": "atr_5",
+      "sql": "screener_price_tech_daily.atr_5",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_rs_rating",
+      "description": "From industry_group_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_rs_rating.avg_rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From industry_group_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_rs_rating",
+        "kind": "concept",
+        "title": "avg rs rating"
+      },
+      "name": "avg_rs_rating",
+      "sql": "screener_price_tech_daily.avg_rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_20d",
+      "description": "Average volume 20d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_20d.avg_vol_20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 20d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_20d",
+        "kind": "concept",
+        "title": "avg vol 20d"
+      },
+      "name": "avg_vol_20d",
+      "sql": "screener_price_tech_daily.avg_vol_20d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_30d",
+      "description": "Average volume 30d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_30d.avg_vol_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 30d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_30d",
+        "kind": "concept",
+        "title": "avg vol 30d"
+      },
+      "name": "avg_vol_30d",
+      "sql": "screener_price_tech_daily.avg_vol_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_50d",
+      "description": "Average volume 50d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_50d.avg_vol_50d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 50d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_50d",
+        "kind": "concept",
+        "title": "avg vol 50d"
+      },
+      "name": "avg_vol_50d",
+      "sql": "screener_price_tech_daily.avg_vol_50d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_5d",
+      "description": "Average volume 5d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_5d.avg_vol_5d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 5d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_5d",
+        "kind": "concept",
+        "title": "avg vol 5d"
+      },
+      "name": "avg_vol_5d",
+      "sql": "screener_price_tech_daily.avg_vol_5d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_60d",
+      "description": "Average volume 60d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_60d.avg_vol_60d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 60d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_60d",
+        "kind": "concept",
+        "title": "avg vol 60d"
+      },
+      "name": "avg_vol_60d",
+      "sql": "screener_price_tech_daily.avg_vol_60d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "avg_vol_90d",
+      "description": "Average volume 90d",
+      "id": "sigmarail.field.screener_price_tech_daily.avg_vol_90d.avg_vol_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average volume 90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.avg_vol_90d",
+        "kind": "concept",
+        "title": "avg vol 90d"
+      },
+      "name": "avg_vol_90d",
+      "sql": "screener_price_tech_daily.avg_vol_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "breakout_signal",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.breakout_signal.breakout_signal",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.breakout_signal",
+        "kind": "concept",
+        "title": "breakout signal"
+      },
+      "name": "breakout_signal",
+      "sql": "screener_price_tech_daily.breakout_signal",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "category",
+      "description": "Security category (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.category.category",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Security category (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.category",
+        "kind": "concept",
+        "title": "category"
+      },
+      "name": "category",
+      "sql": "screener_price_tech_daily.category",
+      "table": "screener_price_tech_daily",
+      "type": "LowCardinality(String)"
+    },
+    {
+      "column": "close",
+      "description": "Close - split adjusted (daily_metrics.close)",
+      "id": "sigmarail.field.screener_price_tech_daily.close.close",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Close - split adjusted (daily_metrics.close)",
+        "id": "sigmarail.mart.screener_price_tech_daily.close",
+        "kind": "concept",
+        "title": "close"
+      },
+      "name": "close",
+      "sql": "screener_price_tech_daily.close",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "closeadj",
+      "description": "Close - fully adjusted (daily_metrics.closeadj)",
+      "id": "sigmarail.field.screener_price_tech_daily.closeadj.closeadj",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Close - fully adjusted (daily_metrics.closeadj)",
+        "id": "sigmarail.mart.screener_price_tech_daily.closeadj",
+        "kind": "concept",
+        "title": "closeadj"
+      },
+      "name": "closeadj",
+      "sql": "screener_price_tech_daily.closeadj",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "company_name",
+      "description": "Company name (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.company_name.company_name",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Company name (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.company_name",
+        "kind": "concept",
+        "title": "company name"
+      },
+      "name": "company_name",
+      "sql": "screener_price_tech_daily.company_name",
+      "table": "screener_price_tech_daily",
+      "type": "String"
+    },
+    {
+      "column": "currency",
+      "description": "Trading currency (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.currency.currency",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trading currency (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.currency",
+        "kind": "concept",
+        "title": "currency"
+      },
+      "name": "currency",
+      "sql": "screener_price_tech_daily.currency",
+      "table": "screener_price_tech_daily",
+      "type": "String"
+    },
+    {
+      "column": "date",
+      "description": "Trading date",
+      "id": "sigmarail.field.screener_price_tech_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trading date",
+        "id": "sigmarail.mart.screener_price_tech_daily.date",
+        "kind": "concept",
+        "title": "date"
+      },
+      "name": "date",
+      "sql": "screener_price_tech_daily.date",
+      "table": "screener_price_tech_daily",
+      "type": "Date"
+    },
+    {
+      "column": "ema130d",
+      "description": "130-day EMA",
+      "id": "sigmarail.field.screener_price_tech_daily.ema130d.ema130d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "130-day EMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.ema130d",
+        "kind": "concept",
+        "title": "ema130d"
+      },
+      "name": "ema130d",
+      "sql": "screener_price_tech_daily.ema130d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ema21d",
+      "description": "21-day EMA",
+      "id": "sigmarail.field.screener_price_tech_daily.ema21d.ema21d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "21-day EMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.ema21d",
+        "kind": "concept",
+        "title": "ema21d"
+      },
+      "name": "ema21d",
+      "sql": "screener_price_tech_daily.ema21d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ema30d",
+      "description": "30-day EMA",
+      "id": "sigmarail.field.screener_price_tech_daily.ema30d.ema30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "30-day EMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.ema30d",
+        "kind": "concept",
+        "title": "ema30d"
+      },
+      "name": "ema30d",
+      "sql": "screener_price_tech_daily.ema30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "exchange",
+      "description": "Primary exchange (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.exchange.exchange",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Primary exchange (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.exchange",
+        "kind": "concept",
+        "title": "exchange"
+      },
+      "name": "exchange",
+      "sql": "screener_price_tech_daily.exchange",
+      "table": "screener_price_tech_daily",
+      "type": "LowCardinality(String)"
+    },
+    {
+      "column": "high",
+      "description": "High - split adjusted (daily_metrics.high)",
+      "id": "sigmarail.field.screener_price_tech_daily.high.high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "High - split adjusted (daily_metrics.high)",
+        "id": "sigmarail.mart.screener_price_tech_daily.high",
+        "kind": "concept",
+        "title": "high"
+      },
+      "name": "high",
+      "sql": "screener_price_tech_daily.high",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "high_30d",
+      "description": "Highest closeadj over last 30d",
+      "id": "sigmarail.field.screener_price_tech_daily.high_30d.high_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Highest closeadj over last 30d",
+        "id": "sigmarail.mart.screener_price_tech_daily.high_30d",
+        "kind": "concept",
+        "title": "high 30d"
+      },
+      "name": "high_30d",
+      "sql": "screener_price_tech_daily.high_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "high_52w",
+      "description": "52-week high (daily_metrics.high_52w)",
+      "id": "sigmarail.field.screener_price_tech_daily.high_52w.high_52w",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "52-week high (daily_metrics.high_52w)",
+        "id": "sigmarail.mart.screener_price_tech_daily.high_52w",
+        "kind": "concept",
+        "title": "high 52w"
+      },
+      "name": "high_52w",
+      "sql": "screener_price_tech_daily.high_52w",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "high_5d",
+      "description": "Highest closeadj over last 5d",
+      "id": "sigmarail.field.screener_price_tech_daily.high_5d.high_5d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Highest closeadj over last 5d",
+        "id": "sigmarail.mart.screener_price_tech_daily.high_5d",
+        "kind": "concept",
+        "title": "high 5d"
+      },
+      "name": "high_5d",
+      "sql": "screener_price_tech_daily.high_5d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "high_90d",
+      "description": "Highest closeadj over last 90d",
+      "id": "sigmarail.field.screener_price_tech_daily.high_90d.high_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Highest closeadj over last 90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.high_90d",
+        "kind": "concept",
+        "title": "high 90d"
+      },
+      "name": "high_90d",
+      "sql": "screener_price_tech_daily.high_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "highadj",
+      "description": "High - fully adjusted",
+      "id": "sigmarail.field.screener_price_tech_daily.highadj.highadj",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "High - fully adjusted",
+        "id": "sigmarail.mart.screener_price_tech_daily.highadj",
+        "kind": "concept",
+        "title": "highadj"
+      },
+      "name": "highadj",
+      "sql": "screener_price_tech_daily.highadj",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "industry",
+      "description": "Industry (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.industry.industry",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.industry",
+        "kind": "concept",
+        "title": "industry"
+      },
+      "name": "industry",
+      "sql": "screener_price_tech_daily.industry",
+      "table": "screener_price_tech_daily",
+      "type": "String"
+    },
+    {
+      "column": "industry_group_rank",
+      "description": "From industry_group_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.industry_group_rank.industry_group_rank",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From industry_group_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.industry_group_rank",
+        "kind": "concept",
+        "title": "industry group rank"
+      },
+      "name": "industry_group_rank",
+      "sql": "screener_price_tech_daily.industry_group_rank",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.screener_price_tech_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ReplacingMergeTree version column",
+        "id": "sigmarail.mart.screener_price_tech_daily.lastupdated",
+        "kind": "concept",
+        "title": "lastupdated"
+      },
+      "name": "lastupdated",
+      "sql": "screener_price_tech_daily.lastupdated",
+      "table": "screener_price_tech_daily",
+      "type": "DateTime('America/New_York')"
+    },
+    {
+      "column": "low",
+      "description": "Low - split adjusted (daily_metrics.low)",
+      "id": "sigmarail.field.screener_price_tech_daily.low.low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Low - split adjusted (daily_metrics.low)",
+        "id": "sigmarail.mart.screener_price_tech_daily.low",
+        "kind": "concept",
+        "title": "low"
+      },
+      "name": "low",
+      "sql": "screener_price_tech_daily.low",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "low_30d",
+      "description": "Lowest closeadj over last 30d",
+      "id": "sigmarail.field.screener_price_tech_daily.low_30d.low_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Lowest closeadj over last 30d",
+        "id": "sigmarail.mart.screener_price_tech_daily.low_30d",
+        "kind": "concept",
+        "title": "low 30d"
+      },
+      "name": "low_30d",
+      "sql": "screener_price_tech_daily.low_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "low_52w",
+      "description": "52-week low (daily_metrics.low_52w)",
+      "id": "sigmarail.field.screener_price_tech_daily.low_52w.low_52w",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "52-week low (daily_metrics.low_52w)",
+        "id": "sigmarail.mart.screener_price_tech_daily.low_52w",
+        "kind": "concept",
+        "title": "low 52w"
+      },
+      "name": "low_52w",
+      "sql": "screener_price_tech_daily.low_52w",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "low_5d",
+      "description": "Lowest closeadj over last 5d",
+      "id": "sigmarail.field.screener_price_tech_daily.low_5d.low_5d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Lowest closeadj over last 5d",
+        "id": "sigmarail.mart.screener_price_tech_daily.low_5d",
+        "kind": "concept",
+        "title": "low 5d"
+      },
+      "name": "low_5d",
+      "sql": "screener_price_tech_daily.low_5d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "low_90d",
+      "description": "Lowest closeadj over last 90d",
+      "id": "sigmarail.field.screener_price_tech_daily.low_90d.low_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Lowest closeadj over last 90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.low_90d",
+        "kind": "concept",
+        "title": "low 90d"
+      },
+      "name": "low_90d",
+      "sql": "screener_price_tech_daily.low_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "lowadj",
+      "description": "Low - fully adjusted",
+      "id": "sigmarail.field.screener_price_tech_daily.lowadj.lowadj",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Low - fully adjusted",
+        "id": "sigmarail.mart.screener_price_tech_daily.lowadj",
+        "kind": "concept",
+        "title": "lowadj"
+      },
+      "name": "lowadj",
+      "sql": "screener_price_tech_daily.lowadj",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "minervini_tt_all_conditions_enhanced",
+      "description": "From minervini_trend_template.tt_all_conditions_enhanced",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_all_conditions_enhanced.minervini_tt_all_conditions_enhanced",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_all_conditions_enhanced",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_enhanced",
+        "kind": "concept",
+        "title": "minervini tt all conditions enhanced"
+      },
+      "name": "minervini_tt_all_conditions_enhanced",
+      "sql": "screener_price_tech_daily.minervini_tt_all_conditions_enhanced",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "minervini_tt_all_conditions_full",
+      "description": "From minervini_trend_template.tt_all_conditions_full",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_all_conditions_full.minervini_tt_all_conditions_full",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_all_conditions_full",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_full",
+        "kind": "concept",
+        "title": "minervini tt all conditions full"
+      },
+      "name": "minervini_tt_all_conditions_full",
+      "sql": "screener_price_tech_daily.minervini_tt_all_conditions_full",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "minervini_tt_all_conditions_light",
+      "description": "From minervini_trend_template.tt_all_conditions_light",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_all_conditions_light.minervini_tt_all_conditions_light",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_all_conditions_light",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_all_conditions_light",
+        "kind": "concept",
+        "title": "minervini tt all conditions light"
+      },
+      "name": "minervini_tt_all_conditions_light",
+      "sql": "screener_price_tech_daily.minervini_tt_all_conditions_light",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "minervini_tt_score_enhanced",
+      "description": "From minervini_trend_template.tt_score_enhanced",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_score_enhanced.minervini_tt_score_enhanced",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_score_enhanced",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_score_enhanced",
+        "kind": "concept",
+        "title": "minervini tt score enhanced"
+      },
+      "name": "minervini_tt_score_enhanced",
+      "sql": "screener_price_tech_daily.minervini_tt_score_enhanced",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "minervini_tt_score_full",
+      "description": "From minervini_trend_template.tt_score_full",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_score_full.minervini_tt_score_full",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_score_full",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_score_full",
+        "kind": "concept",
+        "title": "minervini tt score full"
+      },
+      "name": "minervini_tt_score_full",
+      "sql": "screener_price_tech_daily.minervini_tt_score_full",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "minervini_tt_score_light",
+      "description": "From minervini_trend_template.tt_score_light",
+      "id": "sigmarail.field.screener_price_tech_daily.minervini_tt_score_light.minervini_tt_score_light",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From minervini_trend_template.tt_score_light",
+        "id": "sigmarail.mart.screener_price_tech_daily.minervini_tt_score_light",
+        "kind": "concept",
+        "title": "minervini tt score light"
+      },
+      "name": "minervini_tt_score_light",
+      "sql": "screener_price_tech_daily.minervini_tt_score_light",
+      "table": "screener_price_tech_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "open",
+      "description": "Open - split adjusted (daily_metrics.open)",
+      "id": "sigmarail.field.screener_price_tech_daily.open.open",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Open - split adjusted (daily_metrics.open)",
+        "id": "sigmarail.mart.screener_price_tech_daily.open",
+        "kind": "concept",
+        "title": "open"
+      },
+      "name": "open",
+      "sql": "screener_price_tech_daily.open",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "openadj",
+      "description": "Open - fully adjusted",
+      "id": "sigmarail.field.screener_price_tech_daily.openadj.openadj",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Open - fully adjusted",
+        "id": "sigmarail.mart.screener_price_tech_daily.openadj",
+        "kind": "concept",
+        "title": "openadj"
+      },
+      "name": "openadj",
+      "sql": "screener_price_tech_daily.openadj",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_10d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_10d.perf_10d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_10d",
+        "kind": "concept",
+        "title": "perf 10d"
+      },
+      "name": "perf_10d",
+      "sql": "screener_price_tech_daily.perf_10d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_1m",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_1m.perf_1m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_1m",
+        "kind": "concept",
+        "title": "perf 1m"
+      },
+      "name": "perf_1m",
+      "sql": "screener_price_tech_daily.perf_1m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_1y",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_1y.perf_1y",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_1y",
+        "kind": "concept",
+        "title": "perf 1y"
+      },
+      "name": "perf_1y",
+      "sql": "screener_price_tech_daily.perf_1y",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_3m",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_3m.perf_3m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_3m",
+        "kind": "concept",
+        "title": "perf 3m"
+      },
+      "name": "perf_3m",
+      "sql": "screener_price_tech_daily.perf_3m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_5d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_5d.perf_5d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_5d",
+        "kind": "concept",
+        "title": "perf 5d"
+      },
+      "name": "perf_5d",
+      "sql": "screener_price_tech_daily.perf_5d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "perf_6m",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.perf_6m.perf_6m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.perf_6m",
+        "kind": "concept",
+        "title": "perf 6m"
+      },
+      "name": "perf_6m",
+      "sql": "screener_price_tech_daily.perf_6m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_30pct_above_52w_low",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_30pct_above_52w_low.price_30pct_above_52w_low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_30pct_above_52w_low",
+        "kind": "concept",
+        "title": "price 30pct above 52w low"
+      },
+      "name": "price_30pct_above_52w_low",
+      "sql": "screener_price_tech_daily.price_30pct_above_52w_low",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_70pct_above_52w_low",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_70pct_above_52w_low.price_70pct_above_52w_low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_70pct_above_52w_low",
+        "kind": "concept",
+        "title": "price 70pct above 52w low"
+      },
+      "name": "price_70pct_above_52w_low",
+      "sql": "screener_price_tech_daily.price_70pct_above_52w_low",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_above_sma150d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_above_sma150d.price_above_sma150d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_above_sma150d",
+        "kind": "concept",
+        "title": "price above sma150d"
+      },
+      "name": "price_above_sma150d",
+      "sql": "screener_price_tech_daily.price_above_sma150d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_above_sma200d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_above_sma200d.price_above_sma200d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_above_sma200d",
+        "kind": "concept",
+        "title": "price above sma200d"
+      },
+      "name": "price_above_sma200d",
+      "sql": "screener_price_tech_daily.price_above_sma200d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_above_sma20d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_above_sma20d.price_above_sma20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_above_sma20d",
+        "kind": "concept",
+        "title": "price above sma20d"
+      },
+      "name": "price_above_sma20d",
+      "sql": "screener_price_tech_daily.price_above_sma20d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_above_sma50d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_above_sma50d.price_above_sma50d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_above_sma50d",
+        "kind": "concept",
+        "title": "price above sma50d"
+      },
+      "name": "price_above_sma50d",
+      "sql": "screener_price_tech_daily.price_above_sma50d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "price_vs_52w_high",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_52w_high.price_vs_52w_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_52w_high",
+        "kind": "concept",
+        "title": "price vs 52w high"
+      },
+      "name": "price_vs_52w_high",
+      "sql": "screener_price_tech_daily.price_vs_52w_high",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_vs_52w_low",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_52w_low.price_vs_52w_low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_52w_low",
+        "kind": "concept",
+        "title": "price vs 52w low"
+      },
+      "name": "price_vs_52w_low",
+      "sql": "screener_price_tech_daily.price_vs_52w_low",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_vs_sma150",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_sma150.price_vs_sma150",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_sma150",
+        "kind": "concept",
+        "title": "price vs sma150"
+      },
+      "name": "price_vs_sma150",
+      "sql": "screener_price_tech_daily.price_vs_sma150",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_vs_sma20",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_sma20.price_vs_sma20",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_sma20",
+        "kind": "concept",
+        "title": "price vs sma20"
+      },
+      "name": "price_vs_sma20",
+      "sql": "screener_price_tech_daily.price_vs_sma20",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_vs_sma200",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_sma200.price_vs_sma200",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_sma200",
+        "kind": "concept",
+        "title": "price vs sma200"
+      },
+      "name": "price_vs_sma200",
+      "sql": "screener_price_tech_daily.price_vs_sma200",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_vs_sma50",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_vs_sma50.price_vs_sma50",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_vs_sma50",
+        "kind": "concept",
+        "title": "price vs sma50"
+      },
+      "name": "price_vs_sma50",
+      "sql": "screener_price_tech_daily.price_vs_sma50",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "price_within_25pct_52w_high",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.price_within_25pct_52w_high.price_within_25pct_52w_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.price_within_25pct_52w_high",
+        "kind": "concept",
+        "title": "price within 25pct 52w high"
+      },
+      "name": "price_within_25pct_52w_high",
+      "sql": "screener_price_tech_daily.price_within_25pct_52w_high",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "rs_rating",
+      "description": "From relative_strength.rs_rating",
+      "id": "sigmarail.field.screener_price_tech_daily.rs_rating.rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength.rs_rating",
+        "id": "sigmarail.mart.screener_price_tech_daily.rs_rating",
+        "kind": "concept",
+        "title": "rs rating"
+      },
+      "name": "rs_rating",
+      "sql": "screener_price_tech_daily.rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "rs_rating_12m",
+      "description": "From relative_strength.rs_rating_12m (12-month horizon RS rating, shared universe)",
+      "id": "sigmarail.field.screener_price_tech_daily.rs_rating_12m.rs_rating_12m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength.rs_rating_12m (12-month horizon RS rating, shared universe)",
+        "id": "sigmarail.mart.screener_price_tech_daily.rs_rating_12m",
+        "kind": "concept",
+        "title": "rs rating 12m"
+      },
+      "name": "rs_rating_12m",
+      "sql": "screener_price_tech_daily.rs_rating_12m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "rs_rating_1m",
+      "description": "From relative_strength.rs_rating_1m (1-month horizon RS rating, shared universe)",
+      "id": "sigmarail.field.screener_price_tech_daily.rs_rating_1m.rs_rating_1m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength.rs_rating_1m (1-month horizon RS rating, shared universe)",
+        "id": "sigmarail.mart.screener_price_tech_daily.rs_rating_1m",
+        "kind": "concept",
+        "title": "rs rating 1m"
+      },
+      "name": "rs_rating_1m",
+      "sql": "screener_price_tech_daily.rs_rating_1m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "rs_rating_3m",
+      "description": "From relative_strength.rs_rating_3m (3-month horizon RS rating, shared universe)",
+      "id": "sigmarail.field.screener_price_tech_daily.rs_rating_3m.rs_rating_3m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength.rs_rating_3m (3-month horizon RS rating, shared universe)",
+        "id": "sigmarail.mart.screener_price_tech_daily.rs_rating_3m",
+        "kind": "concept",
+        "title": "rs rating 3m"
+      },
+      "name": "rs_rating_3m",
+      "sql": "screener_price_tech_daily.rs_rating_3m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "rs_rating_6m",
+      "description": "From relative_strength.rs_rating_6m (6-month horizon RS rating, shared universe)",
+      "id": "sigmarail.field.screener_price_tech_daily.rs_rating_6m.rs_rating_6m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength.rs_rating_6m (6-month horizon RS rating, shared universe)",
+        "id": "sigmarail.mart.screener_price_tech_daily.rs_rating_6m",
+        "kind": "concept",
+        "title": "rs rating 6m"
+      },
+      "name": "rs_rating_6m",
+      "sql": "screener_price_tech_daily.rs_rating_6m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sector",
+      "description": "Sector (from tickers)",
+      "id": "sigmarail.field.screener_price_tech_daily.sector.sector",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector (from tickers)",
+        "id": "sigmarail.mart.screener_price_tech_daily.sector",
+        "kind": "concept",
+        "title": "sector"
+      },
+      "name": "sector",
+      "sql": "screener_price_tech_daily.sector",
+      "table": "screener_price_tech_daily",
+      "type": "String"
+    },
+    {
+      "column": "sma10d",
+      "description": "10-day SMA",
+      "id": "sigmarail.field.screener_price_tech_daily.sma10d.sma10d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "10-day SMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma10d",
+        "kind": "concept",
+        "title": "sma10d"
+      },
+      "name": "sma10d",
+      "sql": "screener_price_tech_daily.sma10d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma10d_rs_rating",
+      "description": "From relative_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.sma10d_rs_rating.sma10d_rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma10d_rs_rating",
+        "kind": "concept",
+        "title": "sma10d rs rating"
+      },
+      "name": "sma10d_rs_rating",
+      "sql": "screener_price_tech_daily.sma10d_rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma10d_trend",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma10d_trend.sma10d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma10d_trend",
+        "kind": "concept",
+        "title": "sma10d trend"
+      },
+      "name": "sma10d_trend",
+      "sql": "screener_price_tech_daily.sma10d_trend",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma150d",
+      "description": "150-day SMA",
+      "id": "sigmarail.field.screener_price_tech_daily.sma150d.sma150d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "150-day SMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma150d",
+        "kind": "concept",
+        "title": "sma150d"
+      },
+      "name": "sma150d",
+      "sql": "screener_price_tech_daily.sma150d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma150d_above_sma200d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma150d_above_sma200d.sma150d_above_sma200d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma150d_above_sma200d",
+        "kind": "concept",
+        "title": "sma150d above sma200d"
+      },
+      "name": "sma150d_above_sma200d",
+      "sql": "screener_price_tech_daily.sma150d_above_sma200d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma150d_trend",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma150d_trend.sma150d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma150d_trend",
+        "kind": "concept",
+        "title": "sma150d trend"
+      },
+      "name": "sma150d_trend",
+      "sql": "screener_price_tech_daily.sma150d_trend",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma200_lag_30d",
+      "description": "200-day SMA lagged 30 sessions (soft TT rising)",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200_lag_30d.sma200_lag_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "200-day SMA lagged 30 sessions (soft TT rising)",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200_lag_30d",
+        "kind": "concept",
+        "title": "sma200 lag 30d"
+      },
+      "name": "sma200_lag_30d",
+      "sql": "screener_price_tech_daily.sma200_lag_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma200d",
+      "description": "200-day SMA",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d.sma200d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "200-day SMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d",
+        "kind": "concept",
+        "title": "sma200d"
+      },
+      "name": "sma200d",
+      "sql": "screener_price_tech_daily.sma200d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma200d_rising_150d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d_rising_150d.sma200d_rising_150d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d_rising_150d",
+        "kind": "concept",
+        "title": "sma200d rising 150d"
+      },
+      "name": "sma200d_rising_150d",
+      "sql": "screener_price_tech_daily.sma200d_rising_150d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma200d_rising_30d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d_rising_30d.sma200d_rising_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d_rising_30d",
+        "kind": "concept",
+        "title": "sma200d rising 30d"
+      },
+      "name": "sma200d_rising_30d",
+      "sql": "screener_price_tech_daily.sma200d_rising_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma200d_rs_rating",
+      "description": "From relative_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d_rs_rating.sma200d_rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d_rs_rating",
+        "kind": "concept",
+        "title": "sma200d rs rating"
+      },
+      "name": "sma200d_rs_rating",
+      "sql": "screener_price_tech_daily.sma200d_rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma200d_slope_20d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d_slope_20d.sma200d_slope_20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d_slope_20d",
+        "kind": "concept",
+        "title": "sma200d slope 20d"
+      },
+      "name": "sma200d_slope_20d",
+      "sql": "screener_price_tech_daily.sma200d_slope_20d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma200d_trend",
+      "description": "From daily_metrics_derived.sma200d_trend",
+      "id": "sigmarail.field.screener_price_tech_daily.sma200d_trend.sma200d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.sma200d_trend",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma200d_trend",
+        "kind": "concept",
+        "title": "sma200d trend"
+      },
+      "name": "sma200d_trend",
+      "sql": "screener_price_tech_daily.sma200d_trend",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma20d",
+      "description": "20-day SMA",
+      "id": "sigmarail.field.screener_price_tech_daily.sma20d.sma20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "20-day SMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma20d",
+        "kind": "concept",
+        "title": "sma20d"
+      },
+      "name": "sma20d",
+      "sql": "screener_price_tech_daily.sma20d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma20d_crossover_up",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma20d_crossover_up.sma20d_crossover_up",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma20d_crossover_up",
+        "kind": "concept",
+        "title": "sma20d crossover up"
+      },
+      "name": "sma20d_crossover_up",
+      "sql": "screener_price_tech_daily.sma20d_crossover_up",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma20d_trend",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma20d_trend.sma20d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma20d_trend",
+        "kind": "concept",
+        "title": "sma20d trend"
+      },
+      "name": "sma20d_trend",
+      "sql": "screener_price_tech_daily.sma20d_trend",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma21d_rs_rating",
+      "description": "From relative_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.sma21d_rs_rating.sma21d_rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma21d_rs_rating",
+        "kind": "concept",
+        "title": "sma21d rs rating"
+      },
+      "name": "sma21d_rs_rating",
+      "sql": "screener_price_tech_daily.sma21d_rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma50d",
+      "description": "50-day SMA",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d.sma50d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "50-day SMA",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d",
+        "kind": "concept",
+        "title": "sma50d"
+      },
+      "name": "sma50d",
+      "sql": "screener_price_tech_daily.sma50d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma50d_above_sma150d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d_above_sma150d.sma50d_above_sma150d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d_above_sma150d",
+        "kind": "concept",
+        "title": "sma50d above sma150d"
+      },
+      "name": "sma50d_above_sma150d",
+      "sql": "screener_price_tech_daily.sma50d_above_sma150d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma50d_above_sma200d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d_above_sma200d.sma50d_above_sma200d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d_above_sma200d",
+        "kind": "concept",
+        "title": "sma50d above sma200d"
+      },
+      "name": "sma50d_above_sma200d",
+      "sql": "screener_price_tech_daily.sma50d_above_sma200d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "sma50d_rs_rating",
+      "description": "From relative_strength",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d_rs_rating.sma50d_rs_rating",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From relative_strength",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d_rs_rating",
+        "kind": "concept",
+        "title": "sma50d rs rating"
+      },
+      "name": "sma50d_rs_rating",
+      "sql": "screener_price_tech_daily.sma50d_rs_rating",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma50d_slope_20d",
+      "description": "From daily_metrics_derived.sma50d_slope_20d",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d_slope_20d.sma50d_slope_20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.sma50d_slope_20d",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d_slope_20d",
+        "kind": "concept",
+        "title": "sma50d slope 20d"
+      },
+      "name": "sma50d_slope_20d",
+      "sql": "screener_price_tech_daily.sma50d_slope_20d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sma50d_trend",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.sma50d_trend.sma50d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.sma50d_trend",
+        "kind": "concept",
+        "title": "sma50d trend"
+      },
+      "name": "sma50d_trend",
+      "sql": "screener_price_tech_daily.sma50d_trend",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "stage_code",
+      "description": "Canonical detailed daily stage token projected from daily_metrics_derived.stage_code (1A, 1B, 2A, 2B, 3A, 3B, 4A, 4B); NULL until the daily moving-average inputs are available.",
+      "id": "sigmarail.field.screener_price_tech_daily.stage_code.stage_code",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Canonical detailed daily stage token projected from daily_metrics_derived.stage_code: 1A, 1B, 2A, 2B, 3A, 3B, 4A, or 4B. NULL until the required daily moving averages are available.",
+        "id": "sigmarail.mart.screener_price_tech_daily.stage_code",
+        "kind": "concept",
+        "title": "daily stage code"
+      },
+      "name": "stage_code",
+      "sql": "screener_price_tech_daily.stage_code",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(String)"
+    },
+    {
+      "column": "stage_duration",
+      "description": "Consecutive valid daily observations in the current detailed stage_code, projected from daily_metrics_derived.stage_duration.",
+      "id": "sigmarail.field.screener_price_tech_daily.stage_duration.stage_duration",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Consecutive valid daily observations in the current detailed stage_code, projected from daily_metrics_derived.stage_duration. The source counts across full symbol history, so populate chunk boundaries do not reset the duration; NULL when stage_code is NULL.",
+        "id": "sigmarail.mart.screener_price_tech_daily.stage_duration",
+        "kind": "concept",
+        "title": "daily stage duration"
+      },
+      "name": "stage_duration",
+      "sql": "screener_price_tech_daily.stage_duration",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt32)"
+    },
+    {
+      "column": "stage_slope30_atr",
+      "description": "Legacy 150-day spine slope diagnostic from daily_metrics_derived.stage_slope30_atr.",
+      "id": "sigmarail.field.screener_price_tech_daily.stage_slope30_atr.stage_slope30_atr",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Normalized 30-session slope diagnostic from daily_metrics_derived.stage_slope30_atr; it is not a stage classifier.",
+        "id": "sigmarail.mart.screener_price_tech_daily.stage_slope30_atr",
+        "kind": "concept",
+        "title": "normalized 150-day moving-average slope"
+      },
+      "name": "stage_slope30_atr",
+      "sql": "screener_price_tech_daily.stage_slope30_atr",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock ticker symbol",
+      "id": "sigmarail.field.screener_price_tech_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stock ticker symbol",
+        "id": "sigmarail.mart.screener_price_tech_daily.ticker",
+        "kind": "concept",
+        "title": "ticker"
+      },
+      "name": "ticker",
+      "sql": "screener_price_tech_daily.ticker",
+      "table": "screener_price_tech_daily",
+      "type": "String"
+    },
+    {
+      "column": "total_return_10d",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_10d.total_return_10d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_10d",
+        "kind": "concept",
+        "title": "total return 10d"
+      },
+      "name": "total_return_10d",
+      "sql": "screener_price_tech_daily.total_return_10d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "total_return_1m",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_1m.total_return_1m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_1m",
+        "kind": "concept",
+        "title": "total return 1m"
+      },
+      "name": "total_return_1m",
+      "sql": "screener_price_tech_daily.total_return_1m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "total_return_1y",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_1y.total_return_1y",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_1y",
+        "kind": "concept",
+        "title": "total return 1y"
+      },
+      "name": "total_return_1y",
+      "sql": "screener_price_tech_daily.total_return_1y",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "total_return_3m",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_3m.total_return_3m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_3m",
+        "kind": "concept",
+        "title": "total return 3m"
+      },
+      "name": "total_return_3m",
+      "sql": "screener_price_tech_daily.total_return_3m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "total_return_5d",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_5d.total_return_5d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_5d",
+        "kind": "concept",
+        "title": "total return 5d"
+      },
+      "name": "total_return_5d",
+      "sql": "screener_price_tech_daily.total_return_5d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "total_return_6m",
+      "description": "Dividend-adjusted total return from daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.total_return_6m.total_return_6m",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividend-adjusted total return projected from daily_metrics_derived.",
+        "id": "sigmarail.mart.screener_price_tech_daily.total_return_6m",
+        "kind": "concept",
+        "title": "total return 6m"
+      },
+      "name": "total_return_6m",
+      "sql": "screener_price_tech_daily.total_return_6m",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "true_range",
+      "description": "True range",
+      "id": "sigmarail.field.screener_price_tech_daily.true_range.true_range",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "True range",
+        "id": "sigmarail.mart.screener_price_tech_daily.true_range",
+        "kind": "concept",
+        "title": "true range"
+      },
+      "name": "true_range",
+      "sql": "screener_price_tech_daily.true_range",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "vcp_atr_compression_5d_90d",
+      "description": "From daily_metrics_derived.vcp_atr_compression_5d_90d",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_atr_compression_5d_90d.vcp_atr_compression_5d_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.vcp_atr_compression_5d_90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_atr_compression_5d_90d",
+        "kind": "concept",
+        "title": "vcp atr compression 5d 90d"
+      },
+      "name": "vcp_atr_compression_5d_90d",
+      "sql": "screener_price_tech_daily.vcp_atr_compression_5d_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "vcp_consolidation_days_5pct_30d",
+      "description": "From daily_metrics_derived",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_consolidation_days_5pct_30d.vcp_consolidation_days_5pct_30d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_consolidation_days_5pct_30d",
+        "kind": "concept",
+        "title": "vcp consolidation days 5pct 30d"
+      },
+      "name": "vcp_consolidation_days_5pct_30d",
+      "sql": "screener_price_tech_daily.vcp_consolidation_days_5pct_30d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(UInt32)"
+    },
+    {
+      "column": "vcp_max_drawdown_90d",
+      "description": "From daily_metrics_derived.vcp_max_drawdown_90d",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_max_drawdown_90d.vcp_max_drawdown_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.vcp_max_drawdown_90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_max_drawdown_90d",
+        "kind": "concept",
+        "title": "vcp max drawdown 90d"
+      },
+      "name": "vcp_max_drawdown_90d",
+      "sql": "screener_price_tech_daily.vcp_max_drawdown_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "vcp_proximity_90d",
+      "description": "From daily_metrics_derived.vcp_proximity_90d",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_proximity_90d.vcp_proximity_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.vcp_proximity_90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_proximity_90d",
+        "kind": "concept",
+        "title": "vcp proximity 90d"
+      },
+      "name": "vcp_proximity_90d",
+      "sql": "screener_price_tech_daily.vcp_proximity_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "vcp_tightness_5d_90d",
+      "description": "From daily_metrics_derived.vcp_tightness_5d_90d",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_tightness_5d_90d.vcp_tightness_5d_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.vcp_tightness_5d_90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_tightness_5d_90d",
+        "kind": "concept",
+        "title": "vcp tightness 5d 90d"
+      },
+      "name": "vcp_tightness_5d_90d",
+      "sql": "screener_price_tech_daily.vcp_tightness_5d_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "vcp_volume_dryup_5d_90d",
+      "description": "From daily_metrics_derived.vcp_volume_dryup_5d_90d",
+      "id": "sigmarail.field.screener_price_tech_daily.vcp_volume_dryup_5d_90d.vcp_volume_dryup_5d_90d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "From daily_metrics_derived.vcp_volume_dryup_5d_90d",
+        "id": "sigmarail.mart.screener_price_tech_daily.vcp_volume_dryup_5d_90d",
+        "kind": "concept",
+        "title": "vcp volume dryup 5d 90d"
+      },
+      "name": "vcp_volume_dryup_5d_90d",
+      "sql": "screener_price_tech_daily.vcp_volume_dryup_5d_90d",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "volume",
+      "description": "Volume - split adjusted (daily_metrics.volume)",
+      "id": "sigmarail.field.screener_price_tech_daily.volume.volume",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volume - split adjusted (daily_metrics.volume)",
+        "id": "sigmarail.mart.screener_price_tech_daily.volume",
+        "kind": "concept",
+        "title": "volume"
+      },
+      "name": "volume",
+      "sql": "screener_price_tech_daily.volume",
+      "table": "screener_price_tech_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "allocation_fraction",
+      "description": "Stage allocation fraction",
+      "id": "sigmarail.field.screener_stage_weekly_daily.allocation_fraction.allocation_fraction",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Legacy allocation fraction projected from stage_analysis for existing consumers. This compatibility surface does not change allocation behavior. See the SigmaRail core compatibility contract.",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.allocation_fraction",
+        "kind": "concept",
+        "title": "allocation fraction"
+      },
+      "name": "allocation_fraction",
+      "sql": "screener_stage_weekly_daily.allocation_fraction",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "breakout_strength",
+      "description": "Breakout strength",
+      "id": "sigmarail.field.screener_stage_weekly_daily.breakout_strength.breakout_strength",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Breakout strength",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.breakout_strength",
+        "kind": "concept",
+        "title": "breakout strength"
+      },
+      "name": "breakout_strength",
+      "sql": "screener_stage_weekly_daily.breakout_strength",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "date",
+      "description": "Trading date",
+      "id": "sigmarail.field.screener_stage_weekly_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trading date",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.date",
+        "kind": "concept",
+        "title": "date"
+      },
+      "name": "date",
+      "sql": "screener_stage_weekly_daily.date",
+      "table": "screener_stage_weekly_daily",
+      "type": "Date"
+    },
+    {
+      "column": "days_in_stage",
+      "description": "Days in current stage",
+      "id": "sigmarail.field.screener_stage_weekly_daily.days_in_stage.days_in_stage",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Legacy stage_analysis duration field retained for compatibility. It is not the canonical daily stage_duration or completed-week stage_duration.",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.days_in_stage",
+        "kind": "concept",
+        "title": "legacy days in stage"
+      },
+      "name": "days_in_stage",
+      "sql": "screener_stage_weekly_daily.days_in_stage",
+      "table": "screener_stage_weekly_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "days_in_substage",
+      "description": "Days in current substage",
+      "id": "sigmarail.field.screener_stage_weekly_daily.days_in_substage.days_in_substage",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Legacy stage_analysis duration field retained for compatibility. It is not the canonical daily stage_duration or completed-week stage_duration.",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.days_in_substage",
+        "kind": "concept",
+        "title": "legacy days in substage"
+      },
+      "name": "days_in_substage",
+      "sql": "screener_stage_weekly_daily.days_in_substage",
+      "table": "screener_stage_weekly_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.screener_stage_weekly_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ReplacingMergeTree version column",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.lastupdated",
+        "kind": "concept",
+        "title": "lastupdated"
+      },
+      "name": "lastupdated",
+      "sql": "screener_stage_weekly_daily.lastupdated",
+      "table": "screener_stage_weekly_daily",
+      "type": "DateTime('America/New_York')"
+    },
+    {
+      "column": "ma_alignment_score",
+      "description": "MA alignment score",
+      "id": "sigmarail.field.screener_stage_weekly_daily.ma_alignment_score.ma_alignment_score",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "MA alignment score",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.ma_alignment_score",
+        "kind": "concept",
+        "title": "ma alignment score"
+      },
+      "name": "ma_alignment_score",
+      "sql": "screener_stage_weekly_daily.ma_alignment_score",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "price_vs_sma10w",
+      "description": "Price vs 10w SMA",
+      "id": "sigmarail.field.screener_stage_weekly_daily.price_vs_sma10w.price_vs_sma10w",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Price vs 10w SMA",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.price_vs_sma10w",
+        "kind": "concept",
+        "title": "price vs sma10w"
+      },
+      "name": "price_vs_sma10w",
+      "sql": "screener_stage_weekly_daily.price_vs_sma10w",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "price_vs_sma30w",
+      "description": "Price vs 30w SMA",
+      "id": "sigmarail.field.screener_stage_weekly_daily.price_vs_sma30w.price_vs_sma30w",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Price vs 30w SMA",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.price_vs_sma30w",
+        "kind": "concept",
+        "title": "price vs sma30w"
+      },
+      "name": "price_vs_sma30w",
+      "sql": "screener_stage_weekly_daily.price_vs_sma30w",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "price_vs_sma50d",
+      "description": "Price vs 50d SMA",
+      "id": "sigmarail.field.screener_stage_weekly_daily.price_vs_sma50d.price_vs_sma50d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Price vs 50d SMA",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.price_vs_sma50d",
+        "kind": "concept",
+        "title": "price vs sma50d"
+      },
+      "name": "price_vs_sma50d",
+      "sql": "screener_stage_weekly_daily.price_vs_sma50d",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "price_vs_sma50w",
+      "description": "Price vs 50w SMA",
+      "id": "sigmarail.field.screener_stage_weekly_daily.price_vs_sma50w.price_vs_sma50w",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Price vs 50w SMA",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.price_vs_sma50w",
+        "kind": "concept",
+        "title": "price vs sma50w"
+      },
+      "name": "price_vs_sma50w",
+      "sql": "screener_stage_weekly_daily.price_vs_sma50w",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "relative_strength_vs_sector",
+      "description": "RS vs sector (stage_analysis)",
+      "id": "sigmarail.field.screener_stage_weekly_daily.relative_strength_vs_sector.relative_strength_vs_sector",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "RS vs sector (stage_analysis)",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.relative_strength_vs_sector",
+        "kind": "concept",
+        "title": "relative strength vs sector"
+      },
+      "name": "relative_strength_vs_sector",
+      "sql": "screener_stage_weekly_daily.relative_strength_vs_sector",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "relative_strength_vs_spy",
+      "description": "RS vs SPY (stage_analysis)",
+      "id": "sigmarail.field.screener_stage_weekly_daily.relative_strength_vs_spy.relative_strength_vs_spy",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "RS vs SPY (stage_analysis)",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.relative_strength_vs_spy",
+        "kind": "concept",
+        "title": "relative strength vs spy"
+      },
+      "name": "relative_strength_vs_spy",
+      "sql": "screener_stage_weekly_daily.relative_strength_vs_spy",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "risk_level",
+      "description": "Risk level",
+      "id": "sigmarail.field.screener_stage_weekly_daily.risk_level.risk_level",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Risk level",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.risk_level",
+        "kind": "concept",
+        "title": "risk level"
+      },
+      "name": "risk_level",
+      "sql": "screener_stage_weekly_daily.risk_level",
+      "table": "screener_stage_weekly_daily",
+      "type": "Enum8('Low' = 0, 'Medium' = 1, 'High' = 2, 'Very High' = 3, 'Unknown' = 4)"
+    },
+    {
+      "column": "sma10w_slope",
+      "description": "10w SMA slope from stage_analysis",
+      "id": "sigmarail.field.screener_stage_weekly_daily.sma10w_slope.sma10w_slope",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "10w SMA slope from stage_analysis",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.sma10w_slope",
+        "kind": "concept",
+        "title": "sma10w slope"
+      },
+      "name": "sma10w_slope",
+      "sql": "screener_stage_weekly_daily.sma10w_slope",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "sma200d_trend",
+      "description": "200d trend from stage_analysis",
+      "id": "sigmarail.field.screener_stage_weekly_daily.sma200d_trend.sma200d_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "200d trend from stage_analysis",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.sma200d_trend",
+        "kind": "concept",
+        "title": "sma200d trend"
+      },
+      "name": "sma200d_trend",
+      "sql": "screener_stage_weekly_daily.sma200d_trend",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "sma30w_slope",
+      "description": "30w SMA slope from stage_analysis",
+      "id": "sigmarail.field.screener_stage_weekly_daily.sma30w_slope.sma30w_slope",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "30w SMA slope from stage_analysis",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.sma30w_slope",
+        "kind": "concept",
+        "title": "sma30w slope"
+      },
+      "name": "sma30w_slope",
+      "sql": "screener_stage_weekly_daily.sma30w_slope",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "sma50d_slope_20d",
+      "description": "50d SMA slope ~20d from stage_analysis",
+      "id": "sigmarail.field.screener_stage_weekly_daily.sma50d_slope_20d.sma50d_slope_20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "50d SMA slope ~20d from stage_analysis",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.sma50d_slope_20d",
+        "kind": "concept",
+        "title": "sma50d slope 20d"
+      },
+      "name": "sma50d_slope_20d",
+      "sql": "screener_stage_weekly_daily.sma50d_slope_20d",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "sma50w_slope",
+      "description": "50w SMA slope from stage_analysis",
+      "id": "sigmarail.field.screener_stage_weekly_daily.sma50w_slope.sma50w_slope",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "50w SMA slope from stage_analysis",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.sma50w_slope",
+        "kind": "concept",
+        "title": "sma50w slope"
+      },
+      "name": "sma50w_slope",
+      "sql": "screener_stage_weekly_daily.sma50w_slope",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "stage_primary",
+      "description": "Deprecated broad-stage compatibility projection from stage_analysis.stage_code.",
+      "id": "sigmarail.field.screener_stage_weekly_daily.stage_primary.stage_primary",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Legacy broad-stage value projected from stage_analysis for existing daily-keyed allocation/screen consumers. This compatibility field is not the canonical detailed daily or completed-week stage output; weekly stage_code and stage_duration remain on weekly_metrics_derived at weekly grain. See the SigmaRail core compatibility contract.",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.stage_primary",
+        "kind": "concept",
+        "title": "legacy primary stage"
+      },
+      "name": "stage_primary",
+      "sql": "screener_stage_weekly_daily.stage_primary",
+      "table": "screener_stage_weekly_daily",
+      "type": "Nullable(Enum8('1' = 1, '2' = 2, '3' = 3, '4' = 4))"
+    },
+    {
+      "column": "stage_quality",
+      "description": "Stage quality 0-100",
+      "id": "sigmarail.field.screener_stage_weekly_daily.stage_quality.stage_quality",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stage quality 0-100",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.stage_quality",
+        "kind": "concept",
+        "title": "stage quality"
+      },
+      "name": "stage_quality",
+      "sql": "screener_stage_weekly_daily.stage_quality",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "stage_transition",
+      "description": "Stage transition label",
+      "id": "sigmarail.field.screener_stage_weekly_daily.stage_transition.stage_transition",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stage transition label",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.stage_transition",
+        "kind": "concept",
+        "title": "stage transition"
+      },
+      "name": "stage_transition",
+      "sql": "screener_stage_weekly_daily.stage_transition",
+      "table": "screener_stage_weekly_daily",
+      "type": "String"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock ticker symbol",
+      "id": "sigmarail.field.screener_stage_weekly_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stock ticker symbol",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.ticker",
+        "kind": "concept",
+        "title": "ticker"
+      },
+      "name": "ticker",
+      "sql": "screener_stage_weekly_daily.ticker",
+      "table": "screener_stage_weekly_daily",
+      "type": "String"
+    },
+    {
+      "column": "trend_consistency",
+      "description": "Trend consistency",
+      "id": "sigmarail.field.screener_stage_weekly_daily.trend_consistency.trend_consistency",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trend consistency",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.trend_consistency",
+        "kind": "concept",
+        "title": "trend consistency"
+      },
+      "name": "trend_consistency",
+      "sql": "screener_stage_weekly_daily.trend_consistency",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "trend_duration_weeks",
+      "description": "Weeks in trend",
+      "id": "sigmarail.field.screener_stage_weekly_daily.trend_duration_weeks.trend_duration_weeks",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Legacy stage_analysis trend-duration field retained for compatibility. It is not the canonical completed-week stage_duration.",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.trend_duration_weeks",
+        "kind": "concept",
+        "title": "trend duration weeks"
+      },
+      "name": "trend_duration_weeks",
+      "sql": "screener_stage_weekly_daily.trend_duration_weeks",
+      "table": "screener_stage_weekly_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "trend_regime",
+      "description": "Trend regime",
+      "id": "sigmarail.field.screener_stage_weekly_daily.trend_regime.trend_regime",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trend regime",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.trend_regime",
+        "kind": "concept",
+        "title": "trend regime"
+      },
+      "name": "trend_regime",
+      "sql": "screener_stage_weekly_daily.trend_regime",
+      "table": "screener_stage_weekly_daily",
+      "type": "Enum8('Bull Market' = 0, 'Bear Market' = 1, 'Neutral' = 2)"
+    },
+    {
+      "column": "volatility_regime",
+      "description": "Volatility regime",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volatility_regime.volatility_regime",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volatility regime",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volatility_regime",
+        "kind": "concept",
+        "title": "volatility regime"
+      },
+      "name": "volatility_regime",
+      "sql": "screener_stage_weekly_daily.volatility_regime",
+      "table": "screener_stage_weekly_daily",
+      "type": "Enum8('Low Volatility' = 0, 'Normal Volatility' = 1, 'High Volatility' = 2)"
+    },
+    {
+      "column": "volume_accumulation",
+      "description": "Volume accumulation",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_accumulation.volume_accumulation",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volume accumulation",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_accumulation",
+        "kind": "concept",
+        "title": "volume accumulation"
+      },
+      "name": "volume_accumulation",
+      "sql": "screener_stage_weekly_daily.volume_accumulation",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "volume_breakout_ratio",
+      "description": "Breakout volume ratio",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_breakout_ratio.volume_breakout_ratio",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Breakout volume ratio",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_breakout_ratio",
+        "kind": "concept",
+        "title": "volume breakout ratio"
+      },
+      "name": "volume_breakout_ratio",
+      "sql": "screener_stage_weekly_daily.volume_breakout_ratio",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "volume_breakout_strength",
+      "description": "Breakout strength",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_breakout_strength.volume_breakout_strength",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Breakout strength",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_breakout_strength",
+        "kind": "concept",
+        "title": "volume breakout strength"
+      },
+      "name": "volume_breakout_strength",
+      "sql": "screener_stage_weekly_daily.volume_breakout_strength",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "volume_divergence",
+      "description": "Volume divergence",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_divergence.volume_divergence",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volume divergence",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_divergence",
+        "kind": "concept",
+        "title": "volume divergence"
+      },
+      "name": "volume_divergence",
+      "sql": "screener_stage_weekly_daily.volume_divergence",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "volume_sma_ratio",
+      "description": "Volume vs MA ratio",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_sma_ratio.volume_sma_ratio",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volume vs MA ratio",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_sma_ratio",
+        "kind": "concept",
+        "title": "volume sma ratio"
+      },
+      "name": "volume_sma_ratio",
+      "sql": "screener_stage_weekly_daily.volume_sma_ratio",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "volume_trend",
+      "description": "Volume trend",
+      "id": "sigmarail.field.screener_stage_weekly_daily.volume_trend.volume_trend",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Volume trend",
+        "id": "sigmarail.mart.screener_stage_weekly_daily.volume_trend",
+        "kind": "concept",
+        "title": "volume trend"
+      },
+      "name": "volume_trend",
+      "sql": "screener_stage_weekly_daily.volume_trend",
+      "table": "screener_stage_weekly_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "atr_contracting",
+      "description": "Per-leg ATR envelope shrinking (independent of % depth)",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.atr_contracting.atr_contracting",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "atr_contracting",
+      "sql": "screener_vcp_pivot_daily.atr_contracting",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "base_depth",
+      "description": "base_high to the newest confirmed low, as a fraction",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.base_depth.base_depth",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "base_depth",
+      "sql": "screener_vcp_pivot_daily.base_depth",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "base_high",
+      "description": "High that opened the counted base",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.base_high.base_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "base_high",
+      "sql": "screener_vcp_pivot_daily.base_high",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "base_long_enough",
+      "description": "Base >= 30 sessions",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.base_long_enough.base_long_enough",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "base_long_enough",
+      "sql": "screener_vcp_pivot_daily.base_long_enough",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "base_qualified",
+      "description": "Depth and duration within limits, at least two legs",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.base_qualified.base_qualified",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "base_qualified",
+      "sql": "screener_vcp_pivot_daily.base_qualified",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "breakout",
+      "description": "close > pivot_line",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.breakout.breakout",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "breakout",
+      "sql": "screener_vcp_pivot_daily.breakout",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "breakout_clear",
+      "description": "close > pivot_line * 1.005 — clearance, not a hair",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.breakout_clear.breakout_clear",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "breakout_clear",
+      "sql": "screener_vcp_pivot_daily.breakout_clear",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "breakout_event",
+      "description": "The cross itself: close > pivot_line AND prev_close <= pivot_line",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.breakout_event.breakout_event",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "breakout_event",
+      "sql": "screener_vcp_pivot_daily.breakout_event",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "breakout_on_volume",
+      "description": "breakout with volume >= breakout_volume_mult x avg_vol_50d",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.breakout_on_volume.breakout_on_volume",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "breakout_on_volume",
+      "sql": "screener_vcp_pivot_daily.breakout_on_volume",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "breakout_volume_ratio",
+      "description": "volume / avg_vol_50d at this date",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.breakout_volume_ratio.breakout_volume_ratio",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "breakout_volume_ratio",
+      "sql": "screener_vcp_pivot_daily.breakout_volume_ratio",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "contraction_count",
+      "description": "Counted contractions (<= max_contractions, newest last)",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.contraction_count.contraction_count",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "contraction_count",
+      "sql": "screener_vcp_pivot_daily.contraction_count",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "contraction_depth_last",
+      "description": "Most recent counted leg depth",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.contraction_depth_last.contraction_depth_last",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "contraction_depth_last",
+      "sql": "screener_vcp_pivot_daily.contraction_depth_last",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "contraction_depth_prev",
+      "description": "Previous counted leg depth",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.contraction_depth_prev.contraction_depth_prev",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "contraction_depth_prev",
+      "sql": "screener_vcp_pivot_daily.contraction_depth_prev",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "contraction_depths",
+      "description": "Counted leg depths, newest last: (H_i - L_i) / H_i",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.contraction_depths.contraction_depths",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "contraction_depths",
+      "sql": "screener_vcp_pivot_daily.contraction_depths",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(Float32)"
+    },
+    {
+      "column": "contraction_ratio",
+      "description": "last / prev; <= 1 compressing, ~0.5 is Node D halving",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.contraction_ratio.contraction_ratio",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "contraction_ratio",
+      "sql": "screener_vcp_pivot_daily.contraction_ratio",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "date",
+      "description": "Trading session (matches screener_price_tech_daily.date)",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "date",
+      "sql": "screener_vcp_pivot_daily.date",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Date"
+    },
+    {
+      "column": "days_in_base",
+      "description": "Sessions from the base-opening high to this date",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.days_in_base.days_in_base",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "days_in_base",
+      "sql": "screener_vcp_pivot_daily.days_in_base",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "days_since_pivot",
+      "description": "Sessions since that high",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.days_since_pivot.days_since_pivot",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "days_since_pivot",
+      "sql": "screener_vcp_pivot_daily.days_since_pivot",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(UInt16)"
+    },
+    {
+      "column": "depths_descending",
+      "description": "Strictly shallower each leg",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.depths_descending.depths_descending",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "depths_descending",
+      "sql": "screener_vcp_pivot_daily.depths_descending",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "depths_descending_tol",
+      "description": "Shallower within level_tolerance (Lo-Mamaysky-Wang style)",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.depths_descending_tol.depths_descending_tol",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "depths_descending_tol",
+      "sql": "screener_vcp_pivot_daily.depths_descending_tol",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "dist_to_pivot_pct",
+      "description": "close / pivot_line - 1 at this date",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.dist_to_pivot_pct.dist_to_pivot_pct",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "dist_to_pivot_pct",
+      "sql": "screener_vcp_pivot_daily.dist_to_pivot_pct",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "execution_state",
+      "description": "pre_breakout | breakout | early_post_breakout | extended | overextended | damaged | forming | none",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.execution_state.execution_state",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "execution_state",
+      "sql": "screener_vcp_pivot_daily.execution_state",
+      "table": "screener_vcp_pivot_daily",
+      "type": "LowCardinality(String)"
+    },
+    {
+      "column": "first_leg_deep_enough",
+      "description": "First leg >= 10%",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.first_leg_deep_enough.first_leg_deep_enough",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "first_leg_deep_enough",
+      "sql": "screener_vcp_pivot_daily.first_leg_deep_enough",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "first_leg_depth",
+      "description": "Depth of the first counted leg — the base opener",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.first_leg_depth.first_leg_depth",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "first_leg_depth",
+      "sql": "screener_vcp_pivot_daily.first_leg_depth",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "halving",
+      "description": "Newest leg within 0.40-1.60x the previous (Node D \"roughly half\")",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.halving.halving",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "halving",
+      "sql": "screener_vcp_pivot_daily.halving",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "has_shakeout",
+      "description": "A leg 1.25x deeper than its predecessor",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.has_shakeout.has_shakeout",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "has_shakeout",
+      "sql": "screener_vcp_pivot_daily.has_shakeout",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "highs_descending",
+      "description": "Strictly lower highs",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.highs_descending.highs_descending",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "highs_descending",
+      "sql": "screener_vcp_pivot_daily.highs_descending",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "highs_descending_tol",
+      "description": "Lower highs within tolerance",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.highs_descending_tol.highs_descending_tol",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "highs_descending_tol",
+      "sql": "screener_vcp_pivot_daily.highs_descending_tol",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "ignored_legs",
+      "description": "Legs below the noise floor: reported in leg_depths, not counted",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.ignored_legs.ignored_legs",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "ignored_legs",
+      "sql": "screener_vcp_pivot_daily.ignored_legs",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "last_pivot_low",
+      "description": "Newest confirmed swing low",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.last_pivot_low.last_pivot_low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "last_pivot_low",
+      "sql": "screener_vcp_pivot_daily.last_pivot_low",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {},
+      "name": "lastupdated",
+      "sql": "screener_vcp_pivot_daily.lastupdated",
+      "table": "screener_vcp_pivot_daily",
+      "type": "DateTime"
+    },
+    {
+      "column": "leg_atr_ratios",
+      "description": "Per counted leg: leg mean ATR / 50d baseline — the Substack envelope read",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.leg_atr_ratios.leg_atr_ratios",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "leg_atr_ratios",
+      "sql": "screener_vcp_pivot_daily.leg_atr_ratios",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(Float32)"
+    },
+    {
+      "column": "leg_days",
+      "description": "Sessions per counted leg, newest last",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.leg_days.leg_days",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "leg_days",
+      "sql": "screener_vcp_pivot_daily.leg_days",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(UInt16)"
+    },
+    {
+      "column": "leg_depths",
+      "description": "Every completed leg including noise below the floor — the raw facts",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.leg_depths.leg_depths",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "leg_depths",
+      "sql": "screener_vcp_pivot_daily.leg_depths",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(Float32)"
+    },
+    {
+      "column": "leg_highs",
+      "description": "High pivot price per counted leg, newest last",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.leg_highs.leg_highs",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "leg_highs",
+      "sql": "screener_vcp_pivot_daily.leg_highs",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(Float32)"
+    },
+    {
+      "column": "leg_volume_ratios",
+      "description": "Per counted leg: leg mean volume / 50d baseline, market-neutral",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.leg_volume_ratios.leg_volume_ratios",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "leg_volume_ratios",
+      "sql": "screener_vcp_pivot_daily.leg_volume_ratios",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Array(Float32)"
+    },
+    {
+      "column": "legs_long_enough",
+      "description": "Every leg >= 5 sessions",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.legs_long_enough.legs_long_enough",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "legs_long_enough",
+      "sql": "screener_vcp_pivot_daily.legs_long_enough",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "lows_ascending",
+      "description": "Strictly higher lows",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.lows_ascending.lows_ascending",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "lows_ascending",
+      "sql": "screener_vcp_pivot_daily.lows_ascending",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "lows_ascending_tol",
+      "description": "Higher lows within tolerance — the measured split discriminant",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.lows_ascending_tol.lows_ascending_tol",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "lows_ascending_tol",
+      "sql": "screener_vcp_pivot_daily.lows_ascending_tol",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "max_contraction_ratio_ok",
+      "description": "Every leg <= 0.70x the previous",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.max_contraction_ratio_ok.max_contraction_ratio_ok",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "max_contraction_ratio_ok",
+      "sql": "screener_vcp_pivot_daily.max_contraction_ratio_ok",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "pivot_confirm_date",
+      "description": "Date it became knowable (always after pivot_line_date): the point-in-time proof",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.pivot_confirm_date.pivot_confirm_date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pivot_confirm_date",
+      "sql": "screener_vcp_pivot_daily.pivot_confirm_date",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "pivot_line",
+      "description": "Most recent *confirmed* swing high — the level to break",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.pivot_line.pivot_line",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pivot_line",
+      "sql": "screener_vcp_pivot_daily.pivot_line",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "pivot_line_date",
+      "description": "Date of that high",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.pivot_line_date.pivot_line_date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pivot_line_date",
+      "sql": "screener_vcp_pivot_daily.pivot_line_date",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "pivot_proximity_band",
+      "description": "2 = within 4% of the pivot, 1 = within 8%, else 0",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.pivot_proximity_band.pivot_proximity_band",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pivot_proximity_band",
+      "sql": "screener_vcp_pivot_daily.pivot_proximity_band",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock or ETF ticker symbol",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "ticker",
+      "sql": "screener_vcp_pivot_daily.ticker",
+      "table": "screener_vcp_pivot_daily",
+      "type": "LowCardinality(String)"
+    },
+    {
+      "column": "volume_dryup_compressing",
+      "description": "Per-leg volume ratios declining",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.volume_dryup_compressing.volume_dryup_compressing",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "volume_dryup_compressing",
+      "sql": "screener_vcp_pivot_daily.volume_dryup_compressing",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "volume_dryup_ratio",
+      "description": "Newest leg volume ratio — supply absorbed when falling",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.volume_dryup_ratio.volume_dryup_ratio",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "volume_dryup_ratio",
+      "sql": "screener_vcp_pivot_daily.volume_dryup_ratio",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float32)"
+    },
+    {
+      "column": "wide_and_loose",
+      "description": "Final contraction > 15% — not a tight pivot",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.wide_and_loose.wide_and_loose",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "wide_and_loose",
+      "sql": "screener_vcp_pivot_daily.wide_and_loose",
+      "table": "screener_vcp_pivot_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "zigzag_threshold_pct",
+      "description": "Reversal threshold that confirmed the last swing at this date (ATR-scaled when configured, so it varies)",
+      "id": "sigmarail.field.screener_vcp_pivot_daily.zigzag_threshold_pct.zigzag_threshold_pct",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "zigzag_threshold_pct",
+      "sql": "screener_vcp_pivot_daily.zigzag_threshold_pct",
+      "table": "screener_vcp_pivot_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "close_location_pct",
+      "description": "(close-low)/(high-low) for session; NULL if range=0",
+      "id": "sigmarail.field.symbol_technical_features_daily.close_location_pct.close_location_pct",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "close_location_pct",
+      "sql": "symbol_technical_features_daily.close_location_pct",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "closes_below_sma20_streak",
+      "description": "Consecutive closes below sma20d",
+      "id": "sigmarail.field.symbol_technical_features_daily.closes_below_sma20_streak.closes_below_sma20_streak",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "closes_below_sma20_streak",
+      "sql": "symbol_technical_features_daily.closes_below_sma20_streak",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt16)"
+    },
+    {
+      "column": "consecutive_up_days",
+      "description": "Streak of closes above prior close (0 if today down/flat)",
+      "id": "sigmarail.field.symbol_technical_features_daily.consecutive_up_days.consecutive_up_days",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "consecutive_up_days",
+      "sql": "symbol_technical_features_daily.consecutive_up_days",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt16)"
+    },
+    {
+      "column": "date",
+      "description": "Trading date",
+      "id": "sigmarail.field.symbol_technical_features_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "date",
+      "sql": "symbol_technical_features_daily.date",
+      "table": "symbol_technical_features_daily",
+      "type": "Date"
+    },
+    {
+      "column": "downside_reversal_flag",
+      "description": "1 when new high vs prior day and close in lower 50% of range",
+      "id": "sigmarail.field.symbol_technical_features_daily.downside_reversal_flag.downside_reversal_flag",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "downside_reversal_flag",
+      "sql": "symbol_technical_features_daily.downside_reversal_flag",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "drawdown_from_20d_high",
+      "description": "close/rolling_max(high,20) - 1",
+      "id": "sigmarail.field.symbol_technical_features_daily.drawdown_from_20d_high.drawdown_from_20d_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "drawdown_from_20d_high",
+      "sql": "symbol_technical_features_daily.drawdown_from_20d_high",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "drawdown_from_50d_high",
+      "description": "close/rolling_max(high,50) - 1",
+      "id": "sigmarail.field.symbol_technical_features_daily.drawdown_from_50d_high.drawdown_from_50d_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "drawdown_from_50d_high",
+      "sql": "symbol_technical_features_daily.drawdown_from_50d_high",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "drawdown_from_63d_high",
+      "description": "close/rolling_max(high,63) - 1",
+      "id": "sigmarail.field.symbol_technical_features_daily.drawdown_from_63d_high.drawdown_from_63d_high",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "drawdown_from_63d_high",
+      "sql": "symbol_technical_features_daily.drawdown_from_63d_high",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "entry_gate",
+      "description": "1 when pullback_ready AND three_up_days AND spy_above200d",
+      "id": "sigmarail.field.symbol_technical_features_daily.entry_gate.entry_gate",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "entry_gate",
+      "sql": "symbol_technical_features_daily.entry_gate",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "extended_above_sma20_flag",
+      "description": "1 when pct_from_sma20d >= 0.10",
+      "id": "sigmarail.field.symbol_technical_features_daily.extended_above_sma20_flag.extended_above_sma20_flag",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "extended_above_sma20_flag",
+      "sql": "symbol_technical_features_daily.extended_above_sma20_flag",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "first_up_day_date",
+      "description": "Date of first up day after pullback cycle",
+      "id": "sigmarail.field.symbol_technical_features_daily.first_up_day_date.first_up_day_date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "first_up_day_date",
+      "sql": "symbol_technical_features_daily.first_up_day_date",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "first_up_day_low",
+      "description": "Low of first up day after pullback cycle (guide stop)",
+      "id": "sigmarail.field.symbol_technical_features_daily.first_up_day_low.first_up_day_low",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "first_up_day_low",
+      "sql": "symbol_technical_features_daily.first_up_day_low",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "lastupdated",
+      "description": "Row update timestamp",
+      "id": "sigmarail.field.symbol_technical_features_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {},
+      "name": "lastupdated",
+      "sql": "symbol_technical_features_daily.lastupdated",
+      "table": "symbol_technical_features_daily",
+      "type": "DateTime('America/New_York')"
+    },
+    {
+      "column": "near_sma20_flag",
+      "description": "1 when abs(pct_from_sma20d) <= 0.04",
+      "id": "sigmarail.field.symbol_technical_features_daily.near_sma20_flag.near_sma20_flag",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "near_sma20_flag",
+      "sql": "symbol_technical_features_daily.near_sma20_flag",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "pct_from_sma10d",
+      "description": "close/sma10d - 1",
+      "id": "sigmarail.field.symbol_technical_features_daily.pct_from_sma10d.pct_from_sma10d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pct_from_sma10d",
+      "sql": "symbol_technical_features_daily.pct_from_sma10d",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "pct_from_sma20d",
+      "description": "close/sma20d - 1 (SMA proxy for IBD 21 EMA distance)",
+      "id": "sigmarail.field.symbol_technical_features_daily.pct_from_sma20d.pct_from_sma20d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pct_from_sma20d",
+      "sql": "symbol_technical_features_daily.pct_from_sma20d",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "pullback_ready",
+      "description": "1 when drawdown_from_50d_high <= -0.05",
+      "id": "sigmarail.field.symbol_technical_features_daily.pullback_ready.pullback_ready",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "pullback_ready",
+      "sql": "symbol_technical_features_daily.pullback_ready",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "three_up_days",
+      "description": "1 when up_days_last_3 = 3",
+      "id": "sigmarail.field.symbol_technical_features_daily.three_up_days.three_up_days",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "three_up_days",
+      "sql": "symbol_technical_features_daily.three_up_days",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "ticker",
+      "description": "Ticker symbol",
+      "id": "sigmarail.field.symbol_technical_features_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "ticker",
+      "sql": "symbol_technical_features_daily.ticker",
+      "table": "symbol_technical_features_daily",
+      "type": "String"
+    },
+    {
+      "column": "two_closes_below_sma20",
+      "description": "1 when closes_below_sma20_streak >= 2",
+      "id": "sigmarail.field.symbol_technical_features_daily.two_closes_below_sma20.two_closes_below_sma20",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "two_closes_below_sma20",
+      "sql": "symbol_technical_features_daily.two_closes_below_sma20",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "up_days_last_3",
+      "description": "Count of up days in last 3 sessions incl today",
+      "id": "sigmarail.field.symbol_technical_features_daily.up_days_last_3.up_days_last_3",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "up_days_last_3",
+      "sql": "symbol_technical_features_daily.up_days_last_3",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "up_days_last_5",
+      "description": "Count of up days in last 5 sessions incl today",
+      "id": "sigmarail.field.symbol_technical_features_daily.up_days_last_5.up_days_last_5",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "sp500",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "up_days_last_5",
+      "sql": "symbol_technical_features_daily.up_days_last_5",
+      "table": "symbol_technical_features_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "above_21ema",
+      "description": "1 when closeadj > ema21d",
+      "id": "sigmarail.field.ticker_rvab_daily.above_21ema.above_21ema",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "above_21ema",
+      "sql": "ticker_rvab_daily.above_21ema",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(UInt8)"
+    },
+    {
+      "column": "atr_14",
+      "description": "ATR(14) from daily_screener",
+      "id": "sigmarail.field.ticker_rvab_daily.atr_14.atr_14",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "atr_14",
+      "sql": "ticker_rvab_daily.atr_14",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "atr_stop_baseline",
+      "description": "closeadj - atr_14 (ATR trailing stop)",
+      "id": "sigmarail.field.ticker_rvab_daily.atr_stop_baseline.atr_stop_baseline",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "atr_stop_baseline",
+      "sql": "ticker_rvab_daily.atr_stop_baseline",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "closeadj",
+      "description": "Fully adjusted close (daily_screener dm.closeadj)",
+      "id": "sigmarail.field.ticker_rvab_daily.closeadj.closeadj",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "closeadj",
+      "sql": "ticker_rvab_daily.closeadj",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "date",
+      "description": "Trading session (matches daily_screener.date)",
+      "id": "sigmarail.field.ticker_rvab_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "date",
+      "sql": "ticker_rvab_daily.date",
+      "table": "ticker_rvab_daily",
+      "type": "Date"
+    },
+    {
+      "column": "ema21d",
+      "description": "21-day EMA of closeadj",
+      "id": "sigmarail.field.ticker_rvab_daily.ema21d.ema21d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "ema21d",
+      "sql": "ticker_rvab_daily.ema21d",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "factor_beta_mkt_252d",
+      "description": "252d market beta from factor residuals",
+      "id": "sigmarail.field.ticker_rvab_daily.factor_beta_mkt_252d.factor_beta_mkt_252d",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "factor_beta_mkt_252d",
+      "sql": "ticker_rvab_daily.factor_beta_mkt_252d",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.ticker_rvab_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {},
+      "name": "lastupdated",
+      "sql": "ticker_rvab_daily.lastupdated",
+      "table": "ticker_rvab_daily",
+      "type": "DateTime"
+    },
+    {
+      "column": "rvab_score",
+      "description": "Revere RVAB: (atr_14/spy_atr_14)*coalesce(beta,1)",
+      "id": "sigmarail.field.ticker_rvab_daily.rvab_score.rvab_score",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "rvab_score",
+      "sql": "ticker_rvab_daily.rvab_score",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "spy_atr_14",
+      "description": "SPY ATR(14) for same session",
+      "id": "sigmarail.field.ticker_rvab_daily.spy_atr_14.spy_atr_14",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "spy_atr_14",
+      "sql": "ticker_rvab_daily.spy_atr_14",
+      "table": "ticker_rvab_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "spy_atr_missing",
+      "description": "1 when SPY ATR missing or non-positive",
+      "id": "sigmarail.field.ticker_rvab_daily.spy_atr_missing.spy_atr_missing",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "spy_atr_missing",
+      "sql": "ticker_rvab_daily.spy_atr_missing",
+      "table": "ticker_rvab_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock or ETF ticker symbol",
+      "id": "sigmarail.field.ticker_rvab_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {},
+      "name": "ticker",
+      "sql": "ticker_rvab_daily.ticker",
+      "table": "ticker_rvab_daily",
+      "type": "LowCardinality(String)"
+    }
+  ],
+  "version": 1
+}

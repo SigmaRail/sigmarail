@@ -1,0 +1,401 @@
+{
+  "domain": "screening",
+  "tools": [
+    {
+      "description": "Single-day ranked sample of prefix columns (HTTP → Studio probe).",
+      "id": "studio.mcp.tool.screen_probe_asof",
+      "input_schema": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline"
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "probe_mode": {
+            "title": "Probe Mode",
+            "type": "string"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec"
+          },
+          "through_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Binding Id"
+          },
+          "through_stage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Stage Index"
+          }
+        },
+        "title": "screen_probe_asofArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "screen_probe_asof",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "screen_probe_asofDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compare prefix layers A vs B (HTTP → Studio probe).",
+      "id": "studio.mcp.tool.screen_probe_diff",
+      "input_schema": {
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline"
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "probe_mode": {
+            "title": "Probe Mode",
+            "type": "string"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec"
+          },
+          "through_b_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through B Binding Id"
+          },
+          "through_b_stage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through B Stage Index"
+          },
+          "through_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Binding Id"
+          },
+          "through_stage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Stage Index"
+          }
+        },
+        "title": "screen_probe_diffArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "screen_probe_diff",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "screen_probe_diffDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List stage-prefix layers / computed aliases (HTTP → Studio; no ClickHouse).",
+      "id": "studio.mcp.tool.screen_probe_layers",
+      "input_schema": {
+        "properties": {
+          "pipeline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline"
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "probe_mode": {
+            "title": "Probe Mode",
+            "type": "string"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec"
+          },
+          "through_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Binding Id"
+          },
+          "through_stage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Stage Index"
+          }
+        },
+        "title": "screen_probe_layersArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "screen_probe_layers",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "screen_probe_layersDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Per-day member counts + measure averages (HTTP → Studio probe).",
+      "id": "studio.mcp.tool.screen_probe_range",
+      "input_schema": {
+        "properties": {
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline"
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "probe_mode": {
+            "title": "Probe Mode",
+            "type": "string"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "through_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Binding Id"
+          },
+          "through_stage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Stage Index"
+          }
+        },
+        "title": "screen_probe_rangeArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "screen_probe_range",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "screen_probe_rangeDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Run an L7 screener preset (leaders / minervini_tt / vcp_tight / high_rs / …).",
+      "id": "studio.mcp.tool.screen_stocks",
+      "input_schema": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "preset": {
+            "title": "Preset",
+            "type": "string"
+          }
+        },
+        "title": "screen_stocksArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "screen_stocks",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "screen_stocksDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}
