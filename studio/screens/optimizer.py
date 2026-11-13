@@ -160,7 +160,7 @@ def create_and_launch_optimization_session(
     oos_days: int = 0,
     constraints: list[dict[str, Any]] | None = None,
     max_concurrent: int = 4,
-    lean_project: str = "VeraTradingLab",
+    lean_project: str = "SigmaRailTradingLab",
     client: Any = None,
 ) -> dict[str, Any]:
     """Create an optimization session and submit all grid backtests concurrently."""

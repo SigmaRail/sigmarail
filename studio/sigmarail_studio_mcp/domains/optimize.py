@@ -48,7 +48,7 @@ def launch_sweep(
     objective: str = "sharpe_ratio",
     title: str | None = None,
     max_concurrent: int = 4,
-    lean_project: str = "VeraTradingLab",
+    lean_project: str = "SigmaRailTradingLab",
 ) -> dict[str, Any]:
     """Launch a 1D or 2D hyperparameter sweep session (Euler or grid)."""
     from screens.optimizer import create_and_launch_optimization_session

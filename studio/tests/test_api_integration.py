@@ -37,12 +37,13 @@ def test_list_optimizer_sessions_shape():
     assert isinstance(sessions, list)
 
 
-def test_promotion_gate_missing_run():
+def test_promotion_gate_missing_run(sigmarail_test_database):
     if not _ch_reachable():
         pytest.skip("ClickHouse unreachable")
     from screens.ch import get_ch_client
     from screens.live_promotion import check_promotion_gate
 
+    assert sigmarail_test_database.query("SELECT count() FROM strategy_runs").result_rows == [(0,)]
     client = get_ch_client()
     try:
         res = check_promotion_gate(

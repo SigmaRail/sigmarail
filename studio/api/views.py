@@ -1588,7 +1588,7 @@ class BacktestJobsListView(APIView):
         ir_id = str(body.get("ir_id") or "").strip()
         start_date = str(body.get("start_date") or "").strip()
         end_date = str(body.get("end_date") or "").strip()
-        lean_project = str(body.get("lean_project") or "VeraTradingLab").strip()
+        lean_project = str(body.get("lean_project") or "SigmaRailTradingLab").strip()
         if not ir_id:
             return Response({"detail": "ir_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         if not start_date:
@@ -2559,7 +2559,7 @@ class OptimizerLaunchView(APIView):
         oos_days = int(body.get("oos_days") or 0)
         constraints = body.get("constraints") if isinstance(body.get("constraints"), list) else []
         max_concurrent = int(body.get("max_concurrent") or 4)
-        lean_project = str(body.get("lean_project") or "VeraTradingLab").strip()
+        lean_project = str(body.get("lean_project") or "SigmaRailTradingLab").strip()
 
         try:
             client = get_ch_client()

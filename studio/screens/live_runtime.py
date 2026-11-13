@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 from screens.execution import lean_projects_root
 
 _LOCK = threading.Lock()
-_PROJECT_NAME = "VeraTradingLab"
+_PROJECT_NAME = "SigmaRailTradingLab"
 _MAX_CONCURRENT_DEPLOYMENTS = 2
 
 
@@ -114,7 +114,7 @@ def _project() -> Path:
     root = _root()
     project = (root / _PROJECT_NAME).resolve()
     if root not in project.parents or not (project / "main.py").is_file():
-        raise RuntimeErrorDetail("Configured VeraTradingLab LEAN project was not found")
+        raise RuntimeErrorDetail("Configured SigmaRailTradingLab LEAN project was not found")
     if not (root / "lean.json").is_file():
         raise RuntimeErrorDetail("LEAN workspace configuration was not found")
     return project
@@ -211,7 +211,10 @@ def _sanitize_project_config(value: Any) -> Any:
             normalized = key.lower().replace("_", "-")
             # The selected IR is passed by this deployment. Stale project parameters
             # must not override it, and a project path must not shadow the IR ID.
-            if normalized in {"vera-lab-id", "vera-lab-path", "vera-lab-base64"}:
+            if normalized in {
+                "vera-lab-id", "vera-lab-path", "vera-lab-base64",
+                "sigmarail-strategy-id", "sigmarail-strategy-path", "sigmarail-strategy-base64",
+            }:
                 continue
             # Keep database auth needed by LEAN's configured ClickHouse resolver,
             # including both lean.json's spelling and Docker's uppercase env spelling.

@@ -52,7 +52,12 @@ def sigmarail_synthetic_dataset(pytestconfig):
 
     from sigmarail.testing import generate_synthetic_dataset
 
-    temp_dir = tempfile.TemporaryDirectory(prefix="sigmarail-synthetic-")
+    # ClickHouse changes ownership of its bind mount to its service account.
+    # Cleanup is best-effort because CI uses a disposable runner and the mount
+    # may no longer be owned by the host process after the container exits.
+    temp_dir = tempfile.TemporaryDirectory(
+        prefix="sigmarail-synthetic-", ignore_cleanup_errors=True
+    )
     fixture_dir = Path(temp_dir.name)
     manifest = generate_synthetic_dataset(fixture_dir)
     # ClickHouse's container entrypoint changes ownership of user_files to its
@@ -178,6 +183,21 @@ def sigmarail_clickhouse_service(request, pytestconfig, sigmarail_synthetic_data
     os.environ.update(overrides)
     yield {"host": "127.0.0.1", "http_port": http_port, "native_port": native_port}
     try:
+        # The ClickHouse image chowns user_files at startup. Restore the host
+        # owner before pytest tears the service and temporary fixture down.
+        uid = getattr(os, "getuid", lambda: None)()
+        gid = getattr(os, "getgid", lambda: None)()
+        if uid is not None and gid is not None:
+            subprocess.run(
+                [
+                    "docker", "exec", "--user", "0", container_id,
+                    "chown", "-R", f"{uid}:{gid}", "/var/lib/clickhouse/user_files",
+                ],
+                cwd=pytestconfig.rootpath,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
         logs = subprocess.run(
             ["docker", "compose", "-f", compose_file, "-p", project, "logs", "--no-color", "clickhouse"],
             cwd=pytestconfig.rootpath,

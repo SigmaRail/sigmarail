@@ -50,8 +50,9 @@ def _enabled_modules() -> set[str]:
     unavailable: dict[str, list[str]] = {}
     for name in sorted(enabled):
         missing = [
-            package for package in _MODULES_BY_NAME[name].get("requires", [])
-            if importlib.util.find_spec(package) is None
+            package.replace("-", "_")
+            for package in _MODULES_BY_NAME[name].get("requires", [])
+            if importlib.util.find_spec(package.replace("-", "_")) is None
         ]
         if missing:
             unavailable[name] = missing
