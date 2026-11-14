@@ -40,7 +40,6 @@ jobs:
           npm test
           npm run build
 
-
   lean-smoke:
     # LEAN's private image and a self-hosted Docker Desktop runner are required.
     # Do not expose this runner or its credentials to pull requests from forks.
@@ -86,7 +85,7 @@ jobs:
       - name: Check generated SigmaRail Spec runtime in the lab template
         run: >-
           python3.11 packages/sigmarail-spec/tools/build.py --check --lean-source custom-lean
-          && python packages/sigmarail-spec/tools/sync_lean_vendor.py
+          && python3.11 packages/sigmarail-spec/tools/sync_lean_vendor.py
           --destination trading_lab/sigmarail_spec
 
       - name: Log in to private LEAN image registry
@@ -107,7 +106,7 @@ jobs:
           SIGMARAIL_TRADING_LAB_SOURCE: ${{ github.workspace }}/trading_lab
           SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/packages/sigmarail-spec/src
           SIGMARAIL_STUDIO_PYTHON: ${{ steps.local-python.outputs.python-path }}
-          SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+          SIGMARAIL_LEAN_PYTHON: ${{ steps.local-python.outputs.python-path }}
           SIGMARAIL_LEAN_IMAGE: ghcr.io/mdiggory/lean-clickhouse:arm64-latest
         run: python3.11 -m pytest -s -q tests/test_lean_smoke.py --sigmarail-clickhouse
 
