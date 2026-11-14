@@ -117,7 +117,7 @@ jobs:
           SIGMARAIL_TRADING_LAB_SOURCE: ${{ github.workspace }}/trading_lab
           SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/packages/sigmarail-spec/src
           SIGMARAIL_STUDIO_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-          SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-xython.outputs.python-path }}
+          SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-python.outputs.python-path }}
           SIGMARAIL_LEAN_IMAGE: ghcr.io/mdiggory/lean-clickhouse:arm64-latest
         run: python -m pytest -s -q tests/test_lean_smoke.py --sigmarail-clickhouse
 
@@ -153,7 +153,7 @@ jobs:
           PY
       - name: Build SigmaRail Spec
         run: |
-          pyton -m pip install build
+          python -m pip install build
           python -m build packages/sigmarail-spec --outdir dist
       - name: Publish SigmaRail Spec with PyPI trusted publishing
         uses: pypa/gh-action-pypi-publish@release/v1
