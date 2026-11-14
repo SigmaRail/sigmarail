@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { backtestRunFromPath, backtestRunPath, strategyPath, type BacktestSection } from "../routes";
 import {
   fetchBacktestReport,
@@ -270,21 +270,19 @@ function ReportPanel({
 
   const [expandedArtifact, setExpandedArtifact] = useState<string | null>(null);
   const [snapshotIndex, setSnapshotIndex] = useState(0);
-  const [selectedTradeModal, setSelectedTradeModal] = useState<ClosedTradeItem | null>(null);
-
-  const handleSelectTrade = useCallback((trade: ClosedTradeItem | null) => {
-    setSelectedTradeModal(trade);
-    const url = new URL(window.location.href);
+  const [search, setSearch] = useSearchParams();
+  const handleSelectTrade = (trade: ClosedTradeItem | null) => {
+    const params = new URLSearchParams(search);
     if (trade) {
-      url.searchParams.set("trade", trade.id);
-      url.searchParams.set("campaign", trade.symbol);
+      params.set("trade", trade.id);
+      params.set("campaign", trade.symbol);
     } else {
-      url.searchParams.delete("trade");
-      url.searchParams.delete("campaign");
-      url.searchParams.delete("symbol");
+      params.delete("trade");
+      params.delete("campaign");
+      params.delete("symbol");
     }
-    window.history.replaceState({}, "", url.toString());
-  }, []);
+    setSearch(params);
+  };
 
   const monthlyReturnsQuery = useQuery({
     queryKey: ["backtest-monthly-returns", report.run_id],
@@ -322,36 +320,11 @@ function ReportPanel({
     enabled: Boolean(report.run_id),
   });
 
-  // Deep-linking: sync URL ?trade=<id> and ?campaign=<symbol> to modal on load / data arrival
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tradeParam = params.get("trade");
-    const campaignParam = params.get("campaign") || params.get("symbol");
-    if (!tradeParam && !campaignParam) return;
-    if (selectedTradeModal) return;
-
-    const allTrades = [
-      ...(closedTradesQuery.data?.trades ?? []),
-      ...(closedTradesQuery.data?.open_trades ?? []),
-    ];
-    if (allTrades.length === 0) return;
-
-    if (tradeParam) {
-      const match = allTrades.find((t) => t.id === tradeParam);
-      if (match) {
-        setSelectedTradeModal(match);
-        return;
-      }
-    }
-    if (campaignParam) {
-      const match = allTrades.find(
-        (t) => t.symbol.toUpperCase() === campaignParam.toUpperCase(),
-      );
-      if (match) {
-        setSelectedTradeModal(match);
-      }
-    }
-  }, [closedTradesQuery.data, selectedTradeModal]);
+  const tradeId = search.get("trade");
+  const campaign = (search.get("campaign") || search.get("symbol"))?.toUpperCase();
+  const trades = [...(closedTradesQuery.data?.trades ?? []), ...(closedTradesQuery.data?.open_trades ?? [])];
+  const selectedTradeModal = trades.find(trade => trade.id === tradeId)
+    ?? trades.find(trade => trade.symbol.toUpperCase() === campaign);
 
   const snapshotsQuery = useQuery({
     queryKey: ["backtest-day-snapshots", report.run_id],
@@ -703,7 +676,7 @@ function ReportPanel({
                   <div>
                     <span className="text-[9.5px] text-ink-faint block uppercase font-bold">Active Holdings</span>
                     <span className="font-mono font-bold text-ink">
-                      {Array.isArray(activeSnapshot.holdings) ? `${activeSnapshot.holdings.length} positions` : "0 positions"}
+                      {Array.isArray(activeSnapshot.holdings) ? `${activeSnapshot.holdings.length} positions` : "Unavailable"}
                     </span>
                   </div>
                 </div>
@@ -729,8 +702,8 @@ function ReportPanel({
                       setup_quality_rating: c.setup_quality_rating,
                       atr_pct: c.atr_pct,
                       sector: c.sector,
-                      decision: isHolding ? "bought" : "passed_rank",
-                      target_weight: isHolding ? 0.08 : undefined,
+                      decision: c.decision ?? (isHolding ? "holding" : "none"),
+                      target_weight: c.target_weight,
                     } as CandidateItem;
                   });
                 })()}
@@ -993,66 +966,46 @@ function RunsTab({
   const navigate = useNavigate();
   const { runId: selectedRunId, section } = backtestRunFromPath(location.pathname);
 
-  const setSelectedRunId = useCallback(
-    (id: string | null) => {
-      navigate(id ? backtestRunPath(id) : "/backtests");
-    },
-    [navigate],
-  );
-
-  const initialCompareRunIds = useMemo(() => {
-    const p = new URLSearchParams(window.location.search);
-    const cr = p.get("compare_runs") || p.get("compare");
-    if (!cr) return [];
-    return cr
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }, []);
-
-  const initialIrId = useMemo(() => {
-    const p = new URLSearchParams(window.location.search);
-    return p.get("ir_id") || p.get("spec") || undefined;
-  }, []);
-
-  const [checkedRunIds, setCheckedRunIds] = useState<string[]>(initialCompareRunIds);
-  const [isCompareMode, setIsCompareMode] = useState<boolean>(
-    initialCompareRunIds.length >= 2 || new URLSearchParams(window.location.search).get("view") === "compare",
-  );
+  const [search, setSearch] = useSearchParams();
+  const checkedRunIds = (search.get("compare_runs") || search.get("compare") || "")
+    .split(",").map(id => id.trim()).filter(Boolean);
+  const view = search.get("view");
+  const isCompareMode = view ? view === "compare" : checkedRunIds.length >= 2;
   const [viewMode, setViewMode] = useState<"split" | "table">("split");
-  const [filters, setFilters] = useState<RunFilters>(() => ({
-    ...INITIAL_RUN_FILTERS,
-    irId: initialIrId,
-  }));
+  const [localFilters, setLocalFilters] = useState(INITIAL_RUN_FILTERS);
+  const filters = useMemo(() => ({
+    ...localFilters, irId: search.get("ir_id") || search.get("spec") || undefined,
+  }), [localFilters, search]);
+
+  function setFilters(next: RunFilters) {
+    setLocalFilters(next);
+    if (next.irId === filters.irId) return;
+    const params = new URLSearchParams(search);
+    params.delete("spec");
+    if (next.irId && next.irId !== "all") params.set("ir_id", next.irId);
+    else params.delete("ir_id");
+    setSearch(params);
+  }
+
+  function selectRun(id: string | null) {
+    const params = new URLSearchParams(search);
+    for (const key of ["trade", "campaign", "symbol"]) params.delete(key);
+    if (checkedRunIds.length >= 2) params.set("view", "split");
+    else params.delete("view");
+    navigate({ pathname: id ? backtestRunPath(id) : "/backtests", search: params.toString() });
+  }
+
+  function setComparison(open: boolean) {
+    const params = new URLSearchParams(search);
+    params.set("view", open ? "compare" : "split");
+    setSearch(params);
+  }
+
   const [logModalJob, setLogModalJob] = useState<{
     jobId: string;
     irId?: string | null;
     status?: string;
   } | null>(null);
-
-  // Synchronize comparison run IDs, ir_id filter, and view mode to the address bar
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (checkedRunIds.length > 0) {
-      params.set("compare_runs", checkedRunIds.join(","));
-    } else {
-      params.delete("compare_runs");
-      params.delete("compare");
-    }
-    if (filters.irId && filters.irId !== "all") {
-      params.set("ir_id", filters.irId);
-    } else {
-      params.delete("ir_id");
-      params.delete("spec");
-    }
-    if (isCompareMode) {
-      params.set("view", "compare");
-    } else {
-      params.delete("view");
-    }
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState(null, "", newUrl);
-  }, [checkedRunIds, filters.irId, isCompareMode]);
 
   const jobsQuery = useQuery({
     queryKey: ["backtest-jobs", "recent", filters.irId],
@@ -1133,28 +1086,30 @@ function RunsTab({
   useEffect(() => {
     if (selectedRunId || isCompareMode) return;
     if (filteredRuns.length > 0) {
-      navigate(backtestRunPath(filteredRuns[0].run_id), { replace: true });
+      navigate({ pathname: backtestRunPath(filteredRuns[0].run_id), search: location.search }, { replace: true });
     }
-  }, [selectedRunId, isCompareMode, filteredRuns, navigate]);
+  }, [selectedRunId, isCompareMode, filteredRuns, navigate, location.search]);
 
   // Canonicalize /backtests/:runId (no section) -> /overview.
   useEffect(() => {
     if (!selectedRunId) return;
     const segs = location.pathname.split("/").filter(Boolean);
     if (segs[0] === "backtests" && segs.length === 2) {
-      navigate(backtestRunPath(selectedRunId, "overview"), { replace: true });
+      navigate({ pathname: backtestRunPath(selectedRunId, "overview"), search: location.search }, { replace: true });
     }
-  }, [selectedRunId, location.pathname, navigate]);
+  }, [selectedRunId, location.pathname, location.search, navigate]);
 
   const handleToggleCheck = (runId: string) => {
-    setCheckedRunIds((prev) => {
-      const next = prev.includes(runId)
-        ? prev.filter((id) => id !== runId)
-        : prev.length < 6
-          ? [...prev, runId]
-          : prev;
-      return next;
-    });
+    const ids = checkedRunIds.includes(runId) ? checkedRunIds.filter(id => id !== runId) : [...checkedRunIds, runId];
+    if (ids.length > 6) return;
+    const params = new URLSearchParams(search);
+    params.delete("compare");
+    if (ids.length) params.set("compare_runs", ids.join(","));
+    else params.delete("compare_runs");
+    if (ids.length < 2) params.delete("view");
+    else params.set("view", isCompareMode ? "compare" : "split");
+    setSearch(params);
+
   };
 
   const reportQuery = useQuery({
@@ -1168,7 +1123,7 @@ function RunsTab({
       {/* Top Filter & View Mode Bar */}
       <div className="border-b border-line bg-surface-raised p-2.5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2.5">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-bold text-ink">Strategy Runs Lab</h2>
             <span className="rounded bg-surface px-2 py-0.5 font-mono text-[10.5px] text-ink-muted border border-line">
               ClickHouse strategy_runs &amp; backtest_jobs
@@ -1210,7 +1165,7 @@ function RunsTab({
                 type="button"
                 onClick={() => {
                   setViewMode("split");
-                  setIsCompareMode(true);
+                  setComparison(true);
                 }}
                 className="rounded bg-accent px-3 py-1 text-[11px] font-semibold text-accent-ink shadow-sm hover:opacity-90 transition-opacity"
               >
@@ -1222,8 +1177,9 @@ function RunsTab({
               <button
                 type="button"
                 onClick={() => {
-                  setCheckedRunIds([]);
-                  setIsCompareMode(false);
+                  const params = new URLSearchParams(search);
+                  for (const key of ["compare", "compare_runs", "view"]) params.delete(key);
+                  setSearch(params);
                 }}
                 className="rounded border border-line bg-surface px-2 py-1 text-[11px] font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink"
               >
@@ -1249,9 +1205,8 @@ function RunsTab({
             runs={filteredRuns}
             selectedRunId={selectedRunId}
             onSelectRun={(rid) => {
-              setSelectedRunId(rid);
+              selectRun(rid);
               setViewMode("split");
-              setIsCompareMode(false);
             }}
             checkedRunIds={checkedRunIds}
             onToggleCheck={handleToggleCheck}
@@ -1263,11 +1218,11 @@ function RunsTab({
           />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 bg-surface">
+        <div className="flex min-h-0 flex-1 flex-col bg-surface md:flex-row">
           {/* Left Filtered Runs Sidebar */}
-          <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-raised">
+          <aside className="flex max-h-[30dvh] w-full shrink-0 md:max-h-none md:w-80 flex-col border-r border-line bg-surface-raised">
             <JobsStrip
-              onSelectRun={setSelectedRunId}
+              onSelectRun={selectRun}
               selectedRunId={selectedRunId}
               onViewLog={(jobId, irId, status) =>
                 setLogModalJob({ jobId, irId, status })
@@ -1295,8 +1250,7 @@ function RunsTab({
                     selected={run.run_id === selectedRunId && !isCompareMode}
                     checked={checkedRunIds.includes(run.run_id)}
                     onSelect={() => {
-                      setSelectedRunId(run.run_id);
-                      setIsCompareMode(false);
+                      selectRun(run.run_id);
                     }}
                     onToggleCheck={() => handleToggleCheck(run.run_id)}
                     onViewLog={(jobId, irId, status) =>
@@ -1309,7 +1263,7 @@ function RunsTab({
           </aside>
 
           {/* Right Active Run Inspector / Compare Pane */}
-          <main className="flex min-w-0 flex-1 flex-col bg-surface-raised overflow-y-auto">
+          <section aria-label="Run details" className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface-raised overflow-y-auto">
             <ActiveBacktestBanner
               jobs={jobs}
               onViewLog={(jobId, irId, status) =>
@@ -1320,10 +1274,9 @@ function RunsTab({
             {isCompareMode && checkedRunIds.length >= 2 ? (
               <MultiRunCompareView
                 runIds={checkedRunIds}
-                onClose={() => setIsCompareMode(false)}
+                onClose={() => setComparison(false)}
                 onSelectRun={(rid) => {
-                  setSelectedRunId(rid);
-                  setIsCompareMode(false);
+                  selectRun(rid);
                 }}
               />
             ) : !selectedRunId ? (
@@ -1418,7 +1371,7 @@ function RunsTab({
                 report={reportQuery.data}
                 runSubTab={section}
                 onRunSubTabChange={(s) => {
-                  if (selectedRunId) navigate(backtestRunPath(selectedRunId, s));
+                  if (selectedRunId) navigate({ pathname: backtestRunPath(selectedRunId, s), search: location.search });
                 }}
                 onPromote={
                   onPromoteRun && selectedRunId
@@ -1435,7 +1388,7 @@ function RunsTab({
                 }
               />
             ) : null}
-          </main>
+          </section>
         </div>
       )}
 
@@ -1472,6 +1425,7 @@ export function BacktestView({
   routeStrategyIrId?: string | null;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [paperRunId, setPaperRunId] = useState<string | null>(null);
   const [loadedComposeSpec, setLoadedComposeSpec] = useState<BacktestSpecSummary | null>(null);
 
@@ -1486,9 +1440,9 @@ export function BacktestView({
 
   const navigateToStrategy = useCallback(
     (irId: string | null) => {
-      navigate(strategyPath(irId));
+      navigate({ pathname: strategyPath(irId), search: location.search });
     },
-    [navigate],
+    [navigate, location.search],
   );
 
   const handleEditInComposer = useCallback((run: BacktestRunSummary) => {
@@ -1522,12 +1476,13 @@ export function BacktestView({
     <div className="flex min-h-0 flex-1 flex-col bg-surface">
       {activeTab === "compose" ? (
         <BacktestComposePanel
+          key={routeStrategyIrId ?? ""}
           savedScreens={savedScreens}
           savedScreenId={savedScreenId}
           liveSpec={liveSpec}
           backtestPrefill={backtestPrefill}
           presets={presets}
-          initialSpec={loadedComposeSpec}
+          initialSpec={loadedComposeSpec?.ir_id === routeStrategyIrId ? loadedComposeSpec : null}
           routeStrategyIrId={routeStrategyIrId}
           onNavigateStrategy={navigateToStrategy}
           onNavigateToRuns={() => onTabChange("runs")}

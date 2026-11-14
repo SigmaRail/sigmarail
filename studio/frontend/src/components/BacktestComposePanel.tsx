@@ -165,8 +165,8 @@ export function BacktestComposePanel({
     null,
   );
   const [universeSqlError, setUniverseSqlError] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [irId, setIrId] = useState("");
+  const [title, setTitle] = useState(initialSpec?.title ?? "");
+  const [irId, setIrId] = useState(initialSpec?.ir_id ?? "");
   const [irIdTouched, setIrIdTouched] = useState(false);
   const [evaluationConfig, setEvaluationConfig] = useState<EvaluationConfig>(INITIAL_EVALUATION_CONFIG);
   const [composeResult, setComposeResult] = useState<ComposeBacktestResponse | null>(
@@ -191,6 +191,7 @@ export function BacktestComposePanel({
   const [specLibraryOpen, setSpecLibraryOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [sweepModalOpen, setSweepModalOpen] = useState(false);
+  const [routeLoadError, setRouteLoadError] = useState(false);
   const [loadedSpec, setLoadedSpec] = useState<BacktestSpecSummary | null>(initialSpec || null);
   const [customInlineSpec, setCustomInlineSpec] = useState<UniverseQueryV1 | null>(null);
   const [isTemplate, setIsTemplate] = useState(Boolean(initialSpec?.is_template));
@@ -303,48 +304,21 @@ export function BacktestComposePanel({
     let cancelled = false;
     void fetchBacktestSpecDetail(id)
       .then((detail) => {
-        if (cancelled || !detail) return;
+        if (cancelled) return;
+        if (!detail || detail.ir_id !== id) {
+          setRouteLoadError(true);
+          return;
+        }
         applyLoadedDetail(detail as unknown as BacktestSpecSummary);
       })
       .catch(() => {
-        /* keep canvas if 404 */
+        if (!cancelled) setRouteLoadError(true);
       });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional route-driven hydrate
   }, [routeStrategyIrId]);
-
-  useEffect(() => {
-    if (initialSpec) {
-      if (initialSpec.title) setTitle(initialSpec.title);
-      if (initialSpec.ir_id) setIrId(initialSpec.ir_id);
-      if (initialSpec.ir_content_hash) {
-        setSpecHash(String(initialSpec.ir_content_hash));
-      }
-      setComposeDirty(false);
-
-      if (initialSpec.spec || initialSpec.algorithm_json) {
-        setLoadedSpec(initialSpec);
-      } else if (initialSpec.ir_id) {
-        void fetchBacktestSpecDetail(initialSpec.ir_id)
-          .then((detail) => {
-            if (detail) {
-              setLoadedSpec(detail as unknown as BacktestSpecSummary);
-              if (detail.title) setTitle(detail.title);
-              if (detail.ir_content_hash) setSpecHash(String(detail.ir_content_hash));
-            } else {
-              setLoadedSpec(initialSpec);
-            }
-          })
-          .catch(() => {
-            setLoadedSpec(initialSpec);
-          });
-      } else {
-        setLoadedSpec(initialSpec);
-      }
-    }
-  }, [initialSpec]);
 
   useEffect(() => {
     if (!loadedSpec) return;
@@ -388,19 +362,16 @@ export function BacktestComposePanel({
     refetchInterval: 30_000,
   });
 
+  const savedHash = loadedSpec?.ir_content_hash;
   const specRunsQuery = useQuery({
-    queryKey: ["strategy-runs-count", irId],
-    queryFn: () => fetchBacktestRuns({ irId, limit: 1 }),
-    enabled: Boolean(irId && !irId.startsWith("catalog:")),
+    queryKey: ["strategy-runs-count", loadedSpec?.ir_id, savedHash],
+    queryFn: () => fetchBacktestRuns({ irId: loadedSpec!.ir_id, irContentHash: savedHash!, limit: 1 }),
+    enabled: Boolean(loadedSpec?.ir_id && savedHash && !loadedSpec.ir_id.startsWith("catalog:")),
     staleTime: 30_000,
   });
-  // The endpoint returns { runs, total }, but the TS type models only the array.
-  // We request limit:1 purely to learn whether this spec has any runs at all.
-  const activeRunsCount =
-    (specRunsQuery.data as unknown as { total?: number } | undefined)?.total ??
-    specRunsQuery.data?.length ??
-    null;
-
+  const pinnedRun = specRunsQuery.data?.find(run =>
+    run.ir_id === loadedSpec?.ir_id && run.ir_content_hash === savedHash && Boolean(savedHash),
+  );
 
   const datesQuery = useQuery({
     queryKey: ["as-of-range-compose"],
@@ -1064,6 +1035,15 @@ export function BacktestComposePanel({
     healthQuery.data,
   ]);
 
+  if (routeStrategyIrId && (routeLoadError || !loadedSpec)) {
+    return (
+      <div className="p-4 text-sm" role="status">
+        {routeLoadError ? `Could not open strategy ${routeStrategyIrId}.` : `Opening strategy ${routeStrategyIrId}…`}
+        {routeLoadError && <button className="workbench-control" onClick={() => onNavigateStrategy?.(null)}>Open a new draft</button>}
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface-raised">
 
@@ -1110,7 +1090,8 @@ export function BacktestComposePanel({
               notes,
             });
           }}
-          activeRunsCount={activeRunsCount}
+          savedVersionRunId={pinnedRun?.run_id}
+          prefillScreen={universeChoice.kind === "inline" ? inlineSpec : null}
           saveStrategyPending={saveMutation.isPending}
           composeDirty={composeDirty}
           onLaunchBacktest={() => void handleRunBacktest()}

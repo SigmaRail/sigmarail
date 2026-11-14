@@ -34,3 +34,20 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+@layer components {
+  .workbench { @apply flex h-full min-h-0 min-w-0 flex-col; height: 100dvh; }
+  .workbench-header { @apply flex min-h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-raised px-3; padding-top: env(safe-area-inset-top); }
+  .workbench-control { @apply min-h-11 min-w-11 rounded px-2 text-sm font-semibold text-ink; }
+  .workbench-sidebar { @apply hidden shrink-0 overflow-y-auto border-r border-line bg-surface-raised px-2 py-2 lg:block; }
+  .workbench-nav { @apply flex flex-col gap-2; }
+  .nav-group-label { @apply px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-ink-muted; }
+  .workbench-nav a { @apply flex min-h-11 items-center rounded px-2 text-sm font-medium text-ink; }
+  .workbench-nav a[aria-current="page"], .slot-link[aria-current="page"] { @apply bg-accent-soft font-semibold text-accent; }
+  .workbench-control:hover, .workbench-nav a:hover, .slot-link:hover { @apply bg-surface-sunk; }
+  .workbench :is(button, a, input, select, summary):focus-visible { @apply outline outline-2 outline-offset-[-2px] outline-accent; }
+  .workbench-drawer { @apply fixed inset-y-0 left-0 right-auto m-0 h-full max-h-full w-64 max-w-[90vw] overflow-y-auto border-0 border-r border-line bg-surface-raised p-3 text-ink; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .workbench-drawer::backdrop { background: rgb(26 35 50 / 42%); }
+  .slot-navigation { @apply grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface-raised p-1 sm:grid-cols-5; }
+  .slot-link { @apply flex min-h-11 min-w-0 items-center justify-center rounded px-2 text-center text-sm leading-tight text-ink; }
+}

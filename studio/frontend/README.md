@@ -1,4 +1,4 @@
-# Screening Studio — frontend
+# SigmaRail Studio frontend
 
 React + Vite + TypeScript SPA for SigmaRail Studio Phase 1.
 
@@ -17,6 +17,12 @@ npm run dev
 ```
 
 Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
+
+## Workbench navigation
+
+A saved strategy opens at `/strategies/:irId`. Link to a slot with `?slot=universe`, `alpha`, `portfolio-construction`, `risk-management`, or `execution`. Existing strategy links open Universe. A bare `/strategies` opens a draft. Slot links identify editor views and do not serialize unsaved edits.
+
+Backtests use `/backtests/:runId/:section`. Deploy accepts `?run=<runId>&deployment=<deploymentId>` to reopen a selection. For direct links and refreshes, configure the SPA host to serve `index.html` for frontend routes while forwarding `/api` and `/health` to Django. Vite development and preview servers provide the SPA fallback.
 
 ## Scripts
 

@@ -1,4 +1,4 @@
-# Screening Studio (Vera)
+# SigmaRail Studio
 
 AI-agent index for the Screening Studio web application (Vite + React SPA served at `/`, Django API at `/api`).
 
@@ -10,13 +10,14 @@ AI-agent index for the Screening Studio web application (Vite + React SPA served
 - `/watchlists` — watchlists
 - `/strategies` — strategy composer (untitled draft)
 - `/strategies/{ir_id}` — open a saved Strategy or Template (`ir_id` from ClickHouse `strategy_algorithm_specs`)
+- `/strategies/{ir_id}?slot=risk-management` — selected strategy slot (universe, alpha, portfolio-construction, risk-management, execution)
 - `/backtests` — strategy runs lab (list); auto-selects the most recent run
 - `/backtests/{run_id}/overview` — report overview & heatmap
 - `/backtests/{run_id}/trades` — closed/open trades & excursions
 - `/backtests/{run_id}/attribution` — attribution & macro
 - `/backtests/{run_id}/scrubber` — day-by-day scrubber
 - `/optimize` — optimizer
-- `/deploy` — promote/deploy
+- `/deploy` — promote/deploy (optional query parameters: run, deployment)
 - `/monitor` — live monitor
 
 A run's `run_id` is a UUID (e.g. `68e1ce5f-cd0c-4cca-bbd8-4cb7107a6a49`). To reference a specific run's report section, use `/backtests/{run_id}/{section}`.

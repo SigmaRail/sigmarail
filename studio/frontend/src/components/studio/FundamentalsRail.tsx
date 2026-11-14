@@ -137,17 +137,17 @@ export function FundamentalsRail({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-7 flex-shrink-0 flex-col items-center border-r border-line bg-surface-raised py-2 text-[10px] font-mono font-bold text-ink-muted hover:bg-surface-sunk hover:text-accent"
+        className="flex min-h-11 w-full shrink-0 items-center justify-center gap-1 sm:w-11 sm:flex-col border-r border-line bg-surface-raised py-2 text-[10px] font-mono font-bold text-ink-muted hover:bg-surface-sunk hover:text-accent"
         title="Open fundamentals rail"
       >
         <span>›</span>
-        <span className="mt-2 [writing-mode:vertical-rl] rotate-180 tracking-widest">FUND</span>
+        <span className="sm:mt-2 sm:[writing-mode:vertical-rl] sm:rotate-180 tracking-widest">FUND</span>
       </button>
     );
   }
 
   return (
-    <aside className="flex w-60 flex-shrink-0 flex-col overflow-hidden border-r border-line bg-surface text-[11px] font-mono">
+    <aside className="flex max-h-[30dvh] w-full shrink-0 sm:max-h-none sm:w-60 flex-col overflow-hidden border-r border-line bg-surface text-[11px] font-mono">
       <div className="flex items-center justify-between border-b border-line bg-surface-raised px-2 py-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-accent">Fundamentals</span>
         <div className="flex items-center gap-1.5">

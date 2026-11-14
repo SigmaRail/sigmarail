@@ -105,3 +105,16 @@ export function strategyPath(irId?: string | null): string {
   const id = (irId || "").trim();
   return id ? `/strategies/${encodeURIComponent(id)}` : "/strategies";
 }
+
+export const STRATEGY_SLOTS = [
+  { id: "universe", label: "Universe" },
+  { id: "alpha", label: "Alpha" },
+  { id: "portfolio-construction", label: "Portfolio Construction" },
+  { id: "risk-management", label: "Risk Management" },
+  { id: "execution", label: "Execution" },
+] as const;
+
+export function strategySlotFromSearch(search: string) {
+  const requested = new URLSearchParams(search).get("slot");
+  return STRATEGY_SLOTS.find(slot => slot.id === requested) ?? STRATEGY_SLOTS[0];
+}

@@ -1,5 +1,6 @@
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   controlLocalLiveRuntime,
   fetchLiveAccountProfiles,
@@ -106,12 +107,14 @@ export function PromotePanel({
   initialRunId?: string | null;
 }) {
   const queryClient = useQueryClient();
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(
-    initialRunId ?? null,
-  );
-  const [selectedDeploymentId, setSelectedDeploymentId] = useState<string | null>(
-    null,
-  );
+  const [search, setSearch] = useSearchParams();
+  const selectRecord = useCallback((key: "run" | "deployment", id: string) => {
+    setSearch(params => {
+      const next = new URLSearchParams(params);
+      next.set(key, id);
+      return next;
+    });
+  }, [setSearch]);
   const [selectedLocalDeploymentId, setSelectedLocalDeploymentId] = useState<string | null>(null);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
@@ -187,41 +190,14 @@ export function PromotePanel({
   const runs = runsQuery.data ?? [];
   const deployments = deploymentsQuery.data ?? [];
 
+  const selectedRunId = search.get("run") ?? initialRunId ?? runs[0]?.run_id ?? null;
+  const selectedDeploymentId = search.get("deployment") ?? deployments[0]?.deployment_id ?? null;
   const selectedRun: BacktestRunSummary | undefined = useMemo(
     () => runs.find((r) => r.run_id === selectedRunId),
     [runs, selectedRunId],
   );
 
   const irId = selectedRun?.ir_id?.trim() ?? "";
-
-  useEffect(() => {
-    if (initialRunId) {
-      setSelectedRunId(initialRunId);
-    }
-  }, [initialRunId]);
-
-  useEffect(() => {
-    if (runs.length === 0) {
-      setSelectedRunId(null);
-      return;
-    }
-    if (!selectedRunId || !runs.some((r) => r.run_id === selectedRunId)) {
-      setSelectedRunId(initialRunId ?? runs[0].run_id);
-    }
-  }, [runs, selectedRunId, initialRunId]);
-
-  useEffect(() => {
-    if (deployments.length === 0) {
-      setSelectedDeploymentId(null);
-      return;
-    }
-    if (
-      !selectedDeploymentId ||
-      !deployments.some((d) => d.deployment_id === selectedDeploymentId)
-    ) {
-      setSelectedDeploymentId(deployments[0].deployment_id);
-    }
-  }, [deployments, selectedDeploymentId]);
 
   const gateQuery = useQuery({
     queryKey: ["promotion-gate", selectedRunId, irId],
@@ -306,7 +282,7 @@ export function PromotePanel({
       void queryClient.invalidateQueries({ queryKey: ["local-live-runtime"] });
       void queryClient.invalidateQueries({ queryKey: ["live-deployments"] });
       if (deploymentId) {
-        setSelectedDeploymentId(deploymentId);
+        selectRecord("deployment", deploymentId);
         setSelectedLocalDeploymentId(deploymentId);
       }
     },
@@ -325,7 +301,7 @@ export function PromotePanel({
       ({ run_id }: { run_id: string }) => {
         setRegisterError(null);
         setRegisterSuccess(null);
-        setSelectedRunId(run_id);
+        selectRecord("run", run_id);
         return { selected_run_id: run_id };
       }
     );
@@ -337,14 +313,14 @@ export function PromotePanel({
       setRegisterError(null);
       setRegisterSuccess(`Registered paper deployment ${truncateId(data.deployment_id)}`);
       void queryClient.invalidateQueries({ queryKey: ["live-deployments"] });
-      setSelectedDeploymentId(data.deployment_id);
+      selectRecord("deployment", data.deployment_id);
       return { registered: true, run_id: selectedRunId, ir_id: irId, deployment_id: data.deployment_id };
     });
     return () => {
       unregSelect();
       unregRegister();
     };
-  }, [queryClient, irId, selectedRunId]);
+  }, [queryClient, irId, selectedRunId, selectRecord]);
 
   useEffect(() => {
     studioAgentBridge.updateState({
@@ -354,8 +330,8 @@ export function PromotePanel({
   }, [selectedDeploymentId, gateQuery.data]);
 
   return (
-    <div className="flex min-h-0 flex-1 bg-surface">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface-raised">
+    <div className="flex min-h-0 flex-1 flex-col bg-surface md:flex-row">
+      <aside className="flex max-h-[30dvh] w-full shrink-0 md:max-h-none md:w-72 flex-col border-r border-line bg-surface-raised">
         <div className="border-b border-line px-3 py-3">
           <h2 className="text-sm font-semibold text-ink">Backtest runs</h2>
           <p className="mt-0.5 text-[11px] text-ink-muted">Select run to promote</p>
@@ -375,7 +351,7 @@ export function PromotePanel({
                 onClick={() => {
                   setRegisterError(null);
                   setRegisterSuccess(null);
-                  setSelectedRunId(run.run_id);
+                  selectRecord("run", run.run_id);
                 }}
                 className={`w-full border-b border-line px-3 py-2.5 text-left ${
                   run.run_id === selectedRunId
@@ -395,7 +371,7 @@ export function PromotePanel({
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-surface-raised p-4">
+      <section aria-label="Deployment details" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-surface-raised p-4">
         <section className="mb-6 max-w-5xl">
           <h2 className="text-sm font-semibold text-ink">Local LEAN trading</h2>
           <p className="mt-1 text-[12px] text-ink-muted">
@@ -640,8 +616,8 @@ export function PromotePanel({
           <h3 className="text-sm font-semibold text-ink">Active deployments</h3>
           <p className="mt-0.5 text-[11px] text-ink-muted">live_deployments · ClickHouse</p>
 
-          <div className="mt-3 flex min-h-0 flex-1 gap-0 rounded border border-line bg-surface">
-            <div className="w-72 shrink-0 overflow-y-auto border-r border-line">
+          <div className="mt-3 flex min-h-0 flex-1 flex-col md:flex-row gap-0 rounded border border-line bg-surface">
+            <div className="w-full shrink-0 md:w-72 overflow-y-auto border-r border-line">
               {deploymentsQuery.isLoading ? (
                 <div className="px-3 py-6 text-[12px] text-ink-muted">Loading…</div>
               ) : deployments.length === 0 ? (
@@ -654,7 +630,7 @@ export function PromotePanel({
                     key={d.deployment_id}
                     deployment={d}
                     selected={d.deployment_id === selectedDeploymentId}
-                    onSelect={() => setSelectedDeploymentId(d.deployment_id)}
+                    onSelect={() => selectRecord("deployment", d.deployment_id)}
                   />
                 ))
               )}
@@ -697,7 +673,7 @@ export function PromotePanel({
             </div>
           </div>
         </section>
-      </main>
+      </section>
     </div>
   );
 }

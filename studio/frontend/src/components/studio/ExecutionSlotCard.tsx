@@ -29,11 +29,12 @@ export function ExecutionSlotCard({
                 ? "Evaluate signals on T-1 close, fill at the T open — classic overnight-gap swing entry"
                 : "Evaluate signals on T close data, fill at that same close — no overnight gap between decision and fill"
             }
+            aria-pressed={fillSession === session}
             onClick={() => onChangeFillSession(session)}
             className={
               fillSession === session
-                ? "rounded border border-accent bg-accent/10 px-2 py-1 text-[11px] font-semibold text-accent-ink"
-                : "rounded border border-line px-2 py-1 text-[11px] text-ink-muted"
+                ? "min-h-11 rounded border border-accent bg-accent/10 px-2 py-1 text-[11px] font-semibold text-accent-ink"
+                : "min-h-11 rounded border border-line px-2 py-1 text-[11px] text-ink-muted"
             }
           >
             {session === "moo" ? "MOO (open of T)" : "MOC (close of T)"}

@@ -186,7 +186,7 @@ export function UniversalCandidateExplorer({
                         "px-3 py-1.5 font-mono font-bold text-ink",
                         isSelected && "text-accent font-extrabold"
                       )}>
-                        {c.ticker}
+                        <button type="button" className="min-h-11 min-w-11 text-left" onClick={() => handleSelect(c.ticker)}>{c.ticker}</button>
                       </td>
                       <td className="px-2 py-1.5 font-mono tabular-nums text-ink">
                         {c.price != null ? `$${c.price.toFixed(2)}` : "—"}
@@ -212,7 +212,7 @@ export function UniversalCandidateExplorer({
                             </span>
                           ) : (
                             <span className="font-mono text-[9.5px] text-ink-faint">
-                              passed
+                              {c.decision === "holding" ? "Held" : c.decision === "passed_rank" ? "Passed rank" : "Unavailable"}
                             </span>
                           )}
                         </td>

@@ -75,6 +75,7 @@ export function MarketView({
     if (!container || data.length === 0) return;
 
     const chart = createChart(container, {
+      autoSize: true,
       layout: { background: { type: ColorType.Solid, color: "#0f172a" }, textColor: "#94a3b8" },
       grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
       rightPriceScale: { borderColor: "#1e293b" },
@@ -221,14 +222,14 @@ export function MarketView({
   const asOfPoint = data.find((d) => d.date === asOfDate) ?? null;
 
   return (
-    <div className={cn("flex flex-col h-[90vh] bg-surface-sunk", className)}>
+    <div className={cn("flex min-h-0 flex-1 flex-col bg-surface-sunk", className)}>
       <div className="p-3 border-b border-line flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-3">
           <span className="font-mono text-lg font-bold text-accent">📈 Market Context</span>
           <span className="text-xs font-semibold text-ink-muted">Market Regime & VIX Overlay Over Time</span>
         </div>
 
-        <form onSubmit={handleRangeSubmit} className="flex items-center gap-1.5">
+        <form onSubmit={handleRangeSubmit} className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] text-ink-muted">Range:</span>
           <input
             type="date"
@@ -262,10 +263,10 @@ export function MarketView({
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div ref={chartContainerRef} className="flex-1 w-full min-w-0" style={{ minHeight: 600, paddingBottom: 24 }} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto md:flex-row">
+        <div ref={chartContainerRef} className="min-h-[48dvh] w-full min-w-0 flex-1 pb-6" />
 
-        <div className="w-80 border-l border-line bg-surface-sunk p-3 overflow-y-auto flex-shrink-0">
+        <div className="w-full md:w-80 border-l border-line bg-surface-sunk p-3 overflow-y-auto flex-shrink-0">
           <div className="space-y-2 border-b border-line pb-2.5">
             <div className="flex items-center justify-between">
               <span className="font-bold uppercase tracking-wider text-accent text-[11px]">Current Session</span>

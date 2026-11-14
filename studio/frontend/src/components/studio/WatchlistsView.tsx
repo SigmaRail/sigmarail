@@ -423,7 +423,7 @@ export function WatchlistsView({
   };
 
   return (
-    <div className={cn("flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-canvas", className)}>
+    <div className={cn("flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-canvas", className)}>
       {/* Top Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2.5 text-xs">
         <div className="flex items-center gap-2">
@@ -452,9 +452,9 @@ export function WatchlistsView({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Left Panel: List Manager */}
-        <div className="w-72 flex-shrink-0 border-r border-line bg-surface overflow-y-auto">
+        <div className="max-h-[32dvh] w-full flex-shrink-0 md:max-h-none md:w-72 border-r border-line bg-surface overflow-y-auto">
           <div className="space-y-1 p-3">
             {watchlists.length === 0 ? (
               <div className="px-3 py-8 text-center text-sm text-ink-muted">

@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  testMatch: 'paper_runtime_ui.spec.ts',
+  testMatch: ['paper_runtime_ui.spec.ts', 'responsive_workspace.spec.ts'],
   timeout: 30_000,
   workers: 1,
   retries: 0,

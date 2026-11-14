@@ -25,7 +25,7 @@ import { NameDialog } from "./components/NameDialog";
 import {
   RESULTS_GRID_CHUNK,
 } from "./components/ResultsGrid";
-import { TopBar } from "./components/TopBar";
+import { WorkbenchShell } from "./components/WorkbenchShell";
 import { FieldPickerProvider } from "./components/studio/FieldPickerProvider";
 import { ScreenerStudioModal } from "./components/studio/ScreenerStudioModal";
 import { ScreensView } from "./components/studio/ScreensView";
@@ -100,9 +100,7 @@ function StudioApp() {
     const params = new URLSearchParams(window.location.search);
     const ticker = params.get("ticker") || "";
     const date = params.get("as_of") || todayIso;
-    const presetParam = params.get("preset") || null;
-    const templateParam = params.get("template") || null;
-    return { ticker, date, preset: presetParam, template: templateParam };
+    return { ticker, date };
   }, [todayIso]);
 
   const location = useLocation();
@@ -113,7 +111,8 @@ function StudioApp() {
   const stock = stockFromPath(location.pathname);
   const urlState = useMemo(() => readScreenerState(location.search), [location.search]);
   const [screenerView, setScreenerView] = useState<"list" | "grid">(urlState.view ?? "list");
-  const firstSyncRef = useRef(true);
+  const lastScreenLocation = useRef<string | null>(null);
+  const selectionRevision = useRef(0);
   const [selectedChartTicker, setSelectedChartTicker] = useState<string>(
     stock.ticker ?? initialParams.ticker,
   );
@@ -128,12 +127,11 @@ function StudioApp() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [gridVisibleCount, setGridVisibleCount] = useState(RESULTS_GRID_CHUNK);
   const [savedScreenId, setSavedScreenId] = useState<number | string | null>(
-    null,
+    urlState.screen,
   );
   const [baselineSpecJson, setBaselineSpecJson] = useState("");
   // A load is not an edit: the address keeps the reference until the user changes the screen.
   const [screenEdited, setScreenEdited] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [saveFlash, setSaveFlash] = useState<string | null>(null);
   const [nameDialog, setNameDialog] = useState<null | {
     mode: "save-as" | "rename" | "save-for-backtest";
@@ -161,24 +159,26 @@ function StudioApp() {
 
   // A history entry drives the screener inputs back (back/forward, shared links).
   useEffect(() => {
-    if (urlState.asOf && urlState.asOf !== asOf) setAsOf(urlState.asOf);
+    if (activeTab !== "screens" && activeTab !== "charts") return;
+    setAsOf(urlState.asOf || todayIso);
+    if (activeTab !== "screens") return;
     if (urlState.template && urlState.template !== templateId) {
-      // Load through the state machine so the spec + baseline come back too, not just the id.
       void selectTemplate(urlState.template);
     } else if (urlState.preset && urlState.preset !== preset) {
       selectPreset(urlState.preset);
+    } else if (!urlState.template && !urlState.preset && !urlState.screen && (templateId || preset || savedScreenId != null)) {
+      selectPreset(NO_PRESET);
     }
-    if (urlState.view && urlState.view !== screenerView) setScreenerView(urlState.view);
-    // Chips present means the sharer had altered the screen: keep it that way so the
-    // address keeps carrying them (and the tree shows them).
-    if (urlState.where ?? urlState.filters) setScreenEdited(true);
+    setScreenerView(urlState.view ?? "list");
+    setScreenEdited(Boolean(urlState.where ?? urlState.filters));
+    // Restore the address on navigation, including Back and Forward. Local edits write below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlState.template, urlState.preset, urlState.asOf, urlState.view]);
+  }, [activeTab, location.key]);
 
   // Redirect bare root to the default tab.
   useEffect(() => {
     if (location.pathname === "/") {
-      navigate(TAB_PATHS.screens, { replace: true });
+      navigate({ pathname: TAB_PATHS.screens, search: location.search }, { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -187,7 +187,7 @@ function StudioApp() {
   // failing to load — Back must work even for entries already in the history.
   useEffect(() => {
     const seg = location.pathname.replace(/^\/+/, "");
-    if (seg.includes("=")) {
+    if (!seg.includes("/") && seg.includes("=")) {
       navigate(`${TAB_PATHS.screens}?${seg}`, { replace: true });
     }
   }, [location.pathname, navigate]);
@@ -199,7 +199,10 @@ function StudioApp() {
   useEffect(() => {
     const path = location.pathname;
     const current = `${window.location.pathname}${window.location.search}`;
-    const replace = firstSyncRef.current;
+    if (lastScreenLocation.current !== location.key) {
+      lastScreenLocation.current = location.key;
+      return;
+    }
 
     let target = path;
     if (activeTab === "screens") {
@@ -218,7 +221,7 @@ function StudioApp() {
         { today: todayIso },
       );
       target = search ? `${path}?${search}` : path;
-    } else {
+    } else if (activeTab === "charts") {
       const params = new URLSearchParams(window.location.search);
       for (const key of ["ticker", "template", "preset", "screen", "filters", "view", "universe", "deprecated"]) {
         params.delete(key);
@@ -227,10 +230,11 @@ function StudioApp() {
       else params.delete("as_of");
       const search = params.toString();
       target = search ? `${path}?${search}` : path;
+    } else {
+      return;
     }
 
-    firstSyncRef.current = false;
-    if (target !== current) navigate(target, { replace });
+    if (target !== current) navigate(target);
   }, [
     activeTab,
     asOf,
@@ -243,6 +247,7 @@ function StudioApp() {
     spec,
     screenEdited,
     location.pathname,
+    location.key,
     navigate,
   ]);
 
@@ -283,12 +288,12 @@ function StudioApp() {
 
   // Going back/forward onto a ?screen= entry re-opens that saved screen (spec + baseline).
   useEffect(() => {
-    if (!urlState.screen) return;
-    if (String(savedScreenId ?? "") === urlState.screen) return;
+    if (activeTab !== "screens" || !urlState.screen) return;
+    if (String(savedScreenId ?? "") === urlState.screen && spec) return;
     const found = (savedScreensQuery.data ?? []).find((s) => String(s.id) === urlState.screen);
     if (found) selectSavedScreen(found);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlState.screen, savedScreensQuery.data]);
+  }, [activeTab, urlState.screen, savedScreensQuery.data]);
 
   const fieldsQuery = useQuery({
     queryKey: ["fields"],
@@ -441,6 +446,7 @@ function StudioApp() {
     null;
 
   const selectPreset = (id: string) => {
+    selectionRevision.current++;
     setScreenEdited(false);
     setSource("preset");
     setPreset(id);
@@ -452,12 +458,14 @@ function StudioApp() {
   };
 
   const selectTemplate = async (id: string) => {
+    const revision = ++selectionRevision.current;
     setScreenEdited(false);
     setSource("ir");
     setTemplateId(id);
     setSavedScreenId(null);
     try {
       const detail = await fetchTemplate(id);
+      if (revision !== selectionRevision.current) return;
       setSpec(detail.spec);
       const { rows } = extractAppliedFilters(detail.spec.where);
       setFilterRows(rows);
@@ -465,6 +473,7 @@ function StudioApp() {
         JSON.stringify(applyFiltersToSpec(detail.spec, rows)),
       );
     } catch (err) {
+      if (revision !== selectionRevision.current) return;
       console.error(err);
       setSpec(null);
       setFilterRows([]);
@@ -473,6 +482,7 @@ function StudioApp() {
   };
 
   const selectSavedScreen = (screen: SavedScreen) => {
+    selectionRevision.current++;
     setScreenEdited(false);
     setSource("ir");
     setTemplateId(null);
@@ -502,21 +512,6 @@ function StudioApp() {
       setBaselineSpecJson("");
     }
   };
-
-  // Apply preset or template from URL query params on initial mount
-  const bootPresetApplied = useRef(false);
-  useEffect(() => {
-    if (bootPresetApplied.current) return;
-    bootPresetApplied.current = true;
-    const tid = initialParams.template || initialParams.preset;
-    if (tid) {
-      // Try template first (loads full AST filter tree); fall back to preset
-      selectTemplate(tid).catch(() => {
-        selectPreset(tid);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleRenameSaved = (screen: SavedScreen) => {
     void (async () => {
@@ -561,7 +556,6 @@ function StudioApp() {
 
   const persistNewScreen = async (name: string) => {
     if (!liveSpec || source !== "ir") return null;
-    setSaving(true);
     try {
       const created = await createSavedScreen({
         name,
@@ -577,52 +571,7 @@ function StudioApp() {
         err instanceof Error ? err.message : "Save failed",
       );
       return null;
-    } finally {
-      setSaving(false);
     }
-  };
-
-  const handleSave = async () => {
-    if (!liveSpec || source !== "ir") return;
-    if (savedScreenId != null) {
-      setSaving(true);
-      try {
-        const updated = await updateSavedScreen(savedScreenId, {
-          spec: liveSpec,
-        });
-        markSaved(updated.id, liveSpec);
-        await invalidateSavedScreens();
-        flashSaved(`Saved “${updated.name}”`);
-      } catch (err) {
-        console.error(err);
-        window.alert(
-          err instanceof Error ? err.message : "Save failed",
-        );
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-    void (async () => {
-      const name = await askScreenName({
-        mode: "save-as",
-        initial: backtestScreenTitle ?? "Screen",
-      });
-      if (!name) return;
-      await persistNewScreen(name);
-    })();
-  };
-
-  const handleSaveAs = () => {
-    if (!liveSpec || source !== "ir") return;
-    void (async () => {
-      const name = await askScreenName({
-        mode: "save-as",
-        initial: backtestScreenTitle ?? "Screen",
-      });
-      if (!name) return;
-      await persistNewScreen(name);
-    })();
   };
 
   const onFilterRowsChange = (rows: AppliedFilterRow[]) => {
@@ -695,7 +644,7 @@ function StudioApp() {
   ]);
 
   useEffect(() => {
-    if (activeTab !== "compose") return;
+    if (activeTab !== "compose" || routeStrategyIrId) return;
     const next = buildBacktestPrefill();
     if (!next) return;
     setBacktestPrefill((prev) => {
@@ -703,7 +652,7 @@ function StudioApp() {
       const nextKey = JSON.stringify(next);
       return prevKey === nextKey ? prev : next;
     });
-  }, [activeTab, source, liveSpecJson, preset, buildBacktestPrefill]);
+  }, [activeTab, routeStrategyIrId, source, liveSpecJson, preset, buildBacktestPrefill]);
 
   const handleTabChange = (next: WorkbenchTab) => {
     if (next === "compose") {
@@ -711,7 +660,7 @@ function StudioApp() {
       if (prefill) setBacktestPrefill(prefill);
       // Stay on the open strategy when already composing; else untitled draft.
       const current = strategyIrIdFromPath(location.pathname);
-      navigate(strategyPath(current));
+      if (activeTab !== "compose") navigate(strategyPath(current));
       return;
     }
     navigate(TAB_PATHS[next]);
@@ -816,7 +765,6 @@ function StudioApp() {
     if (!liveSpec || source !== "ir") return null;
     try {
       if (savedScreenId != null) {
-        setSaving(true);
         const updated = await updateSavedScreen(savedScreenId, {
           spec: liveSpec,
         });
@@ -853,13 +801,11 @@ function StudioApp() {
         err instanceof Error ? err.message : "Save failed",
       );
       return null;
-    } finally {
-      setSaving(false);
     }
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <WorkbenchShell>
       <NameDialog
         open={nameDialog != null}
         title={
@@ -874,17 +820,6 @@ function StudioApp() {
         onCancel={() => closeNameDialog(null)}
         onConfirm={(value) => closeNameDialog(value)}
       />
-      <TopBar
-        dirty={dirty}
-        saving={saving}
-        onSave={() => {
-          void handleSave();
-        }}
-        onSaveAs={() => {
-          void handleSaveAs();
-        }}
-      />
-
       {saveFlash ? (
         <div className="border-b border-accent/30 bg-accent-soft px-4 py-1.5 text-[12px] text-ink">
           {saveFlash}
@@ -907,7 +842,8 @@ function StudioApp() {
             setAsOf(d);
             navigate(`${stockPath(t)}?as_of=${d}`);
           }}
-          initialViewMode={urlState.view}
+          routeScreenId={urlState.screen}
+          initialViewMode={screenerView}
           onViewModeChange={setScreenerView}
           initialWhere={urlState.where}
           onTemplateChange={(id) => {
@@ -959,7 +895,7 @@ function StudioApp() {
           savedScreens={savedScreens}
           savedScreenId={savedScreenId}
           liveSpec={liveSpec}
-          backtestPrefill={backtestPrefill}
+          backtestPrefill={routeStrategyIrId ? null : backtestPrefill}
           presets={presetsQuery.data ?? []}
           routeStrategyIrId={routeStrategyIrId}
         />
@@ -1018,7 +954,7 @@ function StudioApp() {
           turnoverApiQuery.isFetching
         }
       />
-    </div>
+    </WorkbenchShell>
   );
 }
 

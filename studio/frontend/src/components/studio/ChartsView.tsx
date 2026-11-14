@@ -144,7 +144,7 @@ export function ChartsView({
   }, [data?.chart_series, extraHistoryCandles]);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-canvas">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-canvas">
       <QuoteHeader
         ticker={ticker}
         data={data}
@@ -160,7 +160,7 @@ export function ChartsView({
         onSearchSubmit={handleSelectSymbol}
       />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:flex-row">
         <FundamentalsRail
           data={data}
           open={railOpen}

@@ -24,6 +24,7 @@ const todayIso = () => {
 
 interface ScreensViewProps {
   initialTemplateId?: string;
+  routeScreenId?: string | null;
   initialAsOfDate?: string;
   onNavigateToChart: (ticker: string, asOfDate: string) => void;
   onSendToStrategy?: (spec: UniverseQueryV1, name?: string) => void;
@@ -45,6 +46,7 @@ interface ScreensViewProps {
 
 export function ScreensView({
   initialTemplateId = "minervini_trend_template",
+  routeScreenId,
   initialAsOfDate = todayIso(),
   onNavigateToChart,
   onSendToStrategy,
@@ -109,12 +111,16 @@ export function ScreensView({
   // Which custom saved screen (if any) is loaded → Save overwrites it instead of creating new.
   const [activeSaved, setActiveSaved] = useState<SavedScreen | null>(null);
 
+  const routeScreen = savedScreens.find(screen => String(screen.id) === routeScreenId);
   useEffect(() => {
-    if (baseSpec) {
-      setInlineSpec(baseSpec);
+    if (routeScreenId) {
+      setActiveSaved(routeScreen ?? null);
+      setInlineSpec(routeScreen?.spec ?? null);
+    } else {
       setActiveSaved(null);
+      setInlineSpec(baseSpec);
     }
-  }, [baseSpec]);
+  }, [baseSpec, routeScreenId, routeScreen]);
 
   const handleInlineSpecChange = useCallback(
     (newSpec: UniverseQueryV1) => {
@@ -207,7 +213,7 @@ export function ScreensView({
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-canvas">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-canvas">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* Loading a screen has one entry point: the panel's Load dialog (system screens

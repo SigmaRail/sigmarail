@@ -1,5 +1,6 @@
+import { backtestRunPath, STRATEGY_SLOTS, strategySlotFromSearch } from "../../routes";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UniverseSlotCard, type UniverseChoice } from "./UniverseSlotCard";
 import { PcmSlotCard } from "./PcmSlotCard";
 import { RiskSlotCard } from "./RiskSlotCard";
@@ -145,6 +146,9 @@ export interface AssembledFrameworkSpec {
   };
 }
 
+// Drafts live only in this browser tab. Saved versions keep separate entries by content hash.
+const strategyDrafts = new Map<string, { document: PipelineDocument; title: string }>();
+
 interface AlgorithmStudioViewProps {
   universeTitle?: string;
   universeCandidateCount?: number;
@@ -171,7 +175,8 @@ interface AlgorithmStudioViewProps {
   onForkStrategy?: (newIrId: string, newTitle: string, notes?: string) => Promise<void> | void;
   saveStrategyPending?: boolean;
   composeDirty?: boolean;
-  activeRunsCount?: number | null;
+  savedVersionRunId?: string;
+  prefillScreen?: UniverseQueryV1 | null;
 }
 
 export function AlgorithmStudioView({
@@ -197,11 +202,15 @@ export function AlgorithmStudioView({
   onForkStrategy,
   saveStrategyPending = false,
   composeDirty = false,
-  activeRunsCount = null,
+  savedVersionRunId,
+  prefillScreen,
 }: AlgorithmStudioViewProps) {
   const navigate = useNavigate();
-  // Slot 1: Universe State
-  const [inlineSpec, setInlineSpec] = useState<UniverseQueryV1 | null>(null);
+  const location = useLocation();
+  const activeSlot = strategySlotFromSearch(location.search);
+  const draftKey = loadedSpec
+    ? JSON.stringify([loadedSpec.ir_id, loadedSpec.ir_content_hash ?? loadedSpec.updated_at ?? loadedSpec.algorithm_json ?? loadedSpec.pipeline_document])
+    : "untitled";
 
   const [pipelineDoc, setPipelineDocState] = useState<PipelineDocument | null>(null);
   const [pipelineDecompileError, setPipelineDecompileError] = useState<string | null>(null);
@@ -271,8 +280,6 @@ export function AlgorithmStudioView({
       vb.Universe &&
       typeof vb.Universe === "object"
     ) {
-      const uAst = vb.Universe as UniverseQueryV1;
-      setInlineSpec(uAst);
       onSelectUniverseChoice({ kind: "inline" });
     }
   }, [loadedSpec, onSelectUniverseChoice]);
@@ -280,10 +287,25 @@ export function AlgorithmStudioView({
   // Decompile a loaded full spec into a PipelineDocument so the pipeline canvas
   // (the source of truth for authoring) can faithfully re-edit and recompile it.
   useEffect(() => {
+    function restoreDraft(baseline: PipelineDocument, baselineTitle: string) {
+      const draft = strategyDrafts.get(draftKey);
+      setPipelineDoc(draft?.document ?? baseline);
+      if (draft) onChangeTitle?.(draft.title);
+      setBaselineSnapshot({
+        irId: loadedSpec?.ir_id ?? "", title: baselineTitle,
+        pipelineJson: stableSerialize(baseline), pipelineDoc: baseline,
+      });
+    }
     if (!loadedSpec) {
-      setPipelineDoc(null);
+      const screen = prefillScreen?.where ? irToFilterTrees(prefillScreen.where as IrWhereNode) : [];
+      const name = composeTitle || (screen.length ? universeTitle : "");
+      restoreDraft(pinChampionPipeline({
+        strategy_name: name, stages: [],
+        universe: { source: "screener", screen, limit_per_day: prefillScreen?.limit_per_day ?? (typeof prefillScreen?.limit === "number" ? prefillScreen.limit : 100) },
+        sizing: { policy: "risk_budgeted", max_positions: 10, risk_per_trade_pct: 0.005, max_weight: 0.25 },
+        risk: { max_positions: 10, max_sector_exposure: 0.25 }, execution: { type: "market_order" },
+      }), composeTitle);
       setPipelineDecompileError(null);
-      setBaselineSnapshot(null);
       return;
     }
 
@@ -331,14 +353,8 @@ export function AlgorithmStudioView({
           }
         }
       }
-      setPipelineDoc(doc);
+      restoreDraft(doc, (loadedSpec.title || composeTitle).trim());
       setPipelineDecompileError(null);
-      setBaselineSnapshot({
-        irId: loadedSpec.ir_id,
-        title: (composeTitle || loadedSpec.title || "").trim(),
-        pipelineJson: stableSerialize(doc),
-        pipelineDoc: doc,
-      });
     };
 
     const authored = loadedSpec.pipeline_document;
@@ -379,35 +395,6 @@ export function AlgorithmStudioView({
       cancelled = true;
     };
   }, [loadedSpec]);
-
-  // Send to Strategy / prefilled screen → Universe extra filters (the screen AST).
-  useEffect(() => {
-    if (!loadedSpec && inlineSpec?.where && !pipelineDoc) {
-      const trees = irToFilterTrees(inlineSpec.where as IrWhereNode);
-      const name = composeTitle.trim()
-        || (universeTitle ? `${universeTitle} Strategy` : "Screen Strategy");
-      setPipelineDoc(
-        pinChampionPipeline({
-          strategy_name: name,
-          stages: [],
-          universe: {
-            source: "screener",
-            screen: trees,
-            limit_per_day:
-              typeof inlineSpec.limit_per_day === "number"
-                ? inlineSpec.limit_per_day
-                : typeof inlineSpec.limit === "number"
-                  ? (inlineSpec.limit as number)
-                  : 100,
-          },
-          sizing: { policy: "risk_budgeted", max_positions: 10, risk_per_trade_pct: 0.005, max_weight: 0.25 },
-          risk: { max_positions: 10, max_sector_exposure: 0.25 },
-          execution: { type: "market_order" },
-        }),
-      );
-      onChangeTitle?.(name);
-    }
-  }, [loadedSpec, inlineSpec, universeTitle, pipelineDoc, composeTitle, onChangeTitle]);
 
   useEffect(() => {
     if (compiledFromAlpha) onChangeFramework(compiledFromAlpha);
@@ -564,12 +551,17 @@ export function AlgorithmStudioView({
   const currentTitleClean = (composeTitle || "").trim();
 
   const hasUnsavedEdits = useMemo(() => {
-    if (isNewDraft) return Boolean(pipelineDoc && (pipelineDoc.stages?.length || pipelineDoc.universe?.screen?.length));
-    if (!baselineSnapshot || baselineSnapshot.irId !== loadedSpec?.ir_id) return false;
+    if (!baselineSnapshot || baselineSnapshot.irId !== (loadedSpec?.ir_id ?? "")) return false;
     const docChanged = currentPipelineJson !== baselineSnapshot.pipelineJson;
     const titleChanged = currentTitleClean !== baselineSnapshot.title;
     return docChanged || titleChanged;
-  }, [isNewDraft, pipelineDoc, baselineSnapshot, loadedSpec?.ir_id, currentPipelineJson, currentTitleClean]);
+  }, [baselineSnapshot, loadedSpec?.ir_id, currentPipelineJson, currentTitleClean]);
+
+  useEffect(() => {
+    if (!pipelineDoc || !baselineSnapshot || baselineSnapshot.irId !== (loadedSpec?.ir_id ?? "")) return;
+    if (hasUnsavedEdits) strategyDrafts.set(draftKey, { document: pipelineDoc, title: composeTitle });
+    else strategyDrafts.delete(draftKey);
+  }, [draftKey, pipelineDoc, composeTitle, hasUnsavedEdits, baselineSnapshot, loadedSpec?.ir_id]);
 
   const handleRevert = useCallback(() => {
     if (!baselineSnapshot) return;
@@ -581,6 +573,18 @@ export function AlgorithmStudioView({
 
   return (
     <div className="space-y-4">
+      <nav aria-label="Strategy slots" className="slot-navigation">
+        {STRATEGY_SLOTS.map(slot => {
+          const params = new URLSearchParams(location.search);
+          params.set("slot", slot.id);
+          return (
+            <Link key={slot.id} className="slot-link" aria-current={slot.id === activeSlot.id ? "page" : undefined}
+              to={{ pathname: location.pathname, search: params.toString(), hash: location.hash }}>
+              {slot.label}
+            </Link>
+          );
+        })}
+      </nav>
       {/* Top Strategy Spec & Template Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-line bg-surface p-2.5 shadow-xs">
         <label className="flex min-w-[220px] max-w-xs flex-1 items-center gap-2">
@@ -691,7 +695,7 @@ export function AlgorithmStudioView({
                   title="View Backtest Runs for this Strategy Spec"
                 >
                   <span>📊</span>
-                  <span>Runs{activeRunsCount != null && activeRunsCount > 0 ? ` (${activeRunsCount})` : ""}</span>
+                  <span>Strategy runs</span>
                 </button>
               )}
 
@@ -786,11 +790,10 @@ export function AlgorithmStudioView({
       </div>
 
       <div className="space-y-3">
-        {/* Strategy Documentation & Rationale Banner */}
-        <StrategyDocumentationBanner spec={loadedSpec} defaultExpanded={true} />
 
-        <div className="space-y-3.5">
-          <UniverseSlotCard
+        <div>
+          <section aria-label="Universe" hidden={activeSlot.id !== "universe"}>
+            <UniverseSlotCard
               screen={pipelineDoc?.universe?.screen ?? []}
               asOf={evalConfig.end_date || ""}
               startDate={evalConfig.start_date || ""}
@@ -817,6 +820,8 @@ export function AlgorithmStudioView({
               }}
             />
 
+          </section>
+          <section aria-label="Alpha" hidden={activeSlot.id !== "alpha"}>
             <div className="space-y-3 rounded-lg border border-line bg-surface p-3.5 shadow-sm">
               <div className="border-b border-line pb-2">
                 <h4 className="text-[12.5px] font-bold text-ink">2. Alpha</h4>
@@ -899,6 +904,8 @@ export function AlgorithmStudioView({
               />
             </div>
 
+          </section>
+          <section aria-label="Portfolio Construction" hidden={activeSlot.id !== "portfolio-construction"}>
             <PcmSlotCard
               phases={pyramid.phases}
               onChangePhases={(phases) =>
@@ -948,6 +955,8 @@ export function AlgorithmStudioView({
               }
             />
 
+          </section>
+          <section aria-label="Risk Management" hidden={activeSlot.id !== "risk-management"}>
             <RiskSlotCard
               tranches={progressive.tranches}
               onChangeTranches={(tranches) =>
@@ -1003,13 +1012,27 @@ export function AlgorithmStudioView({
               }
             />
 
+          </section>
+          <section aria-label="Execution" hidden={activeSlot.id !== "execution"}>
             <ExecutionSlotCard
               fillSession={fillSession}
               onChangeFillSession={(v) =>
                 setPipelineDoc((doc) => (doc ? patchFillSession(doc, v) : doc))
               }
             />
+          </section>
+        </div>
+        {loadedSpec && !isCatalog && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+            <span>Saved-version evidence</span>
+            {savedVersionRunId ? (
+              <Link className="workbench-control inline-flex items-center text-accent" to={backtestRunPath(savedVersionRunId, "scrubber")}>
+                Inspect dated run {savedVersionRunId}
+              </Link>
+            ) : <span>Matching run unavailable</span>}
           </div>
+        )}
+        <StrategyDocumentationBanner spec={loadedSpec} defaultExpanded={false} />
       </div>
 
       {/* In-Canvas Simulation & Evaluation Protocol Panel */}
