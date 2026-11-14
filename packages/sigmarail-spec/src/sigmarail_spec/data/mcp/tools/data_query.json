@@ -1,0 +1,707 @@
+{
+  "domain": "data_query",
+  "tools": [
+    {
+      "description": "Describe one registered core dataset, its fields, lineage, and time semantics.",
+      "id": "studio.mcp.tool.core_describe_dataset",
+      "input_schema": {
+        "properties": {
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          }
+        },
+        "title": "core_describe_datasetArguments",
+        "type": "object"
+      },
+      "module": "core",
+      "name": "core_describe_dataset",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "core_describe_datasetDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List SigmaRail core datasets with IDs, grains, and Sharadar lineage roots.",
+      "id": "studio.mcp.tool.core_list_datasets",
+      "input_schema": {
+        "properties": {},
+        "title": "core_list_datasetsArguments",
+        "type": "object"
+      },
+      "module": "core",
+      "name": "core_list_datasets",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "core_list_datasetsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Run a bounded read-only query with allowlisted field IDs and declared joins.",
+      "id": "studio.mcp.tool.core_query_dataset",
+      "input_schema": {
+        "properties": {
+          "query": {
+            "$defs": {
+              "QueryAliasExpression": {
+                "additionalProperties": false,
+                "description": "Reference an earlier computed result in the same query.",
+                "properties": {
+                  "alias": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "title": "Alias",
+                    "type": "string"
+                  },
+                  "type": {
+                    "const": "alias",
+                    "default": "alias",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alias"
+                ],
+                "title": "QueryAliasExpression",
+                "type": "object"
+              },
+              "QueryArithmeticExpression": {
+                "additionalProperties": false,
+                "description": "Binary arithmetic over field, literal, or prior-alias expressions.",
+                "properties": {
+                  "args": {
+                    "items": {
+                      "discriminator": {
+                        "mapping": {
+                          "alias": "#/$defs/QueryAliasExpression",
+                          "arithmetic": "#/$defs/QueryArithmeticExpression",
+                          "field": "#/$defs/QueryFieldExpression",
+                          "literal": "#/$defs/QueryLiteralExpression"
+                        },
+                        "propertyName": "type"
+                      },
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/QueryFieldExpression"
+                        },
+                        {
+                          "$ref": "#/$defs/QueryLiteralExpression"
+                        },
+                        {
+                          "$ref": "#/$defs/QueryAliasExpression"
+                        },
+                        {
+                          "$ref": "#/$defs/QueryArithmeticExpression"
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "title": "Args",
+                    "type": "array"
+                  },
+                  "op": {
+                    "enum": [
+                      "+",
+                      "-",
+                      "*",
+                      "/"
+                    ],
+                    "title": "Op",
+                    "type": "string"
+                  },
+                  "type": {
+                    "const": "arithmetic",
+                    "default": "arithmetic",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "op",
+                  "args"
+                ],
+                "title": "QueryArithmeticExpression",
+                "type": "object"
+              },
+              "QueryComputedField": {
+                "additionalProperties": false,
+                "description": "A query-local bool or number emitted under a stable alias.\n\nBoolean fields use ``where``. Numeric fields use one of ``expr``,\n``sum_aliases``, or ``mean_available``. Arithmetic and boolean calculations\nare evaluated by the query service in ClickHouse; they are not persisted.\n``mean_available`` lists stable field IDs and averages the non-null values.",
+                "properties": {
+                  "alias": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                    "title": "Alias",
+                    "type": "string"
+                  },
+                  "expr": {
+                    "anyOf": [
+                      {
+                        "discriminator": {
+                          "mapping": {
+                            "alias": "#/$defs/QueryAliasExpression",
+                            "arithmetic": "#/$defs/QueryArithmeticExpression",
+                            "field": "#/$defs/QueryFieldExpression",
+                            "literal": "#/$defs/QueryLiteralExpression"
+                          },
+                          "propertyName": "type"
+                        },
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/QueryFieldExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryLiteralExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryAliasExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryArithmeticExpression"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Expr"
+                  },
+                  "kind": {
+                    "enum": [
+                      "bool",
+                      "number"
+                    ],
+                    "title": "Kind",
+                    "type": "string"
+                  },
+                  "mean_available": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "maxItems": 50,
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Mean Available"
+                  },
+                  "sum_aliases": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "maxLength": 64,
+                          "minLength": 1,
+                          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                          "type": "string"
+                        },
+                        "maxItems": 50,
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Sum Aliases"
+                  },
+                  "where": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/QueryPredicate"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "alias",
+                  "kind"
+                ],
+                "title": "QueryComputedField",
+                "type": "object"
+              },
+              "QueryField": {
+                "additionalProperties": false,
+                "properties": {
+                  "alias": {
+                    "anyOf": [
+                      {
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Alias"
+                  },
+                  "field_id": {
+                    "minLength": 1,
+                    "title": "Field Id",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field_id"
+                ],
+                "title": "QueryField",
+                "type": "object"
+              },
+              "QueryFieldExpression": {
+                "additionalProperties": false,
+                "description": "Read one field in the selected dataset/join scope.",
+                "properties": {
+                  "field_id": {
+                    "minLength": 1,
+                    "title": "Field Id",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "default": 0,
+                    "maximum": 3650,
+                    "minimum": -3650,
+                    "title": "Offset",
+                    "type": "integer"
+                  },
+                  "type": {
+                    "const": "field",
+                    "default": "field",
+                    "title": "Type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field_id"
+                ],
+                "title": "QueryFieldExpression",
+                "type": "object"
+              },
+              "QueryJoin": {
+                "additionalProperties": false,
+                "description": "Reference one join declared by a module manifest.",
+                "properties": {
+                  "relationship_id": {
+                    "minLength": 1,
+                    "title": "Relationship Id",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "relationship_id"
+                ],
+                "title": "QueryJoin",
+                "type": "object"
+              },
+              "QueryLiteralExpression": {
+                "additionalProperties": false,
+                "description": "A scalar constant; query values are still bound as SQL parameters.",
+                "properties": {
+                  "type": {
+                    "const": "literal",
+                    "default": "literal",
+                    "title": "Type",
+                    "type": "string"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ],
+                    "title": "Value"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "title": "QueryLiteralExpression",
+                "type": "object"
+              },
+              "QueryOrder": {
+                "additionalProperties": false,
+                "properties": {
+                  "direction": {
+                    "default": "asc",
+                    "enum": [
+                      "asc",
+                      "desc"
+                    ],
+                    "title": "Direction",
+                    "type": "string"
+                  },
+                  "expr": {
+                    "anyOf": [
+                      {
+                        "discriminator": {
+                          "mapping": {
+                            "alias": "#/$defs/QueryAliasExpression",
+                            "arithmetic": "#/$defs/QueryArithmeticExpression",
+                            "field": "#/$defs/QueryFieldExpression",
+                            "literal": "#/$defs/QueryLiteralExpression"
+                          },
+                          "propertyName": "type"
+                        },
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/QueryFieldExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryLiteralExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryAliasExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryArithmeticExpression"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Expr"
+                  },
+                  "field_id": {
+                    "anyOf": [
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Field Id"
+                  }
+                },
+                "title": "QueryOrder",
+                "type": "object"
+              },
+              "QueryPredicate": {
+                "additionalProperties": false,
+                "description": "Boolean filter tree with a backward-compatible field/literal shorthand.\n\nOlder requests may continue to use ``{\"op\":\"gte\", \"field_id\":..., \"value\":...}``.\nNew requests can compare two typed expressions with ``left`` and ``right``; this\nenables schema-bound comparisons such as ``close > high_52w`` without SQL text.",
+                "properties": {
+                  "field_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Field Id"
+                  },
+                  "item": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/QueryPredicate"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null
+                  },
+                  "items": {
+                    "items": {
+                      "$ref": "#/$defs/QueryPredicate"
+                    },
+                    "maxItems": 50,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "left": {
+                    "anyOf": [
+                      {
+                        "discriminator": {
+                          "mapping": {
+                            "alias": "#/$defs/QueryAliasExpression",
+                            "arithmetic": "#/$defs/QueryArithmeticExpression",
+                            "field": "#/$defs/QueryFieldExpression",
+                            "literal": "#/$defs/QueryLiteralExpression"
+                          },
+                          "propertyName": "type"
+                        },
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/QueryFieldExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryLiteralExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryAliasExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryArithmeticExpression"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Left"
+                  },
+                  "op": {
+                    "enum": [
+                      "all",
+                      "any",
+                      "not",
+                      "eq",
+                      "neq",
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "is_null",
+                      "is_not_null"
+                    ],
+                    "title": "Op",
+                    "type": "string"
+                  },
+                  "right": {
+                    "anyOf": [
+                      {
+                        "discriminator": {
+                          "mapping": {
+                            "alias": "#/$defs/QueryAliasExpression",
+                            "arithmetic": "#/$defs/QueryArithmeticExpression",
+                            "field": "#/$defs/QueryFieldExpression",
+                            "literal": "#/$defs/QueryLiteralExpression"
+                          },
+                          "propertyName": "type"
+                        },
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/QueryFieldExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryLiteralExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryAliasExpression"
+                          },
+                          {
+                            "$ref": "#/$defs/QueryArithmeticExpression"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Right"
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Value"
+                  }
+                },
+                "required": [
+                  "op"
+                ],
+                "title": "QueryPredicate",
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Bounded read query over registered datasets, joins, and computed measures.",
+            "properties": {
+              "as_of_date": {
+                "anyOf": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "As Of Date"
+              },
+              "computed": {
+                "items": {
+                  "$ref": "#/$defs/QueryComputedField"
+                },
+                "maxItems": 50,
+                "title": "Computed",
+                "type": "array"
+              },
+              "dataset_id": {
+                "minLength": 1,
+                "title": "Dataset Id",
+                "type": "string"
+              },
+              "end_date": {
+                "anyOf": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "End Date"
+              },
+              "joins": {
+                "items": {
+                  "$ref": "#/$defs/QueryJoin"
+                },
+                "maxItems": 12,
+                "title": "Joins",
+                "type": "array"
+              },
+              "limit": {
+                "default": 100,
+                "maximum": 1000,
+                "minimum": 1,
+                "title": "Limit",
+                "type": "integer"
+              },
+              "module_id": {
+                "pattern": "^sigmarail\\.[a-z][a-z0-9_]{0,61}$",
+                "title": "Module Id",
+                "type": "string"
+              },
+              "order_by": {
+                "items": {
+                  "$ref": "#/$defs/QueryOrder"
+                },
+                "maxItems": 12,
+                "title": "Order By",
+                "type": "array"
+              },
+              "post_where": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/QueryPredicate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "select": {
+                "items": {
+                  "$ref": "#/$defs/QueryField"
+                },
+                "maxItems": 100,
+                "minItems": 1,
+                "title": "Select",
+                "type": "array"
+              },
+              "start_date": {
+                "anyOf": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Start Date"
+              },
+              "version": {
+                "const": 1,
+                "default": 1,
+                "title": "Version",
+                "type": "integer"
+              },
+              "where": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/QueryPredicate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              }
+            },
+            "required": [
+              "module_id",
+              "dataset_id",
+              "select"
+            ],
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "title": "core_query_datasetArguments",
+        "type": "object"
+      },
+      "module": "core",
+      "name": "core_query_dataset",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "core_query_datasetDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}

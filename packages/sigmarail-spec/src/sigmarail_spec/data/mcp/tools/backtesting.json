@@ -1,0 +1,1142 @@
+{
+  "domain": "backtesting",
+  "tools": [
+    {
+      "description": "Cancel an active/queued backtest job.",
+      "id": "studio.mcp.tool.backtest_cancel",
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_cancelArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_cancel",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_cancelDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Diff the key metrics of two backtest runs (delta = B - A).",
+      "id": "studio.mcp.tool.backtest_compare",
+      "input_schema": {
+        "properties": {
+          "run_id_a": {
+            "title": "Run Id A",
+            "type": "string"
+          },
+          "run_id_b": {
+            "title": "Run Id B",
+            "type": "string"
+          }
+        },
+        "title": "backtest_compareArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_compare",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_compareDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Fetch a single run by run_id including all artifacts (debug/advanced).",
+      "id": "studio.mcp.tool.backtest_get_run",
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_get_runArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_get_run",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_get_runDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Fetch a single VeraLab algorithm spec by ir_id (includes full algorithm_json).",
+      "id": "studio.mcp.tool.backtest_get_spec",
+      "input_schema": {
+        "properties": {
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_get_specArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_get_spec",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_get_specDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Hang/failure forensics for one backtest job.\n\nVerdict ``running``/``pending``/``hung``/``orphaned``/``done``/``failed``/\n``cancelled`` with heartbeat age, log age, live progress re-parse,\n'Analysis Complete' detection, strategy_runs presence, log tail and\nnext-step hints. Use when a job seems stuck, failed, or unreported.",
+      "id": "studio.mcp.tool.backtest_investigate",
+      "input_schema": {
+        "properties": {
+          "heartbeat_stale_seconds": {
+            "title": "Heartbeat Stale Seconds",
+            "type": "integer"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "log_stale_seconds": {
+            "title": "Log Stale Seconds",
+            "type": "integer"
+          },
+          "tail_lines": {
+            "title": "Tail Lines",
+            "type": "integer"
+          }
+        },
+        "title": "backtest_investigateArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_investigate",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_investigateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Current backtest job state from backtest_jobs (incl. telemetry columns).",
+      "id": "studio.mcp.tool.backtest_job_status",
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_job_statusArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_job_status",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_job_statusDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List backtest jobs from the queue (optional status filter).",
+      "id": "studio.mcp.tool.backtest_list_jobs",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "backtest_list_jobsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_list_jobs",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_list_jobsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Pending backtest jobs ordered by submission time (oldest first).",
+      "id": "studio.mcp.tool.backtest_list_pending",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "backtest_list_pendingArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_list_pending",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_list_pendingDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List backtest runs (most-recent first; optional strategy_id filter).",
+      "id": "studio.mcp.tool.backtest_list_runs",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "strategy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Id"
+          }
+        },
+        "title": "backtest_list_runsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_list_runs",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_list_runsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List backtest runs for a VeraLab ir_id (most-recent first).",
+      "id": "studio.mcp.tool.backtest_list_runs_by_ir_id",
+      "input_schema": {
+        "properties": {
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "backtest_list_runs_by_ir_idArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_list_runs_by_ir_id",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_list_runs_by_ir_idDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List stored VeraLab algorithm specs (most-recent first, no algorithm_json blob).",
+      "id": "studio.mcp.tool.backtest_list_specs",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "backtest_list_specsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_list_specs",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_list_specsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Agent-friendly digest for one backtest run (metrics/highlights/warnings).",
+      "id": "studio.mcp.tool.backtest_report",
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_reportArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_report",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_reportDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Per-trade loss-cause attribution for one run.",
+      "id": "studio.mcp.tool.backtest_run_attribution",
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_run_attributionArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_run_attribution",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_run_attributionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compile a strategy catalog template and save_spec it.",
+      "id": "studio.mcp.tool.backtest_save_from_template",
+      "input_schema": {
+        "properties": {
+          "ir_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ir Id"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "backtest_save_from_templateArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_save_from_template",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_save_from_templateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Store a VeraLab algorithm spec in strategy_algorithm_specs.\n\nForks automatically when `ir_id` already has backtest runs: the spec is\nsaved under a NEW ir_id with parent_ir_id + mutation_type=\"fork\", so\nexisting runs are never re-pointed at changed content. Check `forked` in\nthe response and use the returned `ir_id` for follow-up calls.",
+      "id": "studio.mcp.tool.backtest_save_spec",
+      "input_schema": {
+        "properties": {
+          "author_agent": {
+            "title": "Author Agent",
+            "type": "string"
+          },
+          "changelog_notes": {
+            "title": "Changelog Notes",
+            "type": "string"
+          },
+          "force_new_version": {
+            "title": "Force New Version",
+            "type": "boolean"
+          },
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "spec_json": {
+            "title": "Spec Json",
+            "type": "string"
+          },
+          "spec_schema_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec Schema Version"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "title": "backtest_save_specArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_save_spec",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_save_specDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Submit a backtest job (pending, or immediately via lean backtest).",
+      "id": "studio.mcp.tool.backtest_submit",
+      "input_schema": {
+        "properties": {
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "extra_env": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Env"
+          },
+          "immediate": {
+            "title": "Immediate",
+            "type": "boolean"
+          },
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "lean_project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lean Project"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "title": "backtest_submitArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_submit",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_submitDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compile + save a strategy catalog template, then enqueue (or run) a backtest.",
+      "id": "studio.mcp.tool.backtest_submit_from_template",
+      "input_schema": {
+        "properties": {
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "extra_env": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Env"
+          },
+          "immediate": {
+            "title": "Immediate",
+            "type": "boolean"
+          },
+          "ir_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ir Id"
+          },
+          "lean_project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lean Project"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "type": "string"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "title": "backtest_submit_from_templateArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_submit_from_template",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_submit_from_templateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Poll a backtest job until done/failed; returns the report digest on success.",
+      "id": "studio.mcp.tool.backtest_wait",
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "poll_interval_sec": {
+            "title": "Poll Interval Sec",
+            "type": "number"
+          },
+          "timeout_sec": {
+            "title": "Timeout Sec",
+            "type": "integer"
+          }
+        },
+        "title": "backtest_waitArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "backtest_wait",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "backtest_waitDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Cancel a sweep session and its pending backtest jobs.",
+      "id": "studio.mcp.tool.optimize_cancel_session",
+      "input_schema": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "title": "optimize_cancel_sessionArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_cancel_session",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_cancel_sessionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Non-dominated Pareto optimal runs for a sweep session.",
+      "id": "studio.mcp.tool.optimize_get_pareto_frontier",
+      "input_schema": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "title": "optimize_get_pareto_frontierArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_get_pareto_frontier",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_get_pareto_frontierDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Response surface: heatmap grid, Pareto frontier, completed points.",
+      "id": "studio.mcp.tool.optimize_get_session_heatmap",
+      "input_schema": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "title": "optimize_get_session_heatmapArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_get_session_heatmap",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_get_session_heatmapDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Launch a 1D or 2D hyperparameter sweep session.",
+      "id": "studio.mcp.tool.optimize_launch_sweep",
+      "input_schema": {
+        "properties": {
+          "base_ir_id": {
+            "title": "Base Ir Id",
+            "type": "string"
+          },
+          "end_date": {
+            "title": "End Date",
+            "type": "string"
+          },
+          "max_concurrent": {
+            "title": "Max Concurrent",
+            "type": "integer"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "oos_days": {
+            "title": "Oos Days",
+            "type": "integer"
+          },
+          "param_x_name": {
+            "title": "Param X Name",
+            "type": "string"
+          },
+          "param_x_values": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Param X Values",
+            "type": "array"
+          },
+          "param_y_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param Y Name"
+          },
+          "param_y_values": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param Y Values"
+          },
+          "start_date": {
+            "title": "Start Date",
+            "type": "string"
+          },
+          "strategy_type": {
+            "title": "Strategy Type",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "optimize_launch_sweepArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_launch_sweep",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_launch_sweepDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List regime optimizer/search policies.",
+      "id": "studio.mcp.tool.optimize_list_runs",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "policy_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Source"
+          }
+        },
+        "title": "optimize_list_runsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_list_runs",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_list_runsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List recent hyperparameter sweep sessions (Studio optimizer).",
+      "id": "studio.mcp.tool.optimize_list_sessions",
+      "input_schema": {
+        "properties": {
+          "base_ir_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Ir Id"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "optimize_list_sessionsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_list_sessions",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_list_sessionsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Policy scorecard (pooled/train/val/test).",
+      "id": "studio.mcp.tool.optimize_policy_scorecard",
+      "input_schema": {
+        "properties": {
+          "asset_ticker": {
+            "title": "Asset Ticker",
+            "type": "string"
+          },
+          "policy_name": {
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window"
+          }
+        },
+        "title": "optimize_policy_scorecardArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_policy_scorecard",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_policy_scorecardDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Promote a sweep winner to a new spec version (sweep_promotion lineage).",
+      "id": "studio.mcp.tool.optimize_promote_optimal_run",
+      "input_schema": {
+        "properties": {
+          "changelog": {
+            "title": "Changelog",
+            "type": "string"
+          },
+          "new_ir_id": {
+            "title": "New Ir Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "title": "optimize_promote_optimal_runArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "optimize_promote_optimal_run",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "optimize_promote_optimal_runDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compare breadth/allocation aggregates between two date windows.",
+      "id": "studio.mcp.tool.regime_compare_periods",
+      "input_schema": {
+        "properties": {
+          "focus_end": {
+            "title": "Focus End",
+            "type": "string"
+          },
+          "focus_start": {
+            "title": "Focus Start",
+            "type": "string"
+          },
+          "reference_end": {
+            "title": "Reference End",
+            "type": "string"
+          },
+          "reference_start": {
+            "title": "Reference Start",
+            "type": "string"
+          }
+        },
+        "title": "regime_compare_periodsArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_compare_periods",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_compare_periodsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "HARD entry gate (rules 1-7) — mandatory session-open check.",
+      "id": "studio.mcp.tool.regime_entry_gate",
+      "input_schema": {
+        "properties": {
+          "as_of_date": {
+            "title": "As Of Date",
+            "type": "string"
+          }
+        },
+        "title": "regime_entry_gateArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_entry_gate",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_entry_gateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Explain the regime allocation (v1 daily row or composed policy).",
+      "id": "studio.mcp.tool.regime_explain_allocation",
+      "input_schema": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "policy_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Name"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "title": "regime_explain_allocationArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_explain_allocation",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_explain_allocationDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Market regime row for a session date.",
+      "id": "studio.mcp.tool.regime_market_regime",
+      "input_schema": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "title": "regime_market_regimeArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_market_regime",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_market_regimeDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Gate 2.5b pass/fail: R:R >= 3:1, BAR budget, earnings window, regime slots.",
+      "id": "studio.mcp.tool.regime_position_management",
+      "input_schema": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "as_of_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of Date"
+          },
+          "earnings_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earnings Date"
+          },
+          "entry": {
+            "title": "Entry",
+            "type": "number"
+          },
+          "stop": {
+            "title": "Stop",
+            "type": "number"
+          },
+          "targets": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Targets",
+            "type": "array"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "title": "regime_position_managementArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_position_management",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_position_managementDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Rank tickers that already passed the HARD gates (refuses when entry gate closed).",
+      "id": "studio.mcp.tool.regime_rank_candidates",
+      "input_schema": {
+        "properties": {
+          "as_of_date": {
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "passing_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Passing Tickers",
+            "type": "array"
+          }
+        },
+        "title": "regime_rank_candidatesArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_rank_candidates",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_rank_candidatesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Direction-split regime-transition weighting (de-risk only).",
+      "id": "studio.mcp.tool.regime_transition_weight",
+      "input_schema": {
+        "properties": {
+          "as_of_date": {
+            "title": "As Of Date",
+            "type": "string"
+          },
+          "base_weight": {
+            "title": "Base Weight",
+            "type": "number"
+          }
+        },
+        "title": "regime_transition_weightArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "regime_transition_weight",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "regime_transition_weightDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}

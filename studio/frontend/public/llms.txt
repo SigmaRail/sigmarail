@@ -1,0 +1,96 @@
+# Screening Studio (Vera)
+
+AI-agent index for the Screening Studio web application (Vite + React SPA served at `/`, Django API at `/api`).
+
+## Canonical routes
+
+- `/` → redirects to `/screens`
+- `/screens` — universe screener
+- `/charts` — price/technical chart (query: `ticker`, `as_of`)
+- `/watchlists` — watchlists
+- `/strategies` — strategy composer (untitled draft)
+- `/strategies/{ir_id}` — open a saved Strategy or Template (`ir_id` from ClickHouse `strategy_algorithm_specs`)
+- `/backtests` — strategy runs lab (list); auto-selects the most recent run
+- `/backtests/{run_id}/overview` — report overview & heatmap
+- `/backtests/{run_id}/trades` — closed/open trades & excursions
+- `/backtests/{run_id}/attribution` — attribution & macro
+- `/backtests/{run_id}/scrubber` — day-by-day scrubber
+- `/optimize` — optimizer
+- `/deploy` — promote/deploy
+- `/monitor` — live monitor
+
+A run's `run_id` is a UUID (e.g. `68e1ce5f-cd0c-4cca-bbd8-4cb7107a6a49`). To reference a specific run's report section, use `/backtests/{run_id}/{section}`.
+
+## API
+
+Base URL: `/api`
+
+- `GET /api/backtests/runs` — list runs (query: `limit`, `strategy_id`, `status`, `run_type`, `min_sharpe`, `min_return`, `max_dd`, `search`, `include_jobs`)
+- `GET /api/backtests/runs/{run_id}/report` — agent-friendly digest (metrics, highlights, warnings, artifact refs, provenance)
+- `GET /api/backtests/runs/{run_id}/artifacts` — artifact list
+- `GET /api/backtests/runs/{run_id}/equity` — equity curve
+- `GET /api/backtests/runs/{run_id}/orders` — order events
+- `GET /api/backtests/runs/{run_id}/closed-trades` — closed trades
+- `GET /api/backtests/runs/{run_id}/context` — context-pack (report + closed_trades + equity_summary + spec + warnings)
+- `GET /api/backtests/runs/{run_id}/monthly-returns` — monthly return matrix
+- `GET /api/backtests/runs/{run_id}/trade-analytics` — trade analytics
+- `GET /api/backtests/runs/{run_id}/day-snapshots` — daily snapshots
+- `GET /api/backtests/specs` — stored algorithm specs
+- `GET /api/backtests/jobs` — backtest job queue
+
+## Data
+
+Backtest runs live in ClickHouse (`vera.strategy_runs`, `vera.backtest_jobs`, `vera.strategy_algorithm_specs`). The `report` endpoint returns an LLM-ready digest (`metrics`, `highlights`, `warnings`, `artifact_refs`, `provenance`).
+
+## MCP (sigmarail-studio)
+
+The Studio ships a consolidated domain MCP (`sigmarail_studio_mcp/`, registered as `sigmarail-studio` in
+`.cursor/mcp.json`): 70 `domain_verb` tools across 11 domains. Canonical catalog:
+`sigmarail_studio_mcp/CATALOG.md`; old→new parity mapping: `sigmarail_studio_mcp/parity.py`.
+
+- Strategy authoring: `strategy_pipeline_schema`, `strategy_validate_pipeline`, `strategy_compile_pipeline`,
+  `strategy_fork`, `strategy_list_factors`, `strategy_list_columns`.
+  Authoring boundary (EXPRESSION_SURFACE.md §11): predicates → AST sites (`when`/`*_expr`);
+  effects → bounded `then` actions (operand args); mechanics → config (`fill_session`,
+  `uses[]`, `phases[]`). `signal`/`regime`/`signal_compare` nodes are legible only in
+  graph `if` `condition`s — spec_lint E113 blocks them elsewhere.
+- Backtest: `backtest_save_spec`, `backtest_submit`, `backtest_report`, `backtest_compare`, `backtest_get_run`.
+- Studio: `studio_navigate` (canonical URLs), `studio_run_context` (the `/context` pack above).
+- Screener/regime/portfolio/deploy/research/kb/lean/catalog round out the surface; raw SQL stays on `mcp-clickhouse`.
+
+## WebMCP (In-Browser Live Agent Control)
+
+Screening Studio embeds a client-side WebMCP server (`/webmcp.js`), enabling AI agents (Claude Desktop, Cursor, browser extensions) to directly inspect and manipulate the trader's active browser session without brittle scraping.
+
+### Connecting Claude Desktop / Cursor to WebMCP
+1. Add WebMCP to your MCP client:
+   ```json
+   {
+     "mcpServers": {
+       "webmcp": {
+         "command": "npx",
+         "args": ["-y", "@jason.today/webmcp@latest", "--mcp"]
+       }
+     }
+   }
+   ```
+2. Generate an authorization token with `npx @jason.today/webmcp --new` (or ask your agent to generate one).
+3. Click the WebMCP widget in the bottom-right of Screening Studio (`http://localhost:5173`) and paste the token.
+
+### Registered Tools
+- `studio_navigate({ route, ticker?, as_of?, run_id?, section_view? })`: Change the live viewport and subview in the browser.
+- `studio_select_symbol({ ticker, as_of? })`: Select ticker in Lightweight Charts and update the fundamentals rail.
+- `studio_get_current_view()`: Read active tab, selected ticker, as-of date, screener mode, and draft status.
+- `screener_set_preset({ preset_id })`: Switch active universe preset (e.g. `minervini_tt`) and trigger live preview.
+- `screener_get_state()`: Read active screen configuration and count of matching stocks.
+- `strategy_inspect_draft()`: Inspect the in-memory unsaved strategy draft in the composer.
+- `backtest_scrub_to_date({ date })`: Jump the interactive backtest scrubber to a specific date.
+
+### Registered Resources
+- `studio://current-view`: Live viewport state as JSON.
+- `studio://strategy/draft`: In-flight strategy pipeline JSON before persisting.
+- `studio://chart/quote`: Active chart symbol and as-of date.
+
+### Registered Prompts
+- `audit-strategy-draft`: Guidance prompt auditing the draft against the Five Lean slots and sizing rules.
+- `summarize-active-view`: Summary prompt explaining what the trader currently has open.

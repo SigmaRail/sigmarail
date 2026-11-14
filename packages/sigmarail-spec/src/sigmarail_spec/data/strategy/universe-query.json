@@ -1,0 +1,930 @@
+{
+  "$defs": {
+    "AllWhere": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllWhere",
+                "any": "#/$defs/AnyWhere",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "not": "#/$defs/NotWhere"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllWhere"
+              },
+              {
+                "$ref": "#/$defs/AnyWhere"
+              },
+              {
+                "$ref": "#/$defs/NotWhere"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              }
+            ]
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "type": {
+          "const": "all",
+          "default": "all",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "AllWhere",
+      "type": "object"
+    },
+    "AnyWhere": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllWhere",
+                "any": "#/$defs/AnyWhere",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "not": "#/$defs/NotWhere"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllWhere"
+              },
+              {
+                "$ref": "#/$defs/AnyWhere"
+              },
+              {
+                "$ref": "#/$defs/NotWhere"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              }
+            ]
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "type": {
+          "const": "any",
+          "default": "any",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "AnyWhere",
+      "type": "object"
+    },
+    "CmpEq": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Right"
+        },
+        "type": {
+          "const": "eq",
+          "default": "eq",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "CmpEq",
+      "type": "object"
+    },
+    "CmpGt": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Right"
+        },
+        "type": {
+          "const": "gt",
+          "default": "gt",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "CmpGt",
+      "type": "object"
+    },
+    "CmpGte": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Right"
+        },
+        "type": {
+          "const": "gte",
+          "default": "gte",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "CmpGte",
+      "type": "object"
+    },
+    "CmpLt": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Right"
+        },
+        "type": {
+          "const": "lt",
+          "default": "lt",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "CmpLt",
+      "type": "object"
+    },
+    "CmpLte": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            }
+          ],
+          "title": "Right"
+        },
+        "type": {
+          "const": "lte",
+          "default": "lte",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "CmpLte",
+      "type": "object"
+    },
+    "ColRef": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "offset": {
+          "default": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "type": {
+          "const": "col",
+          "default": "col",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ColRef",
+      "type": "object"
+    },
+    "ComputedSelect": {
+      "additionalProperties": false,
+      "description": "Named measure compiled into the SELECT list (C-UNIVERSE-QUERY-V1).\n\nBool measures become ``toUInt8(<predicate>) AS alias``. Number measures use\n``expr``, ``mean_available``, or ``sum_aliases`` (count combinator over prior\nbool aliases). Later computed items may ``col``-ref earlier aliases (same\nSELECT left-to-right reuse in ClickHouse).",
+      "properties": {
+        "alias": {
+          "title": "Alias",
+          "type": "string"
+        },
+        "expr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expr"
+        },
+        "kind": {
+          "enum": [
+            "bool",
+            "number"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "mean_available": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mean Available"
+        },
+        "sum_aliases": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sum Aliases"
+        },
+        "where": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllWhere",
+                  "any": "#/$defs/AnyWhere",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "not": "#/$defs/NotWhere"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllWhere"
+                },
+                {
+                  "$ref": "#/$defs/AnyWhere"
+                },
+                {
+                  "$ref": "#/$defs/NotWhere"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Where"
+        }
+      },
+      "required": [
+        "alias",
+        "kind"
+      ],
+      "title": "ComputedSelect",
+      "type": "object"
+    },
+    "FormulaExpr": {
+      "additionalProperties": false,
+      "description": "Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR).",
+      "properties": {
+        "args": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ]
+          },
+          "title": "Args",
+          "type": "array"
+        },
+        "op": {
+          "enum": [
+            "+",
+            "-",
+            "*",
+            "/"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "type": {
+          "const": "formula",
+          "default": "formula",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "args"
+      ],
+      "title": "FormulaExpr",
+      "type": "object"
+    },
+    "LitVal": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "lit",
+          "default": "lit",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "LitVal",
+      "type": "object"
+    },
+    "NotWhere": {
+      "additionalProperties": false,
+      "properties": {
+        "item": {
+          "discriminator": {
+            "mapping": {
+              "all": "#/$defs/AllWhere",
+              "any": "#/$defs/AnyWhere",
+              "eq": "#/$defs/CmpEq",
+              "gt": "#/$defs/CmpGt",
+              "gte": "#/$defs/CmpGte",
+              "lt": "#/$defs/CmpLt",
+              "lte": "#/$defs/CmpLte",
+              "not": "#/$defs/NotWhere"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/AllWhere"
+            },
+            {
+              "$ref": "#/$defs/AnyWhere"
+            },
+            {
+              "$ref": "#/$defs/NotWhere"
+            },
+            {
+              "$ref": "#/$defs/CmpGt"
+            },
+            {
+              "$ref": "#/$defs/CmpGte"
+            },
+            {
+              "$ref": "#/$defs/CmpLt"
+            },
+            {
+              "$ref": "#/$defs/CmpLte"
+            },
+            {
+              "$ref": "#/$defs/CmpEq"
+            }
+          ],
+          "title": "Item"
+        },
+        "type": {
+          "const": "not",
+          "default": "not",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item"
+      ],
+      "title": "NotWhere",
+      "type": "object"
+    },
+    "OrderByItem": {
+      "additionalProperties": false,
+      "description": "Single ORDER BY term: either an allowlisted ``field`` (must be in select)\nor a computed ``expr`` operand (ColRef / LitVal / FormulaExpr over allowlisted\ncolumns). Exactly one of ``field`` / ``expr`` must be present.",
+      "properties": {
+        "direction": {
+          "default": "desc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "expr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColRef"
+            },
+            {
+              "$ref": "#/$defs/LitVal"
+            },
+            {
+              "$ref": "#/$defs/FormulaExpr"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expr"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        }
+      },
+      "title": "OrderByItem",
+      "type": "object"
+    },
+    "UniverseJoin": {
+      "additionalProperties": false,
+      "description": "Specification of a joined satellite table in a universe query.",
+      "properties": {
+        "on": {
+          "items": {
+            "type": "string"
+          },
+          "title": "On",
+          "type": "array"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "type": {
+          "default": "left_any",
+          "enum": [
+            "left_any",
+            "inner",
+            "left",
+            "right",
+            "full"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table",
+        "on"
+      ],
+      "title": "UniverseJoin",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Canonical JSON universe clause (version 1 or 2).",
+  "properties": {
+    "computed": {
+      "items": {
+        "$ref": "#/$defs/ComputedSelect"
+      },
+      "title": "Computed",
+      "type": "array"
+    },
+    "from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Legacy logical source alias (optional; 'screener' or 'daily_screener'). Ignored in favor of spine/joins.",
+      "title": "From"
+    },
+    "joins": {
+      "description": "Legacy caller join declarations. SigmaRail resolves joins from registered fields.",
+      "items": {
+        "$ref": "#/$defs/UniverseJoin"
+      },
+      "title": "Joins",
+      "type": "array"
+    },
+    "limit_per_day": {
+      "maximum": 5000,
+      "minimum": 1,
+      "title": "Limit Per Day",
+      "type": "integer"
+    },
+    "order_by": {
+      "items": {
+        "$ref": "#/$defs/OrderByItem"
+      },
+      "title": "Order By",
+      "type": "array"
+    },
+    "post_where": {
+      "anyOf": [
+        {
+          "discriminator": {
+            "mapping": {
+              "all": "#/$defs/AllWhere",
+              "any": "#/$defs/AnyWhere",
+              "eq": "#/$defs/CmpEq",
+              "gt": "#/$defs/CmpGt",
+              "gte": "#/$defs/CmpGte",
+              "lt": "#/$defs/CmpLt",
+              "lte": "#/$defs/CmpLte",
+              "not": "#/$defs/NotWhere"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/AllWhere"
+            },
+            {
+              "$ref": "#/$defs/AnyWhere"
+            },
+            {
+              "$ref": "#/$defs/NotWhere"
+            },
+            {
+              "$ref": "#/$defs/CmpGt"
+            },
+            {
+              "$ref": "#/$defs/CmpGte"
+            },
+            {
+              "$ref": "#/$defs/CmpLt"
+            },
+            {
+              "$ref": "#/$defs/CmpLte"
+            },
+            {
+              "$ref": "#/$defs/CmpEq"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional filter on SELECT/computed output aliases (e.g. screens_hit >= 2). Compiled as an outer WHERE around the inner projection so aliases are visible.",
+      "title": "Post Where"
+    },
+    "select": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Select",
+      "type": "array"
+    },
+    "spine": {
+      "default": "screener_price_tech_daily",
+      "description": "Logical query spine (default: screener_price_tech_daily).",
+      "title": "Spine",
+      "type": "string"
+    },
+    "version": {
+      "default": 2,
+      "enum": [
+        1,
+        2
+      ],
+      "title": "Version",
+      "type": "integer"
+    },
+    "where": {
+      "anyOf": [
+        {
+          "discriminator": {
+            "mapping": {
+              "all": "#/$defs/AllWhere",
+              "any": "#/$defs/AnyWhere",
+              "eq": "#/$defs/CmpEq",
+              "gt": "#/$defs/CmpGt",
+              "gte": "#/$defs/CmpGte",
+              "lt": "#/$defs/CmpLt",
+              "lte": "#/$defs/CmpLte",
+              "not": "#/$defs/NotWhere"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/AllWhere"
+            },
+            {
+              "$ref": "#/$defs/AnyWhere"
+            },
+            {
+              "$ref": "#/$defs/NotWhere"
+            },
+            {
+              "$ref": "#/$defs/CmpGt"
+            },
+            {
+              "$ref": "#/$defs/CmpGte"
+            },
+            {
+              "$ref": "#/$defs/CmpLt"
+            },
+            {
+              "$ref": "#/$defs/CmpLte"
+            },
+            {
+              "$ref": "#/$defs/CmpEq"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "JSON boolean expression tree (preferred). Mutually exclusive with where_sql.",
+      "title": "Where"
+    },
+    "where_sql": {
+      "anyOf": [
+        {
+          "maxLength": 2048,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional ClickHouse-style predicate string (parsed with sqlglot, a core dependency). Mutually exclusive with where. Same allowlisted columns as JSON `col` refs.",
+      "title": "Where Sql"
+    }
+  },
+  "required": [
+    "select",
+    "limit_per_day"
+  ],
+  "title": "UniverseQueryV1",
+  "type": "object"
+}

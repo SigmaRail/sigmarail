@@ -1,0 +1,157 @@
+version: 1
+source: backtest_report.py
+entities:
+  - id: vera.backtest.strategy_lineage
+    kind: concept
+    title: Run-bound strategy snapshot and effective window lineage
+    binds: {symbol: strategy_lineage}
+    computability: vera_native
+    definition: >
+      Snapshot and date-window evidence stored in the strategy_lineage artifact
+      for one run. Snapshot status is verified only when SHA-256 of exact UTF-8
+      JSON bytes matches strategy_runs.ir_content_hash. Authored evaluation,
+      effective runtime, and data-provider windows remain separate fields.
+    narrative: >
+      Missing evidence is named explicitly. A current mutable strategy registry
+      row never substitutes for the run-bound snapshot. Even a verified strategy
+      snapshot does not provide exact data replay without frozen data versions.
+    tools: [{name: get_backtest_report, role: read}]
+  - id: vera.backtest.profit_factor
+    kind: concept
+    title: Backtest closed-trade gross profit factor
+    binds: {symbol: profit_factor}
+    computability: vera_native
+    definition: >
+      Gross realized profit divided by absolute gross realized loss, before fees,
+      from complete LEAN totalPerformance closedTrades or signed tradeStatistics
+      totals with a positive integral totalNumberOfTrades. A present incomplete
+      or malformed closedTrades list is unavailable and cannot use aggregate fallback.
+    narrative: >
+      Reports recompute legacy values from sanitized backtest_results at read time
+      without modifying stored evidence. Missing evidence, no trades, all-zero
+      outcomes, and nonfinite ratios return null with unavailable status. Positive
+      profit with zero loss returns null with infinite status; losses without wins
+      yield zero. Additive metric_metadata records status, fixed source labels,
+      record count, gross totals, and gross_before_fees basis. Never substitute
+      LEAN Profit-Loss Ratio or reconstruct totals from rounded averages.
+    related: [vera.backtest.average_win_loss_ratio, vera.backtest.closed_record_win_rate]
+    tools: [{name: get_backtest_report, role: read}]
+  - id: vera.backtest.average_win_loss_ratio
+    kind: concept
+    title: LEAN average win to average loss ratio
+    binds: {symbol: average_win_loss_ratio}
+    computability: vera_native
+    definition: >
+      Finite summary.statistics Profit-Loss Ratio, the LEAN average win divided
+      by absolute average loss. This is separate from gross profit factor and
+      retains LEAN portfolio statistics semantics; missing values are null.
+    related: [vera.backtest.profit_factor, vera.backtest.win_rate]
+  - id: vera.backtest.win_rate
+    kind: concept
+    title: LEAN portfolio win rate
+    binds: {symbol: win_rate}
+    computability: vera_native
+    definition: >
+      Existing strategy_runs.win_rate unit fraction from LEAN portfolio statistics.
+      Retains the source population and outcome classification; it is not the
+      positive-gross-PnL closed-record fraction. Fees are reported separately.
+    narrative: >
+      The sanitized reference has approximately 26 percent portfolio wins versus
+      31 of 101 closed records (approximately 30.69 percent). Do not compare these
+      populations as if identical or infer per-record fee attribution.
+    related: [vera.backtest.closed_record_win_rate]
+  - id: vera.backtest.closed_record_win_rate
+    kind: concept
+    title: Gross closed-record win rate
+    binds: {symbol: closed_record_win_rate}
+    computability: vera_native
+    definition: >
+      Positive gross profitLoss closed records divided by all closed records,
+      including zero-PnL records, as a unit fraction. Requires a complete finite
+      closedTrades list matching totalNumberOfTrades. Aggregate-only or missing
+      evidence is unavailable. Fee amounts are not subtracted from profitLoss.
+    related: [vera.backtest.win_rate, vera.backtest.profit_factor]
+  - id: vera.backtest.total_fees
+    kind: concept
+    title: Backtest fees
+    binds: {symbol: total_fees}
+    computability: vera_native
+    definition: >
+      Existing strategy_runs.total_fees amount, separate from gross closed-trade
+      metrics. Reports do not reconstruct or allocate fees to individual records.
+  - id: vera.backtest.total_return
+    kind: concept
+    title: LEAN portfolio net return
+    binds: {symbol: total_return}
+    computability: vera_native
+    definition: >
+      Existing strategy_runs.total_return unit fraction with LEAN portfolio net
+      return semantics. It is independent of gross closed-trade profit factor.
+    related: [vera.backtest.profit_factor, vera.backtest.total_fees]
+  - id: vera.backtest.accounting_evidence
+    kind: concept
+    title: LEAN backtest accounting evidence coverage
+    binds: {symbol: accounting_evidence}
+    computability: vera_native
+    definition: >
+      A compact summary of recorded initial/final cash and equity, fill-level fee
+      coverage, daily holding marks, and observed dividend/split events from the
+      accounting_ledger artifact. This is evidence coverage only: it does not
+      assert that a cash/equity bridge reconciles or plug missing residuals.
+    related: [vera.backtest.total_fees, vera.backtest.total_return]
+    tools: [{name: get_backtest_accounting, role: read}, {name: get_backtest_report, role: read}]
+  - id: vera.backtest.accounting_reconciliation
+    kind: concept
+    title: Evidence bounded accounting reconciliation
+    binds: {symbol: accounting_reconciliation}
+    computability: vera_native
+    definition: >
+      Additive C-ACCOUNTING-V1 offline FIFO diagnostic over sanitized source
+      artifacts using decimal strings and indexed source entries. Checks cash,
+      marked equity and gross realized plus change in unrealized less event fees
+      plus evidenced adjustments with a target residual of 0.01 USD.
+      Each order requires a unique source ID, symbol and signed ordered quantity;
+      fills must reference that order consistently and cannot overfill it. Remaining
+      order quantity is reported with the source order ID.
+    narrative: >
+      Missing full precision fills, fee currencies, opening balances, terminal
+      marks or interval coverage remain unreconciled. No balancing adjustment.
+      Unsupported FX and corporate actions block reconciliation. Closed portions
+      differ from flat position episodes; orders differ from fill events.
+      Source rounding bounds never widen the acceptance target.
+    tools: [{name: get_backtest_report, role: read}]
+  - id: vera.backtest.benchmark_return
+    kind: concept
+    title: Adjusted benchmark period return
+    binds: {symbol: benchmark_return}
+    computability: vera_native
+    definition: >
+      Same-run first-to-last return from dated fully adjusted benchmark closes
+      in the run interval. Available only when benchmark evidence is explicitly
+      marked adjusted_total_return and matches the LEAN portfolio and benchmark
+      chart session dates. Historical artifacts without this evidence are null.
+    related: [vera.backtest.relative_return, vera.backtest.total_return]
+    tools: [{name: get_backtest_report, role: read}]
+  - id: vera.backtest.relative_return
+    kind: concept
+    title: Same-period arithmetic excess return
+    binds: {symbol: relative_return}
+    computability: vera_native
+    definition: >
+      LEAN portfolio total return minus the fully adjusted benchmark return
+      over the same run interval. Null when benchmark evidence is missing,
+      invalid, stale, or not aligned to the LEAN session dates.
+    related: [vera.backtest.benchmark_return, vera.backtest.total_return]
+    tools: [{name: get_backtest_report, role: read}]
+  - id: vera.backtest.benchmark_validity
+    kind: concept
+    title: Backtest benchmark validity evidence
+    binds: {symbol: benchmark}
+    computability: vera_native
+    definition: >
+      Fixed status and reason summarizing benchmark evidence completeness,
+      adjusted price basis, and exact alignment to the run's portfolio and
+      benchmark chart sessions. This is evidence validation, not performance
+      certification.
+    related: [vera.backtest.benchmark_return, vera.backtest.relative_return]
+    tools: [{name: get_backtest_report, role: read}]

@@ -1,0 +1,80 @@
+{
+  "annotations_sha256": "29d587166db2966d61bbd085e2af48fed12c0534f1b0531a248275a045a301a4",
+  "generator": {
+    "path": "tools/build.py",
+    "sha256": "9549b6b884bac172dec341743d64cfa209c9c3cceb2dbe9d746c4a062acb33ef"
+  },
+  "runtime_provenance": {
+    "bootstrapped_from": {
+      "files": [
+        "src/vera_spec/expr.py",
+        "src/vera_spec/evaluate.py",
+        "src/vera_spec/entry_trigger_ast.py"
+      ],
+      "repository": "mdiggory/VeraSpec",
+      "revision": "a747830b20934e1438a85996da6e471b06b34166"
+    },
+    "ownership": "The copied implementation is canonical in sigmarail_spec. This record is historical provenance only; the spec build does not read VeraSpec runtime sources.",
+    "runtime": "C-VERA-EXPR-V1 and its row evaluator/entry-trigger lowering",
+    "scope_note": "The expression runtime is included to preserve the current Vera Studio and TradingLab consumer contract. SigmaRail SQL core currently has no AST query parser or evaluator, so this does not claim that SigmaRail database commands execute these expressions."
+  },
+  "sources": {
+    "lean": {
+      "content_sha256": "a8af273dc07dc5373bae35c4d671930cee9490b05e76d25d9bd02d1a72365968",
+      "hashed_paths": [
+        "Algorithm.Framework/Alphas",
+        "Algorithm.Framework/Portfolio",
+        "Algorithm.Framework/Execution",
+        "Algorithm.Framework/Risk",
+        "Algorithm.Framework/Selection",
+        "Algorithm/Selection",
+        "Algorithm/Execution",
+        "Algorithm/Risk",
+        "Algorithm/Alphas",
+        "Algorithm/Portfolio"
+      ],
+      "path": "Lean",
+      "revision": "bdcd04a2b6ddf5a36427c4b486f48eab57edbc9e"
+    },
+    "sigmarail": {
+      "content_sha256": "5a1a8578bd784ea13aa4e4da738f2714415b6c59f0ea2b3e0c5cb77e847ce88b",
+      "hashed_paths": [
+        "tools/generate_lineage_manifest.py",
+        "src/sigmarail/query.py",
+        "src/sigmarail/universe.py",
+        "src/sigmarail/sql/schema-manifest.json",
+        "src/sigmarail/sql/schema",
+        "spec/lineage-manifest.json",
+        "src/sigmarail/spec/module-manifest.json"
+      ],
+      "path": ".",
+      "revision": null
+    },
+    "studio": {
+      "content_sha256": "429e77d0c4c9462cdb50bd80e42e8e0fd39018774751bf364b31e92f39eb085f",
+      "hashed_paths": [
+        "studio/api/lean_universe.py",
+        "studio/config/urls.py",
+        "studio/sigmarail_studio_mcp/domains/strategy.py",
+        "studio/sigmarail_studio_mcp/domains/core.py",
+        "studio/sigmarail_studio_mcp/server.py",
+        "studio/sigmarail_studio_mcp/data/module-catalog.json",
+        "studio/AGENTS.md"
+      ],
+      "path": ".",
+      "revision": null
+    },
+    "trading_lab": {
+      "content_sha256": "9a427cfb9ef059030bbf9bd74d68df06d8324b3c67c1b4fb51b54daea30fc77c",
+      "hashed_paths": [
+        "src/sigmarail_lab/ir",
+        "src/sigmarail_lab/runtime",
+        "src/sigmarail_lab/lean",
+        "trading_lab/main.py"
+      ],
+      "path": ".",
+      "revision": null
+    }
+  },
+  "version": 1
+}

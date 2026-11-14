@@ -8,6 +8,8 @@ from sigmarail.transform_sql import (
     chunk_insert_sql,
     parse_transform,
     slug_for_name,
+    stale_transform_views,
+    transform_catalog,
     view_name_for,
 )
 
@@ -279,3 +281,33 @@ AS SELECT 'A' AS ticker"""
         register_transform_view(FakeClient(), spec)
         assert calls[0].startswith("CREATE OR REPLACE VIEW xform_create_only")
         assert "IF NOT EXISTS" not in calls[0]
+
+
+def test_transform_catalog_uses_clickhouse_compatible_prefix_match():
+    class FakeClient:
+        def __init__(self):
+            self.sql = None
+
+        def query(self, sql):
+            self.sql = sql
+            return type("Result", (), {"result_rows": []})()
+
+    client = FakeClient()
+    assert transform_catalog(client) == []
+    assert "startsWith(name, 'xform_')" in client.sql
+    assert "ESCAPE" not in client.sql
+
+
+def test_stale_view_lookup_uses_clickhouse_compatible_prefix_match(tmp_path):
+    class FakeClient:
+        def __init__(self):
+            self.sql = None
+
+        def query(self, sql):
+            self.sql = sql
+            return type("Result", (), {"result_rows": []})()
+
+    client = FakeClient()
+    assert stale_transform_views(client, project_root=tmp_path) == []
+    assert "startsWith(name, 'xform_')" in client.sql
+    assert "ESCAPE" not in client.sql

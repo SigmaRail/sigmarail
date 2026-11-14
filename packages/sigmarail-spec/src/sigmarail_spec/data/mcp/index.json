@@ -1,0 +1,124 @@
+{
+  "activation_catalog": "sigmarail-spec://v1/modules/studio",
+  "default_modules": [
+    "core",
+    "studio"
+  ],
+  "domains": {
+    "backtesting": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/backtesting",
+      "tool_count": 33,
+      "tools": [
+        "backtest_cancel",
+        "backtest_compare",
+        "backtest_get_run",
+        "backtest_get_spec",
+        "backtest_investigate",
+        "backtest_job_status",
+        "backtest_list_jobs",
+        "backtest_list_pending",
+        "backtest_list_runs",
+        "backtest_list_runs_by_ir_id",
+        "backtest_list_specs",
+        "backtest_report",
+        "backtest_run_attribution",
+        "backtest_save_from_template",
+        "backtest_save_spec",
+        "backtest_submit",
+        "backtest_submit_from_template",
+        "backtest_wait",
+        "optimize_cancel_session",
+        "optimize_get_pareto_frontier",
+        "optimize_get_session_heatmap",
+        "optimize_launch_sweep",
+        "optimize_list_runs",
+        "optimize_list_sessions",
+        "optimize_policy_scorecard",
+        "optimize_promote_optimal_run",
+        "regime_compare_periods",
+        "regime_entry_gate",
+        "regime_explain_allocation",
+        "regime_market_regime",
+        "regime_position_management",
+        "regime_rank_candidates",
+        "regime_transition_weight"
+      ]
+    },
+    "data_query": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/data_query",
+      "tool_count": 3,
+      "tools": [
+        "core_describe_dataset",
+        "core_list_datasets",
+        "core_query_dataset"
+      ]
+    },
+    "live_deployment": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/live_deployment",
+      "tool_count": 5,
+      "tools": [
+        "deploy_evaluate_promotion_gate",
+        "deploy_list_deployments",
+        "deploy_performance",
+        "deploy_register_paper_deployment",
+        "deploy_status"
+      ]
+    },
+    "screening": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/screening",
+      "tool_count": 5,
+      "tools": [
+        "screen_probe_asof",
+        "screen_probe_diff",
+        "screen_probe_layers",
+        "screen_probe_range",
+        "screen_stocks"
+      ]
+    },
+    "strategy_authoring": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/strategy_authoring",
+      "tool_count": 19,
+      "tools": [
+        "lean_discover_types",
+        "strategy_compile_pipeline",
+        "strategy_compile_portfolio",
+        "strategy_compile_preset",
+        "strategy_compose_document",
+        "strategy_diff",
+        "strategy_fork",
+        "strategy_fork_portfolio",
+        "strategy_get_template",
+        "strategy_lint",
+        "strategy_list_columns",
+        "strategy_list_factors",
+        "strategy_list_presets",
+        "strategy_list_setup_recipes",
+        "strategy_list_templates",
+        "strategy_patch_pipeline",
+        "strategy_pipeline_schema",
+        "strategy_save_pipeline",
+        "strategy_validate_pipeline"
+      ]
+    },
+    "studio": {
+      "document_uri": "sigmarail-spec://v1/mcp/tools/studio",
+      "tool_count": 4,
+      "tools": [
+        "chart_price_embed",
+        "chart_tv_embed",
+        "studio_navigate",
+        "studio_run_context"
+      ]
+    }
+  },
+  "optional_modules": [
+    "screening",
+    "strategy",
+    "backtesting",
+    "portfolio",
+    "deployment",
+    "knowledge"
+  ],
+  "source": "sigmarail/studio/sigmarail_studio_mcp/server.py",
+  "version": 1
+}

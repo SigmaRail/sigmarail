@@ -1,0 +1,46 @@
+{
+  "SchemaVersion": 2,
+  "Kind": "VeraLabV1",
+  "Framework": {
+    "UniverseSelection": {
+      "Type": "VeraScreenerUniverseSelectionModel",
+      "Parameters": {}
+    },
+    "Alpha": {
+      "Type": "RsiAlphaModel",
+      "Parameters": {
+        "period": 14,
+        "resolution": "Daily"
+      }
+    },
+    "PortfolioConstruction": {
+      "Type": "EqualWeightingPortfolioConstructionModel",
+      "Parameters": {}
+    },
+    "Execution": {
+      "Type": "ImmediateExecutionModel",
+      "Parameters": {}
+    },
+    "RiskManagement": {
+      "Type": "MaximumDrawdownPercentPerSecurity",
+      "Parameters": {
+        "maximum_drawdown_percent": 0.1
+      }
+    }
+  },
+  "AlgorithmParameters": {},
+  "VeraBase": {
+    "Universe": {
+      "version": 1,
+      "from": "daily_screener",
+      "select": ["ticker", "overall_score", "minervini_tt_all_conditions_full"],
+      "where": {
+        "type": "eq",
+        "left": { "type": "col", "name": "minervini_tt_all_conditions_full" },
+        "right": { "type": "lit", "value": 1 }
+      },
+      "order_by": [{ "field": "overall_score", "direction": "desc" }],
+      "limit_per_day": 101
+    }
+  }
+}

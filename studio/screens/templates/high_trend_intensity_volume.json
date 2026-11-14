@@ -1,0 +1,122 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ratings_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "close",
+    "perf_3m",
+    "rs_rating",
+    "technical_rating",
+    "stage_code"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma20d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma20d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "sma200d_rising_30d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "perf_3m",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 0.25
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 75
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "avg_vol_50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 300000
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "perf_3m",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 50
+}

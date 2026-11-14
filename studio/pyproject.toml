@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sigmarail-studio"
+version = "0.1.0"
+description = "SigmaRail research, screener, strategy-authoring, and MCP application"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "Django>=5.0",
+  "djangorestframework",
+  "drf-spectacular",
+  "django-cors-headers",
+  "clickhouse-connect",
+  "PyYAML>=6.0",
+  "pydantic>=2.0",
+  "jsonschema>=4.21,<5",
+  "python-dotenv>=0.19",
+  "keyring>=25.0",
+  "mcp>=1.0.0,<2.0.0",
+  "sigmarail-spec>=0.2.0",
+  "sigmarail>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-docker>=1.0",
+]
+
+[project.scripts]
+sigmarail-studio-mcp = "sigmarail_studio_mcp.server:main"
+sigmarail-studio-schema = "screens.schema:main"
+
+[tool.sigmarail.studio]
+default-modules = ["core", "studio"]
+available-modules = ["core", "studio", "screening", "strategy", "backtesting", "portfolio", "deployment", "knowledge"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "config*", "screens*", "sigmarail_studio_mcp*"]
+
+[tool.setuptools.package-data]
+sigmarail_studio_mcp = ["data/*.json"]
+screens = ["sql/schema/*.sql"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["."]
+testpaths = ["tests"]
