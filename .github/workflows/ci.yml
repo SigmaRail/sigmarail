@@ -63,10 +63,10 @@ jobs:
       - name: Check out the pinned custom LEAN source
         uses: actions/checkout@v4
         with:
-          repository: mdiggory/Lean
+          repository: SigmaRail/Lean
           path: custom-lean
           ref: ${{ steps.lean-revision.outputs.revision }}
-          token: ${{ secrets.SIGMARAIL_PLATFORM_READ_TOKEN || github.token }}
+          token: ${{ github.token }}
           persist-credentials: false
 
       - name: Set up Python 3.11
