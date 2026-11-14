@@ -15,7 +15,7 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, macOS, ARM64, lean]
     env:
-      RUNNER_TOOL_CACHE: ${{ runner.temp }}/tool-cache
+      RUNNER_TOOL_CACHE: ${{ github.workspace }}/.runner-tool-cache
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,7 @@ jobs:
           npm test
           npm run build
 
+
   lean-smoke:
     # LEAN's private image and a self-hosted Docker Desktop runner are required.
     # Do not expose this runner or its credentials to pull requests from forks.
@@ -52,7 +53,7 @@ jobs:
     needs: test
     runs-on: [self-hosted, macOS, ARM64, lean]
     env:
-      RUNNER_TOOL_CACHE: ${{ runner.temp }}/tool-cache
+      RUNNER_TOOL_CACHE: ${{ github.workspace }}/.runner-tool-cache
     timeout-minutes: 45
     permissions:
       contents: read
@@ -116,7 +117,7 @@ jobs:
           SIGMARAIL_TRADING_LAB_SOURCE: ${{ github.workspace }}/trading_lab
           SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/packages/sigmarail-spec/src
           SIGMARAIL_STUDIO_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-          SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+          SIGMARAIL_LEAN_PYTHON: ${{ steps.setup-xython.outputs.python-path }}
           SIGMARAIL_LEAN_IMAGE: ghcr.io/mdiggory/lean-clickhouse:arm64-latest
         run: python -m pytest -s -q tests/test_lean_smoke.py --sigmarail-clickhouse
 
@@ -152,7 +153,7 @@ jobs:
           PY
       - name: Build SigmaRail Spec
         run: |
-          python -m pip install build
+          pyton -m pip install build
           python -m build packages/sigmarail-spec --outdir dist
       - name: Publish SigmaRail Spec with PyPI trusted publishing
         uses: pypa/gh-action-pypi-publish@release/v1
