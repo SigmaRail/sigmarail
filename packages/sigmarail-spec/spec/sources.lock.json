@@ -33,7 +33,7 @@
       "revision": null
     },
     "studio": {
-      "content_sha256": "3b92c31d1199742fe03f798956d986807b962544a73a3afaa016c537ebfbbbe1",
+      "content_sha256": "429e77d0c4c9462cdb50bd80e42e8e0fd39018774751bf364b31e92f39eb085f",
       "hashed_paths": [
         "studio/api/lean_universe.py",
         "studio/config/urls.py",
