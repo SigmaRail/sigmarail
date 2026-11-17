@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStockIntrospection } from "../../api/screens";
-import {
-  loadFundamentalsRailOpen,
-  saveFundamentalsRailOpen,
-} from "../../lib/fundamentalsRailStorage";
 import type { ChartCandlePoint } from "../../types";
-import { FundamentalsRail } from "./FundamentalsRail";
+import { StockOverviewPanel } from "./StockOverviewPanel";
 import { QuoteHeader } from "./QuoteHeader";
 import { StockChartEngine } from "./StockChartEngine";
+import { TradingViewForecastAccuracyChart } from "./TradingViewForecastAccuracyChart";
 
 /**
  * MarketSurge-style chart body shared by Charts tab, Screener introspection,
@@ -36,7 +33,6 @@ export function StockIntrospectionPanel({
   >(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [railOpen, setRailOpen] = useState(() => loadFundamentalsRailOpen());
 
   useEffect(() => {
     setActiveTicker(ticker);
@@ -121,23 +117,8 @@ export function StockIntrospectionPanel({
         }
       />
 
-      <div
-        className={`flex min-h-0 flex-1 overflow-hidden ${
-          compact ? "min-h-[360px]" : "min-h-[420px]"
-        }`}
-      >
-        <FundamentalsRail
-          data={data}
-          open={railOpen}
-          onToggle={() => {
-            const next = !railOpen;
-            setRailOpen(next);
-            saveFundamentalsRailOpen(next);
-          }}
-          onSelectTicker={(t) => setActiveTicker(t)}
-        />
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2">
+      <div className={`grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_18rem] lg:overflow-hidden ${compact ? "min-h-[360px]" : "min-h-[420px]"}`}>
+        <main className={`flex min-w-0 flex-col gap-2 border-b border-line lg:min-h-0 lg:overflow-y-auto lg:p-2 ${compact ? "min-h-[360px]" : "min-h-[420px]"}`}>
           {overviewQuery.isLoading && !data ? (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
               Loading ClickHouse candlestick series…
@@ -149,26 +130,41 @@ export function StockIntrospectionPanel({
                 : "Failed to load chart"}
             </div>
           ) : data?.chart_series && data.chart_series.length > 0 ? (
-            <StockChartEngine
-              candles={mergedChartSeries}
-              screenAsOfDate={asOfDate}
-              inspectedDate={inspectedDate}
-              onSelectDate={(newDate) => setInspectedDate(newDate)}
-              historicalMedianPe={data.historical_median_pe}
-              quarterlyGrowth={data.quarterly_growth}
-              annualGrowth={data.annual_growth}
-              earningsEvents={data.earnings_events}
-              revealFuture={revealFuture}
-              onToggleRevealFuture={setRevealFuture}
-              hasMoreHistory={hasMoreHistory}
-              isLoadingMoreHistory={isLoadingMore}
-              onLoadMoreHistory={handleLoadMoreHistory}
-            />
+            <>
+              <StockChartEngine
+                className="h-auto min-h-0 rounded-none border-0 lg:rounded-lg lg:border"
+                candles={mergedChartSeries}
+                screenAsOfDate={asOfDate}
+                inspectedDate={inspectedDate}
+                onSelectDate={(newDate) => setInspectedDate(newDate)}
+                historicalMedianPe={data.historical_median_pe}
+                quarterlyGrowth={data.quarterly_growth}
+                annualGrowth={data.annual_growth}
+                earningsEvents={data.earnings_events}
+                revealFuture={revealFuture}
+                onToggleRevealFuture={setRevealFuture}
+                hasMoreHistory={hasMoreHistory}
+                isLoadingMoreHistory={isLoadingMore}
+                onLoadMoreHistory={handleLoadMoreHistory}
+              />
+              {data.quarterly_growth?.length ? (
+                <TradingViewForecastAccuracyChart
+                  className="rounded-none border-x-0 lg:rounded-lg lg:border-x"
+                  ticker={activeTicker}
+                  asOfDate={inspectedDate}
+                  quarterlyGrowth={data.quarterly_growth}
+                  quarterlyOnly
+                />
+              ) : null}
+            </>
           ) : (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
               No chart data available for {activeTicker}
             </div>
           )}
+        </main>
+        <div className="min-w-0 border-line lg:min-h-0 lg:overflow-y-auto lg:border-l">
+          <StockOverviewPanel data={data} />
         </div>
       </div>
     </div>
