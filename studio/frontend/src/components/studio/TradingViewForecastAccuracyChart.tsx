@@ -9,6 +9,7 @@ interface TradingViewForecastAccuracyChartProps {
   asOfDate?: string;
   onClose?: () => void;
   className?: string;
+  quarterlyOnly?: boolean;
 }
 
 type PeriodMode = "quarterly" | "annual";
@@ -323,6 +324,7 @@ export function TradingViewForecastAccuracyChart({
   asOfDate,
   onClose,
   className,
+  quarterlyOnly = false,
 }: TradingViewForecastAccuracyChartProps) {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("quarterly");
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -461,7 +463,7 @@ export function TradingViewForecastAccuracyChart({
           </div>
         </div>
 
-        {/* Controls: Annual / Quarterly toggle & Close */}
+      {/* Controls: Annual / Quarterly toggle & Close */}
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded border border-line bg-surface-sunk p-0.5 text-[10px]">
             <button
@@ -479,21 +481,23 @@ export function TradingViewForecastAccuracyChart({
             >
               Quarterly
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPeriodMode("annual");
-                setHoveredIdx(null);
-              }}
-              className={cn(
-                "rounded px-2.5 py-0.5 font-bold transition-all",
-                periodMode === "annual"
-                  ? "bg-accent/20 text-accent font-bold shadow-sm"
-                  : "text-ink-muted hover:text-ink"
-              )}
-            >
-              Annual
-            </button>
+            {!quarterlyOnly && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPeriodMode("annual");
+                  setHoveredIdx(null);
+                }}
+                className={cn(
+                  "rounded px-2.5 py-0.5 font-bold transition-all",
+                  periodMode === "annual"
+                    ? "bg-accent/20 text-accent font-bold shadow-sm"
+                    : "text-ink-muted hover:text-ink"
+                )}
+              >
+                Annual
+              </button>
+            )}
           </div>
 
           {onClose && (

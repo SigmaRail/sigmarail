@@ -1312,7 +1312,7 @@ export function StockChartEngine({
   }, [quarterlyGrowth]);
 
   return (
-    <div className={cn("flex flex-col h-full w-full rounded-lg border border-line bg-surface overflow-hidden", className)}>
+    <div className={cn("flex h-auto min-h-0 w-full flex-col rounded-lg border border-line bg-surface", className)}>
       {/* Chart Top Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-1.5 bg-surface-raised text-[11px]">
         {/* Active Stats */}
@@ -1583,7 +1583,7 @@ export function StockChartEngine({
 
       {/* Chart Canvas Area */}
       <div
-        className="relative w-full"
+        className="relative w-full max-h-[min(58dvh,480px)] shrink-0 lg:max-h-none"
         style={{ height: `${chartHeight}px`, minHeight: "340px" }}
         ref={chartContainerRef}
         onMouseLeave={() => setHoveredCandle(null)}
@@ -1597,7 +1597,7 @@ export function StockChartEngine({
 
       {/* Bottom quarterly table: last 8 reported + 2 estimates */}
       {ribbonQuarters.length > 0 && (
-        <div className="overflow-x-auto border-t border-line bg-surface px-2 py-1 font-mono text-[10px]">
+        <div className="shrink-0 overflow-x-auto border-t border-line bg-surface px-2 py-1 font-mono text-[10px]">
           <table className="w-full min-w-[560px] text-left">
             <thead className="text-[8.5px] uppercase text-ink-muted">
               <tr>

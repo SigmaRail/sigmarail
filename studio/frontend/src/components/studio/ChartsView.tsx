@@ -3,35 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchStockIntrospection } from "../../api/screens";
 import { StockChartEngine } from "./StockChartEngine";
 import { QuoteHeader } from "./QuoteHeader";
-import { FundamentalsRail } from "./FundamentalsRail";
-import { WatchlistSidebar } from "./WatchlistSidebar";
+import { StockOverviewPanel } from "./StockOverviewPanel";
 import { TradingViewForecastAccuracyChart } from "./TradingViewForecastAccuracyChart";
 import { addRecentlyViewed } from "../../lib/watchlistStore";
-import {
-  loadFundamentalsRailOpen,
-  saveFundamentalsRailOpen,
-} from "../../lib/fundamentalsRailStorage";
 import type { ChartCandlePoint, StockIntrospectionData } from "../../types";
 
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-
-const WATCHLIST_STRIP_KEY = "vera_charts_watchlist_strip_open";
-function loadWatchlistOpen(): boolean {
-  try {
-    const val = localStorage.getItem(WATCHLIST_STRIP_KEY);
-    return val !== null ? val === "true" : false; // default collapsed to save vertical room on lower resolutions
-  } catch {
-    return false;
-  }
-}
-function saveWatchlistOpen(open: boolean): void {
-  try {
-    localStorage.setItem(WATCHLIST_STRIP_KEY, String(open));
-  } catch {}
-}
 
 interface ChartsViewProps {
   initialTicker?: string;
@@ -56,10 +36,6 @@ export function ChartsView({
   const [extraHistoryCandles, setExtraHistoryCandles] = useState<ChartCandlePoint[] | null>(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [railOpen, setRailOpen] = useState(() => loadFundamentalsRailOpen());
-  const [watchlistOpen, setWatchlistOpen] = useState(() => loadWatchlistOpen());
-  const [forecastModalOpen, setForecastModalOpen] = useState(false);
-
   useEffect(() => {
     if (initialTicker && initialTicker !== ticker) {
       setTicker(initialTicker);
@@ -160,20 +136,8 @@ export function ChartsView({
         onSearchSubmit={handleSelectSymbol}
       />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <FundamentalsRail
-          data={data}
-          open={railOpen}
-          onToggle={() => {
-            const next = !railOpen;
-            setRailOpen(next);
-            saveFundamentalsRailOpen(next);
-          }}
-          onSelectTicker={handleSelectSymbol}
-          onOpenForecastModal={() => setForecastModalOpen(true)}
-        />
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-2">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:overflow-hidden">
+        <main className="flex min-h-[36rem] min-w-0 flex-col gap-2 border-b border-line lg:min-h-0 lg:overflow-y-auto lg:p-2">
           {chartQuery.isLoading && !data ? (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
               Loading ClickHouse candlestick series for {ticker}…
@@ -183,67 +147,44 @@ export function ChartsView({
               {chartQuery.error instanceof Error ? chartQuery.error.message : "Failed to load chart"}
             </div>
           ) : data?.chart_series && data.chart_series.length > 0 ? (
-            <StockChartEngine
-              ticker={ticker}
-              candles={mergedChartSeries}
-              screenAsOfDate={asOfDate}
-              inspectedDate={inspectedDate}
-              onSelectDate={handleInspectDate}
-              historicalMedianPe={data.historical_median_pe}
-              quarterlyGrowth={data.quarterly_growth}
-              annualGrowth={data.annual_growth}
-              earningsEvents={data.earnings_events}
-              revealFuture={revealFuture}
-              onToggleRevealFuture={setRevealFuture}
-              hasMoreHistory={hasMoreHistory}
-              isLoadingMoreHistory={isLoadingMore}
-              onLoadMoreHistory={handleLoadMoreHistory}
-              onOpenForecastModal={() => setForecastModalOpen(true)}
-            />
+            <>
+              <StockChartEngine
+                className="h-auto min-h-0 rounded-none border-0 lg:rounded-lg lg:border"
+                ticker={ticker}
+                candles={mergedChartSeries}
+                screenAsOfDate={asOfDate}
+                inspectedDate={inspectedDate}
+                onSelectDate={handleInspectDate}
+                historicalMedianPe={data.historical_median_pe}
+                quarterlyGrowth={data.quarterly_growth}
+                annualGrowth={data.annual_growth}
+                earningsEvents={data.earnings_events}
+                revealFuture={revealFuture}
+                onToggleRevealFuture={setRevealFuture}
+                hasMoreHistory={hasMoreHistory}
+                isLoadingMoreHistory={isLoadingMore}
+                onLoadMoreHistory={handleLoadMoreHistory}
+              />
+              {data.quarterly_growth?.length ? (
+                <TradingViewForecastAccuracyChart
+                  className="rounded-none border-x-0 lg:rounded-lg lg:border-x"
+                  ticker={ticker}
+                  asOfDate={inspectedDate}
+                  quarterlyGrowth={data.quarterly_growth}
+                  quarterlyOnly
+                />
+              ) : null}
+            </>
           ) : (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
               No chart data available for {ticker}
             </div>
           )}
+        </main>
+        <div className="min-w-0 border-line lg:min-h-0 lg:overflow-y-auto lg:border-l">
+          <StockOverviewPanel data={data} />
         </div>
       </div>
-
-      <WatchlistSidebar
-        variant="strip"
-        activeTicker={ticker}
-        onSelectTicker={handleSelectSymbol}
-        asOfDate={asOfDate}
-        isOpen={watchlistOpen}
-        onToggleOpen={() => {
-          setWatchlistOpen((open) => {
-            const next = !open;
-            saveWatchlistOpen(next);
-            return next;
-          });
-        }}
-        quotesEnabled={Boolean(chartQuery.data) || chartQuery.isError}
-      />
-
-      {/* TradingView Forecasts & Estimates Accuracy Modal */}
-      {forecastModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setForecastModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl border border-line bg-surface shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <TradingViewForecastAccuracyChart
-              ticker={ticker}
-              asOfDate={inspectedDate}
-              quarterlyGrowth={data?.quarterly_growth}
-              annualGrowth={data?.annual_growth}
-              onClose={() => setForecastModalOpen(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
