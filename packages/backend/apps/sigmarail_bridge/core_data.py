@@ -6,7 +6,7 @@ import json
 import math
 from functools import lru_cache
 from importlib.resources import files
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -19,7 +19,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from sigmarail.query import compile_query, describe_dataset, list_datasets, query_dataset
-from sigmarail.universe import compile_universe_spec
+from sigmarail.universe import compile_universe_spec, universe_membership_by_ticker
 from sigmarail_spec.data_query import DataQueryV1
 
 from .views import DomainAPIRouteView, _workspace_for_request
@@ -47,9 +47,6 @@ def _clickhouse_client():
         secure=settings.SIGMARAIL_CLICKHOUSE_SECURE,
         connect_timeout=10,
         send_receive_timeout=30,
-        # Level 2 remains read-only but permits safe per-query limits such as
-        # max_execution_time emitted by SigmaRail's query compiler.
-        settings={"readonly": 2},
     )
 
 
@@ -446,11 +443,6 @@ class UniversePreviewView(APIView):
         if not isinstance(spec, dict):
             return Response({"detail": "spec must be an object"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Tenure is still calculated by the existing query service. Keep that
-        # behavior there until its point-in-time implementation is ported.
-        if body.get("include_tenure"):
-            return DomainAPIRouteView()._dispatch(request)
-
         # Request exchange with the preview so this route does not need a
         # second lookup. The compiler rejects fields outside its installed
         # contract; those specs continue through the compatibility service.
@@ -475,30 +467,71 @@ class UniversePreviewView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         try:
-            result = client.query(
-                sql,
-                parameters=params,
-                settings={"allow_experimental_analyzer": 0},
-            )
+            result = client.query(sql, parameters=params)
+            result_date = as_of
+            raw_rows = [
+                {name: _preview_json_value(value) for name, value in zip(result.column_names, values, strict=True)}
+                for values in result.result_rows
+            ]
+
+            # Fall back only when the requested session has no source data.
+            # A valid session with zero matches is a real empty universe and
+            # must not silently show membership from a prior date.
+            if not raw_rows:
+                session_data = client.query(
+                    "SELECT 1 FROM screener_price_tech_daily WHERE date = {as_of:Date} LIMIT 1",
+                    parameters={"as_of": as_of},
+                )
+                has_session_data = bool(getattr(session_data, "result_rows", []))
+                if not has_session_data:
+                    latest = client.query(
+                        "SELECT max(date) FROM screener_price_tech_daily WHERE date < {as_of:Date}",
+                        parameters={"as_of": as_of},
+                    )
+                    latest_rows = getattr(latest, "result_rows", [])
+                    fallback_date = str(latest_rows[0][0])[:10] if latest_rows and latest_rows[0][0] else None
+                    if fallback_date and fallback_date != as_of:
+                        sql, params = compile_universe_spec(
+                            native_spec,
+                            start_date=fallback_date,
+                            end_date=fallback_date,
+                        )
+                        result = client.query(sql, parameters=params)
+                        result_date = fallback_date
+                        raw_rows = [
+                            {name: _preview_json_value(value) for name, value in zip(result.column_names, values, strict=True)}
+                            for values in result.result_rows
+                        ]
         except Exception:
             return Response(
                 {"detail": "SigmaRail ClickHouse query failed."},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        columns = list(result.column_names)
-        raw_rows = [
-            {name: _preview_json_value(value) for name, value in zip(columns, values, strict=True)}
-            for values in result.result_rows
-        ]
-        rows = _shape_universe_preview(raw_rows, as_of)
-        if not rows:
-            # Preserve the old latest-trading-date fallback semantics.
-            return DomainAPIRouteView()._dispatch(request)
+        rows = _shape_universe_preview(raw_rows, result_date)
+        if body.get("include_tenure") and rows:
+            tenure_start = str(body.get("tenure_start") or body.get("start_date") or "").strip()
+            if not tenure_start:
+                tenure_start = (date.fromisoformat(result_date) - timedelta(days=int(252 * 1.45))).isoformat()
+            tickers = [row["ticker"] for row in rows if row.get("ticker")]
+            try:
+                tenure = universe_membership_by_ticker(
+                    spec,
+                    start_date=tenure_start,
+                    end_date=result_date,
+                    tickers=tickers or None,
+                    client=client,
+                )
+                for row in rows:
+                    row["days_in_universe"] = int(tenure.get(row["ticker"], 0))
+            except Exception:
+                for row in rows:
+                    row["days_in_universe"] = None
 
         return Response(
             {
-                "as_of": as_of,
+                "as_of": result_date,
+                **({"as_of_requested": as_of, "as_of_fallback": result_date} if result_date != as_of else {}),
                 "count": len(rows),
                 "rows": rows,
                 "screen_ir": "universe_query_v1",

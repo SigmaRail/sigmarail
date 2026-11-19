@@ -221,6 +221,7 @@ export function DataTable<T>({
   fieldCatalog,
   onAddColumn,
   onRemoveColumn,
+  density: densityOverride,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const serverSort = sortMode === "server";
@@ -230,7 +231,7 @@ export function DataTable<T>({
   const [hydratedViewId, setHydratedViewId] = useState<string | null>(null);
   const userChangedColumns = useRef(false);
   const userChangedDensity = useRef(false);
-  const [density, setDensity] = useState<"compact" | "comfortable">("compact");
+  const [density, setDensity] = useState<"compact" | "comfortable">(densityOverride ?? "compact");
 
   // Column visibility state
   const defaultColsVisible = useMemo(
@@ -268,13 +269,13 @@ export function DataTable<T>({
     }
     if (!userChangedDensity.current) {
       const densityPreference = tablePreferences.preference?.density;
-      setDensity(densityPreference ?? "compact");
+      setDensity(densityOverride ?? densityPreference ?? "compact");
     }
     if (tablePreferences.preference) {
       saveStoredTableViewPreferences(viewId, tablePreferences.preference, tablePreferences.userId);
     }
     setHydratedViewId(viewId);
-  }, [tablePreferences.loaded, tablePreferences.preference, viewId, visibilityOverride, persistColumns, columnsSignature]);
+  }, [tablePreferences.loaded, tablePreferences.preference, viewId, visibilityOverride, persistColumns, columnsSignature, densityOverride]);
 
   useEffect(() => {
     if (visibilityOverride) {

@@ -174,39 +174,7 @@ export function UniversalCandidateExplorer({
             </div>
           ) : (
             <>
-              <div className="space-y-2 p-3 lg:hidden">
-                {filteredCandidates.map((candidate, idx) => {
-                  const isSelected = candidate.ticker === effectiveSelectedTicker;
-                  return (
-                    <Button
-                      key={`${candidate.ticker}-${idx}`}
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleSelect(candidate.ticker)}
-                      aria-pressed={isSelected}
-                      className={cn(
-                        "h-auto min-h-14 w-full justify-between gap-3 px-3 py-2 text-left",
-                        isSelected && "border-primary bg-primary/5",
-                      )}
-                    >
-                      <span className="min-w-0">
-                        <span className="block font-mono font-bold text-ink">{candidate.ticker}</span>
-                        <span className="block truncate text-[10px] font-normal text-muted-foreground">{candidate.sector || "—"}</span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-3 font-mono text-[10px]">
-                        <span>Price <b>{candidate.price != null ? `$${candidate.price.toFixed(2)}` : "—"}</b></span>
-                        <span>RS <b>{candidate.rs_rating != null ? Math.round(candidate.rs_rating) : "—"}</b></span>
-                        {mode === "historical" && (
-                          <Badge variant={candidate.decision === "bought" ? "default" : "secondary"}>
-                            {candidate.decision === "bought" ? "Bought" : candidate.decision === "rejected_risk" ? "Rejected" : "Passed"}
-                          </Badge>
-                        )}
-                      </span>
-                    </Button>
-                  );
-                })}
-              </div>
-              <Table containerClassName="hidden max-h-[420px] overflow-auto lg:block">
+              <Table containerClassName="max-h-[420px] overflow-auto" className="min-w-[520px]">
                 <TableHeader className="sticky top-0 z-10 bg-surface-sunk text-ink-faint">
                   <TableRow>
                     <TableHead className="h-auto px-3 py-1.5 text-[10px]">Ticker</TableHead>

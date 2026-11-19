@@ -750,49 +750,11 @@ export function InlineScreenerPanel({
 
         {viewMode === "list" ? (
           <>
-            <div className="grid gap-1.5 p-2 lg:hidden">
-              {rows.map((row, index) => {
-                const metric = (value: unknown, digits = 0) => {
-                  const number = Number(value);
-                  return value == null || value === "" || !Number.isFinite(number)
-                    ? "—"
-                    : digits ? number.toFixed(digits) : String(Math.round(number));
-                };
-                return (
-                  <article
-                    key={`${row.ticker}-${row.rank}`}
-                    className="rounded-md border border-border bg-card px-3 py-2.5"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="w-6 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
-                        <Button
-                          type="button"
-                          onClick={() => onOpenTicker?.(row.ticker)}
-                          variant="link"
-                          size="sm"
-                          className="h-auto min-h-8 min-w-11 justify-start p-0 font-mono font-semibold text-accent"
-                          title={`Open ${row.ticker} chart for ${asOf}`}
-                        >
-                          {row.ticker}
-                        </Button>
-                      </div>
-                      <span className="font-mono text-sm font-semibold tabular-nums">${metric(row.close, 2)}</span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 border-t border-border/70 pt-2 text-[11px]">
-                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">RS</span><span className="font-mono tabular-nums">{metric(row.rs_rating)}</span></div>
-                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Technical</span><span className="font-mono tabular-nums">{metric(row.technical_rating)}</span></div>
-                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Setup</span><span className="font-mono tabular-nums">{metric(row.setup_quality_rating)}</span></div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-            <div className="hidden h-full min-h-0 lg:block">
+            <div className="h-full min-h-0 min-w-0 overflow-x-auto">
               <DataTable<RankedRow>
                 rows={rows}
                 columns={[...panelColumns, ...extraColumns]}
-                viewId={`inline-screener.${activePresetId || "custom"}`}
+                viewId={`inline-screener.v2.${activePresetId || "custom"}`}
                 getRowId={(r) => `${r.ticker}-${r.rank}`}
                 loading={previewQuery.isLoading}
                 emptyLabel="No candidates matched the screen criteria."
@@ -803,6 +765,7 @@ export function InlineScreenerPanel({
                 onRemoveColumn={handleRemoveColumn}
                 onSortByChange={handleSortByChange}
                 density="compact"
+                showDensityToggle={false}
                 height="fill"
               />
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type UIEvent } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { fetchFields, previewIr } from "../../api/screens";
+import { fetchAsOfRange, fetchFields, previewIr } from "../../api/screens";
 import type { OrderDirection, ScreenField, UniverseQueryV1 } from "../../types";
 import type { FilterTree } from "../strategy/StrategyDocument";
 import { FilterTreeSlotEditor } from "./FilterTreeSlotEditor";
@@ -148,6 +148,14 @@ export function UniverseSlotCard({
     staleTime: 5 * 60_000,
   });
   const fields: ScreenField[] = fieldsQuery.data ?? [];
+  const datesQuery = useQuery({
+    queryKey: ["as-of-range-compose"],
+    queryFn: () => fetchAsOfRange(10000),
+    staleTime: 5 * 60_000,
+  });
+  // Strategy routes may not receive BacktestComposePanel's as-of date. Resolve it here so
+  // Universe still previews the latest available market session instead of showing 0 matches.
+  const effectiveAsOf = asOf || datesQuery.data?.[0] || "";
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [hoverDate, setHoverDate] = useState<string | null>(null);
@@ -173,8 +181,8 @@ export function UniverseSlotCard({
   const tenureStart = useMemo(() => {
     const explicit = (startDateProp || "").trim();
     if (explicit) return explicit;
-    return yearBackFrom(asOf);
-  }, [startDateProp, asOf]);
+    return yearBackFrom(effectiveAsOf);
+  }, [startDateProp, effectiveAsOf]);
 
   /** Fingerprint so filter edits (and MCP-driven screen updates) refetch the probe. */
   const screenKey = useMemo(() => JSON.stringify(screen), [screen]);
@@ -185,29 +193,29 @@ export function UniverseSlotCard({
    */
 
   // Click pins; hover only previews when nothing is pinned.
-  const tableDate = pinnedDate ?? (queryDate || asOf);
+  const tableDate = pinnedDate ?? (queryDate || effectiveAsOf);
 
   // Debounce hover → asof query date (~150ms). Ignored while a click pin is active.
   useEffect(() => {
     if (pinnedDate) return;
-    const next = hoverDate || asOf;
+    const next = hoverDate || effectiveAsOf;
     if (!next) {
       setQueryDate("");
       return;
     }
     const t = window.setTimeout(() => setQueryDate(next), 150);
     return () => window.clearTimeout(t);
-  }, [hoverDate, asOf, pinnedDate]);
+  }, [hoverDate, effectiveAsOf, pinnedDate]);
 
   useEffect(() => {
-    if (asOf && !queryDate && !pinnedDate) setQueryDate(asOf);
-  }, [asOf, queryDate, pinnedDate]);
+    if (effectiveAsOf && !queryDate && !pinnedDate) setQueryDate(effectiveAsOf);
+  }, [effectiveAsOf, queryDate, pinnedDate]);
 
   // Clear pin / chart when evaluation end date or screen changes.
   useEffect(() => {
     setPinnedDate(null);
     setChartTicker(null);
-  }, [asOf, liveScreenKey]);
+  }, [effectiveAsOf, liveScreenKey]);
 
   // Reset visible window when the asof date, screen, or sort changes.
   useEffect(() => {
@@ -217,7 +225,7 @@ export function UniverseSlotCard({
 
   // Tenure only on pinned date or evaluation end (not crosshair hover).
   const includeTenure =
-    Boolean(pinnedDate) || (Boolean(tableDate) && tableDate === asOf && !hoverDate);
+    Boolean(pinnedDate) || (Boolean(tableDate) && tableDate === effectiveAsOf && !hoverDate);
 
   const asofQuery = useQuery({
     queryKey: [
@@ -339,7 +347,13 @@ export function UniverseSlotCard({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
           <div className="text-[11px] text-muted-foreground">
-            {asofQuery.isLoading ? "Loading…" : `${asofQuery.data?.count ?? allRows.length} matches`}
+            {asofQuery.isLoading || (!effectiveAsOf && datesQuery.isLoading)
+              ? "Loading…"
+              : asofQuery.error
+                ? "Unable to load universe"
+                : !effectiveAsOf
+                  ? "No market dates available"
+                  : `${asofQuery.data?.count ?? allRows.length} matches`}
             {tableDate ? ` · ${tableDate}` : ""}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -363,11 +377,11 @@ export function UniverseSlotCard({
                     <span className="text-ink">{tableDate || "—"}</span>
                     {pinnedDate ? (
                       <span className="text-ink-faint"> (pinned)</span>
-                    ) : hoverDate && hoverDate !== asOf ? (
+                    ) : hoverDate && hoverDate !== effectiveAsOf ? (
                       <span className="text-ink-faint"> (hover)</span>
                     ) : null}
                   </span>
-                  {pinnedDate && pinnedDate !== asOf ? (
+                  {pinnedDate && pinnedDate !== effectiveAsOf ? (
                     <Button
                       type="button"
                       variant="link"
@@ -376,7 +390,7 @@ export function UniverseSlotCard({
                       onClick={() => {
                         setPinnedDate(null);
                         setHoverDate(null);
-                        setQueryDate(asOf);
+                        setQueryDate(effectiveAsOf);
                       }}
                     >
                       reset
@@ -422,13 +436,23 @@ export function UniverseSlotCard({
                   {(asofQuery.error as Error).message}
                 </p>
               )}
-              <div data-testid="universe-candidates-table" className="hidden md:block">
+              {datesQuery.error && !asOf && (
+                <p className="font-mono text-[10px] text-danger">
+                  Could not load available market dates: {(datesQuery.error as Error).message}
+                </p>
+              )}
+              {!asOf && !datesQuery.isLoading && !datesQuery.error && !effectiveAsOf && (
+                <p className="text-xs text-muted-foreground">
+                  No market dates are available for the strategy universe preview.
+                </p>
+              )}
+              <div data-testid="universe-candidates-table" className="block min-w-0 overflow-x-auto">
                 <MembershipAsOfTable
                   columns={previewCols}
                   rows={shownRows}
                   columnLabels={CANDIDATE_COLUMN_LABELS}
                   formatCell={(column, value) => formatCandidateValue(column, value)}
-                  density="comfortable"
+                  density="compact"
                   sortField={sortField}
                   sortDir={sortDir}
                   sortableCols={sortableCols}
@@ -436,63 +460,26 @@ export function UniverseSlotCard({
                   onSelectTicker={openTickerChart}
                   onSort={handleColumnHeaderClick}
                   onScroll={onTableScroll}
-                  loading={asofQuery.isLoading}
+                  loading={asofQuery.isLoading || (!effectiveAsOf && datesQuery.isLoading)}
                   hint={chartTicker ? undefined : "Select a ticker to view its chart."}
                 />
               </div>
-              <div className="grid gap-1.5 md:hidden">
-                {shownRows.map((row, index) => {
-                  const ticker = String(row.ticker ?? "").trim().toUpperCase();
-                  const display = (value: unknown, decimals = 0) => {
-                    const n = Number(value);
-                    return value == null || value === "" || !Number.isFinite(n)
-                      ? "—"
-                      : decimals ? n.toFixed(decimals) : String(Math.round(n));
-                  };
-                  return (
-                    <article key={`${ticker}-${index}`} className="rounded-md border border-border bg-background px-3 py-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="w-6 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
-                          <Button
-                            type="button"
-                            onClick={() => openTickerChart(ticker)}
-                            variant="link"
-                            size="sm"
-                            className="h-8 min-w-11 justify-start p-0 font-mono font-semibold text-accent"
-                            title={`Open ${ticker} chart at ${tableDate}`}
-                          >
-                            {ticker}
-                          </Button>
-                        </div>
-                        <span className="font-mono text-sm font-semibold tabular-nums">${display(row.close, 2)}</span>
-                      </div>
-                      <div className="mt-1 grid grid-cols-3 gap-2 border-t border-border/70 pt-1.5 text-[11px]">
-                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">Score</span><span className="font-mono tabular-nums">{display(row.overall_score)}</span></div>
-                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">RS</span><span className="font-mono tabular-nums">{display(row.rs_rating)}</span></div>
-                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">ATR</span><span className="font-mono tabular-nums">{display(row.atr_14_pct, 1)}{row.atr_14_pct == null ? "" : "%"}</span></div>
-                      </div>
-                    </article>
-                  );
-                })}
-                {asofQuery.isLoading && !shownRows.length ? (
-                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">Loading…</p>
-                ) : null}
-                {!asofQuery.isLoading && !shownRows.length ? (
-                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">No stocks match this universe on the selected date.</p>
-                ) : null}
-                {hasMoreRows ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-9 w-full"
-                    onClick={() => setVisibleRows((n) => Math.min(n + TABLE_PAGE, allRows.length))}
-                  >
-                    Show more · {allRows.length - shownRows.length} remaining
-                  </Button>
-                ) : null}
-              </div>
+              {asofQuery.data?.as_of && asofQuery.data.as_of !== tableDate ? (
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  No market data for {tableDate}; showing the latest available session, {asofQuery.data.as_of}.
+                </p>
+              ) : null}
+              {hasMoreRows ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-full"
+                  onClick={() => setVisibleRows((n) => Math.min(n + TABLE_PAGE, allRows.length))}
+                >
+                  Show more · {allRows.length - shownRows.length} remaining
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 onClick={() => setHistoryOpen((open) => !open)}
@@ -507,7 +494,7 @@ export function UniverseSlotCard({
               {historyOpen && (
                 <MembershipOverTime
                   spec={rangeSpec}
-                  asOf={asOf}
+                  asOf={effectiveAsOf}
                   startDate={tenureStart}
                   onHoverDate={setHoverDate}
                   onPickDate={(date) => {

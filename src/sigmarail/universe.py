@@ -400,9 +400,6 @@ def universe_membership_counts(
         FROM ({source_sql}) AS q
         GROUP BY q.`date`
         ORDER BY q.`date`
-        SETTINGS max_execution_time = 30,
-          max_rows_to_read = 500000000,
-          timeout_before_checking_execution_speed = 0
         """,
         parameters=params,
     )
@@ -466,9 +463,6 @@ def universe_measure_series(
         GROUP BY u.`date`
         ORDER BY u.`date`
         LIMIT 1000
-        SETTINGS max_execution_time = 30,
-          max_rows_to_read = 500000000,
-          timeout_before_checking_execution_speed = 0
         """,
         parameters=params,
     )
@@ -519,9 +513,6 @@ def universe_membership_by_ticker(
         GROUP BY q.`ticker`
         ORDER BY q.`ticker`
         LIMIT 10000
-        SETTINGS max_execution_time = 30,
-          max_rows_to_read = 500000000,
-          timeout_before_checking_execution_speed = 0
         """,
         parameters=params,
     )
@@ -554,9 +545,6 @@ def universe_membership_samples(
         WHERE toString(q.`date`) IN {{sample_dates:Array(String)}}
         ORDER BY q.`date`, q.`ticker`
         LIMIT 500
-        SETTINGS max_execution_time = 30,
-          max_rows_to_read = 500000000,
-          timeout_before_checking_execution_speed = 0
         """,
         parameters=params,
     )

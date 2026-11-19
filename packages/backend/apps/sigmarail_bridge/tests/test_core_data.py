@@ -155,7 +155,7 @@ def test_native_query_fails_closed_when_database_connection_is_not_configured(us
     assert response.json()["detail"] == "SigmaRail ClickHouse query service is unavailable."
 
 
-def test_clickhouse_client_is_created_with_readonly_setting():
+def test_clickhouse_client_does_not_override_server_readonly_settings():
     _clickhouse_client.cache_clear()
     password_for_test = "test-secret"
     with (
@@ -172,7 +172,7 @@ def test_clickhouse_client_is_created_with_readonly_setting():
     ):
         _clickhouse_client()
 
-    assert create.call_args.kwargs["settings"] == {"readonly": 2}
+    assert "settings" not in create.call_args.kwargs
     assert create.call_args.kwargs["username"] == "studio_reader"
     _clickhouse_client.cache_clear()
 
@@ -588,22 +588,32 @@ def test_universe_preview_runs_compatible_specs_through_native_read_only_client(
     assert "`exchange`" in sql
     assert readonly_client.query.call_args.kwargs["parameters"]["start_date"] == "2024-12-31"
     assert readonly_client.query.call_args.kwargs["parameters"]["end_date"] == "2024-12-31"
-    assert readonly_client.query.call_args.kwargs["settings"] == {"allow_experimental_analyzer": 0}
+    assert readonly_client.query.call_args.kwargs["parameters"]["end_date"] == "2024-12-31"
 
 
-def test_universe_preview_keeps_tenure_on_the_compatibility_service(user, tenant, tenant_membership_factory):
+def test_universe_preview_calculates_tenure_in_the_native_service(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = _client(user)
-    bridge_response = Response({"source": "in-process domain view"})
-    spec = {"version": 1, "from": "daily_screener"}
+    spec = {"version": 1, "from": "daily_screener", "select": ["ticker", "close"]}
+    query_result = SimpleNamespace(
+        column_names=["ticker", "date", "close", "exchange"],
+        result_rows=[["abc", date(2024, 12, 31), Decimal("12.5"), "NASDAQ"]],
+    )
+    native_client = SimpleNamespace(query=Mock(return_value=query_result))
 
     with (
         override_settings(SIGMARAIL_CLICKHOUSE_ENABLED=True),
-        patch("apps.sigmarail_bridge.core_data.compile_universe_spec") as compile_spec,
         patch(
-            "apps.sigmarail_bridge.core_data.DomainAPIRouteView._dispatch",
-            return_value=bridge_response,
-        ) as forward,
+            "apps.sigmarail_bridge.core_data.compile_universe_spec",
+            return_value=("SELECT native preview", {"start_date": "2024-12-31", "end_date": "2024-12-31"}),
+        ),
+        patch(
+            "apps.sigmarail_bridge.core_data._clickhouse_client", return_value=native_client
+        ),
+        patch(
+            "apps.sigmarail_bridge.core_data.universe_membership_by_ticker",
+            return_value={"ABC": 42},
+        ) as membership,
     ):
         response = client.post(
             "/api/screens/preview-ir",
@@ -613,9 +623,11 @@ def test_universe_preview_keeps_tenure_on_the_compatibility_service(user, tenant
         )
 
     assert response.status_code == 200
-    assert response.json() == {"source": "in-process domain view"}
-    compile_spec.assert_not_called()
-    forward.assert_called_once()
+    body = response.json()
+    assert body["count"] == 1
+    assert body["rows"][0]["ticker"] == "ABC"
+    assert body["rows"][0]["days_in_universe"] == 42
+    membership.assert_called_once()
 
 
 def test_universe_preview_uses_compatibility_service_for_unsupported_fields(user, tenant, tenant_membership_factory):
@@ -645,24 +657,30 @@ def test_universe_preview_uses_compatibility_service_for_unsupported_fields(user
     forward.assert_called_once()
 
 
-def test_universe_preview_preserves_latest_trading_date_fallback(user, tenant, tenant_membership_factory):
+def test_universe_preview_uses_latest_date_only_when_requested_session_is_missing(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = _client(user)
-    bridge_response = Response({"source": "latest-date compatibility fallback"})
     empty_result = SimpleNamespace(column_names=["ticker", "date"], result_rows=[])
-    readonly_client = SimpleNamespace(query=Mock(return_value=empty_result))
+    no_session = SimpleNamespace(column_names=["1"], result_rows=[])
+    latest_session = SimpleNamespace(column_names=["max(date)"], result_rows=[[date(2024, 12, 30)]])
+    fallback_result = SimpleNamespace(
+        column_names=["ticker", "date", "close", "exchange"],
+        result_rows=[["abc", date(2024, 12, 30), Decimal("12.5"), "NASDAQ"]],
+    )
+    readonly_client = SimpleNamespace(
+        query=Mock(side_effect=[empty_result, no_session, latest_session, fallback_result])
+    )
 
     with (
         override_settings(SIGMARAIL_CLICKHOUSE_ENABLED=True),
         patch(
             "apps.sigmarail_bridge.core_data.compile_universe_spec",
-            return_value=("SELECT native preview", {"start_date": "2024-12-31", "end_date": "2024-12-31"}),
+            side_effect=[
+                ("SELECT current preview", {"start_date": "2024-12-31", "end_date": "2024-12-31"}),
+                ("SELECT fallback preview", {"start_date": "2024-12-30", "end_date": "2024-12-30"}),
+            ],
         ),
         patch("apps.sigmarail_bridge.core_data._clickhouse_client", return_value=readonly_client),
-        patch(
-            "apps.sigmarail_bridge.core_data.DomainAPIRouteView._dispatch",
-            return_value=bridge_response,
-        ) as forward,
     ):
         response = client.post(
             "/api/screens/preview-ir",
@@ -672,5 +690,9 @@ def test_universe_preview_preserves_latest_trading_date_fallback(user, tenant, t
         )
 
     assert response.status_code == 200
-    assert response.json() == {"source": "latest-date compatibility fallback"}
-    forward.assert_called_once()
+    body = response.json()
+    assert body["count"] == 1
+    assert body["as_of"] == "2024-12-30"
+    assert body["as_of_requested"] == "2024-12-31"
+    assert body["as_of_fallback"] == "2024-12-30"
+    assert body["rows"][0]["ticker"] == "ABC"

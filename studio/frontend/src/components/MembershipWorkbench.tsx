@@ -117,10 +117,10 @@ export function MembershipAsOfTable({
   return (
     <div className="space-y-1">
       <div
-        className={cn("max-h-52 overflow-auto rounded border border-line bg-surface", readable && "max-h-64")}
+        className={cn("max-h-52 min-w-0 overflow-auto rounded border border-line bg-surface", readable && "max-h-64")}
         onScroll={onScroll}
       >
-        <WorkspaceTable className={cn("w-full text-left font-mono text-[10px]", readable && "font-sans text-xs")}>
+        <WorkspaceTable className={cn("w-full min-w-max text-left font-mono text-[10px]", readable && "font-sans text-xs")}>
           <WorkspaceTableHeader>
             <WorkspaceTableRow>
               {columns.map((col) => {

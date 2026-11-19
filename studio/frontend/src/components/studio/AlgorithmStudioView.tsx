@@ -670,7 +670,10 @@ export function AlgorithmStudioView({
       />
 
       <Tabs value={activeSlot} onValueChange={selectStrategySlot} className="space-y-0">
-          <TabsList className="grid h-auto w-full grid-cols-5 gap-1">
+          <TabsList
+            className="w-full grid grid-cols-5 gap-1 overflow-x-auto"
+            style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}
+          >
             {([
               ["universe", "Universe", "Universe"],
               ["alpha", "Alpha", "Alpha"],
@@ -682,7 +685,7 @@ export function AlgorithmStudioView({
                 key={key}
                 value={key}
                 aria-label={accessibleName}
-                className="min-h-10 min-w-0 px-1 py-2 text-[10px] sm:text-xs"
+                className="min-h-10 w-full min-w-0 px-1 py-2 text-[10px] sm:text-xs"
               >
                 <span className="max-w-full truncate">{label}</span>
               </TabsTrigger>
