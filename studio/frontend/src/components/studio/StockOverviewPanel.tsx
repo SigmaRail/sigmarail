@@ -40,7 +40,13 @@ function growthClass(value: number | null | undefined): string {
   return value == null ? "text-ink-muted" : value > 0 ? "text-emerald-500" : value < 0 ? "text-rose-500" : "text-ink";
 }
 
-export function StockOverviewPanel({ data }: { data?: StockIntrospectionData | null }) {
+export function StockOverviewPanel({
+  data,
+  showYearlyEarnings = true,
+}: {
+  data?: StockIntrospectionData | null;
+  showYearlyEarnings?: boolean;
+}) {
   const headingId = useId();
   const kpis = (data?.as_of_kpis ?? {}) as Record<string, unknown>;
   const annual: AnnualGrowthPoint[] = [...(data?.annual_growth ?? [])].sort((a, b) =>
@@ -74,7 +80,7 @@ export function StockOverviewPanel({ data }: { data?: StockIntrospectionData | n
         </div>
       </section>
 
-      <section aria-labelledby={`${headingId}-yearly`} className="border-t border-line px-3 py-2.5">
+      {showYearlyEarnings ? <section aria-labelledby={`${headingId}-yearly`} className="border-t border-line px-3 py-2.5">
         <h2 id={`${headingId}-yearly`} className="mb-1.5 text-xs font-bold text-ink">Yearly earnings</h2>
         {annual.length === 0 ? (
           <p className="py-2 text-ink-muted">No annual series</p>
@@ -106,7 +112,7 @@ export function StockOverviewPanel({ data }: { data?: StockIntrospectionData | n
             </table>
           </div>
         )}
-      </section>
+      </section> : null}
     </aside>
   );
 }

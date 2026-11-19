@@ -208,8 +208,7 @@ export function ScreensView({
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-canvas">
-      <div className="min-h-0 flex-1 overflow-hidden">
+    <div className="h-full min-h-0 w-full overflow-y-auto overscroll-y-contain bg-canvas">
         <InlineScreenerPanel
           spec={inlineSpec}
           activePresetId={null}
@@ -249,7 +248,6 @@ export function ScreensView({
           onViewModeChange={onViewModeChange}
           initialWhere={initialWhere}
         />
-      </div>
       <SaveScreenDialog
         open={saveOpen}
         defaultName={saveName}

@@ -1,6 +1,6 @@
 import { assertUnreachable } from '../../utils';
 import { ThemeAction, ThemeMode, ThemeState, Themes } from './themeProvider.types';
-import { getSystemTheme, resolveTheme, setThemeInDOM } from './themeProvider.utils';
+import { resolveTheme, setThemeInDOM } from './themeProvider.utils';
 
 export const themeReducer = (state: ThemeState, { type, payload }: ThemeAction) => {
   switch (type) {

@@ -25,10 +25,12 @@ export function MembershipTickerInspect({
   ticker,
   asOfDate,
   onClose,
+  onOpenFullChart,
 }: {
   ticker: string;
   asOfDate: string;
   onClose: () => void;
+  onOpenFullChart?: () => void;
   /** @deprecated Unused — kept so callers can drop props gradually. */
   row?: MembershipRow | null;
   /** @deprecated Unused. */
@@ -47,21 +49,29 @@ export function MembershipTickerInspect({
           as of <span className="text-ink">{asOfDate || "—"}</span>
           <span className="text-ink-faint"> (pinned time slice)</span>
         </span>
-        <Button
-          type="button"
-          onClick={onClose}
-          variant="outline"
-          size="sm"
-          className="h-7 px-2 font-mono text-[10px]"
-        >
-          close chart
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          {onOpenFullChart ? (
+            <Button type="button" onClick={onOpenFullChart} variant="ghost" size="sm" className="h-7 px-2 font-mono text-[10px]">
+              Full chart
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 font-mono text-[10px]"
+          >
+            Close
+          </Button>
+        </div>
       </div>
       <div className="min-h-[360px] md:min-h-[420px]">
         <StockIntrospectionPanel
           ticker={ticker}
           asOfDate={asOfDate}
           compact
+          showOverview
           className="h-full min-h-[360px] md:min-h-[420px]"
         />
       </div>
@@ -86,6 +96,7 @@ export function MembershipAsOfTable({
   columnLabels,
   formatCell,
   density = "compact",
+  scrollMode = "contained",
 }: {
   columns: string[];
   rows: MembershipRow[];
@@ -102,6 +113,8 @@ export function MembershipAsOfTable({
   columnLabels?: Readonly<Record<string, string>>;
   formatCell?: (column: string, value: unknown, row: MembershipRow) => ReactNode;
   density?: "compact" | "comfortable";
+  /** Use page scrolling for screener flows; keep the table's internal scroll for embedded probes. */
+  scrollMode?: "contained" | "page";
 }) {
   const readable = density === "comfortable";
   const canSort = (col: string) =>
@@ -117,7 +130,11 @@ export function MembershipAsOfTable({
   return (
     <div className="space-y-1">
       <div
-        className={cn("max-h-52 min-w-0 overflow-auto rounded border border-line bg-surface", readable && "max-h-64")}
+        className={cn(
+          "min-w-0 rounded border border-line bg-surface",
+          scrollMode === "contained" ? "max-h-52 overflow-auto" : "overflow-x-auto",
+          readable && scrollMode === "contained" && "max-h-64",
+        )}
         onScroll={onScroll}
       >
         <WorkspaceTable className={cn("w-full min-w-max text-left font-mono text-[10px]", readable && "font-sans text-xs")}>

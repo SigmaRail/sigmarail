@@ -5,6 +5,9 @@ import { MembershipOverTime } from "./MembershipOverTime";
 import { ScreenPickerDialog } from "./ScreenPickerDialog";
 import { DateNavigator } from "./DateNavigator";
 import { MiniSparklineCard } from "./MiniSparklineCard";
+import { ScreenerFilterSummary } from "./ScreenerFilterSummary";
+import { ScreenerMembershipHistory } from "./ScreenerMembershipHistory";
+import { MembershipTickerInspect } from "../MembershipWorkbench";
 import { useFieldPicker } from "./FieldPickerProvider";
 import type { FieldPick } from "../../lib/fieldPick";
 import { DataTable, type GridColumn, type SortSpec } from "../../components/DataTable";
@@ -34,8 +37,6 @@ import { previewScreen, previewIr, fetchAsOfRange, fetchScreenSparklines } from 
 import { nextFilterId } from "../../lib/irFilters";
 import {
   emptyGroup,
-  isUiGroup,
-  isUiNot,
   stripIds,
   whereToAst,
   withIds,
@@ -196,6 +197,7 @@ export function InlineScreenerPanel({
   const addressCarriesTree = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">(() =>
     initialViewMode ?? "list",
   );
@@ -204,8 +206,6 @@ export function InlineScreenerPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialViewMode]);
   const [asOf, setAsOf] = useState(propAsOf || "");
-  /** The membership chart is opt-in: a 29-year range summary should not fire on load. */
-  const [membershipOpen, setMembershipOpen] = useState(false);
 
   useEffect(() => {
     if (propAsOf && propAsOf !== asOf) {
@@ -262,13 +262,6 @@ export function InlineScreenerPanel({
 
   // Current query spec derived from the screen tree, sort terms, and limit
   const querySpec = buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit);
-  const countCriteria = (node: UiGroup | UiNode): number => {
-    if (isUiGroup(node)) return node.items.reduce((count, item) => count + countCriteria(item), 0);
-    if (isUiNot(node)) return countCriteria(node.item);
-    return 1;
-  };
-  const criteriaCount = countCriteria(whereRoot);
-
   // The address wins when it changes (deep link, back/forward): it carries the screen.
   // Report the composed spec up so the address keeps carrying it.
   const incomingWhereProp = initialWhere ? JSON.stringify(initialWhere) : "";
@@ -556,7 +549,7 @@ export function InlineScreenerPanel({
   }, [asOf, fields]);
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card text-card-foreground">
+    <div className="min-w-0 w-full flex flex-col bg-card text-card-foreground">
       {/* Keep the result count and actions in one compact toolbar. */}
       <div className="flex flex-col gap-2 border-b border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2">
@@ -610,18 +603,6 @@ export function InlineScreenerPanel({
       <div className="flex min-h-10 flex-wrap items-center justify-between gap-1.5 border-b border-line bg-surface-raised/30 px-2.5 py-1">
         {/* Left: Spec Order By & Limit Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 px-2 text-xs"
-            aria-expanded={criteriaOpen}
-            onClick={() => setCriteriaOpen((open) => !open)}
-          >
-            <span aria-hidden="true">{criteriaOpen ? "▾" : "▸"}</span>
-            <span>Filters</span>
-            <Badge variant="muted" className="px-1.5 py-0 text-[10px]">{criteriaCount}</Badge>
-          </Button>
           <div className="flex items-center gap-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Sort:</span>
             <Button
@@ -713,6 +694,13 @@ export function InlineScreenerPanel({
         </div>
       </div>
 
+      <ScreenerFilterSummary
+        where={whereRoot}
+        fields={fields}
+        editorOpen={criteriaOpen}
+        onToggleEditor={() => setCriteriaOpen((open) => !open)}
+      />
+
       <Dialog open={criteriaOpen} onOpenChange={setCriteriaOpen}>
         <DialogContent
           size="lg"
@@ -743,7 +731,18 @@ export function InlineScreenerPanel({
       </Dialog>
 
       {/* Candidates Results */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="min-w-0">
+        <ScreenerMembershipHistory>
+          <MembershipOverTime
+            spec={querySpec}
+            asOf={asOf}
+            height={120}
+            onPickDate={(date) => {
+              setAsOf(date);
+              onAsOfChange?.(date);
+            }}
+          />
+        </ScreenerMembershipHistory>
         {previewQuery.isError && (
           <div className="p-4 text-center text-[12px] text-danger">
             Query failed: {(previewQuery.error as Error)?.message || "Check ClickHouse connection"}
@@ -757,7 +756,7 @@ export function InlineScreenerPanel({
 
         {viewMode === "list" ? (
           <>
-            <div className="h-full min-h-0 min-w-0 overflow-x-auto">
+            <div className="min-w-0 overflow-x-auto">
               <DataTable<RankedRow>
                 rows={rows}
                 columns={[...panelColumns, ...extraColumns]}
@@ -767,13 +766,15 @@ export function InlineScreenerPanel({
                 emptyLabel="No candidates matched the screen criteria."
                 sortMode="server"
                 sortBy={sortBy}
+                onRowClick={(row) => setSelectedTicker(String(row.ticker ?? "").toUpperCase())}
+                rowHighlight={(row) => String(row.ticker ?? "").toUpperCase() === selectedTicker}
                 fieldCatalog={fields}
                 onAddColumn={handleOpenAddColumn}
                 onRemoveColumn={handleRemoveColumn}
                 onSortByChange={handleSortByChange}
                 density="compact"
                 showDensityToggle={false}
-                height="fill"
+                height="natural"
               />
             </div>
           </>
@@ -791,38 +792,20 @@ export function InlineScreenerPanel({
                   sparkline={sparklinesQuery.data?.series[String(r.ticker ?? "").toUpperCase()] ?? []}
                   sparklineLoading={sparklinesQuery.isLoading}
                   sparklineError={sparklinesQuery.error instanceof Error ? sparklinesQuery.error.message : null}
-                  onClick={() => onOpenTicker?.(r.ticker)}
+                  onClick={() => setSelectedTicker(String(r.ticker ?? "").toUpperCase())}
                 />
               ))}
             </div>
           )
         )}
-      </div>
-
-      {/* Secondary analysis follows the results so it never pushes stocks below the fold. */}
-      <div className="shrink-0 border-t border-line">
-        <Button
-          type="button"
-          onClick={() => setMembershipOpen((v) => !v)}
-          variant="ghost"
-          className="h-auto w-full justify-between rounded-none px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted"
-          aria-expanded={membershipOpen}
-        >
-          <span>Membership history</span>
-          <span className="font-mono text-[10px]">{membershipOpen ? "▼" : "▶"}</span>
-        </Button>
-        {membershipOpen && (
-          <div className="max-h-[42dvh] overflow-y-auto border-t border-line px-2.5 py-2">
-            <MembershipOverTime
-              spec={querySpec}
-              asOf={asOf}
-              onPickDate={(date) => {
-                setAsOf(date);
-                onAsOfChange?.(date);
-              }}
-            />
-          </div>
-        )}
+        {selectedTicker ? (
+          <MembershipTickerInspect
+            ticker={selectedTicker}
+            asOfDate={asOf}
+            onClose={() => setSelectedTicker(null)}
+            onOpenFullChart={() => onOpenTicker?.(selectedTicker)}
+          />
+        ) : null}
       </div>
 
       {/* Unified Screen Picker Dialog */}

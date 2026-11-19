@@ -9,6 +9,7 @@ import type { ChartCandlePoint } from "../../types";
 import { FundamentalsRail } from "./FundamentalsRail";
 import { QuoteHeader } from "./QuoteHeader";
 import { StockChartEngine } from "./StockChartEngine";
+import { StockOverviewPanel } from "./StockOverviewPanel";
 import { Button } from "@sb/webapp-core/components/ui/button";
 
 /**
@@ -21,6 +22,7 @@ export function StockIntrospectionPanel({
   onClose,
   className = "",
   compact = false,
+  showOverview = false,
 }: {
   ticker: string;
   asOfDate: string;
@@ -28,6 +30,8 @@ export function StockIntrospectionPanel({
   className?: string;
   /** Tighter chrome for embed under membership tables. */
   compact?: boolean;
+  /** Put point-in-time company metrics before the chart in an inline screener inspection. */
+  showOverview?: boolean;
 }) {
   const [activeTicker, setActiveTicker] = useState(ticker);
   const [revealFuture, setRevealFuture] = useState(true);
@@ -93,6 +97,45 @@ export function StockIntrospectionPanel({
     return Array.from(map.values()).sort((a, b) => a.time.localeCompare(b.time));
   }, [data?.chart_series, extraHistoryCandles]);
 
+  const chartPanel = (
+    <div
+      data-testid="charts-primary-area"
+      className={`flex w-full min-w-0 flex-none flex-col p-2 ${compact ? "min-h-[320px] lg:min-h-[420px]" : "min-h-[320px] md:min-h-[min(80dvh,800px)]"}`}
+    >
+      {overviewQuery.isLoading && !data ? (
+        <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
+          Loading ClickHouse candlestick series…
+        </div>
+      ) : overviewQuery.isError ? (
+        <div className="flex h-full items-center justify-center px-4 text-center font-mono text-xs text-rose-500">
+          {overviewQuery.error instanceof Error
+            ? overviewQuery.error.message
+            : "Failed to load chart"}
+        </div>
+      ) : data?.chart_series && data.chart_series.length > 0 ? (
+        <StockChartEngine
+          candles={mergedChartSeries}
+          screenAsOfDate={asOfDate}
+          inspectedDate={inspectedDate}
+          onSelectDate={(newDate) => setInspectedDate(newDate)}
+          historicalMedianPe={data.historical_median_pe}
+          quarterlyGrowth={data.quarterly_growth}
+          annualGrowth={data.annual_growth}
+          earningsEvents={data.earnings_events}
+          revealFuture={revealFuture}
+          onToggleRevealFuture={setRevealFuture}
+          hasMoreHistory={hasMoreHistory}
+          isLoadingMoreHistory={isLoadingMore}
+          onLoadMoreHistory={handleLoadMoreHistory}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
+          No chart data available for {activeTicker}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
       className={`flex min-h-0 flex-col overflow-hidden bg-surface ${className}`}
@@ -137,39 +180,12 @@ export function StockIntrospectionPanel({
           compact ? "min-h-[360px]" : "min-h-[420px]"
         }`}
       >
-        <div data-testid="charts-primary-area" className="flex min-h-[320px] w-full min-w-0 flex-none flex-col p-2 md:min-h-[min(80dvh,800px)]">
-          {overviewQuery.isLoading && !data ? (
-            <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
-              Loading ClickHouse candlestick series…
-            </div>
-          ) : overviewQuery.isError ? (
-            <div className="flex h-full items-center justify-center px-4 text-center font-mono text-xs text-rose-500">
-              {overviewQuery.error instanceof Error
-                ? overviewQuery.error.message
-                : "Failed to load chart"}
-            </div>
-          ) : data?.chart_series && data.chart_series.length > 0 ? (
-            <StockChartEngine
-              candles={mergedChartSeries}
-              screenAsOfDate={asOfDate}
-              inspectedDate={inspectedDate}
-              onSelectDate={(newDate) => setInspectedDate(newDate)}
-              historicalMedianPe={data.historical_median_pe}
-              quarterlyGrowth={data.quarterly_growth}
-              annualGrowth={data.annual_growth}
-              earningsEvents={data.earnings_events}
-              revealFuture={revealFuture}
-              onToggleRevealFuture={setRevealFuture}
-              hasMoreHistory={hasMoreHistory}
-              isLoadingMoreHistory={isLoadingMore}
-              onLoadMoreHistory={handleLoadMoreHistory}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
-              No chart data available for {activeTicker}
-            </div>
-          )}
-        </div>
+        {showOverview ? (
+          <div className="grid min-w-0 shrink-0 grid-cols-1 lg:grid-cols-[minmax(18rem,0.9fr)_minmax(0,2fr)]">
+            <StockOverviewPanel data={data} showYearlyEarnings={false} />
+            {chartPanel}
+          </div>
+        ) : chartPanel}
 
         <FundamentalsRail
           data={data}

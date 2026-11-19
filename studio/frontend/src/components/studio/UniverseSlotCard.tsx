@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type UIEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchAsOfRange, fetchFields, previewIr } from "../../api/screens";
 import type { OrderDirection, ScreenField, UniverseQueryV1 } from "../../types";
@@ -13,8 +13,9 @@ import {
   MembershipTickerInspect,
 } from "../MembershipWorkbench";
 import { MembershipOverTime } from "./MembershipOverTime";
+import { ScreenerFilterSummary } from "./ScreenerFilterSummary";
+import { ScreenerMembershipHistory } from "./ScreenerMembershipHistory";
 import { useFieldPicker } from "./FieldPickerProvider";
-import { Card } from "@sb/webapp-core/components/ui/card";
 import { Button } from "@sb/webapp-core/components/ui/button";
 
 export type UniverseChoice =
@@ -157,7 +158,7 @@ export function UniverseSlotCard({
   // Universe still previews the latest available market session instead of showing 0 matches.
   const effectiveAsOf = asOf || datesQuery.data?.[0] || "";
 
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [pinnedDate, setPinnedDate] = useState<string | null>(null);
   const [queryDate, setQueryDate] = useState<string>("");
@@ -286,14 +287,6 @@ export function UniverseSlotCard({
     }
   }
 
-  function onTableScroll(e: UIEvent<HTMLDivElement>) {
-    if (!hasMoreRows) return;
-    const el = e.currentTarget;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) {
-      setVisibleRows((n) => Math.min(n + TABLE_PAGE, allRows.length));
-    }
-  }
-
   function handleColumnHeaderClick(col: string) {
     if (!sortableCols.has(col)) return;
     if (sortField === col) {
@@ -342,8 +335,27 @@ export function UniverseSlotCard({
   }
 
   return (
-    <Card className="space-y-3.5 p-4 shadow-sm">
-      <FilterTreeSlotEditor filters={screen} fields={fields} onChange={onChangeScreen} />
+    <div className="min-w-0 space-y-3">
+      <ScreenerFilterSummary
+        where={rangeSpec.where}
+        fields={fields}
+        editorOpen={filtersOpen}
+        onToggleEditor={() => setFiltersOpen((open) => !open)}
+        editor={<FilterTreeSlotEditor filters={screen} fields={fields} onChange={onChangeScreen} />}
+      />
+      <ScreenerMembershipHistory>
+        <MembershipOverTime
+          spec={rangeSpec}
+          asOf={effectiveAsOf}
+          startDate={tenureStart}
+          height={120}
+          onHoverDate={setHoverDate}
+          onPickDate={(date) => {
+            setPinnedDate(date);
+            setQueryDate(date);
+          }}
+        />
+      </ScreenerMembershipHistory>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
           <div className="text-[11px] text-muted-foreground">
@@ -453,13 +465,13 @@ export function UniverseSlotCard({
                   columnLabels={CANDIDATE_COLUMN_LABELS}
                   formatCell={(column, value) => formatCandidateValue(column, value)}
                   density="compact"
+                  scrollMode="page"
                   sortField={sortField}
                   sortDir={sortDir}
                   sortableCols={sortableCols}
                   selectedTicker={chartTicker}
                   onSelectTicker={openTickerChart}
                   onSort={handleColumnHeaderClick}
-                  onScroll={onTableScroll}
                   loading={asofQuery.isLoading || (!effectiveAsOf && datesQuery.isLoading)}
                   hint={chartTicker ? undefined : "Select a ticker to view its chart."}
                 />
@@ -480,29 +492,6 @@ export function UniverseSlotCard({
                   Show more · {allRows.length - shownRows.length} remaining
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                onClick={() => setHistoryOpen((open) => !open)}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-full justify-between px-1 text-left text-xs text-muted-foreground"
-                aria-expanded={historyOpen}
-              >
-                <span>Membership history</span>
-                <span aria-hidden="true">{historyOpen ? "▾" : "▸"}</span>
-              </Button>
-              {historyOpen && (
-                <MembershipOverTime
-                  spec={rangeSpec}
-                  asOf={effectiveAsOf}
-                  startDate={tenureStart}
-                  onHoverDate={setHoverDate}
-                  onPickDate={(date) => {
-                    setPinnedDate(date);
-                    setQueryDate(date);
-                  }}
-                />
-              )}
               {chartTicker ? (
                 <MembershipTickerInspect
                   ticker={chartTicker}
@@ -512,6 +501,6 @@ export function UniverseSlotCard({
               ) : null}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
