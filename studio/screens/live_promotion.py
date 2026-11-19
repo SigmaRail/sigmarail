@@ -278,7 +278,32 @@ def list_live_deployments_core(client: Any, *, limit: int = 20) -> dict[str, Any
 
 def get_live_deployment_status(client: Any, deployment_id: str) -> dict[str, Any]:
     """Deployment status digest via ``sigmarail.features.live_report.get_live_status``."""
-    return get_live_status(client, deployment_id)
+    out = get_live_status(client, deployment_id)
+    if not isinstance(out, dict) or out.get("error"):
+        return out
+    try:
+        rows = client.query(
+            "SELECT artifact_json FROM strategy_run_artifacts FINAL "
+            "WHERE run_id = %(deployment_id)s AND artifact_type = 'live_snapshot' "
+            "ORDER BY run_timestamp DESC LIMIT 1",
+            parameters={"deployment_id": deployment_id},
+        )
+        if rows.result_rows:
+            payload = rows.result_rows[0][0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            if isinstance(payload, dict):
+                snapshot = out.get("latest_snapshot")
+                if not isinstance(snapshot, dict):
+                    snapshot = {}
+                snapshot["decision_events"] = payload.get("decision_events", [])
+                snapshot["strategy_content_hash"] = payload.get("strategy_content_hash")
+                out["latest_snapshot"] = snapshot
+    except Exception:
+        # Status and broker snapshot remain available for older deployments or
+        # when the optional decision artifact cannot be read.
+        pass
+    return out
 
 
 def get_live_status(client: Any, deployment_id: str) -> dict[str, Any]:

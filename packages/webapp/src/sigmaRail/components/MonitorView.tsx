@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchLiveDeployments, fetchLocalLiveRuntime } from '../api/live';
-import type { StudioMode } from '../types';
+import { useState } from 'react';
+import { fetchLiveDeploymentStatus, fetchLiveDeployments, fetchLocalLiveRuntime } from '../api/live';
+import type { LiveDeploymentStatus, StrategyDecisionEvent, StudioMode } from '../types';
 import { PageHeadline } from '@sb/webapp-core/components/pageHeadline';
 import { Button } from '@sb/webapp-core/components/ui/button';
+import { StockIntrospectionPanel } from './workbench/StockIntrospectionPanel';
 import { Card } from '@sb/webapp-core/components/ui/card';
 import { Badge } from '@sb/webapp-core/components/ui/badge';
 import {
@@ -19,6 +21,17 @@ import {
   TableRow,
 } from '@sb/webapp-core/components/ui/table';
 
+function snapshotAgeLabel(timestamp: string): string {
+  const parsed = Date.parse(timestamp);
+  if (!Number.isFinite(parsed)) return 'age unavailable';
+  const ageMs = Math.max(0, Date.now() - parsed);
+  const minutes = Math.floor(ageMs / 60_000);
+  if (minutes < 60) return `${minutes}m old`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h old`;
+  return `${Math.floor(hours / 24)}d old`;
+}
+
 function truncateId(id: string, head = 8, tail = 6): string {
   if (id.length <= head + tail + 1) return id;
   return `${id.slice(0, head)}…${id.slice(-tail)}`;
@@ -29,6 +42,13 @@ export function MonitorView({
 }: {
   onModeChange: (mode: StudioMode) => void;
 }) {
+  const [selectedHolding, setSelectedHolding] = useState<{
+    deploymentId: string;
+    ticker: string;
+    marketPrice?: number | string;
+    snapshotAt: string;
+    asOfDate: string;
+  } | null>(null);
   const deploymentsQuery = useQuery({
     queryKey: ['live-deployments'],
     queryFn: () => fetchLiveDeployments(30),
@@ -52,6 +72,27 @@ export function MonitorView({
       : localRuntimeDeployment?.status === 'external_running'
         ? [localRuntimeDeployment]
         : [];
+  const selectedStatusQuery = useQuery<LiveDeploymentStatus>({
+    queryKey: ['live-deployment-status', selectedHolding?.deploymentId],
+    queryFn: () => fetchLiveDeploymentStatus(selectedHolding!.deploymentId),
+    enabled: Boolean(selectedHolding?.deploymentId),
+  });
+  const selectedSnapshot = selectedStatusQuery.data?.latest_snapshot ?? {};
+  const selectedDecisionEvents = Array.isArray(selectedSnapshot.decision_events)
+    ? selectedSnapshot.decision_events as StrategyDecisionEvent[]
+    : [];
+  const selectedStrategyHash = typeof selectedSnapshot.strategy_content_hash === 'string'
+    ? selectedSnapshot.strategy_content_hash
+    : typeof selectedStatusQuery.data?.spec_summary?.ir_content_hash === 'string'
+      ? selectedStatusQuery.data.spec_summary.ir_content_hash
+      : null;
+  const selectedAsOf = typeof selectedSnapshot.as_of === 'string'
+    ? selectedSnapshot.as_of.slice(0, 10)
+    : selectedHolding?.asOfDate ?? new Date().toISOString().slice(0, 10);
+  const decisionStartDate = new Date(`${selectedAsOf}T00:00:00Z`);
+  decisionStartDate.setUTCDate(decisionStartDate.getUTCDate() - 30);
+  const selectedDecisionStart = decisionStartDate.toISOString().slice(0, 10);
+  const snapshotAge = selectedHolding ? snapshotAgeLabel(selectedHolding.snapshotAt) : 'age unavailable';
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
@@ -194,9 +235,18 @@ export function MonitorView({
                                   className="rounded-md border bg-card px-3 py-2.5"
                                 >
                                   <div className="flex items-center justify-between gap-3">
-                                    <span className="font-mono text-sm font-semibold">
-                                      {holding.symbol}
-                                    </span>
+                                    <button type="button" className="font-mono text-sm font-semibold underline-offset-2 hover:underline" onClick={() => {
+                                      const snapshotAt = metrics.as_of;
+                                      setSelectedHolding({
+                                        deploymentId: deployment.deployment_id ?? '',
+                                        ticker: holding.symbol,
+                                        marketPrice: holding.market_price,
+                                        snapshotAt,
+                                        asOfDate: snapshotAt.slice(0, 10),
+                                      });
+                                    }}>
+                                      {holding.symbol} <span aria-hidden="true">↗</span>
+                                    </button>
                                     <span className="text-xs text-muted-foreground">
                                       Qty {holding.quantity ?? '—'}
                                     </span>
@@ -249,7 +299,16 @@ export function MonitorView({
                                     .map((holding) => (
                                       <TableRow key={holding.symbol}>
                                         <TableCell className="px-3 py-2 font-mono text-xs">
-                                          {holding.symbol}
+                                        <button type="button" className="font-mono underline-offset-2 hover:underline" onClick={() => {
+                                          const snapshotAt = metrics.as_of;
+                                          setSelectedHolding({
+                                            deploymentId: deployment.deployment_id ?? '',
+                                            ticker: holding.symbol,
+                                            marketPrice: holding.market_price,
+                                            snapshotAt,
+                                            asOfDate: snapshotAt.slice(0, 10),
+                                          });
+                                        }}>{holding.symbol}</button>
                                         </TableCell>
                                         <TableCell className="px-3 py-2 text-xs">
                                           {holding.quantity ?? '—'}
@@ -360,6 +419,37 @@ export function MonitorView({
           )}
         </Card>
       </div>
+
+      {selectedHolding ? (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setSelectedHolding(null);
+        }}>
+          <aside className="h-[100dvh] w-full border-l border-line bg-surface shadow-2xl sm:w-[min(92vw,42rem)] lg:w-[min(58vw,52rem)]" aria-label={`${selectedHolding.ticker} live stock review`}>
+            {selectedStatusQuery.isLoading ? (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading strategy evidence…</div>
+            ) : selectedStatusQuery.isError ? (
+              <div className="p-5 text-sm text-destructive">Could not load deployment evidence: {(selectedStatusQuery.error as Error).message}</div>
+            ) : (
+              <StockIntrospectionPanel
+                ticker={selectedHolding.ticker}
+                asOfDate={selectedAsOf}
+                onClose={() => setSelectedHolding(null)}
+                decisionEvents={selectedDecisionEvents.filter((event) => event.ticker.toUpperCase() === selectedHolding.ticker.toUpperCase())}
+                decisionStart={selectedDecisionStart}
+                decisionEnd={selectedAsOf}
+                strategyHash={selectedStrategyHash}
+                sourceLabel="Live deployment evidence"
+                contextLabel={`ClickHouse daily research context · as of ${selectedAsOf}`}
+                markContext={{
+                  label: `LEAN broker mark · ${snapshotAge}`,
+                  value: selectedHolding.marketPrice == null ? '—' : String(selectedHolding.marketPrice),
+                  timestamp: selectedHolding.snapshotAt,
+                }}
+              />
+            )}
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }

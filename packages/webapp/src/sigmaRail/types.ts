@@ -1414,6 +1414,23 @@ export interface StockIntrospectionData {
   chart_series: ChartCandlePoint[];
 }
 
+export type StrategyDecisionStage = "universe" | "alpha" | "portfolio" | "risk" | "execution";
+
+export interface StrategyDecisionEvent {
+  event_id?: string;
+  ticker: string;
+  as_of: string;
+  observed_at: string;
+  stage: StrategyDecisionStage;
+  outcome: string;
+  reason?: string | null;
+  rule_id?: string | null;
+  rule_name?: string | null;
+  inputs?: Record<string, unknown>;
+  outputs?: Record<string, unknown>;
+  strategy_content_hash?: string | null;
+}
+
 export interface DrawdownPoint {
   t: number;
   date: string;

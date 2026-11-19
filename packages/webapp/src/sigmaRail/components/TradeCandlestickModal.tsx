@@ -9,9 +9,10 @@ import {
   campaignPerformance,
   campaignShareTotals,
 } from "../lib/campaignFills";
-import type { ClosedTradeItem } from "../types";
+import type { ClosedTradeItem, StrategyDecisionEvent } from "../types";
 import { CopyIdBadge } from "./CopyIdBadge";
 import { Button } from "@sb/webapp-core/components/ui/button";
+import { StockIntrospectionPanel } from "./workbench/StockIntrospectionPanel";
 import {
   Table as WorkspaceTable,
   TableBody as WorkspaceTableBody,
@@ -74,10 +75,14 @@ function candleIndexOnOrBefore(
 export function TradeCandlestickModal({
   trade,
   runId,
+  decisionEvents = [],
+  strategyHash,
   onClose,
 }: {
   trade: ClosedTradeItem;
   runId?: string | null;
+  decisionEvents?: StrategyDecisionEvent[];
+  strategyHash?: string | null;
   onClose: () => void;
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -114,6 +119,16 @@ export function TradeCandlestickModal({
   });
 
   const candles = candlesQuery.data?.candles ?? [];
+  let decisionAsOfIndex = candleIndexOnOrBefore(candles, entryDate);
+  if (decisionAsOfIndex >= 0 && candles[decisionAsOfIndex]?.date === entryDate) decisionAsOfIndex -= 1;
+  const decisionAsOfDate = decisionAsOfIndex >= 0
+    ? candles[decisionAsOfIndex]!.date
+    : addDays(entryDate, -1);
+  const reviewEvents = decisionEvents.filter((event) =>
+    event.ticker.toUpperCase() === trade.symbol.toUpperCase() &&
+    event.as_of.slice(0, 10) >= decisionAsOfDate &&
+    event.as_of.slice(0, 10) <= latestBound,
+  );
   const meta = candlesQuery.data?.meta;
   const markPrice =
     candles.length > 0
@@ -314,8 +329,8 @@ export function TradeCandlestickModal({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="full" className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-4xl overflow-hidden border-0 bg-transparent p-0 shadow-none animate-in fade-in duration-150">
-      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-lg border border-line bg-surface shadow-2xl overflow-hidden">
+      <DialogContent size="full" className="max-h-[96dvh] w-[calc(100vw-1rem)] max-w-7xl overflow-hidden border-0 bg-transparent p-0 shadow-none animate-in fade-in duration-150">
+      <div className="flex max-h-[96dvh] w-full max-w-7xl flex-col rounded-lg border border-line bg-surface shadow-2xl overflow-hidden">
         {/* Modal Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-raised px-5 py-3.5 pr-12">
           <div className="min-w-0">
@@ -591,7 +606,8 @@ export function TradeCandlestickModal({
         ) : null}
 
         {/* Candlestick Interactive Body */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="grid min-h-0 flex-1 grid-rows-[42dvh_minmax(0,1fr)] overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(22rem,36%)] lg:grid-rows-1">
+        <div className="min-h-0 overflow-y-auto p-5">
           {candlesQuery.isLoading ? (
             <div className="flex h-72 items-center justify-center text-[12px] text-ink-muted">
               Fetching daily OHLCV candles from ClickHouse <code className="font-mono ml-1">sep</code>…
@@ -1220,6 +1236,20 @@ export function TradeCandlestickModal({
               ) : null}
             </div>
           )}
+        </div>
+        <aside className="order-first min-h-0 overflow-hidden border-b border-line lg:order-none lg:border-b-0 lg:border-l" aria-label={`${trade.symbol} historical strategy review`}>
+          <StockIntrospectionPanel
+            ticker={trade.symbol}
+            asOfDate={decisionAsOfDate}
+            compact
+            decisionEvents={reviewEvents}
+            decisionStart={decisionAsOfDate}
+            decisionEnd={latestBound}
+            strategyHash={strategyHash}
+            sourceLabel="Recorded backtest decisions"
+            contextLabel={`Historical stock context · through ${decisionAsOfDate} (before entry session)`}
+          />
+        </aside>
         </div>
 
         {/* Modal Footer */}

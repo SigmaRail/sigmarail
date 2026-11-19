@@ -27,8 +27,10 @@ export function StockIntrospectionDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4 backdrop-blur-xs">
-      <div className="flex h-[92vh] w-[96vw] max-w-[1480px] flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <div className="flex h-[100dvh] w-full flex-col overflow-hidden border-l border-line bg-surface shadow-2xl sm:w-[min(92vw,42rem)] lg:w-[min(58vw,52rem)]">
         <StockIntrospectionPanel
           ticker={ticker}
           asOfDate={asOfDate}

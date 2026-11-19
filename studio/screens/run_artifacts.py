@@ -678,14 +678,28 @@ def get_run_day_snapshots(client: Any, run_id: str) -> dict[str, Any]:
                 snapshots = payload["snapshots"]
             else:
                 snapshots = []
-            return {"run_id": run_id, "snapshots": snapshots, "count": len(snapshots), "error": None}
+            decision_events = []
+            for snapshot in snapshots:
+                if not isinstance(snapshot, dict):
+                    continue
+                raw_events = snapshot.get("decision_events")
+                if not isinstance(raw_events, list):
+                    continue
+                decision_events.extend(event for event in raw_events if isinstance(event, dict))
+            return {
+                "run_id": run_id,
+                "snapshots": snapshots,
+                "decision_events": decision_events,
+                "count": len(snapshots),
+                "error": None,
+            }
         except (json.JSONDecodeError, ValueError):
             pass
 
     # Fallback: Synthesize daily snapshots dynamically from backtest_results
     payload = _load_backtest_results_payload(client, run_id)
     if not payload:
-        return {"run_id": run_id, "snapshots": [], "count": 0, "error": "backtest_results artifact not found"}
+        return {"run_id": run_id, "snapshots": [], "decision_events": [], "count": 0, "error": "backtest_results artifact not found"}
 
     from collections import defaultdict
     from datetime import datetime, timezone
@@ -744,6 +758,7 @@ def get_run_day_snapshots(client: Any, run_id: str) -> dict[str, Any]:
     return {
         "run_id": run_id,
         "snapshots": snapshots,
+        "decision_events": [],
         "count": len(snapshots),
         "error": None,
     }

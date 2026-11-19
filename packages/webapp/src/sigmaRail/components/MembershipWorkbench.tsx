@@ -41,40 +41,19 @@ export function MembershipTickerInspect({
   chartHeight?: number;
 }) {
   return (
-    <div className="mt-2 overflow-hidden rounded border border-line bg-surface">
-      <div className="flex items-center justify-between border-b border-line bg-surface-raised px-2.5 py-1.5">
-        <span className="font-mono text-[10.5px] text-ink-muted">
-          <span className="font-semibold text-ink">{ticker}</span>
-          {" · "}
-          as of <span className="text-ink">{asOfDate || "—"}</span>
-          <span className="text-ink-faint"> (pinned time slice)</span>
-        </span>
-        <div className="flex shrink-0 items-center gap-1">
-          {onOpenFullChart ? (
-            <Button type="button" onClick={onOpenFullChart} variant="ghost" size="sm" className="h-7 px-2 font-mono text-[10px]">
-              Full chart
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            onClick={onClose}
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 font-mono text-[10px]"
-          >
-            Close
-          </Button>
-        </div>
-      </div>
-      <div className="min-h-[360px] md:min-h-[420px]">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <aside className="h-[100dvh] w-full border-l border-line bg-surface shadow-2xl sm:w-[min(92vw,42rem)] lg:w-[min(58vw,52rem)]" aria-label={`${ticker} stock review`}>
         <StockIntrospectionPanel
           ticker={ticker}
           asOfDate={asOfDate}
           compact
           showOverview
-          className="h-full min-h-[360px] md:min-h-[420px]"
+          onClose={onClose}
+          className="h-full"
         />
-      </div>
+      </aside>
     </div>
   );
 }

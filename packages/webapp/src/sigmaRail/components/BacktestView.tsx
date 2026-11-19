@@ -914,6 +914,8 @@ function ReportPanel({
         <TradeCandlestickModal
           trade={selectedTradeModal}
           runId={report.run_id}
+          decisionEvents={snapshotsQuery.data?.decision_events ?? []}
+          strategyHash={report.provenance?.ir_content_hash}
           onClose={() => handleSelectTrade(null)}
         />
       ) : null}

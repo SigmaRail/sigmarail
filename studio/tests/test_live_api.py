@@ -182,6 +182,27 @@ def test_get_live_deployment_status_delegates() -> None:
     assert out == expected
 
 
+def test_get_live_deployment_status_attaches_recorded_decision_evidence() -> None:
+    from types import SimpleNamespace
+    import json
+
+    event = {"ticker": "AAPL", "stage": "risk", "outcome": "no risk adjustment"}
+    client = MagicMock()
+    client.query.return_value = SimpleNamespace(
+        result_rows=[(json.dumps({"decision_events": [event], "strategy_content_hash": "abc123"}),)]
+    )
+    expected = {
+        "deployment": {"deployment_id": "dep-1"},
+        "latest_snapshot": {"as_of": "2026-11-18"},
+        "highlights": [],
+    }
+    with patch("screens.live_promotion.get_live_status", return_value=expected):
+        out = get_live_deployment_status(client, "dep-1")
+    assert out["latest_snapshot"]["decision_events"] == [event]
+    assert out["latest_snapshot"]["strategy_content_hash"] == "abc123"
+    client.query.assert_called_once()
+
+
 @pytest.mark.django_db
 def test_live_deployments_list_endpoint() -> None:
     with patch("api.views.get_ch_client") as mock_ch, patch(

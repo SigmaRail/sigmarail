@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.test import Client
 
-from screens.run_artifacts import get_run_equity_curve, get_run_orders, list_run_artifacts
+from screens.run_artifacts import get_run_day_snapshots, get_run_equity_curve, get_run_orders, list_run_artifacts
 
 
 def _equity_payload() -> dict:
@@ -47,6 +47,30 @@ def test_list_run_artifacts() -> None:
     client.query.return_value = result
     out = list_run_artifacts(client, "run-1")
     assert out["count"] == 2
+
+
+def test_day_snapshots_returns_only_recorded_decision_events() -> None:
+    client = MagicMock()
+    result = MagicMock()
+    event = {"ticker": "AAPL", "stage": "alpha", "outcome": "prediction emitted"}
+    snapshots = [{"date": "2026-11-18", "decision_events": [event]}, {"date": "2026-11-19"}]
+    result.result_rows = [(json.dumps(snapshots),)]
+    client.query.return_value = result
+
+    out = get_run_day_snapshots(client, "run-1")
+
+    assert out["decision_events"] == [event]
+    assert out["snapshots"] == snapshots
+
+
+def test_synthesized_day_snapshots_do_not_claim_recorded_explanations() -> None:
+    client = MagicMock()
+    client.query.side_effect = [
+        MagicMock(result_rows=[]),
+    ]
+    with patch("screens.run_artifacts._load_backtest_results_payload", return_value=None):
+        out = get_run_day_snapshots(client, "legacy-run")
+    assert out["decision_events"] == []
 
 
 def test_get_run_orders_from_dict() -> None:

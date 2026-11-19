@@ -202,7 +202,9 @@ export async function fetchRunDaySnapshots(runId: string): Promise<{
     equity?: number;
     holdings?: unknown[];
     candidates?: Array<{ ticker?: string }>;
+    decision_events?: import("../types").StrategyDecisionEvent[];
   }>;
+  decision_events?: import("../types").StrategyDecisionEvent[];
   count: number;
   error?: string | null;
 }> {
