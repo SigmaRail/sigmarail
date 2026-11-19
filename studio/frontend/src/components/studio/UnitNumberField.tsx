@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export type UnitKind = "%" | "R" | "×" | "d" | "$" | "";
 
@@ -96,7 +98,7 @@ export function UnitNumberField({
 
   const inputEl = (
     <span className="inline-flex items-center gap-0.5">
-      <input
+      <Input
         type="number"
         step={step * (scale !== 1 ? scale : 1)}
         value={text}
@@ -109,7 +111,7 @@ export function UnitNumberField({
             e.currentTarget.blur();
           }
         }}
-        className={`rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink text-right disabled:opacity-40 ${inputClassName}`}
+        className={`h-8 rounded-md px-2 py-1 font-mono text-[11px] text-right disabled:opacity-40 ${inputClassName}`}
       />
       {unit ? (
         <span className="font-mono text-[10px] text-ink-muted w-4">{unit}</span>
@@ -146,23 +148,21 @@ export function UnitNumberField({
               const storage = toStorage(p);
               const active = Math.abs(value - storage) < 1e-9;
               return (
-                <button
+                <Button
                   key={p}
                   type="button"
+                  variant={active ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => {
                     const next = clamp(storage, min, max);
                     onChange(next);
                     setText(String(toDisplay(next)));
                   }}
-                  className={
-                    active
-                      ? "rounded border border-accent bg-accent/10 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-accent-ink"
-                      : "rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] text-ink-muted hover:bg-surface-sunk"
-                  }
+                  className="h-7 px-2 font-mono text-[10px]"
                 >
                   {p}
                   {unit}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -189,24 +189,22 @@ export function UnitNumberField({
             const storage = toStorage(p);
             const active = Math.abs(value - storage) < 1e-9;
             return (
-                <button
+              <Button
                   key={p}
                   type="button"
                   disabled={disabled}
+                variant={active ? "secondary" : "outline"}
+                size="sm"
                   onClick={() => {
                     const next = clamp(storage, min, max);
                     onChange(next);
                     setText(String(toDisplay(next)));
                   }}
-                  className={
-                    active
-                      ? "rounded border border-accent bg-accent/10 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-accent-ink"
-                      : "rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] text-ink-muted hover:bg-surface-sunk disabled:opacity-40"
-                  }
+                className="h-7 px-2 font-mono text-[10px]"
                 >
                 {p}
                 {unit}
-              </button>
+              </Button>
             );
           })}
         </div>

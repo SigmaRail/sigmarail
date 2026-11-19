@@ -3,6 +3,15 @@ import { useMemo, useState } from "react";
 import { fetchUniverseRangeSummary } from "../api/screens";
 import { cn } from "../lib/utils";
 import type { UniverseQueryV1 } from "../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 function yearBackStart(datesDesc: string[]): string {
   if (datesDesc.length === 0) return "";
@@ -84,10 +93,12 @@ export function UniverseRangePanel({
 
   return (
     <div className="border-t border-line/70">
-      <button
+      <Button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-surface-sunk/60"
+        variant="ghost"
+        className="h-auto w-full justify-between rounded-none px-3 py-1.5 text-left"
+        aria-expanded={open}
       >
         <span className="text-[11px] font-medium text-ink-muted">
           Universe range preview
@@ -95,7 +106,7 @@ export function UniverseRangePanel({
         <span className="font-mono text-[10px] text-ink-faint">
           {open ? "−" : "+"}
         </span>
-      </button>
+      </Button>
       {open ? (
         <div className="border-t border-line/70 px-3 py-2">
           {rangeQuery.isLoading ? (
@@ -136,26 +147,26 @@ export function UniverseRangePanel({
               />
               {data.weekly_samples && data.weekly_samples.length > 0 ? (
                 <div className="mt-2 overflow-x-auto">
-                  <table className="w-full text-[10px]">
-                    <thead>
-                      <tr className="border-b border-line text-left text-ink-faint">
-                        <th className="py-1 pr-2 font-medium">Date</th>
-                        <th className="py-1 font-medium">Sample tickers</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <WorkspaceTable className="w-full text-[10px]">
+                    <WorkspaceTableHeader>
+                      <WorkspaceTableRow className="border-b border-line text-left text-ink-faint">
+                        <WorkspaceTableHead className="h-auto py-1 pr-2 font-medium">Date</WorkspaceTableHead>
+                        <WorkspaceTableHead className="h-auto py-1 font-medium">Sample tickers</WorkspaceTableHead>
+                      </WorkspaceTableRow>
+                    </WorkspaceTableHeader>
+                    <WorkspaceTableBody>
                       {data.weekly_samples.map((row) => (
-                        <tr key={row.date} className="border-b border-line/50">
-                          <td className="py-1 pr-2 font-mono text-ink-muted">
+                        <WorkspaceTableRow key={row.date} className="border-b border-line/50">
+                          <WorkspaceTableCell className="py-1 pr-2 font-mono text-ink-muted">
                             {row.date}
-                          </td>
-                          <td className="py-1 font-mono text-ink">
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="py-1 font-mono text-ink">
                             {row.sample_tickers.join(", ") || "—"}
-                          </td>
-                        </tr>
+                          </WorkspaceTableCell>
+                        </WorkspaceTableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </WorkspaceTableBody>
+                  </WorkspaceTable>
                 </div>
               ) : null}
             </>

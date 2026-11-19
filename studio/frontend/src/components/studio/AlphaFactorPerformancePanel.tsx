@@ -11,6 +11,9 @@ import {
   yearsBack,
 } from "../../lib/alphaPerformance";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 type Props = {
   document: PipelineDocument;
@@ -104,14 +107,16 @@ export function AlphaFactorPerformancePanel({
 
   return (
     <div className="rounded border border-line bg-surface-sunk/40">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted hover:bg-surface-raised/50"
+        className="flex h-auto w-full items-center justify-between rounded-none px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted hover:bg-surface-raised/50"
       >
         <span>Factor performance (pre-LEAN)</span>
         <span className="font-mono text-[10px]">{open ? "▼" : "▶"}</span>
-      </button>
+      </Button>
 
       {open && (
         <div className="space-y-2 border-t border-line px-2.5 py-2">
@@ -122,80 +127,67 @@ export function AlphaFactorPerformancePanel({
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-              className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
-            >
-              {evaluable.length === 0 ? (
-                <option value="">(no field measures)</option>
-              ) : null}
-              {evaluable.map((m) => (
-                <option key={m.alias} value={m.alias}>
-                  {m.alias} := {m.column}
-                </option>
-              ))}
-              {measures
-                .filter((m) => !m.column)
-                .map((m) => (
-                  <option key={m.alias} value={m.alias} disabled title={m.reason}>
-                    {m.alias} (unsupported)
-                  </option>
+            <Select value={alias || "__none"} onValueChange={(value) => setAlias(value === "__none" ? "" : value)}>
+              <SelectTrigger className="h-8 w-auto min-w-48 px-2 py-1 font-mono text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {evaluable.length === 0 ? <SelectItem value="__none">(no field measures)</SelectItem> : null}
+                {evaluable.map((m) => (
+                  <SelectItem key={m.alias} value={m.alias}>{m.alias} := {m.column}</SelectItem>
                 ))}
-            </select>
+                {measures.filter((m) => !m.column).map((m) => (
+                  <SelectItem key={m.alias} value={m.alias} disabled>{m.alias} (unsupported)</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <div className="flex items-center gap-1">
               {(["5d", "21d"] as const).map((h) => (
-                <button
+                <Button
                   key={h}
                   type="button"
+                  variant={horizon === h ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => setHorizon(h)}
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 text-[10px] font-mono",
-                    horizon === h
-                      ? "border-accent bg-accent/15 text-accent-ink"
-                      : "border-line text-ink-muted hover:bg-surface",
-                  )}
+                  className="h-7 px-2 font-mono text-[10px]"
                 >
                   {h}
-                </button>
+                </Button>
               ))}
             </div>
 
             <div className="flex items-center gap-1">
               {([5, 10] as const).map((q) => (
-                <button
+                <Button
                   key={q}
                   type="button"
+                  variant={quantiles === q ? "secondary" : "outline"}
+                  size="sm"
                   onClick={() => setQuantiles(q)}
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 text-[10px] font-mono",
-                    quantiles === q
-                      ? "border-accent bg-accent/15 text-accent-ink"
-                      : "border-line text-ink-muted hover:bg-surface",
-                  )}
+                  className="h-7 px-2 font-mono text-[10px]"
                 >
                   q{q}
-                </button>
+                </Button>
               ))}
             </div>
 
             <label className="flex items-center gap-1 text-[10px] text-ink-faint">
               start
-              <input
+              <Input
                 type="date"
                 value={startD}
                 onChange={(e) => setStartInput(e.target.value)}
-                className="rounded border border-line bg-surface px-1 py-0.5 font-mono text-[10px] text-ink"
+                className="h-7 w-auto px-1.5 py-0.5 font-mono text-[10px]"
               />
             </label>
             <label className="flex items-center gap-1 text-[10px] text-ink-faint">
               end
-              <input
+              <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndInput(e.target.value)}
-                className="rounded border border-line bg-surface px-1 py-0.5 font-mono text-[10px] text-ink"
+                className="h-7 w-auto px-1.5 py-0.5 font-mono text-[10px]"
               />
             </label>
           </div>

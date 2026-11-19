@@ -1,5 +1,15 @@
 import { useState } from "react";
 import type { OptimizerHeatmapData } from "../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 export type MetricChoice = "sharpe" | "return" | "drawdown";
 
@@ -70,76 +80,55 @@ export function OptimizerHeatmapChart({
         </div>
 
         {/* Metric Selector Pills */}
-        <div className="flex items-center gap-1 rounded bg-surface-raised p-1 text-[11px]">
-          <button
-            type="button"
-            className={`rounded px-2.5 py-1 font-medium transition-colors ${
-              activeMetric === "sharpe"
-                ? "bg-surface shadow text-accent font-semibold"
-                : "text-ink-muted hover:text-ink"
-            }`}
-            onClick={() => setActiveMetric("sharpe")}
-          >
+        <Tabs value={activeMetric} onValueChange={(value) => setActiveMetric(value as MetricChoice)}>
+          <TabsList className="h-9 gap-1">
+          <TabsTrigger value="sharpe" className="px-2.5 text-[11px]">
             Sharpe Ratio
-          </button>
-          <button
-            type="button"
-            className={`rounded px-2.5 py-1 font-medium transition-colors ${
-              activeMetric === "return"
-                ? "bg-surface shadow text-accent font-semibold"
-                : "text-ink-muted hover:text-ink"
-            }`}
-            onClick={() => setActiveMetric("return")}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="return" className="px-2.5 text-[11px]">
             Total Return
-          </button>
-          <button
-            type="button"
-            className={`rounded px-2.5 py-1 font-medium transition-colors ${
-              activeMetric === "drawdown"
-                ? "bg-surface shadow text-accent font-semibold"
-                : "text-ink-muted hover:text-ink"
-            }`}
-            onClick={() => setActiveMetric("drawdown")}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="drawdown" className="px-2.5 text-[11px]">
             Max Drawdown
-          </button>
-        </div>
+          </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Grid Matrix */}
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse text-center">
-          <thead>
-            <tr>
-              <th className="p-2 text-[11px] font-mono font-semibold uppercase text-ink-faint text-left">
+        <WorkspaceTable className="w-full border-collapse text-center">
+          <WorkspaceTableHeader>
+            <WorkspaceTableRow>
+              <WorkspaceTableHead className="h-auto p-2 text-left font-mono text-[11px] font-semibold uppercase text-ink-faint">
                 {param_y_name || "Y"} ↓ \ {param_x_name} →
-              </th>
+              </WorkspaceTableHead>
               {param_x_values.map((x) => (
-                <th key={x} className="p-2 font-mono text-[11.5px] font-bold text-ink">
+                <WorkspaceTableHead key={x} className="h-auto p-2 font-mono text-[11.5px] font-bold text-ink">
                   {x}
-                </th>
+                </WorkspaceTableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </WorkspaceTableRow>
+          </WorkspaceTableHeader>
+          <WorkspaceTableBody>
             {yValues.map((y, yIdx) => (
-              <tr key={y}>
-                <td className="p-2 font-mono text-[11.5px] font-bold text-ink text-left bg-surface-raised/40">
+              <WorkspaceTableRow key={y}>
+                <WorkspaceTableCell className="p-2 text-left font-mono text-[11.5px] font-bold text-ink bg-surface-raised/40">
                   {param_y_name ? y : "Value"}
-                </td>
+                </WorkspaceTableCell>
                 {param_x_values.map((x, xIdx) => {
                   const val = currentMatrix[yIdx]?.[xIdx];
                   const runId = heatmap.run_id_matrix[yIdx]?.[xIdx];
                   const isSelected = runId && runId === selectedRunId;
 
                   return (
-                    <td key={x} className="p-1.5">
-                      <button
+                    <WorkspaceTableCell key={x} className="p-1.5">
+                      <Button
                         type="button"
                         disabled={!runId}
                         onClick={() => runId && onSelectRunId?.(runId)}
-                        className={`w-full rounded border py-3 px-2 text-center transition-all ${getCellColor(
+                        variant="outline"
+                        className={`h-auto w-full rounded py-3 px-2 text-center transition-all ${getCellColor(
                           activeMetric,
                           val,
                         )} ${
@@ -157,14 +146,14 @@ export function OptimizerHeatmapChart({
                         }
                       >
                         <span className="font-mono text-[12px]">{formatVal(activeMetric, val)}</span>
-                      </button>
-                    </td>
+                      </Button>
+                    </WorkspaceTableCell>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
             ))}
-          </tbody>
-        </table>
+          </WorkspaceTableBody>
+        </WorkspaceTable>
       </div>
 
       {/* Legend */}

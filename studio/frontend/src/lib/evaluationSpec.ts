@@ -1,4 +1,4 @@
-/** Stamp dates / cash / benchmark onto a compiled VeraLab spec. */
+/** Stamp dates, cash, and benchmark onto a compiled strategy specification. */
 
 export type EvaluationStamp = {
   start_date: string;
@@ -15,7 +15,7 @@ export function stampEvaluation(
   const bench = String(evalCfg.benchmark || "SPY").trim().toUpperCase() || "SPY";
   const start = String(evalCfg.start_date || "").trim();
   const end = String(evalCfg.end_date || "").trim();
-  const veraBase =
+  const basePayload =
     spec.VeraBase && typeof spec.VeraBase === "object"
       ? { ...(spec.VeraBase as Record<string, unknown>) }
       : {};
@@ -33,7 +33,7 @@ export function stampEvaluation(
       ...(end ? { "end-date": end } : {}),
     },
     VeraBase: {
-      ...veraBase,
+      ...basePayload,
       Evaluation: {
         start_date: start,
         end_date: end,

@@ -11,7 +11,8 @@ import type {
   UniverseQueryV1,
   UniverseRangeSummary,
 } from "../types";
-import { toTvSymbol } from "../lib/tvSymbol";
+import { toExternalChartSymbol } from "../lib/externalChartSymbol";
+import { authenticatedFetch } from "./authenticatedFetch";
 
 export interface MarketContextPoint {
   date: string;
@@ -96,7 +97,7 @@ async function parseJson(res: Response): Promise<unknown> {
   }
 }
 
-/** Unwrap DRF / VeraCharts-style envelopes when present. */
+/** Unwrap common API response envelopes when present. */
 function unwrapData(payload: unknown): unknown {
   if (payload && typeof payload === "object") {
     const obj = payload as Record<string, unknown>;
@@ -110,13 +111,14 @@ async function request<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(path, {
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
+  const headers = new Headers(init?.headers);
+  headers.set("Accept", "application/json");
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await authenticatedFetch(path, {
     ...init,
+    headers,
   });
   const raw = await parseJson(res);
   if (!res.ok) {
@@ -158,7 +160,7 @@ export async function fetchFieldValues(name: string, q = "", limit = 40): Promis
   return Array.isArray(data.values) ? data.values : [];
 }
 
-/** Pre-LEAN factor performance (VeraProjects#70/#75): quantiles, IC/ICIR, regime, verdict. */
+/** Pre-LEAN factor performance: quantiles, IC/ICIR, regime, and verdict. */
 export async function fetchAlphaPerformance(
   name: string,
   opts: {
@@ -196,7 +198,7 @@ export async function fetchTemplates(): Promise<ScreenTemplateSummary[]> {
   if (data && typeof data === "object" && Array.isArray(data.templates)) {
     return data.templates;
   }
-  return [];
+  throw new Error("Screen template catalog returned an invalid response.");
 }
 
 export async function fetchTemplate(
@@ -285,15 +287,55 @@ export async function fetchTurnover(body: {
   }
 }
 
-export async function fetchSavedScreens(): Promise<SavedScreen[]> {
-  const data = await request<{ screens: SavedScreen[]; count?: number }>(
+export type SavedScreensResponse = {
+  screens: SavedScreen[];
+  count?: number;
+  shared_catalog_available: boolean;
+  shared_catalog_warning?: string;
+};
+
+function isSavedScreenResponse(value: unknown): value is SavedScreen {
+  if (!value || typeof value !== "object") return false;
+  const screen = value as Record<string, unknown>;
+  return (
+    (typeof screen.id === "string" || typeof screen.id === "number") &&
+    typeof screen.name === "string" &&
+    !!screen.spec &&
+    typeof screen.spec === "object"
+  );
+}
+
+export async function fetchSavedScreens(): Promise<SavedScreensResponse> {
+  const data = await request<unknown>(
     "/api/screens/saved",
   );
-  return Array.isArray(data?.screens) ? data.screens : [];
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !Array.isArray((data as { screens?: unknown }).screens)
+  ) {
+    throw new Error("Saved screen catalog returned an invalid response.");
+  }
+  const response = data as Record<string, unknown>;
+  const screens = response.screens as unknown[];
+  if (!screens.every(isSavedScreenResponse)) {
+    throw new Error("Saved screen catalog contains an invalid screen.");
+  }
+  return {
+    screens,
+    count: typeof response.count === "number" ? response.count : undefined,
+    shared_catalog_available: response.shared_catalog_available !== false,
+    shared_catalog_warning:
+      typeof response.shared_catalog_warning === "string"
+        ? response.shared_catalog_warning
+        : undefined,
+  };
 }
 
 export async function createSavedScreen(body: {
   name: string;
+  description?: string;
+  source_template_id?: string;
   spec: UniverseQueryV1;
 }): Promise<SavedScreen> {
   return request<SavedScreen>("/api/screens/saved", {
@@ -304,7 +346,7 @@ export async function createSavedScreen(body: {
 
 export async function updateSavedScreen(
   id: number | string,
-  body: { name?: string; spec?: UniverseQueryV1; source_template_id?: string },
+  body: { name?: string; description?: string; spec?: UniverseQueryV1; source_template_id?: string },
 ): Promise<SavedScreen> {
   return request<SavedScreen>(`/api/screens/saved/${encodeURIComponent(String(id))}`, {
     method: "PUT",
@@ -381,11 +423,11 @@ export async function fetchStockIntrospection(
   return request<StockIntrospectionData>(`/api/screens/stock-overview?${params.toString()}`);
 }
 
-export function tradingViewUrl(
+export function externalChartUrl(
   ticker: string,
   exchange?: string | null,
 ): string {
-  const sym = toTvSymbol(ticker, exchange);
+  const sym = toExternalChartSymbol(ticker, exchange);
   return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(sym)}`;
 }
 

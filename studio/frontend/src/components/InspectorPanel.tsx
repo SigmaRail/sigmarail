@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { tradingViewUrl } from "../api/screens";
+import { externalChartUrl } from "../api/screens";
 import { cn, formatNum, formatVol } from "../lib/utils";
 import type {
   AppliedFilterRow,
@@ -139,7 +139,7 @@ export function InspectorPanel({
                 className="w-full rounded border border-line bg-surface-sunk px-2 py-1.5 text-[12px] font-medium text-ink hover:border-highlight hover:bg-highlight-soft"
                 onClick={() =>
                   window.open(
-                    tradingViewUrl(
+                    externalChartUrl(
                       row.ticker,
                       typeof row.exchange === "string" ? row.exchange : null,
                     ),

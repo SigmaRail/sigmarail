@@ -44,15 +44,22 @@ describe("chartSettings v2", () => {
   it("returns defaults when storage is empty", () => {
     const store = new MemoryStorage();
     const loaded = loadChartSettings(store);
-    expect(loaded.lastTimeframe).toBe("1W");
-    expect(loaded["1D"].range).toBe("6M");
+    expect(loaded.lastTimeframe).toBe("1D");
+    expect(loaded["1D"].range).toBe("1Y");
     expect(loaded["1W"].range).toBe("2Y");
     expect(loaded["1D"].indicators).toEqual(DEFAULT_INDICATORS_1D);
     expect(loaded["1W"].indicators).toEqual(DEFAULT_INDICATORS_1W);
-    expect(loaded["1W"].indicators.earningsLine).toBe(true);
+    expect(loaded["1W"].indicators.earningsLine).toBe(false);
     expect(loaded["1D"].indicators.earningsLine).toBe(false);
     expect(loaded["1D"].indicators.fairValueRibbon).toBe(false);
-    expect(loaded["1W"].indicators.spxOverlay).toBe(true);
+    expect(loaded["1D"].indicators.rsLine).toBe(false);
+    expect(loaded["1D"].indicators.earningsFlags).toBe(false);
+    expect(loaded["1D"].indicators.ema10).toBe(false);
+    expect(loaded["1D"].indicators.ema21).toBe(true);
+    expect(loaded["1D"].indicators.sma50).toBe(true);
+    expect(loaded["1D"].indicators.sma200).toBe(false);
+    expect(loaded["1W"].indicators.sma200).toBe(false);
+    expect(loaded["1W"].indicators.spxOverlay).toBe(false);
   });
 
   it("migrates legacy v1 indicators onto both timeframes once", () => {
@@ -72,8 +79,8 @@ describe("chartSettings v2", () => {
     expect(loaded["1W"].indicators.epsLine).toBe(true);
     expect(loaded["1D"].indicators.ema10).toBe(false);
     expect(loaded["1W"].indicators.forecast).toBe(true);
-    expect(loaded["1D"].indicators.spxOverlay).toBe(true);
-    expect(loaded["1W"].indicators.earningsLine).toBe(true);
+    expect(loaded["1D"].indicators.spxOverlay).toBe(false);
+    expect(loaded["1W"].indicators.earningsLine).toBe(false);
     expect(loaded["1D"].indicators.earningsLine).toBe(false);
     expect(store.getItem(CHART_SETTINGS_STORAGE_KEY)).toBeTruthy();
 
@@ -92,6 +99,8 @@ describe("chartSettings v2", () => {
     saveChartSettings(
       {
         lastTimeframe: "1D",
+        chartHeight: 420,
+        isLogScale: false,
         "1D": { indicators: { ...DEFAULTS["1D"].indicators, sma200: false }, range: "1Y" },
         "1W": { indicators: { ...DEFAULTS["1W"].indicators }, range: "5Y" },
       },
@@ -102,7 +111,7 @@ describe("chartSettings v2", () => {
     expect(loaded["1D"].range).toBe("1Y");
     expect(loaded["1W"].range).toBe("5Y");
     expect(loaded["1D"].indicators.sma200).toBe(false);
-    expect(loaded["1D"].indicators.rsLine).toBe(true);
+    expect(loaded["1D"].indicators.rsLine).toBe(false);
   });
 
   it("getTfBag / setTfBag write only the active timeframe", () => {
@@ -114,7 +123,7 @@ describe("chartSettings v2", () => {
     expect(getTfBag(next, "1D").range).toBe("3M");
     expect(getTfBag(next, "1D").indicators.rsLine).toBe(false);
     expect(getTfBag(next, "1W").range).toBe("2Y");
-    expect(getTfBag(next, "1W").indicators.rsLine).toBe(true);
+    expect(getTfBag(next, "1W").indicators.rsLine).toBe(false);
   });
 
   it("round-trips save then load", () => {
@@ -129,6 +138,6 @@ describe("chartSettings v2", () => {
     expect(loaded.lastTimeframe).toBe("1W");
     expect(loaded["1W"].range).toBe("ALL");
     expect(loaded["1W"].indicators.spxOverlay).toBe(false);
-    expect(loaded["1D"].range).toBe("6M");
+    expect(loaded["1D"].range).toBe(DEFAULTS["1D"].range);
   });
 });

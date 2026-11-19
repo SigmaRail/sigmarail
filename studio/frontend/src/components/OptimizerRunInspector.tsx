@@ -4,6 +4,7 @@ import { EquityCurveChart } from "./EquityCurveChart";
 import { MonthlyReturnsHeatmap } from "./MonthlyReturnsHeatmap";
 import { CopyIdBadge } from "./CopyIdBadge";
 import type { OptimizerRunPoint } from "../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export function OptimizerRunInspector({
   runPoint,
@@ -92,31 +93,37 @@ export function OptimizerRunInspector({
 
         <div className="flex items-center gap-1.5 flex-wrap">
           {onEditInComposer && (
-            <button
+            <Button
               type="button"
               onClick={() => onEditInComposer(runPoint.ir_id, runPoint)}
-              className="rounded bg-accent text-accent-fg px-2.5 py-1 text-[11px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1"
+              variant="default"
+              size="sm"
+              className="h-8 px-2.5 text-[11px]"
               title="Load this optimized variant into Strategy Composer"
             >
               <span>✏️</span>
               <span>Edit in Composer</span>
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onClick={() => onOpenInRunsTab?.(runId)}
-            className="rounded border border-line bg-surface-raised px-2 py-1 text-[11px] font-semibold text-accent hover:bg-surface-sunk transition-colors"
+            variant="outline"
+            size="sm"
+            className="h-8 text-[11px]"
           >
             Full Analysis ↗
-          </button>
+          </Button>
           {onPromoteRun && (
-            <button
+            <Button
               type="button"
               onClick={() => onPromoteRun(runId)}
-              className="rounded bg-surface-sunk border border-line px-2 py-1 text-[11px] font-semibold text-ink hover:text-accent transition-colors"
+              variant="secondary"
+              size="sm"
+              className="h-8 text-[11px]"
             >
               Promote 🚀
-            </button>
+            </Button>
           )}
         </div>
       </div>

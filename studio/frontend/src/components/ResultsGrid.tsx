@@ -1,6 +1,6 @@
 import { formatNum, formatVol } from "../lib/utils";
 import type { RankedRow } from "../types";
-import { TradingViewMiniEmbed } from "./TradingViewMiniEmbed";
+import { ExternalMiniChartEmbed } from "./ExternalMiniChartEmbed";
 
 const GRID_CHUNK = 12;
 
@@ -78,7 +78,7 @@ export function ResultsGrid({
                     <span>Vol {formatVol(row.avg_vol_50d)}</span>
                   </div>
                   <div className="w-full border-t border-line/60 bg-[#131722]">
-                    <TradingViewMiniEmbed
+                    <ExternalMiniChartEmbed
                       symbol={row.ticker}
                       exchange={exchange}
                       height={168}

@@ -12,6 +12,7 @@ import {
   normalizeOperandAst,
   parseRules,
   rulesToJson,
+  summarizeRule,
   type RuleSpec,
 } from "./rulesAst";
 
@@ -75,6 +76,30 @@ describe("PCM action vocabulary", () => {
     expect(metaForAction("enter", "pcm")?.terminal).toBe(true);
     expect(metaForAction("displace", "pcm")?.terminal).toBe(false);
     expect(metaForAction("enter", "risk")).toBeUndefined();
+  });
+});
+
+describe("generated natural-language rule summaries", () => {
+  it("uses the active condition and action values rather than a stored description", () => {
+    expect(summarizeRule({
+      when: {
+        type: "gte",
+        left: { type: "pos", field: "r" },
+        right: { type: "lit", value: 3 },
+      },
+      then: [{
+        type: "ratchet_stop",
+        to: {
+          type: "formula",
+          op: "*",
+          args: [
+            { type: "pos", field: "highest_price" },
+            { type: "lit", value: 0.8 },
+          ],
+        },
+        mode: "max",
+      }],
+    })).toBe("When open profit is at least 3R, raise (never lower) the protective stop to 80% of highest price since entry.");
   });
 });
 

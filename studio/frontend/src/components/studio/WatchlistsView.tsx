@@ -9,66 +9,33 @@ import { fetchStockIntrospection } from "../../api/screens";
 import { DataTable, type GridColumn } from "../../components/DataTable";
 import { cn } from "../../lib/utils";
 import type { StockIntrospectionData } from "../../types";
+import { PageHeadline } from "@sb/webapp-core/components/pageHeadline";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Textarea } from "@sb/webapp-core/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@sb/webapp-core/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 interface WatchlistsViewProps {
   onSelectTicker?: (ticker: string) => void;
   className?: string;
 }
-
-type WatchlistSourceType = "manual" | "screener" | "tradingview" | "deepvue" | "marketsmith" | "finviz";
-
-interface WatchlistSourceMeta {
-  type: WatchlistSourceType;
-  label: string;
-  icon: string;
-  color: string;
-  description: string;
-}
-
-const SOURCE_TYPES: Record<WatchlistSourceType, WatchlistSourceMeta> = {
-  manual: {
-    type: "manual",
-    label: "Manual",
-    icon: "✏️",
-    color: "sky",
-    description: "Manually maintained list",
-  },
-  screener: {
-    type: "screener",
-    label: "Screener",
-    icon: "🔍",
-    color: "emerald",
-    description: "Auto-populated from screener results",
-  },
-  tradingview: {
-    type: "tradingview",
-    label: "TradingView",
-    icon: "📊",
-    color: "purple",
-    description: "Synced from TradingView watchlist",
-  },
-  deepvue: {
-    type: "deepvue",
-    label: "Deepvue",
-    icon: "🔬",
-    color: "amber",
-    description: "Imported from Deepvue screener",
-  },
-  marketsmith: {
-    type: "marketsmith",
-    label: "MarketSmith",
-    icon: "🎯",
-    color: "rose",
-    description: "Imported from MarketSmith",
-  },
-  finviz: {
-    type: "finviz",
-    label: "FinViz",
-    icon: "📈",
-    color: "indigo",
-    description: "Imported from FinViz",
-  },
-};
 
 const FLAG_COLORS: Record<WatchlistFlagColor, { dot: string; label: string; bg: string; text: string }> = {
   red: { dot: "bg-rose-500", label: "Priority Short/Alert", bg: "bg-rose-500/15", text: "text-rose-400" },
@@ -83,6 +50,12 @@ const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
+function finiteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export function WatchlistsView({
   onSelectTicker,
@@ -103,11 +76,11 @@ export function WatchlistsView({
 
   const [showNewListModal, setShowNewListModal] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [selectedSourceType, setSelectedSourceType] = useState<WatchlistSourceType>("manual");
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
-  const [editingListId, setEditingListId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [renameListId, setRenameListId] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [deleteListId, setDeleteListId] = useState<string | null>(null);
   const [filterFlag, setFilterFlag] = useState<WatchlistFlagColor | "all">("all");
   const [searchTicker, setSearchTicker] = useState("");
 
@@ -195,7 +168,7 @@ export function WatchlistsView({
         sortable: false,
         accessor: (r) => r.symbol.flag ?? "none",
         cell: (r) => (
-          <button
+            <Button
             type="button"
             title={FLAG_COLORS[r.symbol.flag ?? "none"].label}
             onClick={(e) => {
@@ -205,11 +178,13 @@ export function WatchlistsView({
               const idx = flags.indexOf(cur);
               setSymbolFlag(activeWatchlistId, r.symbol.ticker, flags[(idx + 1) % flags.length]);
             }}
-            className={cn(
-              "inline-block h-3 w-3 rounded-full transition-all hover:ring-2 hover:ring-offset-1 cursor-pointer",
-              FLAG_COLORS[r.symbol.flag ?? "none"].dot,
-            )}
-          />
+            className="h-9 w-9 p-0 transition-all hover:ring-2 hover:ring-offset-1"
+            variant="ghost"
+            size="icon"
+            aria-label={`Change ${r.symbol.ticker} flag`}
+          >
+            <span className={cn("h-2.5 w-2.5 rounded-full", FLAG_COLORS[r.symbol.flag ?? "none"].dot)} />
+          </Button>
         ),
       },
       {
@@ -362,17 +337,20 @@ export function WatchlistsView({
         widthClass: "w-9",
         accessor: () => "",
         cell: (r) => (
-          <button
+          <Button
             type="button"
             title="Remove from watchlist"
             onClick={(e) => {
               e.stopPropagation();
               removeSymbol(activeWatchlistId, r.symbol.ticker);
             }}
-            className="rounded px-1.5 py-0.5 text-[10px] text-rose-400 opacity-50 hover:bg-rose-500/15 hover:opacity-100 transition-all cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            aria-label={`Remove ${r.symbol.ticker} from watchlist`}
           >
             ✕
-          </button>
+          </Button>
         ),
       },
     ],
@@ -404,197 +382,180 @@ export function WatchlistsView({
   };
 
   const handleDeleteList = (id: string) => {
-    if (confirm(`Delete watchlist "${watchlists.find((w) => w.id === id)?.name}"?`)) {
-      deleteWatchlist(id);
-    }
+    setDeleteListId(id);
   };
 
   const handleStartRename = (id: string, currentName: string) => {
-    setEditingListId(id);
-    setEditingName(currentName);
+    setRenameListId(id);
+    setRenameName(currentName);
   };
 
   const handleSaveRename = (id: string) => {
-    if (editingName.trim()) {
-      renameWatchlist(id, editingName);
+    if (renameName.trim()) {
+      renameWatchlist(id, renameName);
     }
-    setEditingListId(null);
-    setEditingName("");
+    setRenameListId(null);
+    setRenameName("");
   };
 
+  const handleCycleFlag = (row: WatchlistRow) => {
+    const flags: WatchlistFlagColor[] = ["red", "green", "yellow", "blue", "purple", "none"];
+    const current = row.symbol.flag ?? "none";
+    setSymbolFlag(activeWatchlistId, row.symbol.ticker, flags[(flags.indexOf(current) + 1) % flags.length]);
+  };
+
+  const activeDeleteList = watchlists.find((list) => list.id === deleteListId);
+
   return (
-    <div className={cn("flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-canvas", className)}>
-      {/* Top Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2.5 text-xs">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-accent">📑 Watchlists</h2>
-          <span className="rounded bg-surface-sunk px-2 py-0.5 font-mono text-[10px] text-ink-muted">
-            {watchlists.length} Lists
-          </span>
-        </div>
+    <div className={cn("flex h-full min-h-0 w-full flex-col overflow-hidden bg-background", className)}>
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b bg-background px-3 py-3 sm:px-4">
+        <PageHeadline
+          header="Watchlists"
+          subheader="Keep a focused list of symbols and review their latest market context."
+          className="space-y-1"
+        />
 
         <div className="flex items-center gap-2">
-          <button
+          <Badge variant="muted">{watchlists.length} {watchlists.length === 1 ? "list" : "lists"}</Badge>
+          <Button
+            type="button"
             onClick={() => setShowNewListModal(true)}
-            className="rounded-lg bg-accent px-3 py-1.5 font-mono text-xs font-bold text-white hover:bg-accent/90 transition-colors"
+            size="sm"
             title="Create a new watchlist"
           >
-            ➕ New List
-          </button>
-          <button
+            New list
+          </Button>
+          <Button
+            type="button"
             onClick={() => setShowImportModal(true)}
             disabled={!activeWatchlistId}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 font-mono text-xs font-bold text-ink-muted hover:bg-surface-sunk transition-colors disabled:opacity-50"
+            variant="outline"
+            size="sm"
             title="Import tickers into active list"
           >
-            📥 Import
-          </button>
+            Import symbols
+          </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Left Panel: List Manager */}
-        <div className="w-72 flex-shrink-0 border-r border-line bg-surface overflow-y-auto">
-          <div className="space-y-1 p-3">
+        <div className="hidden flex-shrink-0 overflow-y-auto border-r border-line bg-surface lg:block lg:w-72 lg:p-3">
+          <div className="space-y-2">
             {watchlists.length === 0 ? (
-              <div className="px-3 py-8 text-center text-sm text-ink-muted">
-                No watchlists yet. Create one to get started!
+              <div className="min-w-56 rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground lg:min-w-0">
+                No watchlists yet. Create one to begin.
               </div>
             ) : (
               watchlists.map((list) => (
-                <div
-                  key={list.id}
-                  onClick={() => setActiveWatchlistId(list.id)}
-                  className={cn(
-                    "group flex flex-col gap-1 rounded-lg border p-2.5 cursor-pointer transition-all",
-                    activeWatchlistId === list.id
-                      ? "border-accent bg-accent/10"
-                      : "border-line bg-surface-sunk hover:border-accent/50"
-                  )}
-                >
-                  {/* List Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {editingListId === list.id ? (
-                        <input
-                          autoFocus
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onBlur={() => handleSaveRename(list.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSaveRename(list.id);
-                            if (e.key === "Escape") {
-                              setEditingListId(null);
-                              setEditingName("");
-                            }
-                          }}
-                          className="flex-1 rounded px-2 py-0.5 bg-surface-sunk border border-line text-xs font-bold text-ink focus:outline-none focus:border-accent"
-                        />
-                      ) : (
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-sm text-ink truncate">{list.name}</h3>
-                          <p className="text-[9px] text-ink-muted truncate">{list.symbols.length} symbols</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {editingListId !== list.id && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartRename(list.id, list.name);
-                            }}
-                            className="rounded px-1.5 py-0.5 text-[10px] hover:bg-surface-raised"
-                            title="Rename"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteList(list.id);
-                            }}
-                            className="rounded px-1.5 py-0.5 text-[10px] hover:bg-rose-500/15 text-rose-400"
-                            title="Delete"
-                          >
-                            ✕
-                          </button>
-                        </>
-                      )}
-                    </div>
+                <Card key={list.id} className={cn(
+                  "min-w-0 p-2 shadow-none",
+                  activeWatchlistId === list.id && "border-primary/60 bg-accent/5",
+                )}>
+                  <div className="flex min-w-0 items-center gap-1">
+                    <Button
+                      type="button"
+                      onClick={() => setActiveWatchlistId(list.id)}
+                      variant={activeWatchlistId === list.id ? "secondary" : "ghost"}
+                      className="h-auto min-h-10 min-w-0 flex-1 justify-start px-2 py-1.5 text-left"
+                      aria-current={activeWatchlistId === list.id ? "page" : undefined}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{list.name}</span>
+                        <span className="block text-xs font-normal text-muted-foreground">{list.symbols.length} symbols</span>
+                      </span>
+                    </Button>
+                    <WatchlistActions
+                      name={list.name}
+                      onRename={() => handleStartRename(list.id, list.name)}
+                      onDelete={() => handleDeleteList(list.id)}
+                    />
                   </div>
-
-                  {/* Stats Row */}
-                  {activeWatchlistId === list.id && (
-                    <div className="grid grid-cols-2 gap-1 pt-1 border-t border-line/50 text-[9px]">
-                      <div>
-                        <span className="text-ink-muted">Last updated:</span>
-                        <p className="text-ink-muted">{list.updated_at}</p>
-                      </div>
-                      <div>
-                        <span className="text-ink-muted">Created:</span>
-                        <p className="text-ink-muted">{list.created_at}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </Card>
               ))
             )}
           </div>
         </div>
 
         {/* Right Panel: List Contents & Details */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {!activeWatchlist ? (
             <div className="flex h-full items-center justify-center text-ink-muted text-sm">
               Select or create a watchlist to get started
             </div>
           ) : (
             <>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-b border-line bg-surface p-3 lg:hidden">
+                <Select value={activeWatchlistId} onValueChange={setActiveWatchlistId}>
+                  <SelectTrigger aria-label="Active watchlist" className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {watchlists.map((list) => (
+                      <SelectItem key={list.id} value={list.id}>{list.name} · {list.symbols.length}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {activeWatchlist && (
+                  <WatchlistActions
+                    name={activeWatchlist.name}
+                    onRename={() => handleStartRename(activeWatchlist.id, activeWatchlist.name)}
+                    onDelete={() => handleDeleteList(activeWatchlist.id)}
+                  />
+                )}
+              </div>
+
               {/* Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-raised px-4 py-2.5 text-xs">
-                <div className="flex items-center gap-2">
-                  <input
+              <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface-raised px-3 py-2.5 text-xs sm:justify-between sm:px-4">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-xs">
+                  <Input
                     type="text"
-                    placeholder="Search symbols..."
+                    placeholder="Search symbols"
+                    aria-label="Search watchlist symbols"
                     value={searchTicker}
                     onChange={(e) => setSearchTicker(e.target.value)}
-                    className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs font-mono focus:border-accent focus:outline-none"
+                    className="h-9"
                   />
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="hidden max-w-full flex-wrap items-center gap-1.5 lg:flex" role="group" aria-label="Filter symbols by flag">
                   {/* Flag Filter Buttons */}
-                  <button
+                  <Button
+                    type="button"
                     onClick={() => setFilterFlag("all")}
-                    className={cn(
-                      "rounded px-2.5 py-1 font-mono text-[10px] font-bold transition-colors",
-                      filterFlag === "all"
-                        ? "bg-accent/20 text-accent"
-                        : "bg-surface hover:bg-surface-sunk text-ink-muted"
-                    )}
+                    variant={filterFlag === "all" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-8 px-2.5 text-xs"
                   >
                     All
-                  </button>
+                  </Button>
                   {(["green", "yellow", "red", "blue", "purple", "none"] as WatchlistFlagColor[]).map((flag) => (
-                    <button
+                    <Button
+                      type="button"
                       key={flag}
                       onClick={() => setFilterFlag(flag)}
-                      className={cn(
-                        "rounded px-2 py-1 text-[10px] font-bold transition-colors",
-                        filterFlag === flag
-                          ? FLAG_COLORS[flag].bg + " " + FLAG_COLORS[flag].text
-                          : "bg-surface hover:bg-surface-sunk text-ink-muted"
-                      )}
+                      variant={filterFlag === flag ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      aria-pressed={filterFlag === flag}
                     >
-                      <span className={cn("inline-block w-2 h-2 rounded-full mr-1", FLAG_COLORS[flag].dot)}></span>
+                      <span className={cn("inline-block h-2 w-2 rounded-full", FLAG_COLORS[flag].dot)} />
                       {FLAG_COLORS[flag].label.split(" / ")[0]}
-                    </button>
+                    </Button>
                   ))}
                 </div>
+
+                <Select value={filterFlag} onValueChange={(value) => setFilterFlag(value as WatchlistFlagColor | "all")}>
+                  <SelectTrigger aria-label="Filter symbols by flag" className="h-9 w-36 lg:hidden">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All flags</SelectItem>
+                    {(["green", "yellow", "red", "blue", "purple", "none"] as WatchlistFlagColor[]).map((flag) => (
+                      <SelectItem key={flag} value={flag}>{FLAG_COLORS[flag].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <div className="text-[10px] text-ink-muted">
                   {rows.length} / {symbols.length}
@@ -602,122 +563,174 @@ export function WatchlistsView({
               </div>
 
               {/* Symbols Table (reusable DataTable) */}
-              <DataTable<WatchlistRow>
-                rows={rows}
-                columns={watchlistColumns}
-                viewId={`watchlist.${activeWatchlistId}`}
-                getRowId={(r) => r.symbol.ticker}
-                onRowClick={(r) => handleSelectSymbol(r.symbol.ticker)}
-                loading={kpiQuery.isLoading && rows.length > 0}
-                emptyLabel="No symbols match your filters"
-                density="compact"
-                height="fill"
-              />
+              <div className="hidden min-h-0 flex-1 overflow-hidden lg:flex">
+                <DataTable<WatchlistRow>
+                  rows={rows}
+                  columns={watchlistColumns}
+                  viewId={`watchlist.${activeWatchlistId}`}
+                  getRowId={(r) => r.symbol.ticker}
+                  onRowClick={(r) => handleSelectSymbol(r.symbol.ticker)}
+                  loading={kpiQuery.isLoading && rows.length > 0}
+                  emptyLabel="No symbols match your filters"
+                  density="compact"
+                  height="fill"
+                />
+              </div>
+
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 lg:hidden">
+                {kpiQuery.isLoading && <p className="text-xs text-muted-foreground">Loading latest metrics…</p>}
+                {rows.length === 0 ? (
+                  <Card className="p-5 text-center text-sm text-muted-foreground shadow-none">No symbols match these filters.</Card>
+                ) : rows.map((row) => {
+                  const flag = row.symbol.flag ?? "none";
+                  const price = finiteNumber(row.kpis.close);
+                  const change = finiteNumber(row.kpis.forward_1d_pct ?? row.kpis.change_pct);
+                  const rs = finiteNumber(row.kpis.rs_rating);
+                  const volume = finiteNumber(row.kpis.volume);
+                  const avgVolume = finiteNumber(row.kpis.avg_vol_50d);
+                  const atr = finiteNumber(row.kpis.atr_14_pct);
+                  const volumeRatio = volume !== null && avgVolume !== null && avgVolume > 0 ? volume / avgVolume * 100 : null;
+                  return (
+                    <Card key={row.symbol.ticker} data-testid={`watchlist-card-${row.symbol.ticker}`} className="p-3 shadow-none">
+                      <div className="flex min-w-0 items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto justify-start p-0 text-base font-semibold"
+                            aria-label={`Open chart for ${row.symbol.ticker}`}
+                            onClick={() => handleSelectSymbol(row.symbol.ticker)}
+                          >
+                            {row.symbol.ticker}
+                          </Button>
+                          <p className="truncate text-xs text-muted-foreground">{row.company || "Company details unavailable"}</p>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9" aria-label={`Change ${row.symbol.ticker} flag`} title={FLAG_COLORS[flag].label} onClick={() => handleCycleFlag(row)}>
+                          <span className={cn("h-3 w-3 rounded-full", FLAG_COLORS[flag].dot)} />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" aria-label={`Remove ${row.symbol.ticker} from watchlist`} onClick={() => removeSymbol(activeWatchlistId, row.symbol.ticker)}>×</Button>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 border-y py-2">
+                        <WatchlistMetric label="Price" value={price !== null ? `$${price.toFixed(2)}` : "—"} />
+                        <WatchlistMetric label="Change" value={change !== null ? `${change >= 0 ? "+" : ""}${change.toFixed(2)}%` : "—"} valueClass={change !== null ? change >= 0 ? "text-emerald-600" : "text-rose-600" : undefined} />
+                        <WatchlistMetric label="RS" value={rs !== null ? rs.toFixed(0) : "—"} />
+                      </div>
+                      <details className="group pt-2">
+                        <summary className="min-h-9 cursor-pointer list-none py-2 text-xs font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">More details <span className="float-right group-open:rotate-180">⌄</span></summary>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-2">
+                          <WatchlistMetric label="Trend template" value={row.trend ? `${row.trend.passed_count}/8` : "—"} />
+                          <WatchlistMetric label="Stage" value={typeof row.kpis.stage_code === "string" ? row.kpis.stage_code : "—"} />
+                          <WatchlistMetric label="Volume vs 50d" value={volumeRatio === null ? "—" : `${volumeRatio.toFixed(0)}%`} />
+                          <WatchlistMetric label="ATR" value={atr !== null ? `${atr.toFixed(1)}%` : "—"} />
+                          <WatchlistMetric label="Added" value={row.symbol.added_at} />
+                          <WatchlistMetric label="Note" value={row.symbol.note || "—"} />
+                        </div>
+                      </details>
+                    </Card>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>
       </div>
 
-      {/* New List Modal */}
-      {showNewListModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="rounded-lg border border-line bg-surface p-6 shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-ink mb-4">Create New Watchlist</h3>
-
-            <div className="space-y-3 mb-6">
-              <div>
-                <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1.5">List Name</label>
-                <input
-                  autoFocus
-                  type="text"
-                  value={newListName}
-                  onChange={(e) => setNewListName(e.target.value)}
-                  placeholder="e.g., AI Growth Leaders"
-                  className="w-full rounded-lg border border-line bg-surface-sunk px-3 py-2 text-sm focus:border-accent focus:outline-none"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateList();
-                  }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1.5">Source Type</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.values(SOURCE_TYPES).map((source) => (
-                    <button
-                      key={source.type}
-                      onClick={() => setSelectedSourceType(source.type)}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-center text-[10px] font-bold transition-all",
-                        selectedSourceType === source.type
-                          ? "border-accent bg-accent/15 text-accent"
-                          : "border-line bg-surface-sunk text-ink-muted hover:border-line/80"
-                      )}
-                    >
-                      <div>{source.icon}</div>
-                      <div>{source.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-surface-sunk p-3 text-[10px] text-ink-muted">
-                <p className="font-bold mb-1">{SOURCE_TYPES[selectedSourceType].label}</p>
-                <p>{SOURCE_TYPES[selectedSourceType].description}</p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowNewListModal(false)}
-                className="flex-1 rounded-lg border border-line bg-surface px-4 py-2 font-bold text-ink hover:bg-surface-sunk transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateList}
-                disabled={!newListName.trim()}
-                className="flex-1 rounded-lg bg-accent px-4 py-2 font-bold text-white hover:bg-accent/90 transition-colors disabled:opacity-50"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="rounded-lg border border-line bg-surface p-6 shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-ink mb-4">Import Symbols</h3>
-
-            <textarea
+      <Dialog open={showNewListModal} onOpenChange={setShowNewListModal}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Create watchlist</DialogTitle>
+            <DialogDescription>Give this list a name. You can add symbols after it is created.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="watchlist-name" className="text-sm font-medium">Name</label>
+            <Input
+              id="watchlist-name"
               autoFocus
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              placeholder="Paste symbols here (space, comma, or line-separated)&#10;NVDA UBER LYFT&#10;or&#10;NVDA, UBER, LYFT&#10;or&#10;NVDA&#10;UBER&#10;LYFT"
-              className="w-full rounded-lg border border-line bg-surface-sunk px-3 py-2 text-sm font-mono focus:border-accent focus:outline-none resize-none h-32 mb-4"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="e.g. Growth candidates"
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateList(); }}
             />
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowImportModal(false)}
-                className="flex-1 rounded-lg border border-line bg-surface px-4 py-2 font-bold text-ink hover:bg-surface-sunk transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleImportTickers}
-                disabled={!importText.trim()}
-                className="flex-1 rounded-lg bg-accent px-4 py-2 font-bold text-white hover:bg-accent/90 transition-colors disabled:opacity-50"
-              >
-                Import
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowNewListModal(false)}>Cancel</Button>
+            <Button type="button" onClick={handleCreateList} disabled={!newListName.trim()}>Create list</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameListId !== null} onOpenChange={(open) => !open && setRenameListId(null)}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Rename watchlist</DialogTitle>
+            <DialogDescription>Choose a short name that describes the symbols in this list.</DialogDescription>
+          </DialogHeader>
+          <label htmlFor="watchlist-rename" className="text-sm font-medium">Name</label>
+          <Input id="watchlist-rename" autoFocus value={renameName} onChange={(event) => setRenameName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && renameListId && handleSaveRename(renameListId)} />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setRenameListId(null)}>Cancel</Button>
+            <Button type="button" onClick={() => renameListId && handleSaveRename(renameListId)} disabled={!renameName.trim()}>Save name</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteListId !== null} onOpenChange={(open) => !open && setDeleteListId(null)}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Delete watchlist?</DialogTitle>
+            <DialogDescription>{activeDeleteList ? `“${activeDeleteList.name}” and its list of symbols will be removed.` : "This watchlist will be removed."}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeleteListId(null)}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={() => { if (deleteListId) deleteWatchlist(deleteListId); setDeleteListId(null); }}>Delete watchlist</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Import symbols</DialogTitle>
+            <DialogDescription>Paste ticker symbols separated by spaces, commas, or new lines.</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            autoFocus
+            aria-label="Symbols to import"
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            placeholder="NVDA, UBER, LYFT"
+            className="min-h-32 w-full resize-y"
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowImportModal(false)}>Cancel</Button>
+            <Button type="button" onClick={handleImportTickers} disabled={!importText.trim()}>Import symbols</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function WatchlistActions({ name, onRename, onDelete }: { name: string; onRename: () => void; onDelete: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label={`Actions for ${name}`} title="Watchlist actions">•••</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function WatchlistMetric({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className={cn("truncate text-xs font-medium", valueClass)}>{value}</div>
     </div>
   );
 }

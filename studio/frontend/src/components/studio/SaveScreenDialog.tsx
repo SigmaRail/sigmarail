@@ -1,5 +1,14 @@
-import { useState, useEffect } from "react";
-import { cn } from "../../lib/utils";
+import { useEffect, useState, type FormEvent } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
 interface SaveScreenDialogProps {
   open: boolean;
@@ -7,6 +16,8 @@ interface SaveScreenDialogProps {
   defaultName: string;
   /** Whether we are updating an existing screen (vs creating new) */
   isUpdate?: boolean;
+  /** Shared catalog screens are copied into the active workspace when saved. */
+  isShared?: boolean;
   /** Show description field */
   showDescription?: boolean;
   /** Optional error message to display above the action buttons */
@@ -19,6 +30,7 @@ export function SaveScreenDialog({
   open,
   defaultName,
   isUpdate = false,
+  isShared = false,
   showDescription = false,
   onCancel,
   onConfirm,
@@ -34,112 +46,76 @@ export function SaveScreenDialog({
     }
   }, [open, defaultName]);
 
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
-      if (e.key === "Enter" && name.trim()) {
-        e.preventDefault();
-        onConfirm({ name: name.trim(), description: description.trim() || undefined });
-      }
-    }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, name, description, onCancel, onConfirm]);
-
-  if (!open) return null;
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    onConfirm({ name: cleanName, description: description.trim() || undefined });
+  }
 
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div className="flex w-[min(440px,94vw)] flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-line bg-surface-raised px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-ink">💾 Save Universe Screen</span>
-            <span
-              className={cn(
-                "rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider",
-                isUpdate ? "bg-amber-500/15 text-amber-500" : "bg-emerald-500/15 text-emerald-600",
-              )}
-            >
-              {isUpdate ? "Update Existing" : "New Screen"}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-semibold text-ink-muted hover:text-ink transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
+      <DialogContent size="sm" className="max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isShared ? "Save shared screen to my library" : isUpdate ? "Update universe screen" : "Save universe screen"}</DialogTitle>
+          <DialogDescription>
+            {isShared
+              ? "Create a copy in your screen library. The shared catalog screen will stay unchanged."
+              : isUpdate
+              ? "Update the loaded screen or rename it to save a separate copy."
+              : "Name this screen so you can load it again from your screen library."}
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="space-y-3 px-4 py-4">
-          <div>
-            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-              Screen Name
+        <form className="space-y-4" onSubmit={submit}>
+          <div className="space-y-1.5">
+            <label htmlFor="save-screen-name" className="text-sm font-medium text-foreground">
+              Screen name
             </label>
-            <input
+            <Input
+              id="save-screen-name"
               autoFocus
-              type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(event) => setName(event.target.value)}
               placeholder="e.g. My Momentum Screen"
-              className="w-full rounded-lg border border-line bg-surface-sunk px-3 py-2 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+              required
+              maxLength={120}
             />
           </div>
 
           {showDescription && (
-            <div>
-              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                Description (optional)
+            <div className="space-y-1.5">
+              <label htmlFor="save-screen-description" className="text-sm font-medium text-foreground">
+                Description <span className="font-normal text-muted-foreground">(optional)</span>
               </label>
               <textarea
+                id="save-screen-description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
                 placeholder="What does this screen select?"
-                className="w-full resize-none rounded-lg border border-line bg-surface-sunk px-3 py-2 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               />
             </div>
           )}
 
-          {isUpdate && (
-            <p className="rounded bg-surface-sunk px-2.5 py-1.5 text-[10.5px] text-ink-muted">
-              Saving will overwrite the currently loaded screen. Rename above to save as a copy instead.
+          {error && (
+            <p className="text-sm font-medium text-destructive" role="alert">
+              {error}
             </p>
           )}
-        </div>
 
-        {error && (
-          <p className="px-4 pb-1 text-[11px] font-semibold text-red-500" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2 border-t border-line bg-surface-raised px-4 py-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-line bg-surface px-3.5 py-1.5 text-[11.5px] font-semibold text-ink-muted hover:text-ink transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!name.trim()}
-            onClick={() => onConfirm({ name: name.trim(), description: description.trim() || undefined })}
-            className="rounded-lg bg-accent px-4 py-1.5 text-[11.5px] font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-40"
-          >
-            {isUpdate ? "Update Screen" : "Save Screen"}
-          </button>
-        </div>
-      </div>
-    </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!name.trim()}>
+              {isShared ? "Save to my library" : isUpdate ? "Update screen" : "Save screen"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

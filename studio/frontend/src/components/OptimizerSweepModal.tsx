@@ -1,4 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 import type { BacktestSpecSummary, LaunchOptimizerRequest, OptimizerConstraint } from "../types";
 
 const SWEEPABLE_PARAMETERS = [
@@ -37,7 +51,7 @@ export function OptimizerSweepModal({
   const [endDate, setEndDate] = useState(initialEndDate || "2026-01-01");
   const [strategyType, setStrategyType] = useState<"euler" | "grid">("euler");
 
-  useMemo(() => {
+  useEffect(() => {
     if (isOpen && initialIrId) {
       setBaseIrId(initialIrId);
       if (initialTitle) setTitle(`${initialTitle} Sweep`);
@@ -114,69 +128,47 @@ export function OptimizerSweepModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-line bg-surface-raised px-5 py-3.5">
-          <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-ink">Launch Parameter Sweep</span>
-            <span className="rounded bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase text-accent">
-              LEAN Native
-            </span>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="lg" className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle>Launch parameter sweep</DialogTitle>
+            <Badge variant="muted">Backtest optimization</Badge>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-lg font-bold text-ink-muted hover:text-ink transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+          <DialogDescription>Choose a strategy, evaluation period, and parameters to explore.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 text-sm">
           {/* Base Spec & Title */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Base Strategy Spec</label>
-              <select
-                value={baseIrId}
-                onChange={(e) => setBaseIrId(e.target.value)}
-                className="mt-1 w-full rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-xs text-ink"
-                required
-              >
-                {specs.map((s) => (
-                  <option key={s.ir_id} value={s.ir_id}>
-                    {s.title || s.ir_id}
-                  </option>
-                ))}
-              </select>
+              <label className="mb-1.5 block text-sm font-medium">Strategy</label>
+              <Select value={baseIrId} onValueChange={setBaseIrId}>
+                <SelectTrigger aria-label="Base strategy"><SelectValue placeholder="Choose a strategy" /></SelectTrigger>
+                <SelectContent>{specs.map((s) => <SelectItem key={s.ir_id} value={s.ir_id}>{s.title || s.ir_id}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Study Title (Optional)</label>
-              <input
+              <label htmlFor="sweep-title" className="mb-1.5 block text-sm font-medium">Study name (optional)</label>
+              <Input
+                id="sweep-title"
                 type="text"
-                placeholder="e.g. Minervini Risk & Exit Optimization"
+                placeholder="e.g. Risk and exit sweep"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-xs text-ink"
+                className="h-10"
               />
             </div>
           </div>
 
           {/* Strategy & Objective */}
-          <div className="grid grid-cols-3 gap-3 rounded-lg border border-line bg-surface-sunk p-3">
+          <Card className="grid grid-cols-1 gap-3 p-3 shadow-none sm:grid-cols-3">
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Search Strategy</label>
-              <select
-                value={strategyType}
-                onChange={(e) => setStrategyType(e.target.value as "euler" | "grid")}
-                className="mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-xs text-ink"
-              >
-                <option value="euler">EulerSearch (Adaptive Fractal) ⚡</option>
-                <option value="grid">GridSearch (Exhaustive Sweep)</option>
-              </select>
-              <span className="mt-1 block text-[10px] text-ink-faint">
+              <label className="mb-1.5 block text-sm font-medium">Search method</label>
+              <Select value={strategyType} onValueChange={(value) => setStrategyType(value as "euler" | "grid")}>
+                <SelectTrigger aria-label="Search method"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="euler">Adaptive search</SelectItem><SelectItem value="grid">Grid search</SelectItem></SelectContent>
+              </Select>
+              <span className="mt-1 block text-xs text-muted-foreground">
                 {strategyType === "euler"
                   ? "Adaptive coarse sweep with automatic focal zoom."
                   : "Brute-force evaluation of all coordinate pairs."}
@@ -184,206 +176,178 @@ export function OptimizerSweepModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Target Objective</label>
-              <select
-                value={objective}
-                onChange={(e) => setObjective(e.target.value)}
-                className="mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-xs text-ink"
-              >
-                <option value="sharpe_ratio">Sharpe Ratio (Max)</option>
-                <option value="sortino_ratio">Sortino Ratio (Max)</option>
-                <option value="total_return">Total Return (Max)</option>
-                <option value="min_drawdown">Minimize Max Drawdown</option>
-              </select>
+              <label className="mb-1.5 block text-sm font-medium">Optimize for</label>
+              <Select value={objective} onValueChange={setObjective}>
+                <SelectTrigger aria-label="Optimization objective"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="sharpe_ratio">Sharpe ratio</SelectItem><SelectItem value="sortino_ratio">Sortino ratio</SelectItem><SelectItem value="total_return">Total return</SelectItem><SelectItem value="min_drawdown">Lower drawdown</SelectItem></SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Concurrency</label>
-              <select
-                value={maxConcurrent}
-                onChange={(e) => setMaxConcurrent(Number(e.target.value))}
-                className="mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-xs text-ink"
-              >
-                <option value={2}>2 Parallel Workers</option>
-                <option value={4}>4 Parallel Workers (Recommended)</option>
-                <option value={8}>8 Parallel Workers (High Core)</option>
-              </select>
+              <label className="mb-1.5 block text-sm font-medium">Parallel runs</label>
+              <Select value={String(maxConcurrent)} onValueChange={(value) => setMaxConcurrent(Number(value))}>
+                <SelectTrigger aria-label="Parallel runs"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="2">2</SelectItem><SelectItem value="4">4</SelectItem><SelectItem value="8">8</SelectItem></SelectContent>
+              </Select>
             </div>
-          </div>
+          </Card>
 
           {/* Date Range */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">Start Date</label>
-              <input
+              <label className="mb-1.5 block text-sm font-medium">Start date</label>
+              <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1 w-full rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-xs text-ink"
+                className="h-10"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-ink-muted">End Date</label>
-              <input
+              <label className="mb-1.5 block text-sm font-medium">End date</label>
+              <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1 w-full rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-xs text-ink"
+                className="h-10"
               />
             </div>
           </div>
 
           {/* Parameter X Sweep */}
-          <div className="rounded-lg border border-line bg-surface p-3 space-y-2">
-            <span className="text-[11px] font-bold text-ink">Primary Parameter (X-Axis)</span>
-            <div className="grid grid-cols-4 gap-2">
+          <Card className="space-y-3 p-3 shadow-none">
+            <span className="text-sm font-semibold">Primary parameter</span>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div>
-                <label className="block text-[10px] text-ink-muted">Parameter</label>
-                <select
-                  value={paramXName}
-                  onChange={(e) => setParamXName(e.target.value)}
-                  className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
-                >
-                  {SWEEPABLE_PARAMETERS.map((p) => (
-                    <option key={p.id} value={p.id}>{p.label}</option>
-                  ))}
-                </select>
+                <label className="mb-1.5 block text-xs font-medium">Parameter</label>
+                <Select value={paramXName} onValueChange={setParamXName}>
+                  <SelectTrigger aria-label="Primary parameter"><SelectValue /></SelectTrigger>
+                  <SelectContent>{SWEEPABLE_PARAMETERS.map((p) => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] text-ink-muted">Min</label>
-                <input
+                <label className="mb-1.5 block text-xs font-medium">Min</label>
+                <Input
                   type="number"
                   step="any"
                   value={paramXMin}
                   onChange={(e) => setParamXMin(Number(e.target.value))}
-                  className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                  className="h-10"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-ink-muted">Max</label>
-                <input
+                <label className="mb-1.5 block text-xs font-medium">Max</label>
+                <Input
                   type="number"
                   step="any"
                   value={paramXMax}
                   onChange={(e) => setParamXMax(Number(e.target.value))}
-                  className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                  className="h-10"
                 />
               </div>
               <div>
-                <label className="block text-[10px] text-ink-muted">Step</label>
-                <input
+                <label className="mb-1.5 block text-xs font-medium">Step</label>
+                <Input
                   type="number"
                   step="any"
                   value={paramXStep}
                   onChange={(e) => setParamXStep(Number(e.target.value))}
-                  className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                  className="h-10"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Parameter Y Sweep */}
-          <div className="rounded-lg border border-line bg-surface p-3 space-y-2">
+          <Card className="space-y-3 p-3 shadow-none">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-ink">Secondary Parameter (Y-Axis)</span>
-              <label className="flex cursor-pointer items-center gap-1 text-[10.5px] text-ink-muted">
-                <input
-                  type="checkbox"
-                  checked={useParamY}
-                  onChange={(e) => setUseParamY(e.target.checked)}
-                  className="rounded border-line"
-                />
-                Enable 2D Sweep
-              </label>
+              <span className="text-sm font-semibold">Secondary parameter</span>
+              <Checkbox label="2D sweep" checked={useParamY} onCheckedChange={(checked) => setUseParamY(checked === true)} />
             </div>
 
             {useParamY && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div>
-                  <label className="block text-[10px] text-ink-muted">Parameter</label>
-                  <select
-                    value={paramYName}
-                    onChange={(e) => setParamYName(e.target.value)}
-                    className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
-                  >
-                    {SWEEPABLE_PARAMETERS.map((p) => (
-                      <option key={p.id} value={p.id}>{p.label}</option>
-                    ))}
-                  </select>
+                  <label className="mb-1.5 block text-xs font-medium">Parameter</label>
+                  <Select value={paramYName} onValueChange={setParamYName}>
+                    <SelectTrigger aria-label="Secondary parameter"><SelectValue /></SelectTrigger>
+                    <SelectContent>{SWEEPABLE_PARAMETERS.map((p) => <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-muted">Min</label>
-                  <input
+                  <label className="mb-1.5 block text-xs font-medium">Min</label>
+                  <Input
                     type="number"
                     step="any"
                     value={paramYMin}
                     onChange={(e) => setParamYMin(Number(e.target.value))}
-                    className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                    className="h-10"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-muted">Max</label>
-                  <input
+                  <label className="mb-1.5 block text-xs font-medium">Max</label>
+                  <Input
                     type="number"
                     step="any"
                     value={paramYMax}
                     onChange={(e) => setParamYMax(Number(e.target.value))}
-                    className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                    className="h-10"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-ink-muted">Step</label>
-                  <input
+                  <label className="mb-1.5 block text-xs font-medium">Step</label>
+                  <Input
                     type="number"
                     step="any"
                     value={paramYStep}
                     onChange={(e) => setParamYStep(Number(e.target.value))}
-                    className="mt-0.5 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-xs text-ink"
+                    className="h-10"
                   />
                 </div>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Quant Constraints */}
-          <div className="rounded-lg border border-line bg-surface-sunk p-3 space-y-1.5">
-            <span className="block text-[11px] font-bold text-ink-muted">
-              Quant Pruning Constraints (Discard Overfit Anomalies)
+          <Card className="space-y-2 p-3 shadow-none">
+            <span className="block text-sm font-medium">
+              Run constraints
             </span>
-            <div className="flex flex-wrap gap-2 text-[10.5px]">
+            <div className="flex flex-wrap gap-2 text-xs">
               {constraints.map((c, i) => (
-                <span key={i} className="rounded bg-surface px-2 py-0.5 border border-line text-ink">
+                <Badge key={i} variant="muted">
                   {c.target} {c.operator === "lessOrEqual" ? "≤" : "≥"} {c.target_value}
-                </span>
+                </Badge>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Modal Footer & Launch Trigger */}
-          <div className="flex items-center justify-between border-t border-line pt-3">
-            <span className="text-[11px] font-mono text-ink-muted">
-              Estimated variants: <span className="font-bold text-ink">{totalRunsEstimate} runs</span>
+          <DialogFooter className="items-center justify-between border-t pt-3 sm:flex-row">
+            <span className="mr-auto text-sm text-muted-foreground">
+              Estimated variants: <span className="font-semibold text-foreground">{totalRunsEstimate}</span>
             </span>
 
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
-                className="rounded border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-muted hover:text-ink"
+                variant="outline"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={isLaunching || !baseIrId}
-                className="rounded bg-accent px-4 py-1.5 text-xs font-bold text-accent-ink hover:opacity-90 disabled:opacity-50 transition-opacity"
+                size="sm"
               >
-                {isLaunching ? "Launching Study…" : "🚀 Launch Optimization"}
-              </button>
+                {isLaunching ? "Launching…" : "Launch sweep"}
+              </Button>
             </div>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 import type { ScreenField } from "../../types";
 import type { IrOperand } from "../../types";
 import type { SlotExpr } from "../strategy/StrategyDocument";
@@ -65,32 +67,34 @@ export function SlotNumberExprRow({
 
   return (
     <div className="space-y-1">
-      <input
+      <Input
         type="text"
         value={text}
         onChange={(e) => commitText(e.target.value)}
         onBlur={() => commitText(text)}
         placeholder={placeholder}
         spellCheck={false}
-        className="w-full rounded border border-line bg-surface px-1.5 py-1 font-mono text-[11px] text-ink"
+        className="h-8 w-full px-2 py-1 font-mono text-[11px]"
       />
       {error ? <p className="text-[10px] text-danger">{error}</p> : null}
       {presets.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {presets.map((p) => (
-            <button
+            <Button
               key={p.label}
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 const t = exprToText(p.expr.expr as Record<string, unknown>);
                 setText(t);
                 setError(null);
                 onChange(p.expr);
               }}
-              className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink hover:bg-surface-sunk"
+              className="h-7 px-2 text-[10px] text-ink"
             >
               {p.label}
-            </button>
+            </Button>
           ))}
         </div>
       ) : null}

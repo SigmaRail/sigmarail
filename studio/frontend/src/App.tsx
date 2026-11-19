@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCurrentTenant } from "@sb/webapp-tenants/providers/currentTenantProvider/currentTenantProvider.hook";
+import { useGenerateLocalePath } from "@sb/webapp-core/hooks";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   createSavedScreen,
@@ -15,28 +17,19 @@ import {
   previewScreen,
   updateSavedScreen,
 } from "./api/screens";
-import { BacktestView } from "./components/BacktestView";
-import { MarketView } from "./components/studio/MarketView";
+import { NameDialog } from "./components/NameDialog";
+import { TopBar } from "./components/TopBar";
+import { FieldPickerProvider } from "./components/studio/FieldPickerProvider";
 import { stockFromPath, stockPath, strategyIrIdFromPath, strategyPath, tabForPath, TAB_PATHS } from "./routes";
 import { buildScreenerSearch, readScreenerState } from "./lib/screenerUrl";
 import { whereToAst } from "./lib/screenAst";
-import { MonitorView } from "./components/MonitorView";
-import { NameDialog } from "./components/NameDialog";
-import {
-  RESULTS_GRID_CHUNK,
-} from "./components/ResultsGrid";
-import { TopBar } from "./components/TopBar";
-import { FieldPickerProvider } from "./components/studio/FieldPickerProvider";
-import { ScreenerStudioModal } from "./components/studio/ScreenerStudioModal";
-import { ScreensView } from "./components/studio/ScreensView";
-import { ChartsView } from "./components/studio/ChartsView";
-import { WatchlistsView } from "./components/studio/WatchlistsView";
 import {
   applyFiltersToSpec,
   extractAppliedFilters,
 } from "./lib/irFilters";
 import { studioAgentBridge } from "./lib/studioAgentBridge";
 import { initWebMCP } from "./lib/webmcpProvider";
+import { setActiveTenantId } from "./lib/tenantRequest";
 import {
   computeTurnover,
   enrichRows,
@@ -53,6 +46,14 @@ import type {
   ViewMode,
   WorkbenchTab,
 } from "./types";
+
+const BacktestView = lazy(() => import("./components/BacktestView").then(({ BacktestView }) => ({ default: BacktestView })));
+const MarketView = lazy(() => import("./components/studio/MarketView").then(({ MarketView }) => ({ default: MarketView })));
+const MonitorView = lazy(() => import("./components/MonitorView").then(({ MonitorView }) => ({ default: MonitorView })));
+const ScreenerStudioModal = lazy(() => import("./components/studio/ScreenerStudioModal").then(({ ScreenerStudioModal }) => ({ default: ScreenerStudioModal })));
+const ScreensView = lazy(() => import("./components/studio/ScreensView").then(({ ScreensView }) => ({ default: ScreensView })));
+const ChartsView = lazy(() => import("./components/studio/ChartsView").then(({ ChartsView }) => ({ default: ChartsView })));
+const WatchlistsView = lazy(() => import("./components/studio/WatchlistsView").then(({ WatchlistsView }) => ({ default: WatchlistsView })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ const queryClient = new QueryClient({
 const NO_PRESET = "";
 const PREVIEW_LIMIT = 50;
 const IR_DEBOUNCE_MS = 400;
+const RESULTS_GRID_CHUNK = 12;
 
 function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -83,7 +85,45 @@ function useDebouncedValue<T>(value: T, ms: number): T {
   return debounced;
 }
 
-function StudioApp() {
+function withLocalePath(generateLocalePath: (path: string) => string, path: string): string {
+  const queryIndex = path.indexOf("?");
+  const pathname = queryIndex >= 0 ? path.slice(0, queryIndex) : path;
+  const search = queryIndex >= 0 ? path.slice(queryIndex) : "";
+  return `${generateLocalePath(pathname.replace(/^\/+/, ""))}${search}`;
+}
+
+function StudioApp({ embedded = false }: { embedded?: boolean }) {
+  if (!embedded) return <StudioAppContent embedded={false} />;
+  return <TenantBoundStudioApp />;
+}
+
+function TenantBoundStudioApp() {
+  const queryClient = useQueryClient();
+  const { data: currentTenant } = useCurrentTenant();
+  const previousTenantId = useRef<string | null>(null);
+  const tenantId = currentTenant?.id ?? null;
+
+  useLayoutEffect(() => {
+    setActiveTenantId(tenantId);
+    if (previousTenantId.current && previousTenantId.current !== tenantId) {
+      void queryClient.invalidateQueries({ queryKey: ["saved-screens"] });
+    }
+    previousTenantId.current = tenantId;
+    return () => setActiveTenantId(null);
+  }, [queryClient, tenantId]);
+
+  if (!tenantId) {
+    return (
+      <div className="flex h-full min-h-48 items-center justify-center text-sm text-muted-foreground" role="status">
+        Loading organization…
+      </div>
+    );
+  }
+
+  return <StudioAppContent embedded />;
+}
+
+function StudioAppContent({ embedded = false }: { embedded?: boolean }) {
   const queryClient = useQueryClient();
 
   // Today's date as YYYY-MM-DD (local time)
@@ -107,6 +147,7 @@ function StudioApp() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const generateLocalePath = useGenerateLocalePath();
   const activeTab = tabForPath(location.pathname);
   const routeStrategyIrId = strategyIrIdFromPath(location.pathname);
   // The ticker lives in the path (/stock/NVDA/chart); ?ticker= stays readable for old links.
@@ -178,9 +219,9 @@ function StudioApp() {
   // Redirect bare root to the default tab.
   useEffect(() => {
     if (location.pathname === "/") {
-      navigate(TAB_PATHS.screens, { replace: true });
+      navigate(withLocalePath(generateLocalePath, TAB_PATHS.screens), { replace: true });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, generateLocalePath]);
 
   // History entries written by the older build can carry a query as the pathname
   // (/screen=10&filters=v1…). Recover them as the screener's search instead of
@@ -188,9 +229,9 @@ function StudioApp() {
   useEffect(() => {
     const seg = location.pathname.replace(/^\/+/, "");
     if (seg.includes("=")) {
-      navigate(`${TAB_PATHS.screens}?${seg}`, { replace: true });
+      navigate(withLocalePath(generateLocalePath, `${TAB_PATHS.screens}?${seg}`), { replace: true });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, generateLocalePath]);
 
   // Address as the source of truth. The screener carries its settings (reference or
   // applied chips); the chart tab carries only as_of, because the ticker lives in the
@@ -285,7 +326,7 @@ function StudioApp() {
   useEffect(() => {
     if (!urlState.screen) return;
     if (String(savedScreenId ?? "") === urlState.screen) return;
-    const found = (savedScreensQuery.data ?? []).find((s) => String(s.id) === urlState.screen);
+    const found = (savedScreensQuery.data?.screens ?? []).find((s) => String(s.id) === urlState.screen);
     if (found) selectSavedScreen(found);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlState.screen, savedScreensQuery.data]);
@@ -642,7 +683,7 @@ function StudioApp() {
   const invalidateSavedScreens = () =>
     queryClient.invalidateQueries({ queryKey: ["saved-screens"] });
 
-  const savedScreens = savedScreensQuery.data ?? [];
+  const savedScreens = savedScreensQuery.data?.screens ?? [];
   const templates = templatesQuery.data ?? [];
 
   const backtestScreenTitle = useMemo(() => {
@@ -711,10 +752,10 @@ function StudioApp() {
       if (prefill) setBacktestPrefill(prefill);
       // Stay on the open strategy when already composing; else untitled draft.
       const current = strategyIrIdFromPath(location.pathname);
-      navigate(strategyPath(current));
+      navigate(withLocalePath(generateLocalePath, strategyPath(current)));
       return;
     }
-    navigate(TAB_PATHS[next]);
+    navigate(withLocalePath(generateLocalePath, TAB_PATHS[next]));
   };
 
   // Keep StudioAgentBridge state in sync with active React state
@@ -754,10 +795,10 @@ function StudioApp() {
 
       if (route === "backtests" && args.run_id) {
         const subview = args.section_view || "overview";
-        navigate(`/backtests/${args.run_id}/${subview}`);
+        navigate(withLocalePath(generateLocalePath, `/backtests/${args.run_id}/${subview}`));
       } else if (route === "strategies" && (args.ir_id || args.strategy_id)) {
         const id = args.ir_id || args.strategy_id;
-        navigate(`/strategies/${id}`);
+        navigate(withLocalePath(generateLocalePath, `/strategies/${id}`));
       } else if (route in TAB_PATHS) {
         handleTabChange(route as WorkbenchTab);
       } else if (!route || route.includes("=") || route.startsWith("?")) {
@@ -765,9 +806,9 @@ function StudioApp() {
         // screener's search — navigating it as a path produced /screen=10&filters=…
         // and poisoned a history entry (Back landed there and failed to load).
         const search = route.replace(/^\?/, "");
-        navigate(search && search !== location.search.slice(1) ? `/screens?${search}` : "/screens");
+        navigate(withLocalePath(generateLocalePath, search && search !== location.search.slice(1) ? `/screens?${search}` : "/screens"));
       } else {
-        navigate(`/${route}`);
+        navigate(withLocalePath(generateLocalePath, `/${route}`));
       }
     });
 
@@ -810,7 +851,7 @@ function StudioApp() {
       unregTemplate();
       unregScrub();
     };
-  }, [navigate, activeTab, selectPreset, selectTemplate, handleTabChange]);
+  }, [navigate, generateLocalePath, activeTab, selectPreset, selectTemplate, handleTabChange]);
 
   const handleSaveForBacktest = async (): Promise<number | string | null> => {
     if (!liveSpec || source !== "ir") return null;
@@ -859,7 +900,7 @@ function StudioApp() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={embedded && activeTab === "charts" ? "flex min-h-full flex-col" : "flex h-full min-h-0 flex-col"}>
       <NameDialog
         open={nameDialog != null}
         title={
@@ -874,16 +915,18 @@ function StudioApp() {
         onCancel={() => closeNameDialog(null)}
         onConfirm={(value) => closeNameDialog(value)}
       />
-      <TopBar
-        dirty={dirty}
-        saving={saving}
-        onSave={() => {
-          void handleSave();
-        }}
-        onSaveAs={() => {
-          void handleSaveAs();
-        }}
-      />
+      {!embedded ? (
+        <TopBar
+          dirty={dirty}
+          saving={saving}
+          onSave={() => {
+            void handleSave();
+          }}
+          onSaveAs={() => {
+            void handleSaveAs();
+          }}
+        />
+      ) : null}
 
       {saveFlash ? (
         <div className="border-b border-accent/30 bg-accent-soft px-4 py-1.5 text-[12px] text-ink">
@@ -893,7 +936,7 @@ function StudioApp() {
 
       {bootError ? (
         <div className="border-b border-danger/30 bg-danger-soft px-4 py-2 text-[12px] text-danger">
-          Studio startup data could not be loaded: {bootError}. Check the SigmaRail API and ClickHouse connection.
+          API bootstrap failed: {bootError}. Is Django running on :8001?
         </div>
       ) : null}
 
@@ -905,7 +948,7 @@ function StudioApp() {
             // Push so back/forward walks screener -> chart -> screener.
             setSelectedChartTicker(t);
             setAsOf(d);
-            navigate(`${stockPath(t)}?as_of=${d}`);
+            navigate(withLocalePath(generateLocalePath, `${stockPath(t)}?as_of=${d}`));
           }}
           initialViewMode={urlState.view}
           onViewModeChange={setScreenerView}
@@ -935,7 +978,7 @@ function StudioApp() {
         <ChartsView
           initialTicker={selectedChartTicker || "UBER"}
           initialAsOfDate={asOf || todayIso}
-          onSelectTicker={(t) => navigate(stockPath(t))}
+          onSelectTicker={(t) => navigate(withLocalePath(generateLocalePath, stockPath(t)))}
           onSelectDate={(d) => setAsOf(d)}
         />
       ) : activeTab === "watchlists" ? (
@@ -966,8 +1009,9 @@ function StudioApp() {
       )}
 
       {/* Screener Studio Modal (Slot 1 Universe Laboratory) */}
-      <ScreenerStudioModal
-        isOpen={isScreenerModalOpen}
+      {isScreenerModalOpen ? (
+        <ScreenerStudioModal
+        isOpen
         onClose={() => setIsScreenerModalOpen(false)}
         onApplyToStrategy={() => {
           if (liveSpec && source === "ir") {
@@ -978,7 +1022,7 @@ function StudioApp() {
         }}
         presets={presetsQuery.data ?? []}
         templates={templatesQuery.data ?? []}
-        savedScreens={savedScreensQuery.data ?? []}
+        savedScreens={savedScreensQuery.data?.screens ?? []}
         source={source}
         preset={preset}
         templateId={templateId}
@@ -1017,16 +1061,17 @@ function StudioApp() {
           priorPreviewQuery.isFetching ||
           turnoverApiQuery.isFetching
         }
-      />
+        />
+      ) : null}
     </div>
   );
 }
 
-export default function App() {
+export default function App({ embedded = false }: { embedded?: boolean }) {
   return (
     <QueryClientProvider client={queryClient}>
       <FieldPickerProvider>
-        <StudioApp />
+        <StudioApp embedded={embedded} />
       </FieldPickerProvider>
     </QueryClientProvider>
   );

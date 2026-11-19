@@ -1,0 +1,108 @@
+service: "${env:PROJECT_NAME}-workers"
+
+provider:
+  name: aws
+  runtime: 'nodejs18.x'
+  versionFunctions: false
+  stage: "${env:ENV_STAGE}"
+  region: "${env:AWS_DEFAULT_REGION}"
+  stackName: ${self:custom.conf.stackName}
+  environment: ${self:custom.conf.environment}
+  apiGateway:
+    websocketApiId: ${self:custom.conf.websocketApiId}
+  tracing:
+    lambda: true
+  iam:
+    role:
+      statements: ${self:custom.conf.iam}
+
+functions:
+  ScheduleTask:
+    handler: scheduler.handlers.schedule_task
+    runtime: python3.11
+    timeout: 20
+    memorySize: 128
+    environment: ${self:custom.conf.ScheduleTask.environment}
+    events:
+      - eventBridge:
+          eventBus: '${self:custom.conf.eventBusArn}'
+          pattern:
+            source:
+              - backend.scheduler
+
+  ExecuteScheduledTask:
+    handler: scheduler.handlers.execute_task
+    runtime: python3.11
+    timeout: 6
+    memorySize: 128
+    environment: ${self:custom.conf.ExecuteScheduledTask.environment}
+
+  SynchronizeContentfulContent:
+    handler: content.handlers.synchronize_content
+    runtime: python3.11
+    timeout: 30
+    memorySize: 256
+    environment: ${self:custom.conf.SynchronizeContentfulContent.environment}
+    vpc: ${self:custom.conf.vpc}
+    events:
+      - schedule: rate(5 minutes)
+      - eventBridge:
+          eventBus: "${self:custom.conf.eventBusArn}"
+          pattern:
+            source:
+              - backend.contentfulSync
+
+plugins:
+  - serverless-step-functions
+  - serverless-localstack
+
+custom:
+  projectEnvName: "${env:PROJECT_NAME}-${env:ENV_STAGE}"
+  pythonRequirements:
+    dockerizePip: non-linux
+    useDownloadCache: true
+    useStaticCache: false
+
+  ssmService: env-${env:PROJECT_NAME}-${self:provider.stage}-workers
+
+  conf: ${file(./${self:custom.confFile.${self:provider.stage}})}
+  confFile:
+    local: workers.conf.local.yml
+    dev: workers.conf.yml
+    qa: workers.conf.yml
+    prod: workers.conf.yml
+
+  localstack:
+    stages:
+      # list of stages for which the plugin should be enabled
+      - local
+    host: http://localstack  # optional - LocalStack host to connect to
+    edgePort: 4566  # optional - LocalStack edge port to connect to
+    autostart: false  # optional - Start LocalStack in Docker on Serverless deploy
+
+package:
+  individually: true
+  excludeDevDependencies: true
+  patterns:
+    - '!.git/**'
+    - '!node_modules/**'
+    - '!aws/**'
+
+stepFunctions:
+  stateMachines:
+    TaskSchedulingStateMachine:
+      id: TaskSchedulingStateMachineID
+      name: "${opt:stage, self:provider.stage}-TaskSchedulingStateMachine"
+      definition:
+        Comment: "Schedules task execution"
+        StartAt: WaitForDueDate
+        States:
+          WaitForDueDate:
+            Type: Wait
+            TimestampPath: "$.due_date"
+            Next: Execute
+          Execute:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [ ExecuteScheduledTask, Arn ]
+            End: true

@@ -1,6 +1,15 @@
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRunEquityCurve, fetchRunOrders } from "../../api/backtests";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export interface ShiftedTimelineDay {
   dayIndex: number; // 0, 1, 2, ...
@@ -173,18 +182,16 @@ export function DayZeroShiftedTimelinePanel({ runId }: { runId: string }) {
         <div className="flex items-center gap-1">
           <span className="text-[11px] text-ink-faint mr-1">Horizon:</span>
           {([14, 30, 60, 90] as const).map((h) => (
-            <button
+            <Button
               key={h}
               type="button"
               onClick={() => setHorizonDays(h)}
-              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                horizonDays === h
-                  ? "bg-accent text-accent-ink"
-                  : "bg-surface-sunk text-ink-muted hover:text-ink"
-              }`}
+              variant={horizonDays === h ? "default" : "outline"}
+              size="sm"
+              className="h-7 px-2.5 text-[11px]"
             >
               {h}d
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -445,20 +452,20 @@ export function DayZeroShiftedTimelinePanel({ runId }: { runId: string }) {
 
             {/* Shifted Timeline Matrix Data Table */}
             <div className="mt-3 max-h-64 overflow-auto rounded border border-line bg-surface-sunk/40">
-              <table className="w-full text-left text-[11px]">
-                <thead className="sticky top-0 bg-surface-raised border-b border-line text-ink-faint font-mono text-[10px]">
-                  <tr>
-                    <th className="px-3 py-1.5">Timeline</th>
-                    <th className="px-3 py-1.5">Session Date</th>
-                    <th className="px-3 py-1.5">Daily Return (Bar Metric)</th>
-                    <th className="px-3 py-1.5">Cumulative Return (Line Metric)</th>
-                    <th className="px-3 py-1.5 text-right">Equity</th>
-                    <th className="px-3 py-1.5">Milestone</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line/60 font-mono text-[10.5px]">
+              <WorkspaceTable className="w-full text-left text-[11px]">
+                <WorkspaceTableHeader className="sticky top-0 bg-surface-raised border-b border-line text-ink-faint font-mono text-[10px]">
+                  <WorkspaceTableRow>
+                    <WorkspaceTableHead className="px-3 py-1.5">Timeline</WorkspaceTableHead>
+                    <WorkspaceTableHead className="px-3 py-1.5">Session Date</WorkspaceTableHead>
+                    <WorkspaceTableHead className="px-3 py-1.5">Daily Return (Bar Metric)</WorkspaceTableHead>
+                    <WorkspaceTableHead className="px-3 py-1.5">Cumulative Return (Line Metric)</WorkspaceTableHead>
+                    <WorkspaceTableHead className="px-3 py-1.5 text-right">Equity</WorkspaceTableHead>
+                    <WorkspaceTableHead className="px-3 py-1.5">Milestone</WorkspaceTableHead>
+                  </WorkspaceTableRow>
+                </WorkspaceTableHeader>
+                <WorkspaceTableBody className="divide-y divide-line/60 font-mono text-[10.5px]">
                   {timelineData.days.map((d) => (
-                    <tr
+                    <WorkspaceTableRow
                       key={d.dayIndex}
                       onMouseEnter={() => setHoverDay(d)}
                       onMouseLeave={() => setHoverDay(null)}
@@ -466,26 +473,26 @@ export function DayZeroShiftedTimelinePanel({ runId }: { runId: string }) {
                         hoverDay?.dayIndex === d.dayIndex ? "bg-accent/15" : ""
                       }`}
                     >
-                      <td className="px-3 py-1 font-bold text-accent">
+                      <WorkspaceTableCell className="px-3 py-1 font-bold text-accent">
                         Day {d.dayIndex}
-                      </td>
-                      <td className="px-3 py-1 text-ink-muted">
+                      </WorkspaceTableCell>
+                      <WorkspaceTableCell className="px-3 py-1 text-ink-muted">
                         {d.date}
-                      </td>
-                      <td className="px-3 py-1">
+                      </WorkspaceTableCell>
+                      <WorkspaceTableCell className="px-3 py-1">
                         <span className={`font-semibold ${d.dailyReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                           {d.dailyReturnPct >= 0 ? "+" : ""}{d.dailyReturnPct.toFixed(2)}%
                         </span>
-                      </td>
-                      <td className="px-3 py-1">
+                      </WorkspaceTableCell>
+                      <WorkspaceTableCell className="px-3 py-1">
                         <span className={`font-semibold ${d.cumulativeReturnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                           {d.cumulativeReturnPct >= 0 ? "+" : ""}{d.cumulativeReturnPct.toFixed(2)}%
                         </span>
-                      </td>
-                      <td className="px-3 py-1 text-right text-ink">
+                      </WorkspaceTableCell>
+                      <WorkspaceTableCell className="px-3 py-1 text-right text-ink">
                         ${d.equity.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className="px-3 py-1">
+                      </WorkspaceTableCell>
+                      <WorkspaceTableCell className="px-3 py-1">
                         {d.isInitial ? (
                           <span className="rounded bg-surface px-1.5 py-0.5 text-[9.5px] text-ink-faint border border-line">
                             First Buy Entry
@@ -503,11 +510,11 @@ export function DayZeroShiftedTimelinePanel({ runId }: { runId: string }) {
                             Current Horizon
                           </span>
                         ) : null}
-                      </td>
-                    </tr>
+                      </WorkspaceTableCell>
+                    </WorkspaceTableRow>
                   ))}
-                </tbody>
-              </table>
+                </WorkspaceTableBody>
+              </WorkspaceTable>
             </div>
           </div>
         )}

@@ -1,0 +1,36 @@
+import { screen, waitFor } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
+
+import { RoutesConfig } from '{{ routesConfigImport }}';
+import { createMockRouterProps, render } from '../../../../tests/utils/rendering';
+import { {{ pascalCase name }}List } from '../{{ camelCase name }}List.component';
+
+describe('{{ pascalCase name }}List: Component', () => {
+  const routePath = ['{{ camelCase name }}', 'list'];
+
+  const Component = () => (
+    <Routes>
+      <Route path={RoutesConfig.getLocalePath(routePath)} element={<{{ pascalCase name }}List />} />
+    </Routes>
+  );
+
+  it('should render page title', async () => {
+    const routerProps = createMockRouterProps(routePath);
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    });
+  });
+
+  it('should render add new button', async () => {
+    const routerProps = createMockRouterProps(routePath);
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /add new/i })).toBeInTheDocument();
+    });
+  });
+});

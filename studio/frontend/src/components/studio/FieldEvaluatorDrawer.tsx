@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import katex from "katex";
 import type { FieldEvaluationResult } from "../../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { authenticatedFetch } from "../../api/authenticatedFetch";
 
 export interface FieldEvaluatorDrawerProps {
   fieldName: string;
@@ -28,7 +31,7 @@ export function FieldEvaluatorDrawer({
       const q = new URLSearchParams({ ticker: t });
       if (table) q.set("table", table);
       if (asOfDate) q.set("as_of_date", asOfDate);
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `/api/screens/fields/${encodeURIComponent(fieldName)}/evaluate?${q.toString()}`
       );
       if (!response.ok) {
@@ -92,21 +95,24 @@ export function FieldEvaluatorDrawer({
         <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
           Live Worked Example
         </span>
-        <form onSubmit={handleSubmit} className="flex items-center gap-1">
-          <input
+        <form onSubmit={handleSubmit} className="flex min-w-0 items-center gap-1">
+          <Input
             type="text"
             value={inputTicker}
             onChange={(e) => setInputTicker(e.target.value.toUpperCase())}
             placeholder="Ticker"
-            className="w-16 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] uppercase text-ink focus:border-accent focus:outline-none"
+            aria-label="Ticker for live field example"
+            className="h-8 w-20 px-2 font-mono text-xs uppercase"
           />
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="rounded bg-accent/15 px-1.5 py-0.5 text-[9.5px] font-semibold text-accent hover:bg-accent/25"
+            size="sm"
+            variant="outline"
+            className="h-8 px-2 text-xs"
           >
-            Eval
-          </button>
+            {loading ? "Loading" : "Evaluate"}
+          </Button>
         </form>
       </div>
 

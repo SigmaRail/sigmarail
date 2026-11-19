@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "../../lib/utils";
 import { fetchFieldValues } from "../../api/screens";
+import { authenticatedFetch } from "../../api/authenticatedFetch";
 import type { ScreenField } from "../../types";
 import type { ExpressionRecipe, FieldPick } from "../../lib/fieldPick";
 import {
@@ -15,6 +15,18 @@ import {
   valueCompletionContext,
 } from "../../lib/formulaParser";
 import { FieldDetailCard } from "./FieldDetailCard";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
 
 type AcItem =
   | { kind: "field"; field: ScreenField }
@@ -106,6 +118,7 @@ export function FieldBrowserModal({
   expressionLinked = false,
 }: FieldBrowserModalProps) {
   const [activeMode, setActiveMode] = useState<BrowserMode>(mode ?? "fields");
+  const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<ExpressionRecipe | null>(null);
@@ -122,7 +135,7 @@ export function FieldBrowserModal({
     let active = true;
     void (async () => {
       try {
-        const res = await fetch("/api/screens/formula-presets?active_only=false");
+        const res = await authenticatedFetch("/api/screens/formula-presets?active_only=false");
         if (!res.ok || !active) return;
         const payload = (await res.json()) as { presets?: ApiFormulaPreset[] };
         if (active) setManagedRecipes(payload.presets ?? []);
@@ -154,6 +167,7 @@ export function FieldBrowserModal({
     if (isOpen) {
       setSelectedName(initialFieldName ?? null);
       setSelectedRecipe(null);
+      setShowDetailOnMobile(false);
       setQuery("");
       setFreeText(initialExpression ?? "");
       setFreeError(null);
@@ -494,19 +508,19 @@ export function FieldBrowserModal({
     : null;
   const editorActive = expressionLinked || purpose === "sort" || purpose === "number";
 
-  return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-6 backdrop-blur-[2px]" onClick={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex h-[86vh] w-[min(1240px,96vw)] flex-col overflow-hidden rounded-xl border border-line bg-surface-raised shadow-2xl"
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        size="full"
+        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[1240px] flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[86dvh] sm:max-h-[86dvh] sm:w-[96vw]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-line bg-surface px-4 py-2.5">
-          <div className="flex items-center gap-2">
+        <DialogHeader className="flex flex-row flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2 pr-12 sm:px-4 sm:py-2.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded bg-accent/15 text-accent text-xs font-bold">
               {purpose === "filter" ? "ƒ" : purpose === "sort" ? "⇅" : purpose === "number" ? "Σ" : "ℹ"}
             </span>
-            <h3 className="text-sm font-bold text-ink">{title ?? "Field & Expression Browser"}</h3>
+            <DialogTitle className="max-w-full truncate text-sm font-bold text-ink">{title ?? "Field & Expression Browser"}</DialogTitle>
             {purposeLabel && (
               <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-accent">
                 {purposeLabel}
@@ -516,10 +530,8 @@ export function FieldBrowserModal({
               {fields.length} fields · {recipes.length} expressions
             </span>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 text-ink-muted hover:bg-surface-sunk hover:text-ink transition-colors" title="Close">
-            ✕
-          </button>
-        </div>
+          <DialogDescription className="sr-only">Browse fields, inspect their definitions, and build expressions.</DialogDescription>
+        </DialogHeader>
 
         {/* 1. Expression editor (top) — authoring uses only */}
         {editorActive && (
@@ -545,7 +557,7 @@ export function FieldBrowserModal({
             </div>
 
             <div className="relative mt-1">
-              <input
+              <Input
                 ref={editorRef}
                 type="text"
                 value={freeText}
@@ -573,20 +585,22 @@ export function FieldBrowserModal({
                       ? "e.g. rs_rating >= 80 and close >= sma50d"
                       : "e.g. (close - sma50d) / atr_14"
                 }
-                className="w-full rounded-lg border border-line bg-surface-sunk px-3 py-1.5 font-mono text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40"
+                className="h-9 w-full bg-surface-sunk px-3 py-1.5 font-mono text-[12px]"
               />
 
               {/* Autocomplete dropdown */}
               {acOpen && acSuggestions.length > 0 && (
                 <div className="absolute left-0 right-0 top-full z-[70] mt-1 overflow-hidden rounded-lg border border-accent/40 bg-surface-raised shadow-2xl ring-1 ring-black/10">
                   {acSuggestions.map((item, i) => (
-                    <button
+                    <Button
                       key={item.kind === "value" ? `v:${item.value}` : item.field.name}
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onMouseDown={(e) => { e.preventDefault(); applyAcItem(item); }}
                       onMouseEnter={() => setAcIndex(i)}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] transition-colors",
+                        "h-auto w-full justify-between gap-2 rounded-none px-3 py-1 text-left text-[11px] transition-colors",
                         i === acIndex ? "bg-accent/15 text-ink" : "hover:bg-surface-sunk text-ink",
                       )}
                     >
@@ -601,7 +615,7 @@ export function FieldBrowserModal({
                           <span className="truncate text-ink-muted">{item.field.label}</span>
                         </>
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -621,20 +635,20 @@ export function FieldBrowserModal({
                     join aliases with
                   </span>
                   {["+", "-", "*", "/"].map((op) => (
-                    <button
+                    <Button
                       key={op}
                       type="button"
+                      variant={joinOp === op ? "secondary" : "outline"}
+                      size="sm"
                       onClick={() => setJoinOp(op)}
                       title={`Arithmetic ${op}`}
                       className={cn(
-                        "rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold transition-colors",
-                        joinOp === op
-                          ? "border-accent bg-accent/15 text-accent"
-                          : "border-line bg-surface-sunk text-ink-muted hover:border-accent/60 hover:text-accent",
+                        "h-7 px-1.5 font-mono text-[10px] font-semibold",
+                        joinOp === op && "border-accent bg-accent/15 text-accent",
                       )}
                     >
                       {op}
-                    </button>
+                    </Button>
                   ))}
                   <span className="mx-1 h-4 w-px bg-line" />
                   <span className="mr-0.5 text-[9px] font-bold uppercase tracking-wider text-ink-faint">math</span>
@@ -646,20 +660,20 @@ export function FieldBrowserModal({
                 <>
                   <span className="mr-0.5 text-[9px] font-bold uppercase tracking-wider text-ink-faint">join new terms with</span>
                   {["and", "or", "+", "-", "*", "/"].map((op) => (
-                    <button
+                    <Button
                       key={op}
                       type="button"
+                      variant={joinOp === op ? "secondary" : "outline"}
+                      size="sm"
                       onClick={() => setJoinOp(op)}
                       title={op === "and" || op === "or" ? `Combine with ${op}` : `Arithmetic ${op}`}
                       className={cn(
-                        "rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold transition-colors",
-                        joinOp === op
-                          ? "border-accent bg-accent/15 text-accent"
-                          : "border-line bg-surface-sunk text-ink-muted hover:border-accent/60 hover:text-accent",
+                        "h-7 px-1.5 font-mono text-[10px] font-semibold",
+                        joinOp === op && "border-accent bg-accent/15 text-accent",
                       )}
                     >
                       {op}
-                    </button>
+                    </Button>
                   ))}
                   <span className="mx-1 h-4 w-px bg-line" />
                   <span className="mr-0.5 text-[9px] font-bold uppercase tracking-wider text-ink-faint">compare</span>
@@ -677,37 +691,35 @@ export function FieldBrowserModal({
         )}
 
         {/* 2. Tabs */}
-        <div className="flex items-center justify-between border-b border-line bg-surface-raised/60 px-4 py-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised/60 px-3 py-1.5 sm:px-4">
           {hasModes ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveMode("fields")}
-                className={cn("rounded px-2.5 py-1 text-[11px] font-bold transition-colors", activeMode === "fields" ? "bg-accent/20 text-accent" : "text-ink-muted hover:text-ink")}
-              >
-                Fields
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMode("expressions")}
-                className={cn("rounded px-2.5 py-1 text-[11px] font-bold transition-colors", activeMode === "expressions" ? "bg-accent/20 text-accent" : "text-ink-muted hover:text-ink")}
-              >
-                Expressions
-              </button>
-            </div>
+            <Tabs
+              value={activeMode}
+              onValueChange={(value) => {
+                setActiveMode(value as BrowserMode);
+                setShowDetailOnMobile(false);
+              }}
+            >
+              <TabsList className="h-8 rounded-md p-0.5">
+                <TabsTrigger value="fields" className="px-2 py-1 text-[11px]">Fields</TabsTrigger>
+                <TabsTrigger value="expressions" className="px-2 py-1 text-[11px]">Expressions</TabsTrigger>
+              </TabsList>
+            </Tabs>
           ) : null}
-          <span className="text-[10px] text-ink-faint">
+          <span className="hidden text-[10px] text-ink-faint sm:inline">
             {activeMode === "fields" ? "ClickHouse table columns — click to preview" : "Expression knowledgebase — grouped by purpose"}
           </span>
           {activeMode === "expressions" && (
-            <button
+            <Button
               type="button"
               onClick={() => setShowManageDialog(true)}
-              className="ml-auto rounded border border-line bg-surface px-1.5 py-0.5 text-[9px] font-mono text-ink-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
+              variant="outline"
+              size="sm"
+              className="ml-auto h-7 px-2 text-[10px] font-mono"
               title="Manage expressions"
             >
               Manage
-            </button>
+            </Button>
           )}
         </div>
 
@@ -715,20 +727,23 @@ export function FieldBrowserModal({
         <div className="border-b border-line px-4 py-2">
           <div className="relative">
             <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint text-[11px]">🔍</span>
-            <input
+            <Input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={activeMode === "fields" ? "Search fields by name, label, category, description…" : "Search expressions by label, formula, or purpose…"}
-              className="w-full rounded-lg border border-line bg-surface-sunk py-1.5 pl-8 pr-3 font-mono text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+              className="h-9 w-full bg-surface-sunk py-1.5 pl-8 pr-3 font-mono text-[12px]"
             />
           </div>
         </div>
 
         {/* 4. Master / Detail */}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           {/* Master list */}
-          <div className="w-[46%] min-w-[320px] flex-shrink-0 overflow-y-auto border-r border-line bg-surface/40">
+          <div className={cn(
+            "min-h-0 w-full min-w-0 flex-shrink-0 overflow-y-auto bg-surface/40 md:w-[46%] md:min-w-[320px] md:border-r md:border-line",
+            showDetailOnMobile ? "hidden md:block" : "block",
+          )}>
             {activeMode === "fields" ? (
               filteredGroups.length === 0 ? (
                 <div className="px-4 py-8 text-center text-[12px] text-ink-muted">No fields match “{query}”</div>
@@ -743,7 +758,7 @@ export function FieldBrowserModal({
                       return (
                         <div
                           key={f.name}
-                          onClick={() => { setSelectedName(f.name); setSelectedRecipe(null); }}
+                          onClick={() => { setSelectedName(f.name); setSelectedRecipe(null); setShowDetailOnMobile(true); }}
                           className={cn(
                             "group flex w-full cursor-pointer items-start justify-between gap-2 border-b border-line/30 px-3 py-1.5 transition-colors",
                             isSel ? "bg-accent/10" : "hover:bg-surface-sunk",
@@ -760,14 +775,17 @@ export function FieldBrowserModal({
                           </div>
                           {/* Insert into expression button (editor uses) */}
                           {editorActive && (
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Insert ${fieldToken(f)} into expression`}
                               title={`Insert ${fieldToken(f)} into expression`}
                               onClick={(e) => { e.stopPropagation(); insertTerm(fieldToken(f)); }}
-                              className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-sunk text-[10px] font-bold text-ink-muted opacity-0 transition-opacity hover:bg-accent/20 hover:text-accent group-hover:opacity-100"
+                              className="mt-1 h-6 w-6 shrink-0 rounded-full text-[10px] font-bold text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                             >
                               +
-                            </button>
+                            </Button>
                           )}
                         </div>
                       );
@@ -788,7 +806,7 @@ export function FieldBrowserModal({
                     return (
                       <div
                         key={r.id}
-                        onClick={() => { setSelectedRecipe(r); setSelectedName(null); }}
+                        onClick={() => { setSelectedRecipe(r); setSelectedName(null); setShowDetailOnMobile(true); }}
                         className={cn(
                           "group flex w-full cursor-pointer items-start justify-between gap-2 border-b border-line/30 px-3 py-1.5 transition-colors",
                           isSel ? "bg-accent/10" : "hover:bg-surface-sunk",
@@ -803,14 +821,17 @@ export function FieldBrowserModal({
                           <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-ink-muted">{r.desc}</p>
                         </div>
                         {editorActive && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Insert ${r.label} into expression`}
                             title={`Insert ${r.expr}`}
                             onClick={(e) => { e.stopPropagation(); insertTerm(r.expr); setSelectedRecipe(r); }}
-                            className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-sunk text-[10px] font-bold text-ink-muted opacity-0 transition-opacity hover:bg-accent/20 hover:text-accent group-hover:opacity-100"
+                            className="mt-1 h-6 w-6 shrink-0 rounded-full text-[10px] font-bold text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                           >
                             +
-                          </button>
+                          </Button>
                         )}
                       </div>
                     );
@@ -821,20 +842,30 @@ export function FieldBrowserModal({
           </div>
 
           {/* Detail pane */}
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className={cn(
+            "min-h-0 min-w-0 flex-1 flex-col",
+            showDetailOnMobile ? "flex" : "hidden md:flex",
+          )}>
+            <div className="border-b border-line px-2 py-1 md:hidden">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowDetailOnMobile(false)}>
+                ← Back to results
+              </Button>
+            </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
               {activeMode === "fields" ? (
                 selectedField ? (
                   <div className="p-4">
                     <FieldDetailCard field={selectedField} className="w-full" />
                     {editorActive && (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => insertTerm(fieldToken(selectedField))}
-                        className="mt-2 w-full rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-[11px] font-bold text-accent hover:bg-accent/20"
+                        className="mt-2 h-auto w-full whitespace-normal border-accent/40 bg-accent/10 px-3 py-2 text-[11px] font-bold text-accent hover:bg-accent/20"
                       >
                         + Insert "{fieldToken(selectedField)}" into expression
-                      </button>
+                      </Button>
                     )}
                   </div>
                 ) : (
@@ -855,13 +886,15 @@ export function FieldBrowserModal({
                     <p className="mt-2 text-[11px] leading-relaxed text-ink">{selectedRecipe.desc}</p>
                   </div>
                   {editorActive && (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => insertTerm(selectedRecipe.expr)}
-                      className="mt-2 w-full rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-[11px] font-bold text-accent hover:bg-accent/20"
+                      className="mt-2 h-auto w-full whitespace-normal border-accent/40 bg-accent/10 px-3 py-2 text-[11px] font-bold text-accent hover:bg-accent/20"
                     >
                       + Insert recipe into expression
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -874,30 +907,24 @@ export function FieldBrowserModal({
             {/* Action footer */}
             {canApply && (
               <div className="flex items-center justify-end gap-2 border-t border-line px-4 py-2.5">
-                <button type="button" onClick={onClose} className="rounded border border-line bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink-muted hover:text-ink transition-colors">
+                <Button type="button" onClick={onClose} variant="outline" size="sm">
                   Cancel
-                </button>
-                <button type="button" onClick={confirmPick} className="rounded-lg bg-accent px-3.5 py-1.5 text-[11.5px] font-bold text-white hover:opacity-90 transition-opacity">
+                </Button>
+                <Button type="button" onClick={confirmPick} size="sm">
                   {actionLabel}
-                </button>
+                </Button>
               </div>
             )}
           </div>
         </div>
-      </div>
+      </DialogContent>
       {showManageDialog && (
-      <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border border-line bg-surface-sunk flex flex-col">
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <h3 className="text-[12px] font-bold text-ink">Manage Expressions</h3>
-            <button
-              type="button"
-              onClick={() => { setShowManageDialog(false); setEditingRecipe(null); }}
-              className="rounded border border-line bg-surface p-1 text-ink-muted hover:bg-accent/5 hover:text-accent transition-colors"
-            >
-              ✕
-            </button>
-          </div>
+      <Dialog open={showManageDialog} onOpenChange={(open) => { setShowManageDialog(open); if (!open) setEditingRecipe(null); }}>
+        <DialogContent size="lg" className="max-h-[85dvh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-[12px]">Manage expressions</DialogTitle>
+            <DialogDescription>Maintain reusable expressions for filtering, sorting, and measures.</DialogDescription>
+          </DialogHeader>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Add/Edit Form */}
             <div className="border border-line/60 rounded-lg p-4 space-y-3">
@@ -905,45 +932,45 @@ export function FieldBrowserModal({
               <div className="space-y-2">
                 <div>
                   <label className="block text-[10px] font-bold text-ink-muted mb-1">Label</label>
-                  <input
+                  <Input
                     type="text"
                     value={editingRecipe ? editingRecipe.label : newRecipe.label}
                     onChange={(e) => setNewRecipe({ ...newRecipe, label: e.target.value })}
                     placeholder="e.g. My Custom Breakout"
-                    className="w-full rounded border border-line bg-surface px-2 py-1.5 text-[11px] font-mono text-ink"
+                    className="h-9 w-full font-mono text-[11px]"
                     disabled={savingRecipe}
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-ink-muted mb-1">Expression</label>
-                  <input
+                  <Input
                     type="text"
                     value={editingRecipe ? editingRecipe.expr : newRecipe.expr}
                     onChange={(e) => setNewRecipe({ ...newRecipe, expr: e.target.value })}
                     placeholder="e.g. close > high[-1]"
-                    className="w-full rounded border border-line bg-surface px-2 py-1.5 text-[11px] font-mono text-ink"
+                    className="h-9 w-full font-mono text-[11px]"
                     disabled={savingRecipe}
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-ink-muted mb-1">Description</label>
-                  <input
+                  <Input
                     type="text"
                     value={editingRecipe ? editingRecipe.desc : newRecipe.description}
                     onChange={(e) => setNewRecipe({ ...newRecipe, description: e.target.value })}
                     placeholder="Optional tooltip text"
-                    className="w-full rounded border border-line bg-surface px-2 py-1.5 text-[11px] font-mono text-ink"
+                    className="h-9 w-full font-mono text-[11px]"
                     disabled={savingRecipe}
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-ink-muted mb-1">Category</label>
-                  <input
+                  <Input
                     type="text"
                     value={editingRecipe ? editingRecipe.category : newRecipe.category}
                     onChange={(e) => setNewRecipe({ ...newRecipe, category: e.target.value })}
                     placeholder="e.g. Breakout, Momentum, Multi-bar"
-                    className="w-full rounded border border-line bg-surface px-2 py-1.5 text-[11px] font-mono text-ink"
+                    className="h-9 w-full font-mono text-[11px]"
                     disabled={savingRecipe}
                   />
                 </div>
@@ -952,11 +979,10 @@ export function FieldBrowserModal({
                   <div className="flex gap-2">
                     {(["filter", "sort", "number", "column"] as const).map((p) => (
                       <label key={p} className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={newRecipe.purposes.includes(p)}
-                          onChange={(e) => setNewRecipe({ ...newRecipe, purposes: e.target.checked ? [...newRecipe.purposes, p] : newRecipe.purposes.filter((pur) => pur !== p) })}
-                          className="rounded border border-line bg-surface"
+                          onCheckedChange={(checked) => setNewRecipe({ ...newRecipe, purposes: checked ? [...newRecipe.purposes, p] : newRecipe.purposes.filter((pur) => pur !== p) })}
+                          aria-label={`${p} purpose`}
                         />
                         <span className="text-[10px] font-medium capitalize">{p}</span>
                       </label>
@@ -965,23 +991,25 @@ export function FieldBrowserModal({
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-line/40">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => { setEditingRecipe(null); setNewRecipe({ label: "", expr: "", description: "", category: "Custom", purposes: ["filter"] }); }}
-                  className="rounded border border-line bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink-muted hover:bg-accent/5"
                   disabled={savingRecipe}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  size="sm"
                   onClick={async () => {
                     const payload = editingRecipe
                       ? { ...newRecipe }
                       : { ...newRecipe, id: crypto.randomUUID() };
                     setSavingRecipe(true);
                     try {
-                      const res = await fetch(editingRecipe ? `/api/screens/formula-presets/${editingRecipe.id}` : "/api/screens/formula-presets", {
+                      const res = await authenticatedFetch(editingRecipe ? `/api/screens/formula-presets/${editingRecipe.id}` : "/api/screens/formula-presets", {
                         method: editingRecipe ? "PATCH" : "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload),
@@ -1004,11 +1032,10 @@ export function FieldBrowserModal({
                       setSavingRecipe(false);
                     }
                   }}
-                  className="rounded bg-accent px-3.5 py-1.5 text-[11px] font-bold text-white hover:opacity-90 transition-opacity"
                   disabled={savingRecipe || !newRecipe.label || !newRecipe.expr}
                 >
                   {savingRecipe ? "Saving…" : (editingRecipe ? "Save Changes" : "Add Expression")}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1039,20 +1066,26 @@ export function FieldBrowserModal({
                     </div>
                     {!isStaticRecipe && (
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => { setEditingRecipe(r); setNewRecipe({ label: r.label, expr: r.expr, description: r.desc ?? "", category: r.category ?? "Custom", purposes: r.purposes || ["filter"] }); }}
-                        className="rounded border border-line bg-surface p-1.5 text-[10px] text-ink-muted hover:bg-accent/5 hover:text-accent"
                         title="Edit"
+                        aria-label={`Edit ${r.label}`}
                       >
                         ✏️
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
                         onClick={async () => {
                           if (!confirm(`Delete "${r.label}"?`)) return;
                           try {
-                            const res = await fetch(`/api/screens/formula-presets/${r.id}`, { method: "DELETE" });
+                            const res = await authenticatedFetch(`/api/screens/formula-presets/${r.id}`, { method: "DELETE" });
                             if (res.ok) {
                               setManagedRecipes((prev) => (prev ?? []).filter((p) => p.id !== r.id));
                             }
@@ -1060,11 +1093,11 @@ export function FieldBrowserModal({
                             console.error("Failed to delete expression:", e);
                           }
                         }}
-                        className="rounded border border-amber-500/50 bg-surface p-1.5 text-[10px] text-amber-500 hover:bg-amber-500/10"
                         title="Delete"
+                        aria-label={`Delete ${r.label}`}
                       >
                         🗑️
-                      </button>
+                      </Button>
                     </div>
                     )}
                   </div>
@@ -1073,33 +1106,28 @@ export function FieldBrowserModal({
               </div>
             </div>
           </div>
-          <div className="border-t border-line p-4 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowManageDialog(false)}
-              className="rounded border border-line bg-surface px-4 py-2 text-[11px] font-semibold text-ink-muted hover:bg-accent/5"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowManageDialog(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       )}
-    </div>,
-    document.body,
+      </Dialog>
   );
 }
 
 function OpChip({ op, title, onClick }: { op: string; title: string; onClick: () => void }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="sm"
       onClick={onClick}
       title={title}
-      className="rounded border border-line bg-surface-sunk px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink-muted transition-colors hover:border-accent/60 hover:text-accent"
+      className="h-7 px-1.5 font-mono text-[10px] font-semibold text-ink-muted"
     >
       {op}
-    </button>
+    </Button>
   );
 }
 

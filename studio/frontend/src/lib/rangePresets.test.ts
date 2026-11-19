@@ -78,3 +78,4 @@ describe("presetWindow", () => {
     expect(presetWindow("1M", "23/09/2026")).toBeNull();
   });
 });
+

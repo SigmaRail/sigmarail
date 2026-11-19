@@ -7,12 +7,17 @@ import {
   boolText,
   catalogForSlot,
   emptyRule,
-  formatAction,
   isActionTypeId,
   metaForAction,
   ruleKey,
+  summarizeRule,
 } from "../../lib/rulesAst";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+import { Textarea } from "@sb/webapp-core/components/ui/textarea";
 import { ReorderButtons } from "./ReorderButtons";
 import { BoolExprEditor, OperandEditor } from "./ExprPillEditor";
 
@@ -91,23 +96,25 @@ function ActionRow({
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded border border-line bg-surface-sunk px-1.5 py-1">
       <span className="font-mono text-[10px] text-ink-muted">{index + 1}.</span>
-      <select
+      <Select
         value={action.type}
-        onChange={(e) => onChange(defaultAction(e.target.value as ActionTypeId, slot))}
-        className="rounded border border-line bg-surface px-1 py-0.5 text-[10px] font-semibold text-ink"
-        title={meta?.hint}
+        onValueChange={(value) => onChange(defaultAction(value as ActionTypeId, slot))}
       >
-        {catalog.map((a: ActionMeta) => (
-          <option key={a.id} value={a.id}>
-            {a.label}
-            {a.terminal ? " ■" : " ▫"}
-          </option>
-        ))}
-        {/* Stored foreign-slot actions still render selectable (can't be picked anew). */}
-        {!catalog.some((a) => a.id === action.type) ? (
-          <option value={action.type}>{action.type} (foreign)</option>
-        ) : null}
-      </select>
+        <SelectTrigger aria-label="Action" title={meta?.hint} className="h-8 w-auto min-w-32 px-2 text-xs font-semibold">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {catalog.map((a: ActionMeta) => (
+            <SelectItem key={a.id} value={a.id}>
+              {a.label}{a.terminal ? " ■" : " ▫"}
+            </SelectItem>
+          ))}
+          {/* Stored foreign-slot actions still render selectable (can't be picked anew). */}
+          {!catalog.some((a) => a.id === action.type) ? (
+            <SelectItem value={action.type}>{action.type} (foreign)</SelectItem>
+          ) : null}
+        </SelectContent>
+      </Select>
       {meta && (
         <span
           className={cn(
@@ -122,7 +129,7 @@ function ActionRow({
       {action.type === "exit" || action.type === "trim" ? (
         <label className="flex items-center gap-1 text-[10px] text-ink-muted">
           frac
-          <input
+          <Input
             type="number"
             min={0.01}
             max={1}
@@ -131,7 +138,8 @@ function ActionRow({
             onChange={(e) =>
               onChange({ ...action, fraction: Number(e.target.value) } as RuleAction)
             }
-            className="w-14 rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink"
+            aria-label="Action fraction"
+            className="h-8 w-16 px-2 py-1 text-xs"
           />
         </label>
       ) : null}
@@ -173,62 +181,72 @@ function ActionRow({
           ).map(([key, lab]) => (
             <label key={key} className="flex items-center gap-1 text-[10px] text-ink-muted">
               {lab}
-              <input
+              <Input
                 type="number"
                 step="any"
                 value={(action as Record<string, unknown>)[key] as number | undefined ?? 0}
                 onChange={(e) =>
                   onChange({ ...action, [key]: Number(e.target.value) } as RuleAction)
                 }
-                className="w-14 rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink"
+                aria-label={lab}
+                className="h-8 w-16 px-2 py-1 text-xs"
               />
             </label>
           ))}
         </>
       ) : null}
       {action.type === "ratchet_stop" ? (
-        <select
+        <Select
           value={action.mode ?? "max"}
-          onChange={(e) => onChange({ ...action, mode: e.target.value as "max" | "set" })}
-          className="rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink"
+          onValueChange={(value) => onChange({ ...action, mode: value as "max" | "set" })}
         >
-          <option value="max">max</option>
-          <option value="set">set</option>
-        </select>
+          <SelectTrigger aria-label="Stop update mode" className="h-8 w-24 px-2 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="max">max</SelectItem>
+            <SelectItem value="set">set</SelectItem>
+          </SelectContent>
+        </Select>
       ) : null}
       {action.type === "arm_cooldown" ? (
         <label className="flex items-center gap-1 text-[10px] text-ink-muted">
           days
-          <input
+          <Input
             type="number"
             min={0}
             step={1}
             value={action.days ?? 0}
             onChange={(e) => onChange({ ...action, days: Number(e.target.value) } as RuleAction)}
-            className="w-14 rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink"
+            aria-label="Cooldown days"
+            className="h-8 w-16 px-2 py-1 text-xs"
           />
         </label>
       ) : null}
       {action.type === "set_flag" ? (
         <label className="flex items-center gap-1 text-[10px] text-ink-muted">
           flag
-          <input
+          <Input
             type="text"
             value={action.flag ?? ""}
             onChange={(e) => onChange({ ...action, flag: e.target.value } as RuleAction)}
             placeholder="tranche1_taken"
-            className="w-36 rounded border border-line bg-surface px-1 py-0.5 font-mono text-[10px] text-ink"
+            aria-label="Flag name"
+            className="h-8 w-36 px-2 py-1 font-mono text-xs"
           />
         </label>
       ) : null}
-      <button
+      <Button
         type="button"
         onClick={onRemove}
+        variant="ghost"
+        size="icon"
         title="Remove action"
-        className="ml-auto rounded border border-line px-1 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk"
+        aria-label="Remove action"
+        className="ml-auto h-8 w-8 text-ink-muted"
       >
         ✕
-      </button>
+      </Button>
     </div>
   );
 }
@@ -278,36 +296,29 @@ export function RuleListEditor({
 
   if (!rules.length) {
     return (
-      <div className={cn("rounded border border-dashed border-line p-2", className)}>
-        <div className="flex items-center justify-between">
-          <span className="text-[10.5px] text-ink-faint">
-            {label}: none — the generated ladder is materialized into the spec on save.
-          </span>
-          <button
-            type="button"
-            onClick={() => onChangeRules([emptyRule(0, slot)])}
-            className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
-          >
-            + rule
-          </button>
-        </div>
+      <div className={cn("flex items-center justify-between py-1", className)}>
+        <span className="text-[10.5px] text-ink-faint">{label}</span>
+        <Button
+          type="button"
+          onClick={addRule}
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-xs text-ink-muted"
+        >
+          + rule
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-1.5 rounded border border-line p-2", className)}>
-      <div className="flex items-center justify-between">
-        <span className="text-[10.5px] font-semibold text-ink">
-          {label}{" "}
-          <span className="font-normal text-ink-faint">
-            (first match wins · ■ terminal)
-          </span>
-        </span>
+    <div className={cn("space-y-0.5", className)}>
+      <div className="flex min-h-8 items-center justify-between gap-2 border-b border-line/60 pb-1">
+        <span className="text-[10.5px] font-semibold text-ink">{label}</span>
         <div className="flex items-center gap-1">
           {jsonEdit !== null ? (
             <>
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   try {
@@ -318,21 +329,25 @@ export function RuleListEditor({
                   }
                   setJsonEdit(null);
                 }}
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs"
               >
                 apply
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => setJsonEdit(null)}
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-ink-muted"
               >
                 cancel
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   setExpanded(
@@ -341,74 +356,73 @@ export function RuleListEditor({
                       : new Set(rules.map((_, i) => i)),
                   )
                 }
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs text-ink-muted"
                 title={expanded.size === rules.length ? "Collapse all rules" : "Expand all rules"}
               >
                 {expanded.size === rules.length ? "collapse" : "expand"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => setJsonEdit(JSON.stringify(rules, null, 2))}
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs text-ink-muted"
                 title="Edit raw rule JSON"
               >
                 json
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={addRule}
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs text-ink-muted"
               >
                 + rule
-              </button>
+              </Button>
             </>
           )}
         </div>
       </div>
 
       {jsonEdit !== null ? (
-        <textarea
+        <Textarea
           value={jsonEdit}
           onChange={(e) => setJsonEdit(e.target.value)}
           rows={Math.min(20, jsonEdit.split("\n").length + 1)}
-          className="w-full rounded border border-line bg-surface-sunk p-1.5 font-mono text-[10px] text-ink"
+          className="min-h-32 w-full bg-surface-sunk p-2 font-mono text-xs text-ink"
           spellCheck={false}
         />
       ) : (
         rules.map((rule, i) => {
           const isOpen = expanded.has(i);
-          const fireSummary = rule.then
-            .map((a) => formatAction(a as RuleAction))
-            .join(" → ");
           if (!isOpen) {
             return (
               <div
                 key={ruleKey(rule, i)}
-                className="flex items-center gap-1.5 rounded border border-line bg-surface-raised/40 px-1.5 py-1"
+                className="flex min-w-0 items-center gap-1.5 rounded border border-line bg-surface-raised/40 px-1.5 py-1"
               >
-                <button
+                <Button
                   type="button"
                   onClick={() => toggleExpanded(i)}
-                  className="text-[10px] text-ink-muted hover:text-ink"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-ink-muted"
                   title="Expand rule"
                   aria-label={`expand ${rule.name}`}
                 >
                   ▸
-                </button>
-                <span className="w-6 text-right font-mono text-[9px] text-ink-faint">
+                </Button>
+                <span className="w-5 shrink-0 text-right font-mono text-[9px] text-ink-faint">
                   {rule.priority ?? 0}
                 </span>
-                <span
-                  className="truncate font-mono text-[10px] font-semibold text-ink"
-                  title={rule.description ?? undefined}
-                >
+                <span className="max-w-36 shrink-0 truncate font-mono text-[10px] font-semibold text-ink">
                   {rule.name}
                 </span>
-                <span className="truncate text-[10px] text-ink-muted" title={boolText(rule.when)}>
-                  {boolText(rule.when)}
-                </span>
-                <span className="ml-auto shrink-0 text-[10px] text-info">
-                  → {fireSummary || "—"}
+                <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground" title={summarizeRule(rule)}>
+                  {summarizeRule(rule)}
                 </span>
               </div>
             );
@@ -419,78 +433,72 @@ export function RuleListEditor({
             className="space-y-1 rounded border border-line bg-surface-raised/40 p-1.5"
           >
             <div className="flex flex-wrap items-center gap-1.5">
-              <button
+              <Button
                 type="button"
                 onClick={() => toggleExpanded(i)}
-                className="text-[10px] text-ink-muted hover:text-ink"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-ink-muted"
                 title="Collapse rule"
                 aria-label={`collapse ${rule.name}`}
               >
                 ▾
-              </button>
+              </Button>
               <ReorderButtons
                 canUp={i > 0}
                 canDown={i < rules.length - 1}
                 onUp={() => move(i, -1)}
                 onDown={() => move(i, 1)}
               />
-              <input
+              <Input
                 type="text"
                 value={rule.name}
                 onChange={(e) => patchRule(i, { name: e.target.value })}
-                className="w-32 rounded border border-line bg-surface px-1 py-0.5 font-mono text-[10px] font-semibold text-ink"
+                aria-label="Rule name"
+                className="h-8 w-32 px-2 py-1 font-mono text-xs font-semibold"
                 placeholder="name"
               />
               {showPriority && (
                 <label className="flex items-center gap-1 text-[10px] text-ink-muted">
                   pri
-                  <input
+                  <Input
                     type="number"
                     step={1}
                     value={rule.priority ?? 0}
                     onChange={(e) => patchRule(i, { priority: Number(e.target.value) })}
-                    className="w-12 rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink"
+                    aria-label="Rule priority"
+                    className="h-8 w-16 px-2 py-1 text-xs"
                   />
                 </label>
               )}
-              <label
-                className="flex items-center gap-1 text-[10px] text-ink-muted"
-                title="Fire at most once per position (tracked via __rule.<name>.fired)"
-              >
-                <input
-                  type="checkbox"
+              <span title="Fire at most once per position (tracked via __rule.<name>.fired)">
+                <Checkbox
                   checked={rule.once}
-                  onChange={(e) => patchRule(i, { once: e.target.checked })}
-                  className="rounded border-line"
+                  onCheckedChange={(checked) => patchRule(i, { once: checked === true })}
+                  label="Once"
+                  className="min-h-8 px-1 text-ink-muted"
                 />
-                once
-              </label>
-              <input
+              </span>
+              <Input
                 type="text"
                 value={rule.tag ?? ""}
                 onChange={(e) => patchRule(i, { tag: e.target.value || null })}
-                className="w-24 rounded border border-line bg-surface px-1 py-0.5 text-[10px] text-ink-muted"
+                aria-label="Rule tag"
+                className="h-8 w-28 px-2 py-1 text-xs text-ink-muted"
                 placeholder="tag"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => onChangeRules(rules.filter((_, idx) => idx !== i))}
-                className="ml-auto rounded border border-line px-1 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk"
+                variant="ghost"
+                size="icon"
+                className="ml-auto h-8 w-8 text-ink-muted"
                 title="Remove rule"
+                aria-label={`Remove ${rule.name}`}
               >
                 ✕
-              </button>
+              </Button>
             </div>
-            <input
-              type="text"
-              value={rule.description ?? ""}
-              onChange={(e) => patchRule(i, { description: e.target.value || null })}
-              placeholder="what this rule is for…"
-              title="Rule intent — display-only; never affects evaluation"
-              aria-label="rule description"
-              spellCheck={false}
-              className="w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-[10px] italic text-ink-muted placeholder:text-ink-faint hover:border-line focus:border-line focus:bg-surface"
-            />
             <div className="flex items-start gap-1.5">
               <span className="pt-0.5 text-[10px] text-ink-muted" title={boolText(rule.when)}>
                 when:
@@ -523,7 +531,7 @@ export function RuleListEditor({
                   }
                 />
               ))}
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   patchRule(i, {
@@ -535,14 +543,13 @@ export function RuleListEditor({
                     ],
                   })
                 }
-                className="rounded border border-dashed border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 border-dashed px-2 text-xs text-ink-muted"
               >
                 + action
-              </button>
+              </Button>
             </div>
-            <p className="text-[9.5px] text-ink-faint">
-              on fire: {fireSummary || "—"}
-            </p>
           </div>
           );
         })

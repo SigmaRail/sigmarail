@@ -579,3 +579,4 @@ export class StudioAgentBridgeRegistry {
 }
 
 export const studioAgentBridge = new StudioAgentBridgeRegistry();
+

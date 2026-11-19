@@ -302,3 +302,4 @@ export function groupsToFilterTrees(groups: AppliedFilterGroup[]): FilterTree[] 
     ],
   }));
 }
+

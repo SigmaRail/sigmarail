@@ -15,6 +15,8 @@ import { AlphaInsightsPanel } from "../studio/AlphaInsightsPanel";
 import { AlphaFactorPerformancePanel } from "../studio/AlphaFactorPerformancePanel";
 import { upsertPolicyRuleForBinding } from "../studio/PolicyRulesPanel";
 import { insightsFieldCatalog } from "../../lib/insightsFieldCatalog";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
 const ALPHA_MODES: StageMode[] = [...ALPHA_ADD_MODES];
 const ALL_MODES: StageMode[] = [...ALPHA_MODES, "hedge", "exit"];
@@ -148,11 +150,12 @@ export function PipelineCanvas({
           <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
             Strategy Name
           </label>
-          <input
+          <Input
             type="text"
             value={strategyName}
             onChange={(e) => onChange({ ...document, strategy_name: e.target.value })}
-            className="mt-1 w-full rounded border border-line bg-surface-sunk px-2 py-1 text-[13px] text-ink"
+            aria-label="Strategy name"
+            className="mt-1 h-9 w-full"
             placeholder="Strategy name"
           />
         </div>
@@ -173,25 +176,28 @@ export function PipelineCanvas({
       />
 
       <div className="relative">
-        <button
+        <Button
           type="button"
           onClick={() => setAddOpen((o) => !o)}
-          className="w-full rounded border border-dashed border-accent/50 bg-accent/5 py-2 text-[12px] font-semibold text-accent-ink hover:bg-accent/10"
+          variant="outline"
+          className="h-auto w-full border-dashed py-2 text-[12px] font-semibold"
+          aria-expanded={addOpen}
         >
           + Add Stage
-        </button>
+        </Button>
         {addOpen ? (
           <div className="absolute z-10 mt-1 w-full rounded border border-line bg-surface-raised p-2 shadow-panel">
             {addModes.map((mode) => (
-              <button
+              <Button
                 key={mode}
                 type="button"
                 onClick={() => addStage(mode)}
-                className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-[12px] text-ink hover:bg-surface-sunk"
+                variant="ghost"
+                className="h-auto w-full justify-between rounded px-2 py-1.5 text-left text-[12px] text-ink"
               >
                 <span className="font-semibold">{STAGE_MODE_LABELS[mode]}</span>
                 <span className="text-[10px] opacity-60">{EMPTY_STAGE[mode].name}</span>
-              </button>
+              </Button>
             ))}
           </div>
         ) : null}

@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { fetchWatchlistPreferences, saveWatchlistPreferences } from "../api/preferences";
 
 export type WatchlistFlagColor = "red" | "green" | "yellow" | "blue" | "purple" | "none";
 
@@ -18,8 +19,12 @@ export interface Watchlist {
   updated_at: string;
 }
 
-const STORAGE_KEY = "vera_screening_studio_watchlists_v1";
-const RECENT_KEY = "vera_screening_studio_recently_viewed_v1";
+const STORAGE_KEY = "sigmarail_studio_watchlists_v1";
+const RECENT_KEY = "sigmarail_studio_recently_viewed_v1";
+const LEGACY_STORAGE_KEY = "vera_screening_studio_watchlists_v1";
+const LEGACY_RECENT_KEY = "vera_screening_studio_recently_viewed_v1";
+const PRIOR_STORAGE_KEY = "sigmarail_studio_watchlists_v1";
+const PROFILE_SAVE_DELAY_MS = 500;
 
 const DEFAULT_WATCHLISTS: Watchlist[] = [
   {
@@ -51,23 +56,35 @@ const DEFAULT_WATCHLISTS: Watchlist[] = [
   },
 ];
 
-export function getStoredWatchlists(): Watchlist[] {
+export function getStoredWatchlists(userId: string | null): Watchlist[] {
+  if (!userId) return DEFAULT_WATCHLISTS;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const scopedKey = `${STORAGE_KEY}.${encodeURIComponent(userId)}`;
+    const raw = localStorage.getItem(scopedKey) ??
+      localStorage.getItem(PRIOR_STORAGE_KEY) ??
+      localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_WATCHLISTS));
       return DEFAULT_WATCHLISTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_WATCHLISTS;
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      localStorage.setItem(scopedKey, JSON.stringify(parsed));
+      localStorage.removeItem(PRIOR_STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return parsed;
+    }
+    return DEFAULT_WATCHLISTS;
   } catch {
     return DEFAULT_WATCHLISTS;
   }
 }
 
-export function saveStoredWatchlists(watchlists: Watchlist[]): void {
+export function saveStoredWatchlists(watchlists: Watchlist[], userId: string | null): void {
+  if (!userId) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlists));
+    localStorage.setItem(`${STORAGE_KEY}.${encodeURIComponent(userId)}`, JSON.stringify(watchlists));
+    localStorage.removeItem(PRIOR_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch (err) {
     console.error("Failed to save watchlists to localStorage:", err);
   }
@@ -75,7 +92,7 @@ export function saveStoredWatchlists(watchlists: Watchlist[]): void {
 
 export function getRecentlyViewed(): string[] {
   try {
-    const raw = localStorage.getItem(RECENT_KEY);
+    const raw = localStorage.getItem(RECENT_KEY) ?? localStorage.getItem(LEGACY_RECENT_KEY);
     return raw ? JSON.parse(raw) : ["LYFT", "UBER", "NVDA", "CRM"];
   } catch {
     return ["LYFT", "UBER", "NVDA", "CRM"];
@@ -89,30 +106,101 @@ export function addRecentlyViewed(ticker: string): void {
     const current = getRecentlyViewed().filter((t) => t !== clean);
     const updated = [clean, ...current].slice(0, 20);
     localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
+    localStorage.removeItem(LEGACY_RECENT_KEY);
   } catch (err) {
     console.error("Failed to update recently viewed:", err);
   }
+}
+
+function normalizeProfileWatchlists(value: unknown): Watchlist[] | null {
+  if (!Array.isArray(value)) return null;
+  const valid = value.filter((item): item is Watchlist => {
+    if (!item || typeof item !== "object") return false;
+    const candidate = item as Partial<Watchlist>;
+    return typeof candidate.id === "string" &&
+      typeof candidate.name === "string" &&
+      Array.isArray(candidate.symbols);
+  });
+  return valid.length > 0 ? valid : null;
 }
 
 /**
  * Custom React hook to manage watchlists reactively across the entire application
  */
 export function useWatchlists() {
-  const [watchlists, setWatchlists] = useState<Watchlist[]>(() => getStoredWatchlists());
+  const [watchlists, setWatchlists] = useState<Watchlist[]>(DEFAULT_WATCHLISTS);
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>(() => {
-    const lists = getStoredWatchlists();
-    return lists[0]?.id || "tech_leaders";
+    return DEFAULT_WATCHLISTS[0]?.id || "tech_leaders";
   });
+  const watchlistsRef = useRef(watchlists);
+  const profileUserIdRef = useRef<string | null>(null);
+  const profileLoadedRef = useRef(false);
+  const localChangesRef = useRef(false);
+  const saveTimerRef = useRef<number | null>(null);
+
+  const scheduleProfileSave = useCallback((next: Watchlist[]) => {
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null;
+      void saveWatchlistPreferences(next).catch(() => {
+        // Keep local persistence as an offline fallback; retry on the next edit.
+      });
+    }, PROFILE_SAVE_DELAY_MS);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    void fetchWatchlistPreferences()
+      .then(({ userId, preferences: value }) => {
+        if (!mounted) return;
+        profileUserIdRef.current = userId;
+        const remote = normalizeProfileWatchlists(value);
+        profileLoadedRef.current = true;
+
+        if (localChangesRef.current) {
+          saveStoredWatchlists(watchlistsRef.current, userId);
+          if (userId) scheduleProfileSave(watchlistsRef.current);
+          return;
+        }
+
+        const selected = remote ?? getStoredWatchlists(userId);
+        watchlistsRef.current = selected;
+        setWatchlists(selected);
+        saveStoredWatchlists(selected, userId);
+        setActiveWatchlistId((current) => selected.some((list) => list.id === current) ? current : selected[0]?.id ?? "");
+        if (!remote && userId) scheduleProfileSave(selected);
+      })
+      .catch(() => {
+        // Preserve local use when the profile service is temporarily unavailable.
+        if (!mounted) return;
+        profileLoadedRef.current = true;
+        if (localChangesRef.current && profileUserIdRef.current) scheduleProfileSave(watchlistsRef.current);
+      });
+
+    return () => {
+      mounted = false;
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+        if (profileUserIdRef.current) void saveWatchlistPreferences(watchlistsRef.current).catch(() => {
+          // Local persistence remains available if navigation interrupts a profile save.
+        });
+      }
+    };
+  }, [scheduleProfileSave]);
 
   const activeWatchlist = watchlists.find((w) => w.id === activeWatchlistId) || watchlists[0];
 
   const updateWatchlists = useCallback((updater: (prev: Watchlist[]) => Watchlist[]) => {
     setWatchlists((prev) => {
       const next = updater(prev);
-      saveStoredWatchlists(next);
+      watchlistsRef.current = next;
+      localChangesRef.current = true;
+      saveStoredWatchlists(next, profileUserIdRef.current);
+      if (profileLoadedRef.current && profileUserIdRef.current) scheduleProfileSave(next);
       return next;
     });
-  }, []);
+  }, [scheduleProfileSave]);
 
   const createWatchlist = useCallback((name: string, initialSymbols: string[] = []): string => {
     const cleanName = name.trim();

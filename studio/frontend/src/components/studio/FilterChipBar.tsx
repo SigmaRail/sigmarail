@@ -4,6 +4,7 @@ import type { AppliedFilterRow, ScreenField } from "../../types";
 import type { FieldPick } from "../../lib/fieldPick";
 import { formatFilterRowToExpression, parseExpressionToFilterRows } from "../../lib/formulaParser";
 import { useFieldPicker } from "./FieldPickerProvider";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 interface FilterChipBarProps {
   filterRows: AppliedFilterRow[];
@@ -199,64 +200,56 @@ export function FilterChipBar({
             >
               <div
                 className={cn(
-                  "group inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10.5px] transition-all",
+                  "group inline-flex min-h-10 max-w-full items-center rounded-full border transition-colors",
                   row.readOnly
                     ? "border-line bg-surface-raised opacity-70 text-ink-muted"
                     : row.annotation?.source === "agent"
-                      ? "border-accent/70 bg-accent/10 text-ink cursor-pointer ring-1 ring-accent/40"
-                      : "border-line bg-surface-raised hover:border-accent/60 hover:bg-surface-sunk text-ink cursor-pointer"
+                      ? "border-accent/70 bg-accent/10 text-ink ring-1 ring-accent/40"
+                      : "border-line bg-surface-raised hover:border-accent/60 hover:bg-surface-sunk text-ink"
                 )}
-                onClick={() => {
-                  if (!row.readOnly) openEdit(row);
-                }}
-                title={
-                  row.annotation?.rationale
-                    ? row.annotation.rationale
-                    : row.readOnly
-                      ? "Preset IR condition"
-                      : "Click to edit in the shared field/expression browser"
-                }
               >
-                <span className="select-none">{chipLabelText}</span>
-                {row.annotation?.rationale ? (
-                  <span
-                    className="rounded bg-accent/20 px-1 font-sans text-[8px] uppercase tracking-wide text-accent-ink"
-                    title={row.annotation.rationale}
-                  >
-                    why
-                  </span>
-                ) : null}
+                <Button
+                  type="button"
+                  disabled={row.readOnly}
+                  onClick={() => openEdit(row)}
+                  title={row.annotation?.rationale ?? (row.readOnly ? "Preset IR condition" : "Edit filter")}
+                  variant="ghost"
+                  className="h-auto min-h-10 min-w-0 justify-start gap-1.5 rounded-l-full px-3 py-1 text-left font-mono text-[10.5px] disabled:cursor-default"
+                >
+                  <span className="min-w-0 select-none break-words">{chipLabelText}</span>
+                  {row.annotation?.rationale ? (
+                    <span className="shrink-0 rounded bg-accent/20 px-1 font-sans text-[8px] uppercase tracking-wide text-accent-ink">
+                      why
+                    </span>
+                  ) : null}
+                  {!row.readOnly && <span className="shrink-0 font-sans text-[9px] text-ink-faint group-hover:text-accent">Edit</span>}
+                </Button>
                 {!row.readOnly && (
-                  <span className="text-[9px] text-ink-faint group-hover:text-accent font-sans transition-colors">
-                    E
-                  </span>
-                )}
-                {!row.readOnly && (
-                  <button
+                  <Button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFilter(row.id);
-                    }}
-                    className="ml-0.5 rounded-full p-0.5 text-ink-faint hover:text-danger hover:bg-danger/10 transition-colors"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFilter(row.id)}
+                    className="mr-0.5 h-9 w-9 shrink-0 rounded-full text-ink-faint hover:bg-danger/10 hover:text-danger"
                     aria-label={"Remove filter " + chipLabelText}
                     title="Remove filter"
                   >
-                    x
-                  </button>
+                    <span aria-hidden="true">×</span>
+                  </Button>
                 )}
               </div>
             </div>
           );
         })}
 
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={openAdd}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-accent/60 bg-accent/5 px-2.5 py-0.5 text-[10.5px] font-semibold text-accent hover:bg-accent/15 transition-colors"
+          className="min-h-10 border-dashed border-accent/60 bg-accent/5 px-3 text-xs font-semibold text-accent hover:bg-accent/15"
         >
           + Add Filter
-        </button>
+        </Button>
       </div>
 
       {linterWarnings.length > 0 && (
@@ -271,13 +264,15 @@ export function FilterChipBar({
                 <span className="truncate">{w.message}</span>
               </div>
               {w.quickFix && (
-                <button
+                <Button
                   type="button"
                   onClick={w.quickFix.action}
-                  className="flex-shrink-0 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-semibold px-2 py-0.5 text-[9.5px] border border-amber-500/40 transition-colors cursor-pointer"
+                  variant="outline"
+                  size="sm"
+                  className="h-auto flex-shrink-0 border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[9.5px] font-semibold text-amber-200 hover:bg-amber-500/30 hover:text-amber-100"
                 >
                   Quick Fix: {w.quickFix.label}
-                </button>
+                </Button>
               )}
             </div>
           ))}

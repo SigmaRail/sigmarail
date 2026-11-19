@@ -25,6 +25,36 @@ import type {
 } from "../types";
 import { CopyIdBadge } from "./CopyIdBadge";
 import { studioAgentBridge } from "../lib/studioAgentBridge";
+import { PageHeadline } from "@sb/webapp-core/components/pageHeadline";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+
+function ProfileSelectField({
+  label,
+  value,
+  onValueChange,
+  options,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+        <SelectTrigger className="h-9 w-full text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 function truncateId(id: string, head = 8, tail = 6): string {
   if (id.length <= head + tail + 1) return id;
@@ -56,9 +86,9 @@ function GateMetrics({ gate }: { gate: PromotionGateResult | undefined }) {
 
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-line bg-surface px-2.5 py-2">
-      <div className="text-[10px] text-ink-muted">{label}</div>
-      <div className="mt-0.5 text-[13px] font-semibold tabular-nums text-ink">{value}</div>
+    <div className="rounded-md border bg-card px-3 py-2">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-semibold tabular-nums">{value}</div>
     </div>
   );
 }
@@ -73,14 +103,11 @@ function DeploymentRow({
   onSelect: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onSelect}
-      className={`w-full border-b border-line px-3 py-2.5 text-left transition-colors ${
-        selected
-          ? "border-l-2 border-l-accent bg-accent-soft/60"
-          : "border-l-2 border-l-transparent hover:bg-surface-sunk"
-      }`}
+      variant={selected ? "secondary" : "ghost"}
+      className="h-auto w-full justify-start rounded-none border-b px-3 py-2.5 text-left"
     >
       <div className="font-mono text-[11px] font-medium text-ink">
         {truncateId(deployment.deployment_id)}
@@ -92,11 +119,12 @@ function DeploymentRow({
         <span className="rounded bg-surface-sunk px-1.5 py-0.5 text-ink-muted">
           {deployment.status ?? "unknown"}
         </span>
+        {deployment.is_shared ? <Badge variant="muted">Shared</Badge> : null}
         {deployment.lean_environment ? (
           <span className="text-ink-faint">{deployment.lean_environment}</span>
         ) : null}
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -354,22 +382,30 @@ export function PromotePanel({
   }, [selectedDeploymentId, gateQuery.data]);
 
   return (
-    <div className="flex min-h-0 flex-1 bg-surface">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface-raised">
-        <div className="border-b border-line px-3 py-3">
-          <h2 className="text-sm font-semibold text-ink">Backtest runs</h2>
-          <p className="mt-0.5 text-[11px] text-ink-muted">Select run to promote</p>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <header className="shrink-0 border-b px-3 py-3 sm:px-4">
+        <PageHeadline
+          header="Deploy"
+          subheader="Choose a backtest, configure an account, and manage a local runtime."
+          className="space-y-1"
+        />
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <aside className="flex max-h-48 w-full shrink-0 flex-col border-b bg-background lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
+        <div className="border-b px-3 py-2.5">
+          <h2 className="text-sm font-semibold">Backtest runs</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Select a run to review its deployment gate.</p>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 gap-2 overflow-x-auto overflow-y-hidden p-2 lg:block lg:space-y-1 lg:overflow-x-hidden lg:overflow-y-auto">
           {runsQuery.isLoading ? (
-            <div className="px-3 py-6 text-[12px] text-ink-muted">Loading runs…</div>
+            <div className="px-3 py-6 text-sm text-muted-foreground">Loading runs…</div>
           ) : runs.length === 0 ? (
-            <div className="px-3 py-8 text-center text-[11px] text-ink-muted">
+            <div className="min-w-48 px-3 py-6 text-center text-sm text-muted-foreground lg:min-w-0">
               No completed runs yet.
             </div>
           ) : (
             runs.map((run) => (
-              <button
+              <Button
                 key={run.run_id}
                 type="button"
                 onClick={() => {
@@ -377,11 +413,8 @@ export function PromotePanel({
                   setRegisterSuccess(null);
                   setSelectedRunId(run.run_id);
                 }}
-                className={`w-full border-b border-line px-3 py-2.5 text-left ${
-                  run.run_id === selectedRunId
-                    ? "border-l-2 border-l-accent bg-accent-soft/60"
-                    : "border-l-2 border-l-transparent hover:bg-surface-sunk"
-                }`}
+                variant={run.run_id === selectedRunId ? "secondary" : "ghost"}
+                className="h-auto min-w-48 shrink-0 justify-start rounded-md border px-3 py-2.5 text-left lg:w-full lg:min-w-0 lg:rounded-none lg:border-x-0 lg:border-t-0"
               >
                 <div className="font-mono text-[11px] font-medium text-ink">
                   {truncateId(run.run_id)}
@@ -389,104 +422,94 @@ export function PromotePanel({
                 <div className="mt-0.5 truncate font-mono text-[10px] text-ink-faint">
                   {run.ir_id ?? "—"}
                 </div>
-              </button>
+              </Button>
             ))
           )}
         </div>
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-surface-raised p-4">
-        <section className="mb-6 max-w-5xl">
-          <h2 className="text-sm font-semibold text-ink">Local LEAN trading</h2>
-          <p className="mt-1 text-[12px] text-ink-muted">
-            Run up to two isolated local LEAN Docker deployments with a supported brokerage and account profile.
-          </p>
+        <section className="mb-6 max-w-5xl space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">Local runtime</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Configure a brokerage profile and review the selected backtest before starting a local runtime.
+            </p>
+          </div>
 
-          <div className="mt-4 rounded border border-line bg-surface p-3">
+          <Card className="p-3 shadow-none sm:p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <h3 className="text-[13px] font-semibold text-ink">Brokerage account</h3>
-                <p className="mt-0.5 text-[11px] text-ink-muted">Account details are stored in Studio’s local database. Broker credentials go to the operating-system credential vault.</p>
+                <h3 className="text-sm font-semibold">Brokerage account</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Account settings are stored locally. Broker credentials go to the operating-system credential vault.</p>
               </div>
-              <span className={`rounded px-2 py-1 text-[10px] ${account?.credentials_configured ? "bg-accent-soft text-accent" : "bg-surface-sunk text-ink-muted"}`}>
+              <Badge variant={account?.credentials_configured ? "success" : "muted"}>
                 {account?.credentials_configured ? "Credentials secured" : "Not connected"}
-              </span>
+              </Badge>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <label className="text-[11px] text-ink-muted">Saved account
-                <select value={creatingAccount ? "new" : (account?.id ?? "new")} onChange={(e) => {
-                  if (e.target.value === "new") {
+            <div className="mt-4 max-w-lg">
+              <ProfileSelectField
+                label="Account profile"
+                value={creatingAccount ? "new" : (account?.id ?? "new")}
+                onValueChange={(value) => {
+                  if (value === "new") {
                     setCreatingAccount(true); setSelectedAccountId(null); setAccountProvider("alpaca"); setAccountDataProvider("alpaca"); setAccountEnvironment("paper"); setAccountName("Alpaca paper"); setAccountIdentifier(""); setCredentialValues({});
                   } else {
-                    setCreatingAccount(false); setSelectedAccountId(e.target.value);
+                    setCreatingAccount(false); setSelectedAccountId(value);
                   }
-                }} className="ml-2 rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
-                  {accounts.map((item) => <option key={item.id} value={item.id}>{item.display_name} · {item.provider} · {item.environment} · {item.data_provider} feed{item.active ? "" : " · disabled"}</option>)}
-                  <option value="new">+ Add account</option>
-                </select>
-              </label>
+                }}
+                options={[
+                  ...accounts.map((item) => ({ value: item.id, label: `${item.display_name} · ${item.provider} · ${item.environment}` })),
+                  { value: "new", label: "Add account" },
+                ]}
+              />
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <label className="text-[11px] text-ink-muted">LEAN brokerage
-                <select value={accountProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => {
-                  const next = brokerages.find((item) => item.id === e.target.value);
-                  setAccountProvider(e.target.value);
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ProfileSelectField label="Brokerage" value={accountProvider} disabled={!creatingAccount && Boolean(account)} onValueChange={(value) => {
+                  const next = brokerages.find((item) => item.id === value);
+                  setAccountProvider(value);
                   setAccountDataProvider(next?.default_data_provider ?? "alpaca");
                   const nextEnv = next?.environments.paper ? "paper" : "live";
                   setAccountEnvironment(nextEnv);
-                  setAccountName(`${next?.label ?? e.target.value} ${nextEnv}`);
+                  setAccountName(`${next?.label ?? value} ${nextEnv}`);
                   setCredentialValues({});
-                }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
-                  {brokerages.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                </select>
+                }} options={brokerages.map((item) => ({ value: item.id, label: item.label }))} />
+              <ProfileSelectField label="Market data provider" value={accountDataProvider} disabled={!creatingAccount && Boolean(account)} onValueChange={(value) => { setAccountDataProvider(value); setCredentialValues({}); }} options={dataProviders.map((item) => ({ value: item.id, label: item.label }))} />
+              <ProfileSelectField label="Account environment" value={accountEnvironment} disabled={!creatingAccount && Boolean(account)} onValueChange={(value) => { setAccountEnvironment(value as "paper" | "live"); setAccountName(`${selectedBrokerage?.label ?? accountProvider} ${value}`); }} options={(Object.keys(selectedBrokerage?.environments ?? { paper: "paper" }) as Array<"paper" | "live">).map((env) => ({ value: env, label: env === "live" ? "Live account" : "Paper / test account" }))} />
+              <label className="block text-sm font-medium">Account name
+                <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} className="mt-1.5 h-9" />
               </label>
-              <label className="text-[11px] text-ink-muted">Live data provider (separate from brokerage)
-                <select value={accountDataProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountDataProvider(e.target.value); setCredentialValues({}); }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
-                  {dataProviders.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                </select>
+              <label className="block text-sm font-medium">Account ID or label (optional)
+                <Input value={accountIdentifier} onChange={(e) => setAccountIdentifier(e.target.value)} className="mt-1.5 h-9" />
               </label>
-              <label className="text-[11px] text-ink-muted">Account environment
-                <select value={accountEnvironment} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountEnvironment(e.target.value as "paper" | "live"); setAccountName(`${selectedBrokerage?.label ?? accountProvider} ${e.target.value}`); }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
-                  {(Object.keys(selectedBrokerage?.environments ?? { paper: "paper" }) as Array<"paper" | "live">).map((env) => <option key={env} value={env}>{env === "live" ? "Live account" : "Paper / test account"}</option>)}
-                </select>
-              </label>
-              <label className="text-[11px] text-ink-muted">Account label
-                <input value={accountName} onChange={(e) => setAccountName(e.target.value)} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink" />
-              </label>
-              <label className="text-[11px] text-ink-muted">Account ID / label (optional)
-                <input value={accountIdentifier} onChange={(e) => setAccountIdentifier(e.target.value)} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink" />
-              </label>
-              {credentialFields.map((field) => <label key={field.key} className="text-[11px] text-ink-muted">{field.label}
+              {credentialFields.map((field) => <div key={field.key}>
                 {field.choices ? (
-                  <select value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
-                    <option value="">Choose…</option>
-                    {field.choices.map((choice) => <option key={choice} value={choice}>{choice}</option>)}
-                  </select>
+                  <ProfileSelectField label={field.label} value={credentialValues[field.key] || "__unset__"} onValueChange={(value) => setCredentialValues((current) => ({ ...current, [field.key]: value === "__unset__" ? "" : value }))} options={[{ value: "__unset__", label: "Choose…" }, ...field.choices.map((choice) => ({ value: choice, label: choice }))]} />
                 ) : (
-                  <input type={field.secret ? "password" : "text"} autoComplete="new-password" value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 font-mono text-[12px] text-ink" />
+                  <label className="block text-sm font-medium">{field.label}<Input type={field.secret ? "password" : "text"} autoComplete="new-password" value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="mt-1.5 h-9 font-mono" /></label>
                 )}
-              </label>)}
+              </div>)}
             </div>
-            <p className="mt-2 text-[10px] text-ink-faint">Real-time coverage depends on the selected provider’s subscription, market, and instrument entitlements. A paper brokerage account can still use a separate live-data provider.</p>
+            <p className="mt-3 text-xs text-muted-foreground">Market-data coverage depends on your provider plan and instrument entitlements. Paper trading can use a separate market-data provider.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={saveAccountMutation.isPending || !accountName.trim()} onClick={() => saveAccountMutation.mutate()} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+              <Button type="button" variant="outline" size="sm" disabled={saveAccountMutation.isPending || !accountName.trim()} onClick={() => saveAccountMutation.mutate()}>
                 {saveAccountMutation.isPending ? "Saving…" : "Save account and vault credentials"}
-              </button>
+              </Button>
               {account ? (
                 <>
                   {account.connection_verification_available ? (
-                    <button type="button" disabled={!account.credentials_configured || verifyAccountMutation.isPending} onClick={() => verifyAccountMutation.mutate(account.id)} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+                    <Button type="button" variant="outline" size="sm" disabled={!account.credentials_configured || verifyAccountMutation.isPending} onClick={() => verifyAccountMutation.mutate(account.id)}>
                       {verifyAccountMutation.isPending ? "Verifying…" : "Verify broker connection"}
-                    </button>
+                    </Button>
                   ) : null}
-                  <button type="button" disabled={accountActiveMutation.isPending} onClick={() => accountActiveMutation.mutate({ profileId: account.id, active: !account.active })} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+                  <Button type="button" variant="outline" size="sm" disabled={accountActiveMutation.isPending} onClick={() => accountActiveMutation.mutate({ profileId: account.id, active: !account.active })}>
                     {account.active ? "Disable account" : "Enable account"}
-                  </button>
-                  <button type="button" disabled={deleteAccountMutation.isPending} onClick={() => {
+                  </Button>
+                  <Button type="button" variant="destructive" size="sm" disabled={deleteAccountMutation.isPending} onClick={() => {
                     if (window.confirm(`Remove ${account.display_name} and its credentials from the OS vault? This cannot be undone.`)) deleteAccountMutation.mutate(account.id);
-                  }} className="rounded border border-danger/50 px-3 py-1.5 text-[11px] font-medium text-danger disabled:opacity-40">
+                  }}>
                     Remove account
-                  </button>
+                  </Button>
                 </>
               ) : null}
               {account?.account_identifier ? <span className="text-[10px] text-ink-faint">Account: {account.account_identifier}</span> : null}
@@ -494,18 +517,18 @@ export function PromotePanel({
             {accountError ? <p className="mt-2 text-[11px] text-danger">{accountError}</p> : null}
             {accountMessage ? <p className="mt-2 text-[11px] text-accent">{accountMessage}</p> : null}
             {verificationMessage ? <p className="mt-2 text-[11px] text-accent">{verificationMessage}</p> : account?.credentials_configured ? <p className="mt-2 text-[11px] text-ink-muted">Credentials configured; connection not verified. A broker check does not confirm market-data entitlement.</p> : null}
-          </div>
+          </Card>
 
-          <div className="mt-3 rounded border border-line bg-surface p-3">
+          <Card className="p-3 shadow-none sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-[12px] font-semibold text-ink">Runtime: {runtime?.status ?? "checking"}</div>
-                <div className="mt-0.5 text-[10px] text-ink-muted">{runtime?.active_count ?? 0}/{runtime?.max_concurrent ?? 2} local deployments active · {runtimeDeployment ? `${runtimeDeployment.account_name ?? "Unmanaged runtime"} · ${runtimeDeployment.project} · ${runtimeDeployment.mode}` : "VeraTradingLab · local Docker"}</div>
+                <div className="mt-0.5 text-[10px] text-ink-muted">{runtime?.active_count ?? 0}/{runtime?.max_concurrent ?? 2} local deployments active · {runtimeDeployment ? `${runtimeDeployment.account_name ?? "Unmanaged runtime"} · ${runtimeDeployment.project} · ${runtimeDeployment.mode}` : "SigmaRail LEAN runtime · local Docker"}</div>
                 {runtimeDeployment?.container_name ? <div className="mt-0.5 font-mono text-[10px] text-ink-faint">{runtimeDeployment.container_name} · Docker {runtimeDeployment.container_status ?? "unknown"}</div> : null}
               </div>
               {runtimeDeployment?.deployment_id && runtimeDeployment.account_profile_id && runtimeDeployment.status === "running" ? (
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" disabled={runtimeAction.isPending} onClick={() => {
+                  <Button type="button" variant="outline" size="sm" disabled={runtimeAction.isPending || runtime?.remote_stop_supported === false} onClick={() => {
                     const deploymentId = runtimeDeployment.deployment_id!;
                     if (runtimeDeployment.mode === "live") {
                       const expected = `STOP ${deploymentId.slice(-8)}`;
@@ -513,8 +536,8 @@ export function PromotePanel({
                     } else if (window.confirm("Stop this LEAN algorithm and Docker container? Existing paper positions will remain open.")) {
                       runtimeAction.mutate({ action: "stop", deployment_id: deploymentId });
                     }
-                  }} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">Stop selected</button>
-                  <button type="button" disabled={runtimeAction.isPending} onClick={() => {
+                  }}>Stop selected</Button>
+                  {runtime?.remote_liquidation_supported !== false ? <Button type="button" variant="destructive" size="sm" disabled={runtimeAction.isPending} onClick={() => {
                     const deploymentId = runtimeDeployment.deployment_id!;
                     const isLive = runtimeDeployment.mode === "live";
                     if (isLive) {
@@ -523,7 +546,7 @@ export function PromotePanel({
                     } else if (window.confirm("Send market liquidation orders for all open paper positions? LEAN will stay running so you can confirm fills.")) {
                       runtimeAction.mutate({ action: "liquidate", deployment_id: deploymentId });
                     }
-                  }} className="rounded border border-danger/50 px-3 py-1.5 text-[11px] font-medium text-danger disabled:opacity-40">Liquidate selected</button>
+                  }}>Liquidate selected</Button> : null}
                 </div>
               ) : null}
             </div>
@@ -535,14 +558,14 @@ export function PromotePanel({
               <div className="mt-3 space-y-1 border-t border-line pt-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Managed deployments</div>
                 {runtimeDeployments.map((deployment) => (
-                  <button key={deployment.deployment_id} type="button" onClick={() => setSelectedLocalDeploymentId(deployment.deployment_id ?? null)} className={`flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-[11px] ${deployment.deployment_id === selectedLocalDeploymentId ? "bg-accent-soft text-accent" : "text-ink hover:bg-surface-sunk"}`}>
+                  <Button key={deployment.deployment_id} type="button" variant={deployment.deployment_id === selectedLocalDeploymentId ? "secondary" : "ghost"} onClick={() => setSelectedLocalDeploymentId(deployment.deployment_id ?? null)} className="flex h-auto w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-xs">
                     <span className="min-w-0 truncate">{deployment.account_name ?? "Paper account"} · {deployment.ir_id ?? "strategy"}</span>
                     <span className="shrink-0 font-mono">{deployment.status}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             ) : null}
-          </div>
+          </Card>
 
           {selectedRun ? (
             <div className="mt-4 rounded border border-line bg-surface p-3">
@@ -598,9 +621,9 @@ export function PromotePanel({
               )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                   type="button"
-                  disabled={!canPromote || !runtime?.enabled || !account?.active || !account?.credentials_configured || runtimeLimitReached || runtimeAction.isPending}
+                  disabled={!canPromote || !runtime?.enabled || runtime?.remote_start_supported === false || !account?.active || !account?.credentials_configured || runtimeLimitReached || runtimeAction.isPending}
                   onClick={() => {
                     if (!account) return;
                     if (account.environment === "paper") {
@@ -612,11 +635,12 @@ export function PromotePanel({
                       if (window.prompt(`This starts a LIVE brokerage account and may place real orders. Type ${expected} to continue.`) === expected) runtimeAction.mutate({ action: "start-live", ir_id: irId, approval_backtest_run_id: selectedRunId!, account_profile_id: account.id, live_confirmation: expected });
                     }
                   }}
-                  className="rounded bg-ink px-3 py-1.5 text-[12px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  size="sm"
                 >
                   {runtimeAction.isPending ? "Starting…" : `Start ${account?.environment === "live" ? "LIVE" : "paper"} ${selectedBrokerage?.label ?? "LEAN"} deployment`}
-                </button>
+                </Button>
                 {runtimeLimitReached ? <span className="text-[11px] text-warn">{runtime?.status === "external_running" ? "Stop the unmanaged LEAN runtime before starting a Studio deployment." : `Stop a managed run before starting another (limit ${runtime?.max_concurrent ?? 2}).`}</span> : null}
+                {runtime?.remote_start_supported === false ? <span className="text-[11px] text-warn">Remote deployment starts are disabled during the AppTension migration.</span> : null}
                 {!account?.credentials_configured ? <span className="text-[11px] text-warn">Save this account and its credentials first</span> : null}
                 {account?.environment === "live" ? <span className="rounded bg-danger-soft px-2 py-1 text-[11px] font-semibold text-danger">LIVE account — orders can move real money</span> : null}
                 {!irId ? (
@@ -698,6 +722,7 @@ export function PromotePanel({
           </div>
         </section>
       </main>
+      </div>
     </div>
   );
 }

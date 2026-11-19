@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
 import { cancelBacktestJob } from "../api/backtests";
 import type { BacktestJobListItem } from "../types";
 
@@ -64,7 +65,7 @@ export function ActiveBacktestBanner({
             >
               <div>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[11px] font-bold text-ink truncate">
@@ -90,16 +91,18 @@ export function ActiveBacktestBanner({
                     ) : null}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
+                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center">
+                    <Button
                       type="button"
                       onClick={() => onViewLog(job.job_id, job.ir_id, job.status)}
-                      className="rounded border border-line bg-surface-sunk px-2 py-1 text-[10.5px] font-medium text-ink hover:bg-surface-raised transition-colors"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 min-h-8 px-2 text-xs"
                       title="View live container log"
                     >
                       📜 Live Log
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       disabled={cancellingId === job.job_id}
                       onClick={() => {
@@ -108,11 +111,13 @@ export function ActiveBacktestBanner({
                           cancelMutation.mutate(job.job_id);
                         }
                       }}
-                      className="rounded border border-danger/40 bg-danger-soft/60 px-2 py-1 text-[10.5px] font-medium text-danger hover:bg-danger-soft transition-colors disabled:opacity-50"
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 min-h-8 px-2 text-xs"
                       title="Abort this backtest"
                     >
                       {cancellingId === job.job_id ? "Aborting…" : "⏹ Abort"}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 

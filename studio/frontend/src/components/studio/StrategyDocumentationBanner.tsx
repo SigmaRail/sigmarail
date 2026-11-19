@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGenerateLocalePath } from "@sb/webapp-core/hooks";
 import { useQuery } from "@tanstack/react-query";
 import type { BacktestSpecSummary, BacktestRunSummary } from "../../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { authenticatedFetch } from "../../api/authenticatedFetch";
 
 interface StrategyDocumentationBannerProps {
   spec?: BacktestSpecSummary | null;
@@ -115,6 +118,7 @@ export function StrategyDocumentationBanner({
 }: StrategyDocumentationBannerProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const navigate = useNavigate();
+  const generateLocalePath = useGenerateLocalePath();
 
   const irId = spec?.ir_id;
   const lineage = (spec?.lineage as {
@@ -130,7 +134,7 @@ export function StrategyDocumentationBanner({
     queryKey: ["latest-run-for-spec", irId],
     queryFn: async () => {
       if (!irId) return null;
-      const res = await fetch(`/api/backtests/runs?ir_id=${encodeURIComponent(irId)}&limit=1`);
+      const res = await authenticatedFetch(`/api/backtests/runs?ir_id=${encodeURIComponent(irId)}&limit=1`);
       if (!res.ok) return null;
       const json = await res.json();
       return (json.runs?.[0] as BacktestRunSummary) ?? null;
@@ -142,7 +146,7 @@ export function StrategyDocumentationBanner({
     queryKey: ["latest-run-for-spec", parentIrId],
     queryFn: async () => {
       if (!parentIrId) return null;
-      const res = await fetch(`/api/backtests/runs?ir_id=${encodeURIComponent(parentIrId)}&limit=1`);
+      const res = await authenticatedFetch(`/api/backtests/runs?ir_id=${encodeURIComponent(parentIrId)}&limit=1`);
       if (!res.ok) return null;
       const json = await res.json();
       return (json.runs?.[0] as BacktestRunSummary) ?? null;
@@ -195,9 +199,11 @@ export function StrategyDocumentationBanner({
           )}
         </div>
 
-        <button
+        <Button
           type="button"
-          className="text-[11px] font-medium text-accent hover:underline flex items-center gap-1"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded((prev) => !prev);
@@ -205,7 +211,7 @@ export function StrategyDocumentationBanner({
         >
           <span>{isExpanded ? "Collapse" : "Show Rationale"}</span>
           <span className="text-[10px]">{isExpanded ? "▲" : "▼"}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Live Performance & Compare Parent Bar */}
@@ -267,18 +273,20 @@ export function StrategyDocumentationBanner({
                 );
               })()}
 
-              <button
+              <Button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/backtests?compare_runs=${currentRun.run_id},${parentRun.run_id}&view=compare`);
+                  navigate(generateLocalePath(`backtests?compare_runs=${currentRun.run_id},${parentRun.run_id}&view=compare`));
                 }}
-                className="flex items-center gap-1 rounded bg-accent/15 border border-accent/40 px-2.5 py-1 text-[11px] font-semibold text-accent hover:bg-accent/25 transition-colors cursor-pointer"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs"
                 title={`Compare ${spec.ir_id} against parent ${parentIrId}`}
               >
                 <span>⚔️</span>
                 <span>Compare with Parent</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -319,3 +327,4 @@ export function StrategyDocumentationBanner({
     </div>
   );
 }
+

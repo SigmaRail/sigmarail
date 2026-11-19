@@ -6,6 +6,7 @@ import {
   formatFilterRowToExpression,
 } from "../../lib/formulaParser";
 import { FieldInfoPopover } from "./FieldInfoPopover";
+import { authenticatedFetch } from "../../api/authenticatedFetch";
 
 interface FormulaPreset {
   id: string;
@@ -76,7 +77,7 @@ export function TextFormulaInput({
     let cancelled = false;
     const loadPresets = async () => {
       try {
-        const res = await fetch("/api/screens/formula-presets?active_only=true");
+        const res = await authenticatedFetch("/api/screens/formula-presets?active_only=true");
         if (res.ok) {
           const data = await res.json();
           if (!cancelled) {
@@ -393,7 +394,7 @@ export function TextFormulaInput({
                         : { ...newPreset, id: crypto.randomUUID() };
                       setSavingPreset(true);
                       try {
-                        const res = await fetch(editingPreset ? `/api/screens/formula-presets/${editingPreset.id}` : "/api/screens/formula-presets", {
+                        const res = await authenticatedFetch(editingPreset ? `/api/screens/formula-presets/${editingPreset.id}` : "/api/screens/formula-presets", {
                           method: editingPreset ? "PATCH" : "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify(payload),
@@ -462,7 +463,7 @@ export function TextFormulaInput({
                               onClick={async () => {
                                 if (!confirm(`Delete "${p.label}"?`)) return;
                                 try {
-                                  await fetch(`/api/screens/formula-presets/${p.id}`, { method: "DELETE" });
+                                  await authenticatedFetch(`/api/screens/formula-presets/${p.id}`, { method: "DELETE" });
                                   setPresets(prev => prev.filter(x => x.id !== p.id));
         } catch (e) {
                                   console.error("Failed to delete preset:", e);

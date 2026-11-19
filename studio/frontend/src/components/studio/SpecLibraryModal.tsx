@@ -1,10 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGenerateLocalePath } from "@sb/webapp-core/hooks";
 import { fetchBacktestSpecDetail, fetchBacktestSpecs } from "../../api/backtests";
 import { fetchCatalogTemplates } from "../../api/strategy";
 import type { BacktestSpecSummary } from "../../types";
 import { CopyIdBadge } from "../CopyIdBadge";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@sb/webapp-core/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
 
 /** Studio compose only lists AST templates that compile against the current pipeline. */
 const STUDIO_STRATEGY_TEMPLATE_IDS = [
@@ -30,28 +49,12 @@ export function SpecLibraryModal({
   onDuplicateSpec,
 }: SpecLibraryModalProps) {
   const navigate = useNavigate();
+  const generateLocalePath = useGenerateLocalePath();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [schemaFilter, setSchemaFilter] = useState<"all" | "modern" | "legacy">("all");
   const [alphaFilter, setAlphaFilter] = useState<string>("all");
   const [inspectingJsonSpec, setInspectingJsonSpec] = useState<BacktestSpecSummary | null>(null);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (inspectingJsonSpec) {
-          setInspectingJsonSpec(null);
-        } else {
-          onClose();
-        }
-      }
-    };
-    if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [isOpen, inspectingJsonSpec, onClose]);
 
   const catalogQuery = useQuery({
     queryKey: ["catalog-templates", "strategy", "studio-working"],
@@ -175,174 +178,111 @@ export function SpecLibraryModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="flex h-[92vh] w-full max-w-6xl flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        size="full"
+        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-6xl flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[92dvh] sm:max-h-[92dvh]"
+      >
         {/* Modal Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-raised px-6 py-4">
-          <div className="flex items-center gap-3">
+        <DialogHeader className="flex flex-row items-start justify-between gap-3 border-b border-line bg-surface-raised px-4 py-3 pr-12 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 border border-accent/30 text-accent font-bold">
               📚
             </div>
-            <div>
-              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+            <div className="min-w-0">
+              <DialogTitle className="flex flex-wrap items-center gap-2 text-base font-bold text-ink">
                 Strategy Spec & Template Library
                 <span className="rounded-full bg-surface-sunk border border-line px-2 py-0.5 text-[10px] font-mono text-ink-muted">
                   {filteredSpecs.length} / {allSpecs.length}
                 </span>
-              </h2>
-              <p className="text-[11.5px] text-ink-muted">
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-[11.5px] text-ink-muted">
                 Open a Strategy or Template in compose, or Clone a copy. Template is a filter tag.
-              </p>
+              </DialogDescription>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <div className="hidden items-center gap-2 sm:flex">
+            <Button
               type="button"
               onClick={onClose}
+              variant="outline"
               className="rounded-lg border border-line bg-surface-sunk px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface-raised hover:border-accent/40 transition-colors"
             >
               Close (Esc)
-            </button>
+            </Button>
           </div>
-        </div>
+        </DialogHeader>
 
         {/* Filter & Search Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 bg-surface-sunk/60 px-6 py-3">
+        <div className="flex flex-col gap-3 border-b border-line/60 bg-surface-sunk/60 px-3 py-3 sm:px-6">
           {/* Category Tabs & Schema Filter */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("all")}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                  selectedCategory === "all"
-                    ? "bg-accent text-accent-fg shadow-sm font-semibold"
-                    : "bg-surface-raised border border-line text-ink-muted hover:text-ink hover:border-accent/30"
-                }`}
-              >
-                All ({counts.total})
-              </button>
+          <div className="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_auto]">
+            <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
+              <TabsList className="grid h-auto w-full grid-cols-4 p-1">
+                <TabsTrigger value="all" className="min-w-0 px-2 py-1.5 text-xs">All ({counts.total})</TabsTrigger>
+                <TabsTrigger value="strategies" className="min-w-0 px-2 py-1.5 text-xs">Strategies ({counts.strategies})</TabsTrigger>
+                <TabsTrigger value="templates" className="min-w-0 px-2 py-1.5 text-xs">Templates ({counts.templates})</TabsTrigger>
+                <TabsTrigger value="catalog" className="min-w-0 px-2 py-1.5 text-xs">Catalog ({counts.catalog})</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("strategies")}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                  selectedCategory === "strategies"
-                    ? "bg-accent text-accent-fg shadow-sm font-semibold"
-                    : "bg-surface-raised border border-line text-ink-muted hover:text-ink hover:border-accent/30"
-                }`}
-              >
-                Strategies ({counts.strategies})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("templates")}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                  selectedCategory === "templates"
-                    ? "bg-accent text-accent-fg shadow-sm font-semibold"
-                    : "bg-surface-raised border border-line text-ink-muted hover:text-ink hover:border-accent/30"
-                }`}
-              >
-                Templates ({counts.templates})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("catalog")}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                  selectedCategory === "catalog"
-                    ? "bg-accent text-accent-fg shadow-sm font-semibold"
-                    : "bg-surface-raised border border-line text-ink-muted hover:text-ink hover:border-accent/30"
-                }`}
-              >
-                Catalog ({counts.catalog})
-              </button>
-            </div>
-
-            <div className="h-4 w-px bg-line/80 mx-1 hidden sm:block" />
-
-            <div className="flex items-center gap-1 rounded-md border border-line bg-surface p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setSchemaFilter("all")}
-                className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
-                  schemaFilter === "all"
-                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
-                    : "text-ink-muted hover:text-ink"
-                }`}
-              >
-                All Schemas
-              </button>
-              <button
-                type="button"
-                onClick={() => setSchemaFilter("modern")}
-                className={`rounded px-2 py-0.5 text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
-                  schemaFilter === "modern"
-                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
-                    : "text-ink-muted hover:text-ink"
-                }`}
-                title="Specs with modern multi-stage pipeline documents"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Modern ({counts.modern})
-              </button>
-              <button
-                type="button"
-                onClick={() => setSchemaFilter("legacy")}
-                className={`rounded px-2 py-0.5 text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
-                  schemaFilter === "legacy"
-                    ? "bg-accent text-accent-fg font-semibold shadow-xs"
-                    : "text-ink-muted hover:text-ink"
-                }`}
-                title="Legacy AST specs (upgradeable via pipeline decompiler)"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                Legacy ({counts.legacy})
-              </button>
-            </div>
+            <Tabs value={schemaFilter} onValueChange={(value) => setSchemaFilter(value as "all" | "modern" | "legacy")}>
+              <TabsList className="grid h-auto w-full grid-cols-3 p-1 xl:w-auto">
+                <TabsTrigger value="all" className="px-2 py-1.5 text-xs">Any schema</TabsTrigger>
+                <TabsTrigger value="modern" title="Specs with modern multi-stage pipeline documents" className="px-2 py-1.5 text-xs">Modern ({counts.modern})</TabsTrigger>
+                <TabsTrigger value="legacy" title="Legacy AST specs (upgradeable via pipeline decompiler)" className="px-2 py-1.5 text-xs">Legacy ({counts.legacy})</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Search & Alpha Dropdown */}
-          <div className="flex items-center gap-2.5 flex-1 min-w-[280px] max-w-md">
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <input
+              <Input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search strategy specs"
                 placeholder="Search title, ir_id, models, symbols…"
-                className="w-full rounded-md border border-line bg-surface px-3 py-1.5 pl-8 text-xs font-mono text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                className="h-10 w-full pl-8 font-mono text-xs"
               />
-              <span className="absolute left-2.5 top-1.5 text-xs text-ink-faint">🔍</span>
+              <span aria-hidden="true" className="pointer-events-none absolute left-2.5 top-3 text-xs text-muted-foreground">🔍</span>
               {searchTerm ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1.5 text-xs text-ink-muted hover:text-ink"
+                  aria-label="Clear spec search"
+                  className="absolute right-1 top-1 h-8 w-8"
                 >
                   ✕
-                </button>
+                </Button>
               ) : null}
             </div>
 
-            <select
+            <Select
               value={alphaFilter}
-              onChange={(e) => setAlphaFilter(e.target.value)}
-              className="rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
+              onValueChange={setAlphaFilter}
             >
-              <option value="all">All Alpha Models ({alphaModels.length})</option>
+              <SelectTrigger aria-label="Alpha model" className="h-10 w-full text-xs sm:w-[260px]">
+                <SelectValue placeholder="All Alpha Models" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Alpha Models ({alphaModels.length})</SelectItem>
               {alphaModels.map((m) => (
-                <option key={m} value={m}>
+                <SelectItem key={m} value={m}>
                   {m}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Spec Grid / Card List */}
-        <div className="flex-1 overflow-y-auto p-6 bg-surface/50">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-surface/50 p-3 sm:p-6">
           {catalogQuery.isLoading || chSpecsQuery.isLoading ? (
             <div className="flex h-64 flex-col items-center justify-center gap-2 text-ink-muted">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -356,17 +296,18 @@ export function SpecLibraryModal({
                 Try adjusting your search query or switching categories. You can save any current 5-slot composition as a template anytime.
               </p>
               {searchTerm || selectedCategory !== "all" || alphaFilter !== "all" ? (
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     setSearchTerm("");
                     setSelectedCategory("all");
                     setAlphaFilter("all");
                   }}
+                variant="outline"
                   className="rounded-md border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface-raised"
                 >
                   Reset Filters
-                </button>
+                </Button>
               ) : null}
             </div>
           ) : (
@@ -375,7 +316,7 @@ export function SpecLibraryModal({
                 return (
                   <div
                     key={spec.ir_id}
-                    className="flex flex-col justify-between rounded-xl border border-line bg-surface-raised/80 hover:border-accent/50 hover:shadow-lg transition-all p-4.5 group"
+                    className="flex flex-col justify-between rounded-xl border border-line bg-surface-raised/80 p-3 transition-all hover:border-accent/50 hover:shadow-lg sm:p-4 group"
                   >
                     <div>
                       {/* Top Badges & Title */}
@@ -395,6 +336,11 @@ export function SpecLibraryModal({
                                 ⚙️ Custom Spec
                               </span>
                             )}
+                            {spec.is_shared ? (
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Shared · fork to edit
+                              </span>
+                            ) : null}
 
                             {/* Schema Version Badge */}
                             {spec.catalog_template_id || spec.has_pipeline || spec.schema_status === "modern" ? (
@@ -490,7 +436,7 @@ export function SpecLibraryModal({
                     {/* Action Buttons */}
                     <div className="pt-2 border-t border-line/60 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => {
                             if (spec.algorithm_json) {
@@ -505,49 +451,53 @@ export function SpecLibraryModal({
                               setInspectingJsonSpec(spec);
                             }
                           }}
+                          variant="outline"
                           className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface hover:border-accent/40 transition-colors"
                           title="View JSON AST"
                         >
                           JSON
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                           type="button"
                           onClick={() => {
                             onDuplicateSpec(spec);
                             onClose();
                           }}
+                          variant="outline"
                           className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface hover:border-accent/40 transition-colors"
                           title="Clone a copy and open it"
                         >
                           Clone
-                        </button>
+                        </Button>
 
                         {!spec.catalog_template_id && (
-                          <button
+                          <Button
                             type="button"
                             onClick={() => {
-                              navigate(`/backtests?ir_id=${encodeURIComponent(spec.ir_id)}`);
+                              navigate(generateLocalePath(`backtests?ir_id=${encodeURIComponent(spec.ir_id)}`));
                               onClose();
                             }}
+                            variant="outline"
                             className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface hover:border-accent/40 transition-colors flex items-center gap-1"
                             title="Filter Backtest Runs on this Strategy Spec"
                           >
                             <span>📊</span> Runs
-                          </button>
+                          </Button>
                         )}
                       </div>
 
-                      <button
+                      <Button
                         type="button"
                         onClick={() => {
                           onSelectSpec(spec);
                           onClose();
                         }}
+                        variant="default"
                         className="rounded-lg bg-accent text-accent-fg px-3.5 py-1.5 text-xs font-semibold hover:opacity-90 shadow-sm transition-all"
                       >
                         Open
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );
@@ -555,29 +505,22 @@ export function SpecLibraryModal({
             </div>
           )}
         </div>
-      </div>
+      </DialogContent>
 
       {/* JSON Inspector Slide-over / Modal */}
       {inspectingJsonSpec ? (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="flex h-[85vh] w-full max-w-3xl flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between border-b border-line bg-surface-raised px-5 py-3.5">
-              <div>
-                <h3 className="font-mono text-sm font-bold text-ink flex items-center gap-2">
-                  <span>📄 {inspectingJsonSpec.title}</span>
-                  <span className="text-xs text-ink-muted">({inspectingJsonSpec.ir_id})</span>
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInspectingJsonSpec(null)}
-                className="rounded border border-line bg-surface-sunk px-2.5 py-1 text-xs font-semibold text-ink hover:bg-surface-raised"
-              >
-                ✕ Close
-              </button>
-            </div>
+        <Dialog open onOpenChange={(open) => !open && setInspectingJsonSpec(null)}>
+          <DialogContent size="lg" className="flex max-h-[88dvh] flex-col overflow-hidden p-0">
+            <DialogHeader className="border-b px-4 py-3 sm:px-5">
+              <DialogTitle className="break-all font-mono text-sm">
+                {inspectingJsonSpec.title}
+              </DialogTitle>
+              <DialogDescription className="break-all font-mono text-xs">
+                {inspectingJsonSpec.ir_id}
+              </DialogDescription>
+            </DialogHeader>
 
-            <div className="flex-1 overflow-auto p-4 bg-surface-sunk font-mono text-[11.5px] leading-relaxed text-ink">
+            <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-4 font-mono text-xs leading-relaxed">
               <pre className="whitespace-pre-wrap break-words">
                 {inspectingJsonSpec.algorithm_json
                   ? JSON.stringify(JSON.parse(inspectingJsonSpec.algorithm_json), null, 2)
@@ -585,27 +528,28 @@ export function SpecLibraryModal({
               </pre>
             </div>
 
-            <div className="flex items-center justify-between border-t border-line bg-surface-raised px-5 py-3">
+            <DialogFooter className="flex-col-reverse items-stretch gap-2 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <CopyIdBadge
                 id={inspectingJsonSpec.algorithm_json || ""}
                 label="Copy Full Spec JSON"
                 truncate={false}
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   onSelectSpec(inspectingJsonSpec);
                   setInspectingJsonSpec(null);
                   onClose();
                 }}
+                variant="default"
                 className="rounded-lg bg-accent text-accent-fg px-4 py-1.5 text-xs font-semibold hover:opacity-90"
               >
                 📥 Load This Spec into Composer
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       ) : null}
-    </div>
+    </Dialog>
   );
 }

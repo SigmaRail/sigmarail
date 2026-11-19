@@ -1,5 +1,5 @@
 {
-  "name": "sigmarail-studio",
+  "name": "@sigmarail/workbench",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,7 +10,8 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:e2e:ui": "playwright test --config=playwright.ui.config.ts",
-    "browser:attach": "node ../scripts/attach_playwright.mjs"
+    "test:e2e:workbench": "playwright test --config=playwright.workbench.config.ts",
+    "test:e2e:workbench:webkit": "playwright test --config=playwright.webkit.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.66.0",

@@ -581,3 +581,4 @@ export function registerStudioPrompts(mcp: WebMCPInstance): void {
     }
   );
 }
+

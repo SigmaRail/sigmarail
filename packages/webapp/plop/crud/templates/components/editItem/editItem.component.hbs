@@ -1,0 +1,141 @@
+import { useMutation, useQuery } from '@apollo/client';
+import { PageLayout } from '@sb/webapp-core/components/pageLayout';
+import { Paragraph } from '@sb/webapp-core/components/typography';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@sb/webapp-core/components/ui/card';
+import { Skeleton } from '@sb/webapp-core/components/ui/skeleton';
+import { useGenerateLocalePath } from '@sb/webapp-core/hooks';
+import { trackEvent } from '@sb/webapp-core/services/analytics';
+import { useToast } from '@sb/webapp-core/toast/useToast';
+import { useCurrentTenant } from '@sb/webapp-tenants/providers';
+import { ArrowLeft, Database, Edit } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { FormattedMessage, useIntl } from 'react-intl';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+
+import { RoutesConfig } from '{{ routesConfigImport }}';
+import { {{ pascalCase name }}Form } from '../{{ camelCase name }}Form';
+import { {{ pascalCase name }}FormFields } from '../{{ camelCase name }}Form/{{ camelCase name }}Form.component';
+import { edit{{ pascalCase name }}Mutation, edit{{ pascalCase name }}Query } from './edit{{ pascalCase name }}.graphql';
+
+type Params = { id: string };
+
+export const Edit{{ pascalCase name }} = () => {
+  const { data: currentTenant } = useCurrentTenant();
+  const navigate = useNavigate();
+  const { id } = useParams<Params>();
+  const { data, loading } = useQuery(edit{{ pascalCase name }}Query, {
+    variables: { id: id ?? '', tenantId: currentTenant?.id ?? '' },
+    skip: !id || !currentTenant,
+  });
+  const {{ camelCase name }} = data?.{{ camelCase name }};
+
+  const { toast } = useToast();
+  const intl = useIntl();
+
+  const successMessage = intl.formatMessage({
+    id: '{{ pascalCase name }} form / Edit{{ pascalCase name }} / Success message',
+    defaultMessage: 'Changes saved successfully!',
+  });
+
+  const generateLocalePath = useGenerateLocalePath();
+  const [commitEdit{{ pascalCase name }}Mutation, { error, loading: loadingMutation }] = useMutation(edit{{ pascalCase name }}Mutation, {
+    onCompleted: (data) => {
+      const id = data?.update{{ pascalCase name }}?.{{ camelCase name }}?.id;
+
+      trackEvent('crud', 'edit', id);
+
+      toast({ description: successMessage, variant: 'success' });
+
+      navigate(generateLocalePath(RoutesConfig.{{ camelCase name }}.list));
+    },
+  });
+
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="mx-auto w-full max-w-5xl space-y-8">
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-10 w-24" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!{{ camelCase name }}) return <Navigate to={generateLocalePath(RoutesConfig.{{ camelCase name }}.list)} />;
+
+  const onFormSubmit = (formData: {{ pascalCase name }}FormFields) => {
+    if (!currentTenant) return;
+    commitEdit{{ pascalCase name }}Mutation({
+      variables: { input: { tenantId: currentTenant.id, id: {{ camelCase name }}.id, name: formData.name } },
+    });
+  };
+
+  return (
+    <PageLayout>
+      <Helmet
+        title={intl.formatMessage({
+          defaultMessage: 'Edit {{ pascalCase name }} Item',
+          id: 'Edit{{ pascalCase name }} / page title',
+        })}
+      />
+
+      <div className="mx-auto w-full max-w-5xl space-y-8">
+        {/* Hero Section */}
+        <div className="space-y-4">
+          <Link
+            to={generateLocalePath(RoutesConfig.{{ camelCase name }}.list)}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <FormattedMessage defaultMessage="Back to items" id="Edit{{ pascalCase name }} / Back" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <Edit className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold tracking-tight">
+              <FormattedMessage defaultMessage="Edit {{ pascalCase name }} Item" id="Edit{{ pascalCase name }} / Header" />
+            </h1>
+          </div>
+          <Paragraph className="text-lg text-muted-foreground">
+            <FormattedMessage defaultMessage="Update the item details" id="Edit{{ pascalCase name }} / Description" />
+          </Paragraph>
+        </div>
+
+        {/* Form Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              <FormattedMessage defaultMessage="Item Details" id="Edit{{ pascalCase name }} / Form title" />
+            </CardTitle>
+            <CardDescription>
+              <FormattedMessage
+                defaultMessage="Update the details for this item"
+                id="Edit{{ pascalCase name }} / Form description"
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <{{ pascalCase name }}Form onSubmit={onFormSubmit} initialData={ {{~ camelCase name ~}} } error={error} loading={loadingMutation} />
+          </CardContent>
+        </Card>
+      </div>
+    </PageLayout>
+  );
+};

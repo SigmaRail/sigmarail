@@ -7,6 +7,11 @@ import { EditableOperand } from "./ExprPillEditor";
 import { RuleListEditor } from "./RuleListEditor";
 import { RuleTableTester } from "./RuleTableTester";
 import { UnitNumberField } from "./UnitNumberField";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 interface PcmSlotCardProps {
   /** Pyramid phase geometry — the state machine definition (pyr.entry_frac/add_frac). */
@@ -71,28 +76,11 @@ export function PcmSlotCard({
   const pcmBindings = usePcmBindings();
 
   return (
-    <div className="space-y-3 rounded-lg border border-line bg-surface p-3.5 shadow-sm">
-      <div className="flex items-center justify-between border-b border-line pb-2">
-        <h4 className="text-[12.5px] font-bold text-ink">3. Portfolio (PCM)</h4>
-        <span className="font-mono text-[10px] text-ink-muted">
-          RiskBudgetedPortfolioConstructionModel
-        </span>
-      </div>
-
-      <p className="text-[10.5px] text-ink-muted leading-tight">
-        Every allocation decision is an expression below: the book policy computes scale,
-        capacity, and ordering once per pass; the rules table decides each unit;{" "}
-        <code className="text-[10px]">size_expr</code> prices it. Numbers are literals
-        inside the ASTs — edit in place, or reset an expr to regenerate from the doc.
-      </p>
-
+    <Card className="space-y-3 p-3.5 shadow-sm">
       {onChangeBookExpr ? (
         <div className="space-y-2 rounded border border-line p-2">
           <span className="text-[10.5px] font-semibold text-ink">
-            Book policy{" "}
-            <span className="font-normal text-ink-faint">
-              evaluated once per pass, before the rules table
-            </span>
+            Book policy
           </span>
           {(
             [
@@ -111,16 +99,18 @@ export function PcmSlotCard({
                     <span className="font-sans text-ink-faint">{label}</span>
                   </span>
                   {expr ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => onChangeBookExpr(key, null)}
-                      className="rounded border border-line px-1.5 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-1.5 text-[10px]"
                       title="Remove the authored expression — the generated default is materialized on save"
                     >
                       reset
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
                       type="button"
                       onClick={() =>
                         onChangeBookExpr(key, {
@@ -129,10 +119,12 @@ export function PcmSlotCard({
                           field: key === "order_expr" ? "rank" : "fraction",
                         } as unknown as Record<string, unknown>)
                       }
-                      className="rounded border border-line px-1.5 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-1.5 text-[10px]"
                     >
                       + expr
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {expr ? (
@@ -142,11 +134,7 @@ export function PcmSlotCard({
                     fields={slotFields}
                     pcmBindings={exprBindings}
                   />
-                ) : (
-                  <p className="text-[9px] text-ink-faint">
-                    none — the generated default is materialized on save.
-                  </p>
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -163,14 +151,16 @@ export function PcmSlotCard({
               </span>
             </span>
             {sizeExpr ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => onChangeSizeExpr(null)}
-                className="rounded border border-line px-1.5 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-[10px]"
                 title="Remove the authored size expression — the generated default is materialized on save"
               >
                 reset
-              </button>
+              </Button>
             ) : null}
           </div>
           {sizeExpr ? (
@@ -182,25 +172,24 @@ export function PcmSlotCard({
             />
           ) : (
             <div className="flex items-center justify-between">
-              <span className="text-[10.5px] text-ink-faint">
-                none — the generated risk-budget expression is materialized on save.
-              </span>
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   onChangeSizeExpr({ type: "ref", ns: "acct", field: "portfolio_value" } as unknown as Record<string, unknown>)
                 }
-                className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-[10px]"
               >
                 + size expr
-              </button>
+              </Button>
             </div>
           )}
         </div>
       ) : null}
 
       {onChangeRules ? (
-        <div>
+        <>
           <RuleListEditor
             rules={rules ?? []}
             onChangeRules={onChangeRules}
@@ -209,32 +198,24 @@ export function PcmSlotCard({
             slot="pcm"
           />
           <RuleTableTester slot="pcm" irId={testIrId ?? null} rules={rules ?? []} />
-        </div>
+        </>
       ) : null}
 
       <details className="rounded border border-line bg-surface-raised/40">
         <summary className="cursor-pointer px-2.5 py-1.5 text-[10px] font-semibold text-ink-muted select-none">
-          Engine plumbing — pyramid geometry, surrogates, regime wiring (not allocation decisions)
+          Advanced settings
         </summary>
         <div className="space-y-2.5 border-t border-line p-2.5">
           {onToggleRegime && onChangeRegimeUses ? (
             <div className="space-y-1.5">
-              <label
-                className="flex items-center gap-1.5 cursor-pointer"
-                title="Wire the weekly CH regime signal into position sizing and scale-in."
-              >
-                <input
-                  type="checkbox"
+              <div title="Wire the weekly CH regime signal into position sizing and scale-in.">
+                <Checkbox
                   checked={regimeOn}
-                  onChange={(e) => onToggleRegime(e.target.checked)}
-                  className="rounded border-line"
+                  onCheckedChange={(checked) => onToggleRegime(checked === true)}
+                  label="Regime thermostat"
+                  className="text-[11px] font-semibold"
                 />
-                <span className="text-[11px] font-semibold text-ink">Regime thermostat</span>
-              </label>
-              <p className="text-[9px] leading-snug text-ink-faint">
-                Data wiring only — the uses select which regime rule rows and scale_expr
-                shape generate at save; the thermostat's arithmetic lives in the exprs above.
-              </p>
+              </div>
               {regimeOn ? (
                 <div className="flex flex-wrap gap-1.5">
                   {(
@@ -245,9 +226,11 @@ export function PcmSlotCard({
                   ).map(([use, label]) => {
                     const on = regimeUses.includes(use);
                     return (
-                      <button
+                      <Button
                         key={use}
                         type="button"
+                        variant={on ? "secondary" : "outline"}
+                        size="sm"
                         title={
                           use === "scale_exposure"
                             ? "Generate a regime-scaled scale_expr (else scale_expr is the constant 1.0)"
@@ -258,14 +241,11 @@ export function PcmSlotCard({
                             on ? regimeUses.filter((u) => u !== use) : [...regimeUses, use],
                           )
                         }
-                        className={
-                          on
-                            ? "rounded border border-accent bg-accent/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-accent-ink"
-                            : "rounded border border-line px-1.5 py-0.5 text-[9.5px] text-ink-muted"
-                        }
+                        className="h-7 px-2 text-[10px]"
+                        aria-pressed={on}
                       >
                         {label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -281,29 +261,27 @@ export function PcmSlotCard({
                   — live: pyr.entry_frac / add_frac read these at runtime
                 </span>
               </span>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 border-dashed px-2 text-[10px]"
                 onClick={() =>
                   onChangePhases([
                     ...phases,
                     { name: `phase_${phases.length + 1}`, size_pct: 0.25 },
                   ])
                 }
-                className="rounded border border-dashed border-emerald-500/50 bg-emerald-500/5 px-1.5 py-0.5 text-[10px] text-emerald-300"
               >
                 + Phase
-              </button>
+              </Button>
             </div>
-            <p className="text-[9px] leading-snug text-ink-faint">
-              Pyramid state machine — each phase is a fraction of the full risk size
-              added at its turn (starter → add → full).
-            </p>
             {phases.map((p, fi) => (
               <div
                 key={fi}
                 className="flex items-center gap-2 rounded border border-line/60 bg-surface-sunk/50 px-2 py-1 text-[11px]"
               >
-                <input
+                <Input
                   type="text"
                   value={p.name}
                   onChange={(e) => {
@@ -311,11 +289,11 @@ export function PcmSlotCard({
                     next[fi] = { ...p, name: e.target.value };
                     onChangePhases(next);
                   }}
-                  className="w-24 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
+                  className="h-8 w-24 px-2 py-1 font-mono text-xs"
                 />
                 <label className="flex items-center gap-1 text-[10.5px]">
                   <span className="text-ink-muted">Size</span>
-                  <input
+                  <Input
                     type="number"
                     step="0.05"
                     min="0"
@@ -326,58 +304,43 @@ export function PcmSlotCard({
                       next[fi] = { ...p, size_pct: parseFloat(e.target.value) || 0 };
                       onChangePhases(next);
                     }}
-                    className="w-16 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink text-right"
+                    className="h-8 w-20 px-2 py-1 text-right font-mono text-xs"
                   />
                 </label>
-                <button
+                <Button
                   type="button"
                   onClick={() => onChangePhases(phases.filter((_, i) => i !== fi))}
-                  className="ml-auto text-[12px] text-ink-faint hover:text-danger"
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-8 w-8 p-0 text-muted-foreground"
+                  aria-label={`Remove phase ${p.name}`}
                 >
                   ✕
-                </button>
+                </Button>
               </div>
             ))}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-bold text-ink">
-                <input
-                  type="checkbox"
-                  checked={enableSurrogates}
-                  onChange={(e) => onChangeEnableSurrogates?.(e.target.checked)}
-                  className="rounded border-line"
-                />
-                <span>Route Eligible Stocks to Leveraged ETF Surrogates</span>
-              </label>
-              <span className="rounded bg-accent/10 px-1.5 py-0.5 text-[9.5px] font-mono text-accent-ink">
-                Capital-Efficiency Layer
-              </span>
+              <Checkbox
+                checked={enableSurrogates}
+                onCheckedChange={(checked) => onChangeEnableSurrogates?.(checked === true)}
+                label="Route eligible stocks to leveraged ETF surrogates"
+                className="text-[11px] font-bold"
+              />
             </div>
-            <p className="text-[10px] text-ink-faint leading-tight">
-              Execution routing, not a decision — an insight on an underlying routes
-              execution to its leveraged ETF surrogate (NVDL 2x, TSLL 2x, SOXL 3x).
-            </p>
             {enableSurrogates && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 pt-1 border-t border-line/50">
                 <div className="space-y-1 rounded border border-line/60 bg-surface/50 p-2">
                   <span className="block text-[10px] font-semibold text-ink">Sizing mode</span>
-                  <select
-                    value={surrogateSizingMode}
-                    onChange={(e) =>
-                      onChangeSurrogateSizingMode?.(
-                        e.target.value as "dollar_risk_parity" | "full_notional",
-                      )
-                    }
-                    className="block w-full rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10.5px] text-ink"
-                  >
-                    <option value="dollar_risk_parity">Dollar Risk Parity (1/L Weight - Recommended)</option>
-                    <option value="full_notional">Full Notional (Equal Nominal Capital)</option>
-                  </select>
-                  <p className="text-[9px] leading-snug text-ink-faint">
-                    Dollar Risk Parity halves 2x surrogate weight to maintain identical 1R dollar risk while freeing up 50% cash.
-                  </p>
+                  <Select value={surrogateSizingMode} onValueChange={(value) => onChangeSurrogateSizingMode?.(value as "dollar_risk_parity" | "full_notional")}>
+                    <SelectTrigger className="h-9 w-full text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dollar_risk_parity">Dollar Risk Parity (1/L Weight - Recommended)</SelectItem>
+                      <SelectItem value="full_notional">Full Notional (Equal Nominal Capital)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <UnitNumberField
                   layout="card"
@@ -396,6 +359,6 @@ export function PcmSlotCard({
           </div>
         </div>
       </details>
-    </div>
+    </Card>
   );
 }

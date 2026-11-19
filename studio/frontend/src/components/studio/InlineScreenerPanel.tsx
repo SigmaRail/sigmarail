@@ -8,11 +8,34 @@ import { MiniSparklineCard } from "./MiniSparklineCard";
 import { useFieldPicker } from "./FieldPickerProvider";
 import type { FieldPick } from "../../lib/fieldPick";
 import { DataTable, type GridColumn, type SortSpec } from "../../components/DataTable";
-import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@sb/webapp-core/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@sb/webapp-core/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
 import { previewScreen, previewIr, fetchAsOfRange } from "../../api/screens";
 import { nextFilterId } from "../../lib/irFilters";
 import {
   emptyGroup,
+  isUiGroup,
+  isUiNot,
   stripIds,
   whereToAst,
   withIds,
@@ -104,6 +127,12 @@ interface InlineScreenerPanelProps {
   presets: ScreenPreset[];
   /** Available saved screens for the picker */
   savedScreens: SavedScreen[];
+  savedScreensLoading?: boolean;
+  savedScreensError?: string | null;
+  savedScreensWarning?: string | null;
+  onRetrySavedScreens?: () => void;
+  templatesLoading?: boolean;
+  templatesError?: string | null;
   /** Available fields for the filter builder */
   fields: ScreenField[];
   /** Called whenever the spec changes (filters edited, sort changed, preset loaded) */
@@ -133,11 +162,17 @@ export function InlineScreenerPanel({
   spec,
   activePresetId,
   asOf: propAsOf,
-  presets: _presets,
+  presets,
   savedScreens,
+  savedScreensLoading = false,
+  savedScreensError = null,
+  savedScreensWarning = null,
+  onRetrySavedScreens,
+  templatesLoading = false,
+  templatesError = null,
   fields,
   onSpecChange,
-  onSelectPreset: _onSelectPreset,
+  onSelectPreset,
   onSelectSaved,
   onAsOfChange,
   onSaveTemplate,
@@ -160,7 +195,10 @@ export function InlineScreenerPanel({
    */
   const addressCarriesTree = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(initialViewMode ?? "list");
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(() =>
+    initialViewMode ?? "list",
+  );
   useEffect(() => {
     if (initialViewMode && initialViewMode !== viewMode) setViewMode(initialViewMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,6 +262,12 @@ export function InlineScreenerPanel({
 
   // Current query spec derived from the screen tree, sort terms, and limit
   const querySpec = buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit);
+  const countCriteria = (node: UiGroup | UiNode): number => {
+    if (isUiGroup(node)) return node.items.reduce((count, item) => count + countCriteria(item), 0);
+    if (isUiNot(node)) return countCriteria(node.item);
+    return 1;
+  };
+  const criteriaCount = countCriteria(whereRoot);
 
   // The address wins when it changes (deep link, back/forward): it carries the screen.
   // Report the composed spec up so the address keeps carrying it.
@@ -375,7 +419,7 @@ export function InlineScreenerPanel({
 
   // Rows as returned directly from the ClickHouse screen spec query
   const rows: RankedRow[] = rankRows(previewQuery.data?.rows as RankedRow[] | undefined);
-  const count = rows.length;
+  const count = previewQuery.data?.count ?? rows.length;
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__STUDIO_AGENT_BRIDGE__) {
@@ -416,14 +460,16 @@ export function InlineScreenerPanel({
         info: fieldMeta("ticker"),
         accessor: (r) => r.ticker,
         cell: (r) => (
-          <button
+          <Button
             type="button"
             onClick={() => onOpenTicker?.(r.ticker)}
-            className="font-mono font-bold text-accent hover:underline text-left cursor-pointer inline-flex items-center gap-1"
+            variant="link"
+            size="sm"
+            className="h-auto justify-start p-0 font-mono text-left font-bold text-accent"
             title={`Open ${r.ticker} chart for ${asOf}`}
           >
             <span>{r.ticker}</span>
-          </button>
+          </Button>
         ),
       },
       {
@@ -503,86 +549,80 @@ export function InlineScreenerPanel({
   }, [asOf, fields]);
 
   return (
-    <div className="relative rounded-lg border border-accent/30 bg-surface shadow-sm">
-      {/* Screen Header Row */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-accent/20 bg-accent/5 px-2.5 py-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[9.5px] font-bold uppercase tracking-wider text-accent">Selected Universe Screen</span>
-          <span className="rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] font-semibold text-accent border border-accent/30">
-            ClickHouse AST
-          </span>
-          {previewQuery.isFetching && (
-            <span className="font-mono text-[9px] text-ink-faint animate-pulse">querying…</span>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card text-card-foreground">
+      {/* Keep the result count and actions in one compact toolbar. */}
+      <div className="flex flex-col gap-2 border-b border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <Badge variant="muted" className="shrink-0 px-2 py-0.5 text-[10px] tabular-nums">
+            {previewQuery.isFetching && !previewQuery.data ? "Loading" : `${count} matches`}
+          </Badge>
+          {previewQuery.isFetching && previewQuery.data && (
+            <span className="text-[11px] text-muted-foreground animate-pulse">Updating…</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           {datesDesc.length > 0 && (
             <DateNavigator
               currentDate={asOf}
               availableDates={datesDesc}
+              compact
               onChangeDate={(d) => {
                 setAsOf(d);
                 onAsOfChange?.(d);
               }}
             />
           )}
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink-muted hover:text-ink hover:border-accent transition-colors"
-          >
-            📂 Load
-          </button>
-          {onSaveTemplate && (
-            <button
-              type="button"
-              onClick={() => onSaveTemplate(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
-              className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink-muted hover:text-ink hover:border-accent transition-colors"
-              title="Save current screen as a reusable template"
-            >
-              💾 Save
-            </button>
-          )}
-          {onSendToStrategy && (
-            <button
-              type="button"
-              onClick={() => onSendToStrategy(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
-              className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:bg-accent/20 transition-colors"
-              title="Send screen conditions into Strategy Pipeline as a filter stage"
-            >
-              ⚡ Send to Strategy
-            </button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                Actions <span aria-hidden="true">▾</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setPickerOpen(true)}>Load screen</DropdownMenuItem>
+              {onSaveTemplate && (
+                <DropdownMenuItem
+                  onSelect={() => onSaveTemplate(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
+                >
+                  Save screen
+                </DropdownMenuItem>
+              )}
+              {onSendToStrategy && (
+                <DropdownMenuItem
+                  onSelect={() => onSendToStrategy(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
+                >
+                  Use in strategy
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Filter Groups (Deepvue-style ALL / ANY) */}
-      <div className="border-b border-line px-2.5 py-1">
-        <UniverseTreeEditor
-          node={whereRoot}
-          isRoot
-          fields={fields.length > 0 ? fields : [
-            { name: "rs_rating", label: "RS Rating", category: "momentum" },
-            { name: "technical_rating", label: "Technical Rating", category: "momentum" },
-            { name: "close", label: "Price", category: "price" },
-            { name: "market_cap", label: "Market Cap", category: "fundamental" },
-            { name: "setup_quality_rating", label: "Setup Quality", category: "momentum" },
-            { name: "atr_pct", label: "ATR %", category: "volatility" },
-          ]}
-          onChange={handleWhereChange}
-        />
-      </div>
-
-      {/* Spec Controls Toolbar: Sort by, Direction, Limit */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-line bg-surface-raised/40 px-2.5 py-1 text-[10px]">
+      {/* Keep the result controls in one short row; query authoring stays in a dialog. */}
+      <div className="flex min-h-10 flex-wrap items-center justify-between gap-1.5 border-b border-line bg-surface-raised/30 px-2.5 py-1">
         {/* Left: Spec Order By & Limit Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2 text-xs"
+            aria-expanded={criteriaOpen}
+            onClick={() => setCriteriaOpen((open) => !open)}
+          >
+            <span aria-hidden="true">{criteriaOpen ? "▾" : "▸"}</span>
+            <span>Filters</span>
+            <Badge variant="muted" className="px-1.5 py-0 text-[10px]">{criteriaCount}</Badge>
+          </Button>
           <div className="flex items-center gap-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Sort:</span>
-            <button
+            <Button
               type="button"
               onClick={handleOpenSortPicker}
-              className="inline-flex max-w-[300px] items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 font-semibold text-accent hover:border-accent/60 transition-colors text-[10.5px]"
+              variant="outline"
+              size="sm"
+              className="h-auto max-w-[300px] gap-1 px-2 py-1 text-[10.5px] font-semibold text-accent"
               title="Open the shared field/expression browser to set ORDER BY"
             >
               {sortBy.length === 0 ? (
@@ -591,99 +631,109 @@ export function InlineScreenerPanel({
                 <span className="truncate">{sortBy[0].label ?? sortBy[0].field ?? "expression"}</span>
               )}
               <span className="shrink-0 text-[9px]">⚙</span>
-            </button>
+            </Button>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={handleSortDirToggle}
             disabled={sortBy.length === 0}
-            className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10.5px] font-semibold text-ink hover:border-accent transition-colors disabled:opacity-40"
+            variant="outline"
+            size="sm"
+            className="h-auto gap-1 px-2 py-1 font-mono text-[10.5px] font-semibold"
             title="Toggle Spec sort direction"
           >
             <span>{activeSortDir === "desc" ? "DESC" : "ASC"}</span>
             <span className="text-accent">{activeSortDir === "desc" ? "▼" : "▲"}</span>
-          </button>
+          </Button>
 
-          <div className="flex items-center gap-1 ml-1 pl-2 border-l border-line">
+          <div className="flex items-center gap-1 border-l border-line pl-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Top:</span>
-            <select
-              value={activeLimit}
-              onChange={(e) => handleLimitChange(Number(e.target.value))}
-              className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10.5px] text-ink focus:border-accent focus:outline-none"
-              title="ClickHouse Spec limit_per_day"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-            </select>
+            <Select value={String(activeLimit)} onValueChange={(value) => handleLimitChange(Number(value))}>
+              <SelectTrigger
+                className="h-8 w-[76px] border-line bg-surface px-2 py-1 font-mono text-[10.5px]"
+                title="ClickHouse Spec limit_per_day"
+                aria-label="Maximum results per day"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100, 200].map((limit) => (
+                  <SelectItem key={limit} value={String(limit)} className="font-mono text-xs">
+                    {limit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Right: Results Count + View Mode Toggle */}
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] text-ink-muted">
-            {previewQuery.isLoading ? "Loading…" : `${count} matching`}
-          </span>
           <div className="flex items-center rounded border border-line bg-surface-sunk overflow-hidden text-[10px] font-bold">
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setViewMode("list");
                 onViewModeChange?.("list");
               }}
-              className={cn(
-                "px-1.5 py-0.5 transition-colors",
-                viewMode === "list" ? "bg-accent/20 text-accent" : "text-ink-muted hover:text-ink"
-              )}
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-none"
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
               title="List view"
             >
               ☰
-            </button>
+            </Button>
             <div className="w-px h-3 bg-line" />
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setViewMode("grid");
                 onViewModeChange?.("grid");
               }}
-              className={cn(
-                "px-1.5 py-0.5 transition-colors",
-                viewMode === "grid" ? "bg-accent/20 text-accent" : "text-ink-muted hover:text-ink"
-              )}
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-none"
+              aria-label="Chart grid view"
+              aria-pressed={viewMode === "grid"}
               title="Chart grid view"
             >
               ⊞
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Membership over time — the same chart the strategy card shows, for this screen. */}
-      <div className="border-b border-line">
-        <button
-          type="button"
-          onClick={() => setMembershipOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted hover:bg-surface-raised/50"
+      <Dialog open={criteriaOpen} onOpenChange={setCriteriaOpen}>
+        <DialogContent
+          size="lg"
+          className="inset-x-0 bottom-0 top-auto max-h-[88dvh] w-full translate-x-0 translate-y-0 rounded-t-2xl p-0 sm:bottom-auto sm:left-[50%] sm:top-[50%] sm:w-[min(92vw,56rem)] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg"
         >
-          <span>Membership over time</span>
-          <span className="font-mono text-[10px]">{membershipOpen ? "▼" : "▶"}</span>
-        </button>
-        {membershipOpen && (
-          <div className="border-t border-line px-2.5 py-2">
-            <MembershipOverTime
-              spec={querySpec}
-              asOf={asOf}
-              onPickDate={(date) => {
-                setAsOf(date);
-                onAsOfChange?.(date);
-              }}
-            />
+          <DialogHeader className="border-b border-border px-4 py-3 pr-12">
+            <DialogTitle className="text-base">Screen filters</DialogTitle>
+            <DialogDescription>
+              Refine the stock list. Results update as you change these rules.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-2">
+          <UniverseTreeEditor
+            node={whereRoot}
+            isRoot
+            fields={fields.length > 0 ? fields : [
+              { name: "rs_rating", label: "RS Rating", category: "momentum" },
+              { name: "technical_rating", label: "Technical Rating", category: "momentum" },
+              { name: "close", label: "Price", category: "price" },
+              { name: "market_cap", label: "Market Cap", category: "fundamental" },
+              { name: "setup_quality_rating", label: "Setup Quality", category: "momentum" },
+              { name: "atr_pct", label: "ATR %", category: "volatility" },
+            ]}
+            onChange={handleWhereChange}
+          />
           </div>
-        )}
-      </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Candidates Results */}
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -699,27 +749,69 @@ export function InlineScreenerPanel({
         )}
 
         {viewMode === "list" ? (
-          <DataTable<RankedRow>
-            rows={rows}
-            columns={[...panelColumns, ...extraColumns]}
-            viewId={`inline-screener.${activePresetId || "custom"}`}
-            getRowId={(r) => `${r.ticker}-${r.rank}`}
-            loading={previewQuery.isLoading}
-            emptyLabel="No candidates matched the screen criteria."
-            sortMode="server"
-            sortBy={sortBy}
-            fieldCatalog={fields}
-            onAddColumn={handleOpenAddColumn}
-            onRemoveColumn={handleRemoveColumn}
-            onSortByChange={handleSortByChange}
-            density="compact"
-            height="fill"
-          />
+          <>
+            <div className="grid gap-1.5 p-2 lg:hidden">
+              {rows.map((row, index) => {
+                const metric = (value: unknown, digits = 0) => {
+                  const number = Number(value);
+                  return value == null || value === "" || !Number.isFinite(number)
+                    ? "—"
+                    : digits ? number.toFixed(digits) : String(Math.round(number));
+                };
+                return (
+                  <article
+                    key={`${row.ticker}-${row.rank}`}
+                    className="rounded-md border border-border bg-card px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="w-6 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
+                        <Button
+                          type="button"
+                          onClick={() => onOpenTicker?.(row.ticker)}
+                          variant="link"
+                          size="sm"
+                          className="h-auto min-h-8 min-w-11 justify-start p-0 font-mono font-semibold text-accent"
+                          title={`Open ${row.ticker} chart for ${asOf}`}
+                        >
+                          {row.ticker}
+                        </Button>
+                      </div>
+                      <span className="font-mono text-sm font-semibold tabular-nums">${metric(row.close, 2)}</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2 border-t border-border/70 pt-2 text-[11px]">
+                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">RS</span><span className="font-mono tabular-nums">{metric(row.rs_rating)}</span></div>
+                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Technical</span><span className="font-mono tabular-nums">{metric(row.technical_rating)}</span></div>
+                      <div><span className="block text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Setup</span><span className="font-mono tabular-nums">{metric(row.setup_quality_rating)}</span></div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden h-full min-h-0 lg:block">
+              <DataTable<RankedRow>
+                rows={rows}
+                columns={[...panelColumns, ...extraColumns]}
+                viewId={`inline-screener.${activePresetId || "custom"}`}
+                getRowId={(r) => `${r.ticker}-${r.rank}`}
+                loading={previewQuery.isLoading}
+                emptyLabel="No candidates matched the screen criteria."
+                sortMode="server"
+                sortBy={sortBy}
+                fieldCatalog={fields}
+                onAddColumn={handleOpenAddColumn}
+                onRemoveColumn={handleRemoveColumn}
+                onSortByChange={handleSortByChange}
+                density="compact"
+                height="fill"
+              />
+            </div>
+          </>
         ) : (
           rows.length > 0 && (
             <div
               className="grid gap-2 p-2"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
             >
               {rows.map((r, idx) => (
                 <MiniSparklineCard
@@ -735,11 +827,45 @@ export function InlineScreenerPanel({
         )}
       </div>
 
+      {/* Secondary analysis follows the results so it never pushes stocks below the fold. */}
+      <div className="shrink-0 border-t border-line">
+        <Button
+          type="button"
+          onClick={() => setMembershipOpen((v) => !v)}
+          variant="ghost"
+          className="h-auto w-full justify-between rounded-none px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted"
+          aria-expanded={membershipOpen}
+        >
+          <span>Membership history</span>
+          <span className="font-mono text-[10px]">{membershipOpen ? "▼" : "▶"}</span>
+        </Button>
+        {membershipOpen && (
+          <div className="max-h-[42dvh] overflow-y-auto border-t border-line px-2.5 py-2">
+            <MembershipOverTime
+              spec={querySpec}
+              asOf={asOf}
+              onPickDate={(date) => {
+                setAsOf(date);
+                onAsOfChange?.(date);
+              }}
+            />
+          </div>
+        )}
+      </div>
+
       {/* Unified Screen Picker Dialog */}
       <ScreenPickerDialog
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
+        templates={presets}
+        templatesLoading={templatesLoading}
+        templatesError={templatesError}
         screens={savedScreens}
+        screensLoading={savedScreensLoading}
+        screensError={savedScreensError}
+        screensWarning={savedScreensWarning}
+        onRetryLoad={onRetrySavedScreens}
+        onSelectTemplate={onSelectPreset}
         onSelectScreen={(s) => {
           onSelectSaved(s);
           setPickerOpen(false);

@@ -1,22 +1,29 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { UniverseSlotCard, type UniverseChoice } from "./UniverseSlotCard";
 import { PcmSlotCard } from "./PcmSlotCard";
 import { RiskSlotCard } from "./RiskSlotCard";
 import { upsertPolicyRuleForBinding } from "./PolicyRulesPanel";
 import { ExecutionSlotCard } from "./ExecutionSlotCard";
 import { studioAgentBridge, setPathValue } from "../../lib/studioAgentBridge";
-import {
-  EvaluationSettingsPanel,
-  INITIAL_EVALUATION_CONFIG,
-} from "./EvaluationSettingsPanel";
-import { CopyIdBadge } from "../CopyIdBadge";
 import { StrategyEditorView } from "../strategy/StrategyEditorView";
 import type { PipelineDocument, SlotExpr } from "../strategy/StrategyDocument";
 import { irToFilterTrees, normalizeDocumentScreen } from "../../lib/filterTreeChips";
 import { decompilePipeline } from "../../api/strategy";
 import { ForkStrategyVersionModal } from "./ForkStrategyVersionModal";
-import { StrategyDocumentationBanner } from "./StrategyDocumentationBanner";
+import { StrategySettingsDialog } from "./StrategySettingsDialog";
+import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
+
+type StrategySlotKey = "universe" | "alpha" | "portfolio" | "risk" | "execution";
+const STRATEGY_SLOT_KEYS: StrategySlotKey[] = ["universe", "alpha", "portfolio", "risk", "execution"];
+
+function isStrategySlotKey(value: string | null): value is StrategySlotKey {
+  return value !== null && STRATEGY_SLOT_KEYS.includes(value as StrategySlotKey);
+}
 
 /** Deterministically serializes an object with sorted keys for accurate dirty checking */
 function stableSerialize(val: unknown): string {
@@ -60,8 +67,6 @@ import type {
   ScreenPreset,
   SavedScreen,
   BacktestSpecSummary,
-  EvaluationConfig,
-  SweepParamRange,
   UniverseQueryV1,
   IrWhereNode,
 } from "../../types";
@@ -148,21 +153,24 @@ export interface AssembledFrameworkSpec {
 interface AlgorithmStudioViewProps {
   universeTitle?: string;
   universeCandidateCount?: number;
-  universeChoice: UniverseChoice;
+  asOfDate?: string;
+  startDate?: string;
   onSelectUniverseChoice: (choice: UniverseChoice) => void;
   presets?: ScreenPreset[];
   savedScreens?: SavedScreen[];
   onChangeFramework: (framework: AssembledFrameworkSpec) => void;
   onChangeFullSpec?: (spec: Record<string, unknown>) => void;
-  onLaunchBacktest?: () => void;
-  onLaunchOptimizer?: () => void;
-  evaluationConfig?: EvaluationConfig;
-  onChangeEvaluationConfig?: (cfg: EvaluationConfig) => void;
   loadedSpec?: BacktestSpecSummary | null;
   onOpenSpecLibrary?: () => void;
   onOpenSaveTemplate?: (spec: AssembledFrameworkSpec) => void;
   composeTitle?: string;
   onChangeTitle?: (title: string) => void;
+  strategyNotes?: string;
+  onChangeStrategyNotes?: (notes: string) => void;
+  composeIrId?: string;
+  onChangeIrId?: (irId: string) => void;
+  isTemplate?: boolean;
+  onChangeIsTemplate?: (isTemplate: boolean) => void;
   /** Authored PipelineDocument for save/agent round-trip. */
   onChangeAuthoredPipeline?: (doc: PipelineDocument | null) => void;
   /** Persist current pipeline + compiled spec to ClickHouse. */
@@ -171,35 +179,54 @@ interface AlgorithmStudioViewProps {
   onForkStrategy?: (newIrId: string, newTitle: string, notes?: string) => Promise<void> | void;
   saveStrategyPending?: boolean;
   composeDirty?: boolean;
-  activeRunsCount?: number | null;
 }
 
 export function AlgorithmStudioView({
   universeTitle = "Minervini Trend Template",
   universeCandidateCount: _universeCandidateCount,
-  universeChoice,
+  asOfDate = "",
+  startDate = "",
   onSelectUniverseChoice,
-  presets = [],
-  savedScreens = [],
   onChangeFramework,
   onChangeFullSpec,
-  onLaunchBacktest,
-  onLaunchOptimizer,
-  evaluationConfig,
-  onChangeEvaluationConfig,
   loadedSpec,
   onOpenSpecLibrary,
   onOpenSaveTemplate,
   composeTitle = "",
   onChangeTitle,
+  strategyNotes = "",
+  onChangeStrategyNotes,
+  composeIrId = "",
+  onChangeIrId,
+  isTemplate = false,
+  onChangeIsTemplate,
   onChangeAuthoredPipeline,
   onSaveStrategy,
   onForkStrategy,
   saveStrategyPending = false,
   composeDirty = false,
-  activeRunsCount = null,
 }: AlgorithmStudioViewProps) {
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeSlot, setActiveSlot] = useState<StrategySlotKey>(() => {
+    const requestedSlot = searchParams.get("slot");
+    return isStrategySlotKey(requestedSlot) ? requestedSlot : "universe";
+  });
+
+  useEffect(() => {
+    const requestedSlot = searchParams.get("slot");
+    if (isStrategySlotKey(requestedSlot) && requestedSlot !== activeSlot) {
+      setActiveSlot(requestedSlot);
+    }
+  }, [searchParams, activeSlot]);
+
+  const selectStrategySlot = useCallback((value: string) => {
+    if (!isStrategySlotKey(value)) return;
+    setActiveSlot(value);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("slot", value);
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Slot 1: Universe State
   const [inlineSpec, setInlineSpec] = useState<UniverseQueryV1 | null>(null);
 
@@ -209,10 +236,12 @@ export function AlgorithmStudioView({
   const [baselineSnapshot, setBaselineSnapshot] = useState<{
     irId: string;
     title: string;
+    notes: string;
     pipelineJson: string;
     pipelineDoc: PipelineDocument;
   } | null>(null);
   const [forkModalOpen, setForkModalOpen] = useState(false);
+  const [strategySettingsOpen, setStrategySettingsOpen] = useState(false);
 
   const normalizePipeline = useCallback((doc: PipelineDocument | null) => {
     if (!doc) return null;
@@ -232,13 +261,25 @@ export function AlgorithmStudioView({
   const setPipelineDoc = useCallback(
     (update: PipelineDocument | null | ((prev: PipelineDocument | null) => PipelineDocument | null)) => {
       setPipelineDocState((prev) => {
-        const raw = typeof update === "function" ? update(prev) : update;
+        // A new strategy draft has no authored document until its first slot
+        // edit. Seed that first edit with the same minimal document shape used
+        // by the agent bridge so slot controls never appear interactive while
+        // silently dropping changes.
+        const base =
+          prev ??
+          (!loadedSpec && typeof update === "function"
+            ? {
+                strategy_name: composeTitle.trim() || "Untitled strategy",
+                stages: [],
+              }
+            : prev);
+        const raw = typeof update === "function" ? update(base) : update;
         const next = normalizePipeline(raw);
         queueMicrotask(() => onChangeAuthoredPipeline?.(next));
         return next;
       });
     },
-    [onChangeAuthoredPipeline, normalizePipeline],
+    [composeTitle, loadedSpec, onChangeAuthoredPipeline, normalizePipeline],
   );
 
   // Automatically deserialize and populate state when a spec/template is loaded
@@ -255,7 +296,7 @@ export function AlgorithmStudioView({
     const uniType = String(uni.Type || uni.type_id || "VeraScreenerUniverseSelectionModel");
 
     const vb = (specData.VeraBase || specData.vera_base || {}) as Record<string, unknown>;
-    // Do not stuff the full VeraBase.Universe (computed gates / screens_hit) into the
+    // Do not stuff the full universe contract (computed gates / screens_hit) into the
     // Universe slot inline AST — that bypasses pipeline compile and can surface
     // dangling screen_* columns in SQL preview. Prefer pipeline_document recompile.
     const hasPipelineAuthored =
@@ -336,6 +377,7 @@ export function AlgorithmStudioView({
       setBaselineSnapshot({
         irId: loadedSpec.ir_id,
         title: (composeTitle || loadedSpec.title || "").trim(),
+        notes: loadedSpec.notes ?? "",
         pipelineJson: stableSerialize(doc),
         pipelineDoc: doc,
       });
@@ -413,33 +455,6 @@ export function AlgorithmStudioView({
     if (compiledFromAlpha) onChangeFramework(compiledFromAlpha);
   }, [compiledFromAlpha, onChangeFramework]);
 
-  // Dynamic Universe title based on active model and choice
-  const activePreset = presets.find(
-    (p) => universeChoice.kind === "preset" && p.id === universeChoice.id
-  );
-  const activeSaved = savedScreens.find(
-    (s) => universeChoice.kind === "saved" && String(s.id) === String(universeChoice.id)
-  );
-
-  const dynamicUniverseTitle = useMemo(() => {
-    if (universeChoice.kind === "preset") {
-      return activePreset?.label || universeChoice.id;
-    }
-    if (universeChoice.kind === "saved") {
-      return activeSaved?.name || "Saved Screen";
-    }
-    if (universeChoice.kind === "inline") {
-      return "Custom AST Screen";
-    }
-    return universeTitle || "Universe AST Screen";
-  }, [
-    universeChoice,
-    activePreset,
-    activeSaved,
-    universeTitle,
-  ]);
-
-  const evalConfig = evaluationConfig ?? INITIAL_EVALUATION_CONFIG;
   const strategyNameValue = pipelineDoc?.strategy_name ?? composeTitle;
   const pcm = pcmFromDoc(pipelineDoc ?? { strategy_name: "", stages: [] });
   const pyramid = pyramidFromDoc(pipelineDoc ?? { strategy_name: "", stages: [] });
@@ -547,18 +562,10 @@ export function AlgorithmStudioView({
       policy_rules: rules,
     };
   }
-  const availableSweepParams = useMemo<SweepParamRange[]>(
-    () => [
-      { name: "risk_per_trade_pct", label: "Risk Budget % (1R)", target_slot: "Portfolio", min: 0.005, max: 0.02, step: 0.0025 },
-      { name: "take_profit_r", label: "Tranche 1 Profit (R)", target_slot: "Risk", min: 1.5, max: 3.5, step: 0.5 },
-      { name: "max_positions", label: "Max Portfolio Capacity", target_slot: "Portfolio", min: 5, max: 20, step: 5 },
-    ],
-    [],
-  );
-
   const isCatalog = Boolean(loadedSpec?.ir_id?.startsWith("catalog:") || loadedSpec?.is_system);
   const isNewDraft = !loadedSpec || !loadedSpec.ir_id;
   const isLegacySpec = Boolean(loadedSpec && loadedSpec.schema_status === "legacy" && !loadedSpec.has_pipeline);
+  const isSharedSpec = Boolean(loadedSpec?.is_shared);
 
   const currentPipelineJson = useMemo(() => stableSerialize(pipelineDoc), [pipelineDoc]);
   const currentTitleClean = (composeTitle || "").trim();
@@ -568,8 +575,9 @@ export function AlgorithmStudioView({
     if (!baselineSnapshot || baselineSnapshot.irId !== loadedSpec?.ir_id) return false;
     const docChanged = currentPipelineJson !== baselineSnapshot.pipelineJson;
     const titleChanged = currentTitleClean !== baselineSnapshot.title;
-    return docChanged || titleChanged;
-  }, [isNewDraft, pipelineDoc, baselineSnapshot, loadedSpec?.ir_id, currentPipelineJson, currentTitleClean]);
+    const notesChanged = strategyNotes !== baselineSnapshot.notes;
+    return docChanged || titleChanged || notesChanged;
+  }, [isNewDraft, pipelineDoc, baselineSnapshot, loadedSpec?.ir_id, currentPipelineJson, currentTitleClean, strategyNotes]);
 
   const handleRevert = useCallback(() => {
     if (!baselineSnapshot) return;
@@ -577,223 +585,115 @@ export function AlgorithmStudioView({
     if (baselineSnapshot.title && onChangeTitle) {
       onChangeTitle(baselineSnapshot.title);
     }
-  }, [baselineSnapshot, setPipelineDoc, onChangeTitle]);
+    onChangeStrategyNotes?.(baselineSnapshot.notes);
+  }, [baselineSnapshot, setPipelineDoc, onChangeTitle, onChangeStrategyNotes]);
 
   return (
-    <div className="space-y-4">
-      {/* Top Strategy Spec & Template Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-line bg-surface p-2.5 shadow-xs">
-        <label className="flex min-w-[220px] max-w-xs flex-1 items-center gap-2">
-          <span className="shrink-0 text-[10.5px] font-semibold uppercase tracking-wider text-ink-faint">
-            Strategy
-          </span>
-          <input
-            type="text"
-            value={strategyNameValue}
-            onChange={(e) => {
-              const name = e.target.value;
-              onChangeTitle?.(name);
-              setPipelineDoc((doc) =>
-                doc
-                  ? { ...doc, strategy_name: name }
-                  : pinChampionPipeline({
-                      strategy_name: name,
-                      stages: [],
-                      universe: { source: "screener" },
-                      sizing: { policy: "risk_budgeted", max_positions: 10, risk_per_trade_pct: 0.005, max_weight: 0.25 },
-                      risk: { max_positions: 10 },
-                      execution: { type: "market_order" },
-                    },
-                  ),
-              );
-            }}
-            placeholder="Strategy name"
-            className="min-w-0 w-full rounded border border-line bg-surface-raised px-2.5 py-1 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-          />
-        </label>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Spec State Badge */}
-          {isCatalog ? (
-            <span
-              className="rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-semibold text-sky-400 flex items-center gap-1.5"
-              title="Read-only system catalog seed"
-            >
-              <span>🌟</span> System Template
-            </span>
-          ) : isNewDraft ? (
-            <span className="rounded border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[11px] font-semibold text-blue-400">
-              New Strategy Draft
-            </span>
-          ) : hasUnsavedEdits ? (
-            <div className="flex items-center gap-1.5">
-              <span
-                className="rounded border border-warn/40 bg-warn/10 px-2 py-1 text-[11px] font-semibold text-warn flex items-center gap-1.5"
-                title="In-memory draft differs from ClickHouse spec snapshot"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-warn animate-pulse" />
-                Unsaved edits
-              </span>
-              {baselineSnapshot && (
-                <button
-                  type="button"
-                  onClick={handleRevert}
-                  className="rounded border border-line bg-surface px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface-sunk transition-colors"
-                  title="Discard unsaved edits and restore loaded baseline"
-                >
-                  ↺ Revert
-                </button>
-              )}
-            </div>
-          ) : (
-            <span
-              className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5"
-              title="In-memory draft matches ClickHouse spec snapshot"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Up to date
-            </span>
-          )}
-
-          {/* Active Spec Info: Schema & Content Hash & Runs */}
-          {loadedSpec && (
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              {/* Schema Badge */}
-              {isLegacySpec ? (
-                <span
-                  className="rounded bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400"
-                  title="Legacy AST spec (without pipeline_json stage definitions)"
-                >
-                  v1 Legacy AST
-                </span>
-              ) : (
-                <span className="rounded bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                  v2 Pipeline
-                </span>
-              )}
-
-              {/* Hash Badge */}
-              {loadedSpec.ir_content_hash ? (
-                <span
-                  className="font-mono rounded bg-surface-sunk border border-line px-1.5 py-0.5 text-[10px] text-ink-muted"
-                  title={`Immutable Content Hash: ${loadedSpec.ir_content_hash}`}
-                >
-                  #{loadedSpec.ir_content_hash.slice(0, 8)}
-                </span>
-              ) : null}
-
-              {/* Runs Quick Link */}
-              {!isCatalog && (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/backtests?ir_id=${encodeURIComponent(loadedSpec.ir_id)}`)}
-                  className="rounded border border-line bg-surface-sunk px-2 py-0.5 text-[11px] font-medium text-ink hover:border-accent hover:text-accent transition-colors flex items-center gap-1"
-                  title="View Backtest Runs for this Strategy Spec"
-                >
-                  <span>📊</span>
-                  <span>Runs{activeRunsCount != null && activeRunsCount > 0 ? ` (${activeRunsCount})` : ""}</span>
-                </button>
-              )}
-
-              <CopyIdBadge
-                id={loadedSpec.ir_id}
-                label="IR"
-                head={8}
-                tail={4}
-                sqlQuery={`SELECT * FROM strategy_algorithm_specs FINAL WHERE ir_id = '${loadedSpec.ir_id}'`}
-              />
-            </div>
-          )}
-
-          {/* Primary Save Action */}
-          {onSaveStrategy ? (
-            isCatalog ? (
-              <button
-                type="button"
-                onClick={() => setForkModalOpen(true)}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 disabled:opacity-50"
-                title="System templates are read-only seeds. Save as a new strategy to customize."
-              >
-                <span>📥</span>
-                <span>Save as Strategy</span>
-              </button>
-            ) : isLegacySpec ? (
-              <button
-                type="button"
-                onClick={() => onSaveStrategy()}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 shadow-sm"
-                title="Save compiled pipeline to upgrade this spec to v2 Pipeline"
-              >
-                <span>🚀</span>
-                <span>{saveStrategyPending ? "Upgrading…" : "Upgrade & Save (v2)"}</span>
-              </button>
-            ) : hasUnsavedEdits ? (
-              <button
-                type="button"
-                onClick={() => onSaveStrategy()}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 shadow-sm"
-              >
-                <span>💾</span>
-                <span>{saveStrategyPending ? "Saving…" : "Save Changes"}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="flex items-center gap-1.5 rounded-md border border-line bg-surface-sunk px-3 py-1.5 text-xs font-semibold text-ink-muted opacity-60 cursor-default"
-                title="No unsaved changes in this strategy"
-              >
-                <span>✓</span>
-                <span>Saved</span>
-              </button>
-            )
+    <div className="space-y-3">
+      <Card className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 shadow-none">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Badge variant={hasUnsavedEdits ? "warning" : "muted"} className="px-2 py-0.5 text-[11px]">
+            {isCatalog ? "System template" : isNewDraft ? "Draft" : isSharedSpec ? "Shared" : hasUnsavedEdits ? "Unsaved changes" : "Saved"}
+          </Badge>
+          {loadedSpec ? (
+            <span className="truncate font-mono text-[10px] text-muted-foreground">{loadedSpec.ir_id}</span>
           ) : null}
+          {hasUnsavedEdits && baselineSnapshot ? (
+            <Button type="button" variant="ghost" size="sm" onClick={handleRevert} className="h-7 px-2 text-xs">
+              Revert
+            </Button>
+          ) : null}
+        </div>
 
-          {/* Fork / New Version Button */}
-          {loadedSpec && !isCatalog && (
-            <button
-              type="button"
-              onClick={() => setForkModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-accent hover:text-accent transition-colors"
-              title="Save a new version (fork) to preserve the previous version and its backtests"
-            >
-              <span>🌱</span>
-              <span>Fork Version</span>
-            </button>
-          )}
-
-          {/* Library and Template Buttons */}
-          <button
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
             type="button"
             onClick={onOpenSpecLibrary}
-            className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink hover:border-accent hover:text-accent transition-colors"
+            variant="outline"
+            size="sm"
           >
-            <span>📚</span>
-            <span>Browse Specs & Templates</span>
-          </button>
-          <button
+            Strategy library
+          </Button>
+          <Button
             type="button"
-            onClick={() => onOpenSaveTemplate?.(compiledFromAlpha ?? EMPTY_FRAMEWORK)}
-            className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-accent hover:bg-surface-sunk transition-colors"
+            onClick={() => setStrategySettingsOpen(true)}
+            variant="outline"
+            size="sm"
+            aria-haspopup="dialog"
           >
-            <span>💾</span>
-            <span>Save as Template</span>
-          </button>
+            Strategy settings
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      <div className="space-y-3">
-        {/* Strategy Documentation & Rationale Banner */}
-        <StrategyDocumentationBanner spec={loadedSpec} defaultExpanded={true} />
+      <StrategySettingsDialog
+        open={strategySettingsOpen}
+        onOpenChange={setStrategySettingsOpen}
+        strategyName={strategyNameValue}
+        strategyId={composeIrId}
+        onStrategyIdChange={onChangeIrId}
+        notes={strategyNotes}
+        onNotesChange={onChangeStrategyNotes ?? (() => undefined)}
+        isTemplate={isTemplate}
+        onTemplateChange={onChangeIsTemplate}
+        onStrategyNameChange={(name) => {
+          onChangeTitle?.(name);
+          setPipelineDoc((doc) =>
+            doc
+              ? { ...doc, strategy_name: name }
+              : pinChampionPipeline({
+                  strategy_name: name,
+                  stages: [],
+                  universe: { source: "screener" },
+                  sizing: { policy: "risk_budgeted", max_positions: 10, risk_per_trade_pct: 0.005, max_weight: 0.25 },
+                  risk: { max_positions: 10 },
+                  execution: { type: "market_order" },
+                }),
+          );
+        }}
+        loadedSpec={loadedSpec}
+        isNewDraft={isNewDraft}
+        isCatalog={isCatalog}
+        isSharedSpec={isSharedSpec}
+        isLegacySpec={isLegacySpec}
+        hasUnsavedEdits={hasUnsavedEdits}
+        savePending={saveStrategyPending}
+        onSave={() => onSaveStrategy?.()}
+        onFork={() => {
+          setStrategySettingsOpen(false);
+          setForkModalOpen(true);
+        }}
+        onSaveTemplate={() => {
+          setStrategySettingsOpen(false);
+          onOpenSaveTemplate?.(compiledFromAlpha ?? EMPTY_FRAMEWORK);
+        }}
+      />
 
-        <div className="space-y-3.5">
+      <Tabs value={activeSlot} onValueChange={selectStrategySlot} className="space-y-0">
+          <TabsList className="grid h-auto w-full grid-cols-5 gap-1">
+            {([
+              ["universe", "Universe", "Universe"],
+              ["alpha", "Alpha", "Alpha"],
+              ["portfolio", "Portfolio", "Portfolio construction"],
+              ["risk", "Risk", "Risk management"],
+              ["execution", "Execution", "Execution"],
+            ] as [StrategySlotKey, string, string][]).map(([key, label, accessibleName]) => (
+              <TabsTrigger
+                key={key}
+                value={key}
+                aria-label={accessibleName}
+                className="min-h-10 min-w-0 px-1 py-2 text-[10px] sm:text-xs"
+              >
+                <span className="max-w-full truncate">{label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value="universe" forceMount className={cn("mt-3", activeSlot === "universe" ? "block" : "hidden")}>
           <UniverseSlotCard
               screen={pipelineDoc?.universe?.screen ?? []}
-              asOf={evalConfig.end_date || ""}
-              startDate={evalConfig.start_date || ""}
+              asOf={asOfDate}
+              startDate={startDate}
               onChangeScreen={(nextScreen) => {
                 setPipelineDoc((doc) =>
                   doc
@@ -816,50 +716,43 @@ export function AlgorithmStudioView({
                 );
               }}
             />
+          </TabsContent>
 
-            <div className="space-y-3 rounded-lg border border-line bg-surface p-3.5 shadow-sm">
-              <div className="border-b border-line pb-2">
-                <h4 className="text-[12.5px] font-bold text-ink">2. Alpha</h4>
-              </div>
-              <p className="text-[10.5px] text-ink-muted leading-tight">
-                Measures (SQL + Insight ✓ for who/when) → Insights (Insight.Price property lookup
-                only). Stops / scale-in on PCM + Risk — not Alpha trigger lists.
-              </p>
+          <TabsContent value="alpha" forceMount className={cn("mt-3", activeSlot === "alpha" ? "block" : "hidden")}>
+              <Card className="space-y-3 rounded-lg p-3.5 shadow-sm">
               <div className="rounded border border-line bg-surface-raised/40 px-2.5 py-2">
                 {progressive.regimeOn ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      title="Stop Alpha from emitting new Up insights while the regime is risk-off. Existing positions are still managed by Risk. The regime thermostat lives on the PCM card."
-                      onClick={() =>
-                        setPipelineDoc((doc) =>
-                          doc
-                            ? patchProgressive(doc, {
-                                regimeUses: progressive.regimeUses.includes("block_new_longs")
-                                  ? progressive.regimeUses.filter((u) => u !== "block_new_longs")
-                                  : [...progressive.regimeUses, "block_new_longs"],
-                              })
-                            : doc,
-                        )
-                      }
-                      className={
-                        progressive.regimeUses.includes("block_new_longs")
-                          ? "rounded border border-accent bg-accent/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-accent-ink"
-                          : "rounded border border-line px-1.5 py-0.5 text-[9.5px] text-ink-muted"
-                      }
-                    >
-                      Block new longs in risk-off
-                    </button>
-                    <span className="text-[9px] text-ink-faint">
-                      Regime entry gate — suppresses new Up insights; holds stay managed. Regime
-                      source + exposure scaling on the PCM card.
-                    </span>
-                  </div>
+                  <Button
+                    type="button"
+                    variant={progressive.regimeUses.includes("block_new_longs") ? "secondary" : "outline"}
+                    size="sm"
+                    title="Block new long entries during risk-off. Existing positions remain under Risk rules."
+                    onClick={() =>
+                      setPipelineDoc((doc) =>
+                        doc
+                          ? patchProgressive(doc, {
+                              regimeUses: progressive.regimeUses.includes("block_new_longs")
+                                ? progressive.regimeUses.filter((u) => u !== "block_new_longs")
+                                : [...progressive.regimeUses, "block_new_longs"],
+                            })
+                          : doc,
+                      )
+                    }
+                    className="h-7 px-2 text-[10px]"
+                    aria-pressed={progressive.regimeUses.includes("block_new_longs")}
+                  >
+                    Block new longs in risk-off
+                  </Button>
                 ) : (
-                  <p className="text-[9px] text-ink-faint">
-                    Regime entry gate off — enable the regime thermostat on the PCM card to gate
-                    new Up insights in risk-off.
-                  </p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-6 px-0 text-[10px]"
+                    onClick={() => selectStrategySlot("portfolio")}
+                  >
+                    Enable entry gate in Portfolio
+                  </Button>
                 )}
               </div>
               {pipelineDecompileError ? (
@@ -869,8 +762,8 @@ export function AlgorithmStudioView({
               ) : null}
               <StrategyEditorView
                 initialDocument={pipelineDoc}
-                asOf={evalConfig.end_date || ""}
-                startDate={evalConfig.start_date || ""}
+                asOf={asOfDate}
+                startDate={startDate}
                 prepareRevision={JSON.stringify(pipelineDoc?.universe?.screen ?? [])}
                 prepareDocument={(doc) =>
                   pinChampionPipeline({
@@ -897,8 +790,10 @@ export function AlgorithmStudioView({
                   onChangeFullSpec?.(spec);
                 }}
               />
-            </div>
+              </Card>
+          </TabsContent>
 
+          <TabsContent value="portfolio" forceMount className={cn("mt-3", activeSlot === "portfolio" ? "block" : "hidden")}>
             <PcmSlotCard
               phases={pyramid.phases}
               onChangePhases={(phases) =>
@@ -947,7 +842,9 @@ export function AlgorithmStudioView({
                 setPipelineDoc((doc) => (doc ? patchPcmBookExpr(doc, key, v) : doc))
               }
             />
+          </TabsContent>
 
+          <TabsContent value="risk" forceMount className={cn("mt-3", activeSlot === "risk" ? "block" : "hidden")}>
             <RiskSlotCard
               tranches={progressive.tranches}
               onChangeTranches={(tranches) =>
@@ -1002,54 +899,17 @@ export function AlgorithmStudioView({
                 setPipelineDoc((doc) => (doc ? patchInitStop(doc, v) : doc))
               }
             />
+          </TabsContent>
 
+          <TabsContent value="execution" forceMount className={cn("mt-3", activeSlot === "execution" ? "block" : "hidden")}>
             <ExecutionSlotCard
               fillSession={fillSession}
               onChangeFillSession={(v) =>
                 setPipelineDoc((doc) => (doc ? patchFillSession(doc, v) : doc))
               }
             />
-          </div>
-      </div>
-
-      {/* In-Canvas Simulation & Evaluation Protocol Panel */}
-      {onChangeEvaluationConfig && (
-        <EvaluationSettingsPanel
-          config={evalConfig}
-          onChangeConfig={onChangeEvaluationConfig}
-          availableParams={availableSweepParams}
-        />
-      )}
-
-      {/* Bottom Lifecycle Action Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-panel">
-        <div className="flex items-center gap-2 text-[12px] text-ink-muted">
-          <span className="font-semibold text-ink">Ready to evaluate:</span>
-          <span>{dynamicUniverseTitle} + Pyramid Alpha + Risk-Budgeted PCM</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {evalConfig.strategy === "optimization_sweep" ? (
-            <button
-              type="button"
-              onClick={onLaunchOptimizer ?? onLaunchBacktest}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-fg shadow-sm hover:opacity-90 transition-opacity"
-            >
-              <span>⚡</span>
-              <span>Launch Optimization Sweep</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onLaunchBacktest}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-fg shadow-sm hover:opacity-90 transition-opacity"
-            >
-              <span>▶</span>
-              <span>Launch Baseline Backtest</span>
-            </button>
-          )}
-        </div>
-      </div>
+          </TabsContent>
+      </Tabs>
 
       <ForkStrategyVersionModal
         isOpen={forkModalOpen}

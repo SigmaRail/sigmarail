@@ -1,6 +1,15 @@
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { fetchRunRollingStats } from "../../api/backtests";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 type MetricKey = "sharpe" | "win_rate" | "volatility" | "beta";
 
@@ -81,70 +90,71 @@ export function RollingStatsMatrix({ runId }: { runId: string }) {
             Rolling Statistics Matrix
           </h3>
           <p className="mt-0.5 text-[11px] text-ink-muted">
-            QuantConnect-style multi-horizon sliding windows (1M, 3M, 6M)
+            Multi-horizon rolling windows (1M, 3M, 6M)
           </p>
         </div>
 
         {/* Metric Switcher */}
-        <select
-          value={selectedMetric}
-          onChange={(e) => setSelectedMetric(e.target.value as MetricKey)}
-          className="rounded border border-line bg-surface-raised px-2.5 py-1 text-[11px] font-semibold text-ink shadow-xs focus:border-accent focus:outline-none"
-        >
+        <Select value={selectedMetric} onValueChange={(value) => setSelectedMetric(value as MetricKey)}>
+          <SelectTrigger aria-label="Rolling statistic" className="w-full sm:w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
           {METRICS.map((m) => (
-            <option key={m.key} value={m.key}>
+            <SelectItem key={m.key} value={m.key}>
               {m.label}
-            </option>
+            </SelectItem>
           ))}
-        </select>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Main Grid: Matrix Table on Left, Sparkline on Right */}
       <div className="mt-3 grid gap-3 lg:grid-cols-12 items-center">
         {/* Rolling Horizon Table (7 cols) */}
         <div className="lg:col-span-7 overflow-x-auto">
-          <table className="w-full text-left font-mono text-[11px]">
-            <thead>
-              <tr className="border-b border-line/60 text-ink-faint text-[10px] uppercase">
-                <th className="pb-1.5 font-medium">Metric</th>
-                <th className="pb-1.5 text-center font-medium">1 Month (21d)</th>
-                <th className="pb-1.5 text-center font-medium">3 Months (63d)</th>
-                <th className="pb-1.5 text-center font-medium">6 Months (126d)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line/30">
+          <WorkspaceTable className="w-full text-left font-mono text-[11px]">
+            <WorkspaceTableHeader>
+              <WorkspaceTableRow className="border-b border-line/60 text-ink-faint text-[10px] uppercase">
+                <WorkspaceTableHead className="pb-1.5 font-medium">Metric</WorkspaceTableHead>
+                <WorkspaceTableHead className="pb-1.5 text-center font-medium">1 Month (21d)</WorkspaceTableHead>
+                <WorkspaceTableHead className="pb-1.5 text-center font-medium">3 Months (63d)</WorkspaceTableHead>
+                <WorkspaceTableHead className="pb-1.5 text-center font-medium">6 Months (126d)</WorkspaceTableHead>
+              </WorkspaceTableRow>
+            </WorkspaceTableHeader>
+            <WorkspaceTableBody className="divide-y divide-line/30">
               {METRICS.map((m) => {
                 const row = matrix ? matrix[m.key] : null;
                 const isSelected = m.key === selectedMetric;
                 return (
-                  <tr
+                  <WorkspaceTableRow
                     key={m.key}
                     onClick={() => setSelectedMetric(m.key)}
                     className={`cursor-pointer transition-colors ${
                       isSelected ? "bg-accent/10 font-bold" : "hover:bg-surface-sunk/60"
                     }`}
                   >
-                    <td className="py-2 text-ink flex items-center gap-1.5">
+                    <WorkspaceTableCell className="py-2 text-ink flex items-center gap-1.5">
                       <span
                         className="inline-block h-2 w-2 rounded-full"
                         style={{ backgroundColor: m.color }}
                       />
                       <span>{m.label}</span>
-                    </td>
-                    <td className="py-2 text-center text-ink">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-center text-ink">
                       {row ? String(row["1M"] ?? "—") : "—"}
-                    </td>
-                    <td className="py-2 text-center text-ink-muted">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-center text-ink-muted">
                       {row ? String(row["3M"] ?? "—") : "—"}
-                    </td>
-                    <td className="py-2 text-center text-ink-muted">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-center text-ink-muted">
                       {row ? String(row["6M"] ?? "—") : "—"}
-                    </td>
-                  </tr>
+                    </WorkspaceTableCell>
+                  </WorkspaceTableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </WorkspaceTableBody>
+          </WorkspaceTable>
         </div>
 
         {/* Rolling Sparkline Visualizer (5 cols) */}

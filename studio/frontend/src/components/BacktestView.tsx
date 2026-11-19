@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useGenerateLocalePath } from "@sb/webapp-core/hooks";
 import { backtestRunFromPath, backtestRunPath, strategyPath, type BacktestSection } from "../routes";
 import {
   fetchBacktestReport,
@@ -27,6 +28,7 @@ import type {
   WorkbenchTab,
 } from "../types";
 import { BacktestComposePanel } from "./BacktestComposePanel";
+import { BacktestRunSetupDialog } from "./BacktestRunSetupDialog";
 import { MonthlyReturnsHeatmap } from "./MonthlyReturnsHeatmap";
 import { TradeAnalyticsPanel } from "./TradeAnalyticsPanel";
 import { ClosedTradesTable } from "./ClosedTradesTable";
@@ -48,10 +50,35 @@ import { RollingStatsMatrix } from "./studio/RollingStatsMatrix";
 import { CopyIdBadge } from "./CopyIdBadge";
 import { RunFilterBar, type RunFilters, INITIAL_RUN_FILTERS } from "./RunFilterBar";
 import { RunScreenerTable } from "./RunScreenerTable";
+import { PageHeadline } from "@sb/webapp-core/components/pageHeadline";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@sb/webapp-core/components/ui/alert";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+import { Slider } from "@sb/webapp-core/components/ui/slider";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 function truncateId(id: string, head = 8, tail = 6): string {
   if (id.length <= head + tail + 1) return id;
   return `${id.slice(0, head)}…${id.slice(-tail)}`;
+}
+
+function localePath(generateLocalePath: (path: string) => string, path: string) {
+  return generateLocalePath(path.replace(/^\/+/, ""));
 }
 
 function formatPct(value: number | null | undefined): string {
@@ -135,13 +162,12 @@ function RunListItem({
       }`}
     >
       <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
-        <input
-          type="checkbox"
+        <Checkbox
           checked={checked}
           disabled={!isDone}
-          onChange={() => onToggleCheck && onToggleCheck()}
-          className="rounded border-line bg-surface text-accent focus:ring-accent disabled:opacity-30"
+          onCheckedChange={() => onToggleCheck?.()}
           title="Select for comparison"
+          aria-label="Select for comparison"
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -162,17 +188,20 @@ function RunListItem({
           </div>
 
           {isFailed && onViewLog ? (
-            <button
+          <Button
               type="button"
+            variant="ghost"
+            size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onViewLog(run.run_id, run.ir_id, run.status);
               }}
-              className="text-[10px] text-ink-muted hover:text-ink"
+            className="h-7 w-7"
               title="View error log"
+            aria-label="View error log"
             >
-              📜
-            </button>
+            Log
+          </Button>
           ) : isRunning && run.progress_pct ? (
             <span className="font-mono text-[9px] font-bold text-sky-400">
               {Math.round(run.progress_pct * 100)}%
@@ -369,8 +398,41 @@ function ReportPanel({
     report.metrics?.total_orders === 0 ||
     (ordersQuery.data?.total === 0 && ordersQuery.isSuccess);
 
+  const selectOrder = (
+    row: Record<string, unknown>,
+    idx: number,
+    timeStr: string,
+    dir: string,
+    sym: string,
+  ) => {
+    if (!sym || sym === "—") return;
+    const allTrades = [
+      ...(closedTradesQuery.data?.trades ?? []),
+      ...(closedTradesQuery.data?.open_trades ?? []),
+    ];
+    const match = allTrades.find(
+      (trade) => trade.symbol.toUpperCase() === sym.toUpperCase(),
+    );
+    if (match) {
+      handleSelectTrade(match);
+      return;
+    }
+    handleSelectTrade({
+      id: String(row.id ?? `order_${idx}`),
+      symbol: sym,
+      entry_time: timeStr !== "—" ? timeStr : new Date().toISOString().slice(0, 10),
+      entry_price: row.fillPrice != null && Number(row.fillPrice) > 0 ? Number(row.fillPrice) : 0,
+      direction: dir,
+      quantity: row.quantity != null ? Number(row.quantity) : 0,
+      profit_loss: 0,
+      return_pct: 0,
+      is_win: true,
+      status: "OPEN",
+    });
+  };
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col p-4">
       {/* Header Info */}
       <div className="mb-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -393,23 +455,25 @@ function ReportPanel({
           </div>
           <div className="flex items-center gap-2">
             {onEditInComposer && (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={onEditInComposer}
-                className="rounded border border-line bg-surface-sunk px-3 py-1.5 text-[12px] font-semibold text-accent hover:bg-surface hover:border-accent/40 flex items-center gap-1.5"
               >
                 <span>✏️</span>
                 <span>Open in Composer</span>
-              </button>
+              </Button>
             )}
             {onPromote && report.ir_id ? (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={onPromote}
-                className="rounded border border-line bg-surface-sunk px-3 py-1.5 text-[12px] font-medium text-ink hover:bg-surface"
               >
                 Promote to paper
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
@@ -428,63 +492,44 @@ function ReportPanel({
         ) : null}
       </div>
 
-      {/* Subtab Navigation Bar */}
-      <div className="mb-4 flex gap-1 border-b border-line pb-2">
-        <button
-          type="button"
-          onClick={() => onRunSubTabChange("overview")}
-          className={`rounded px-3 py-1.5 text-[12px] font-medium transition-colors ${
-            runSubTab === "overview"
-              ? "bg-accent text-accent-ink font-semibold"
-              : "text-ink-muted hover:bg-surface-sunk hover:text-ink"
-          }`}
-        >
-          Overview & Heatmap
-        </button>
-        <button
-          type="button"
-          onClick={() => onRunSubTabChange("trades")}
-          className={`rounded px-3 py-1.5 text-[12px] font-medium transition-colors ${
-            runSubTab === "trades"
-              ? "bg-accent text-accent-ink font-semibold"
-              : "text-ink-muted hover:bg-surface-sunk hover:text-ink"
-          }`}
-        >
-          Trades & Excursions {closedTradesQuery.data?.total ? `(${closedTradesQuery.data.total})` : ""}
-        </button>
-        <button
-          type="button"
-          onClick={() => onRunSubTabChange("attribution")}
-          className={`rounded px-3 py-1.5 text-[12px] font-medium transition-colors ${
-            runSubTab === "attribution"
-              ? "bg-accent text-accent-ink font-semibold"
-              : "text-ink-muted hover:bg-surface-sunk hover:text-ink"
-          }`}
-        >
-          Attribution & Macro
-        </button>
-        <button
-          type="button"
-          onClick={() => onRunSubTabChange("scrubber")}
-          className={`rounded px-3 py-1.5 text-[12px] font-medium transition-colors ${
-            runSubTab === "scrubber"
-              ? "bg-accent text-accent-ink font-semibold"
-              : "text-ink-muted hover:bg-surface-sunk hover:text-ink"
-          }`}
-        >
-          Day Scrubber {snapshots.length > 0 ? `(${snapshots.length}d)` : ""}
-        </button>
+      {/* Section navigation stays compact on phones and keeps full labels on desktop. */}
+      <div className="mb-4 min-w-0 pb-1">
+        <div className="md:hidden">
+          <Select value={runSubTab} onValueChange={(value) => onRunSubTabChange(value as BacktestSection)}>
+            <SelectTrigger aria-label="Report section" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="overview">Overview</SelectItem>
+              <SelectItem value="trades">Trades &amp; Excursions</SelectItem>
+              <SelectItem value="attribution">Attribution &amp; Macro</SelectItem>
+              <SelectItem value="scrubber">Day Scrubber</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="hidden md:block">
+        <Tabs value={runSubTab} onValueChange={(value) => onRunSubTabChange(value as BacktestSection)}>
+          <TabsList className="h-10 w-full justify-start rounded-none border-b bg-transparent p-0">
+            <TabsTrigger value="overview" className="h-9 rounded-none px-3 text-xs">Overview</TabsTrigger>
+            <TabsTrigger value="trades" className="h-9 rounded-none px-3 text-xs">
+              Trades & Excursions{closedTradesQuery.data?.total ? ` (${closedTradesQuery.data.total})` : ""}
+            </TabsTrigger>
+            <TabsTrigger value="attribution" className="h-9 rounded-none px-3 text-xs">Attribution & Macro</TabsTrigger>
+            <TabsTrigger value="scrubber" className="h-9 rounded-none px-3 text-xs">
+              Day Scrubber{snapshots.length > 0 ? ` (${snapshots.length}d)` : ""}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        </div>
       </div>
 
       {zeroOrders ? (
-        <section className="mb-4 rounded border border-warn/30 bg-warn-soft px-3 py-2">
-          <p className="text-[12px] font-medium text-warn">No orders recorded</p>
+        <Card className="mb-4 space-y-1 border-amber-500/30 bg-amber-50/50 px-3 py-2.5 shadow-none dark:bg-amber-950/20">
+          <Badge variant="warning" className="w-fit">No orders recorded</Badge>
           <p className="mt-1 text-[11px] text-warn/90">
-            Check that <span className="font-mono">vera_query_service</span> is
-            running (<span className="font-mono">VERA_QUERY_URL</span>) and the
-            universe returned rows for the backtest window.
+            Check that the market data service is available and the universe returned rows for the backtest window.
           </p>
-        </section>
+        </Card>
       ) : null}
 
       {/* OVERVIEW SUBTAB */}
@@ -574,25 +619,59 @@ function ReportPanel({
             onSelectTrade={(t) => handleSelectTrade(t)}
           />
 
-          {/* Raw Orders Table */}
+          {/* Execution Orders */}
           {ordersQuery.data && ordersQuery.data.count > 0 ? (
             <section className="mb-4">
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
                 Execution Orders Log ({ordersQuery.data.total})
               </h3>
-              <div className="mt-2 max-h-56 overflow-auto rounded border border-line bg-surface">
-                <table className="w-full text-left text-[11px]">
-                  <thead className="sticky top-0 bg-surface-sunk text-ink-faint">
-                    <tr>
-                      <th className="px-2 py-1">Time</th>
-                      <th className="px-2 py-1">Symbol</th>
-                      <th className="px-2 py-1">Direction</th>
-                      <th className="px-2 py-1">Quantity</th>
-                      <th className="px-2 py-1">Fill Price</th>
-                      <th className="px-2 py-1">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="mt-2 md:hidden max-h-56 space-y-2 overflow-auto rounded border border-line bg-surface p-2">
+                {ordersQuery.data.orders.map((o, idx) => {
+                  const row = o as Record<string, unknown>;
+                  const timeNum = typeof row.time === "number" ? row.time : Number(row.time);
+                  const timeStr = !Number.isNaN(timeNum) && timeNum > 0
+                    ? new Date(timeNum > 1e12 ? timeNum : timeNum * 1000).toISOString().slice(0, 10)
+                    : "—";
+                  const dir = String(row.direction ?? row.Direction ?? "—").toLowerCase();
+                  const qty = row.quantity != null ? Number(row.quantity).toLocaleString() : "—";
+                  const fillPx = row.fillPrice != null && Number(row.fillPrice) > 0 ? `$${Number(row.fillPrice).toFixed(2)}` : "—";
+                  const sym = String(row.symbolValue ?? row.Symbol ?? row.symbol ?? "—");
+                  return (
+                    <Card key={String(row.id ?? idx)} className="space-y-2 p-3 shadow-none">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-mono text-sm font-semibold text-ink">{sym}</div>
+                          <div className="text-xs text-muted-foreground">{timeStr}</div>
+                        </div>
+                        <Badge variant={dir === "buy" ? "success" : dir === "sell" ? "destructive" : "muted"} className="shrink-0 uppercase">
+                          {dir}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                        <span className="text-muted-foreground">Quantity</span><span className="text-right tabular-nums">{qty}</span>
+                        <span className="text-muted-foreground">Fill price</span><span className="text-right tabular-nums">{fillPx}</span>
+                        <span className="text-muted-foreground">Status</span><span className="text-right">{String(row.status ?? row.Status ?? "—")}</span>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => selectOrder(row, idx, timeStr, dir, sym)}>
+                        View chart
+                      </Button>
+                    </Card>
+                  );
+                })}
+              </div>
+              <div className="mt-2 hidden max-h-56 overflow-auto rounded border border-line bg-surface md:block">
+                <WorkspaceTable className="w-full text-left text-[11px]">
+                  <WorkspaceTableHeader className="sticky top-0 bg-surface-sunk text-ink-faint">
+                    <WorkspaceTableRow>
+                      <WorkspaceTableHead className="px-2 py-1">Time</WorkspaceTableHead>
+                      <WorkspaceTableHead className="px-2 py-1">Symbol</WorkspaceTableHead>
+                      <WorkspaceTableHead className="px-2 py-1">Direction</WorkspaceTableHead>
+                      <WorkspaceTableHead className="px-2 py-1">Quantity</WorkspaceTableHead>
+                      <WorkspaceTableHead className="px-2 py-1">Fill Price</WorkspaceTableHead>
+                      <WorkspaceTableHead className="px-2 py-1">Status</WorkspaceTableHead>
+                    </WorkspaceTableRow>
+                  </WorkspaceTableHeader>
+                  <WorkspaceTableBody>
                     {ordersQuery.data.orders.map((o, idx) => {
                       const row = o as Record<string, unknown>;
                       const timeNum = typeof row.time === "number" ? row.time : Number(row.time);
@@ -604,54 +683,29 @@ function ReportPanel({
                       const fillPx = row.fillPrice != null && Number(row.fillPrice) > 0 ? `$${Number(row.fillPrice).toFixed(2)}` : "—";
                       const sym = String(row.symbolValue ?? row.Symbol ?? row.symbol ?? "—");
                       return (
-                        <tr
+                        <WorkspaceTableRow
                           key={idx}
-                          onClick={() => {
-                            if (!sym || sym === "—") return;
-                            const allTrades = [
-                              ...(closedTradesQuery.data?.trades ?? []),
-                              ...(closedTradesQuery.data?.open_trades ?? []),
-                            ];
-                            const match = allTrades.find(
-                              (t) => t.symbol.toUpperCase() === sym.toUpperCase(),
-                            );
-                            if (match) {
-                              handleSelectTrade(match);
-                            } else {
-                              handleSelectTrade({
-                                id: String(row.id ?? `order_${idx}`),
-                                symbol: sym,
-                                entry_time: timeStr !== "—" ? timeStr : new Date().toISOString().slice(0, 10),
-                                entry_price: row.fillPrice != null && Number(row.fillPrice) > 0 ? Number(row.fillPrice) : 0,
-                                direction: dir,
-                                quantity: row.quantity != null ? Number(row.quantity) : 0,
-                                profit_loss: 0,
-                                return_pct: 0,
-                                is_win: true,
-                                status: "OPEN",
-                              });
-                            }
-                          }}
+                          onClick={() => selectOrder(row, idx, timeStr, dir, sym)}
                           className="border-t border-line hover:bg-surface-sunk/60 cursor-pointer transition-colors"
                           title={`Click to view ${sym} candlestick chart & campaign`}
                         >
-                          <td className="px-2 py-1 font-mono text-[10px] text-ink-muted">{timeStr}</td>
-                          <td className="px-2 py-1 font-mono font-medium text-ink">
+                          <WorkspaceTableCell className="px-2 py-1 font-mono text-[10px] text-ink-muted">{timeStr}</WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 font-mono font-medium text-ink">
                             {sym}
-                          </td>
-                          <td className="px-2 py-1">
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1">
                             <span className={`inline-block font-semibold ${dir === "buy" ? "text-emerald-500" : dir === "sell" ? "text-rose-500" : "text-ink"}`}>
                               {dir.toUpperCase()}
                             </span>
-                          </td>
-                          <td className="px-2 py-1 tabular-nums text-ink">{qty}</td>
-                          <td className="px-2 py-1 tabular-nums text-ink">{fillPx}</td>
-                          <td className="px-2 py-1 text-ink-muted">{String(row.status ?? row.Status ?? "—")}</td>
-                        </tr>
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 tabular-nums text-ink">{qty}</WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 tabular-nums text-ink">{fillPx}</WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 text-ink-muted">{String(row.status ?? row.Status ?? "—")}</WorkspaceTableCell>
+                        </WorkspaceTableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </WorkspaceTableBody>
+                </WorkspaceTable>
               </div>
             </section>
           ) : null}
@@ -667,7 +721,7 @@ function ReportPanel({
       {runSubTab === "scrubber" ? (
         snapshots.length > 0 ? (
           <section className="mb-4 space-y-3">
-            <div className="rounded-lg border border-line bg-surface p-3.5 shadow-sm">
+            <Card className="space-y-3.5 p-3.5 shadow-none">
               <div className="flex items-center justify-between">
                 <h3 className="text-[12px] font-bold text-ink">
                   Point-in-Time Day Scrubber
@@ -676,13 +730,14 @@ function ReportPanel({
                   Snapshot {snapshotIndex + 1} of {snapshots.length}
                 </span>
               </div>
-              <input
-                type="range"
+              <Slider
                 min={0}
                 max={Math.max(0, snapshots.length - 1)}
-                value={Math.min(snapshotIndex, snapshots.length - 1)}
-                onChange={(e) => setSnapshotIndex(Number(e.target.value))}
-                className="mt-3 w-full"
+                step={1}
+                value={[Math.min(snapshotIndex, snapshots.length - 1)]}
+                onValueChange={([index]) => setSnapshotIndex(index ?? 0)}
+                aria-label="Select historical snapshot"
+                className="mt-3"
               />
               {activeSnapshot ? (
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded border border-line bg-surface-sunk p-2.5 text-[11px]">
@@ -708,7 +763,7 @@ function ReportPanel({
                   </div>
                 </div>
               ) : null}
-            </div>
+            </Card>
 
             {activeSnapshot && (
               <UniversalCandidateExplorer
@@ -759,9 +814,10 @@ function ReportPanel({
               const open = expandedArtifact === atype;
               return (
                 <li key={atype} className="rounded border border-line bg-surface">
-                  <button
+                  <Button
                     type="button"
-                    className="flex w-full items-baseline justify-between gap-2 px-2.5 py-1.5 font-mono text-[11px] hover:bg-surface-sunk"
+                    className="flex h-auto w-full items-baseline justify-between gap-2 rounded-none px-2.5 py-1.5 text-left font-mono text-[11px]"
+                    variant="ghost"
                     onClick={() =>
                       setExpandedArtifact((prev) => (prev === atype ? null : atype))
                     }
@@ -773,7 +829,7 @@ function ReportPanel({
                         : "—"}{" "}
                       · {open ? "Collapse" : "Expand"}
                     </span>
-                  </button>
+                  </Button>
                   {open ? (
                     <div className="border-t border-line px-2.5 py-2">
                       {artifactPreviewQuery.isLoading ? (
@@ -889,7 +945,7 @@ function JobsStrip({
   const liveJobs = jobs.filter(
     (j) => j.status === "pending" || j.status === "running",
   );
-  const recent = liveJobs.length > 0 ? liveJobs : jobs.slice(0, 5);
+  const activeJobs = liveJobs;
 
   if (jobsQuery.isLoading && jobs.length === 0) {
     return (
@@ -898,7 +954,29 @@ function JobsStrip({
       </div>
     );
   }
-  if (jobs.length === 0) return null;
+  if (jobsQuery.isError) {
+    return (
+      <div className="border-b border-line p-2">
+        <Alert variant="destructive" className="p-2">
+          <AlertTitle className="text-[11px]">Job status is unavailable</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+            <span>{(jobsQuery.error as Error).message}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7"
+              onClick={() => void jobsQuery.refetch()}
+              disabled={jobsQuery.isFetching}
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  if (activeJobs.length === 0) return null;
 
   return (
     <div className="border-b border-line bg-surface px-3 py-2">
@@ -912,7 +990,7 @@ function JobsStrip({
         ) : null}
       </div>
       <ul className="mt-1.5 max-h-36 space-y-1.5 overflow-y-auto">
-        {recent.map((j) => {
+        {activeJobs.map((j) => {
           const isRunning = j.status === "running";
           const pct = Math.min(100, Math.max(0, Math.round((j.progress_pct ?? 0) * 100)));
           const isSelected = j.job_id === selectedRunId;
@@ -932,17 +1010,20 @@ function JobsStrip({
                 </span>
                 <div className="flex items-center gap-1.5">
                   {onViewLog ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onViewLog(j.job_id, j.ir_id, j.status);
                       }}
-                      className="text-[10px] text-ink-muted hover:text-ink"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
                       title="View live log"
+                      aria-label="View live log"
                     >
-                      📜
-                    </button>
+                      Log
+                    </Button>
                   ) : null}
                   <span
                     className={
@@ -985,19 +1066,22 @@ function JobsStrip({
 function RunsTab({
   onPromoteRun,
   onEditInComposer,
+  compareRunIds = [],
 }: {
   onPromoteRun?: (runId: string) => void;
   onEditInComposer?: (run: BacktestRunSummary) => void;
+  compareRunIds?: string[];
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const generateLocalePath = useGenerateLocalePath();
   const { runId: selectedRunId, section } = backtestRunFromPath(location.pathname);
 
   const setSelectedRunId = useCallback(
     (id: string | null) => {
-      navigate(id ? backtestRunPath(id) : "/backtests");
+      navigate(localePath(generateLocalePath, id ? backtestRunPath(id) : "/backtests"));
     },
-    [navigate],
+    [navigate, generateLocalePath],
   );
 
   const initialCompareRunIds = useMemo(() => {
@@ -1015,9 +1099,11 @@ function RunsTab({
     return p.get("ir_id") || p.get("spec") || undefined;
   }, []);
 
-  const [checkedRunIds, setCheckedRunIds] = useState<string[]>(initialCompareRunIds);
+  const [checkedRunIds, setCheckedRunIds] = useState<string[]>(
+    compareRunIds.length >= 2 ? compareRunIds : initialCompareRunIds,
+  );
   const [isCompareMode, setIsCompareMode] = useState<boolean>(
-    initialCompareRunIds.length >= 2 || new URLSearchParams(window.location.search).get("view") === "compare",
+    compareRunIds.length >= 2 || initialCompareRunIds.length >= 2 || new URLSearchParams(window.location.search).get("view") === "compare",
   );
   const [viewMode, setViewMode] = useState<"split" | "table">("split");
   const [filters, setFilters] = useState<RunFilters>(() => ({
@@ -1029,6 +1115,7 @@ function RunsTab({
     irId?: string | null;
     status?: string;
   } | null>(null);
+  const [newBacktestOpen, setNewBacktestOpen] = useState(false);
 
   // Synchronize comparison run IDs, ir_id filter, and view mode to the address bar
   useEffect(() => {
@@ -1133,18 +1220,17 @@ function RunsTab({
   useEffect(() => {
     if (selectedRunId || isCompareMode) return;
     if (filteredRuns.length > 0) {
-      navigate(backtestRunPath(filteredRuns[0].run_id), { replace: true });
+      navigate(localePath(generateLocalePath, backtestRunPath(filteredRuns[0].run_id)), { replace: true });
     }
-  }, [selectedRunId, isCompareMode, filteredRuns, navigate]);
+  }, [selectedRunId, isCompareMode, filteredRuns, navigate, generateLocalePath]);
 
   // Canonicalize /backtests/:runId (no section) -> /overview.
   useEffect(() => {
     if (!selectedRunId) return;
-    const segs = location.pathname.split("/").filter(Boolean);
-    if (segs[0] === "backtests" && segs.length === 2) {
-      navigate(backtestRunPath(selectedRunId, "overview"), { replace: true });
+    if (location.pathname.endsWith(`/${selectedRunId}`)) {
+      navigate(localePath(generateLocalePath, backtestRunPath(selectedRunId, "overview")), { replace: true });
     }
-  }, [selectedRunId, location.pathname, navigate]);
+  }, [selectedRunId, location.pathname, navigate, generateLocalePath]);
 
   const handleToggleCheck = (runId: string) => {
     setCheckedRunIds((prev) => {
@@ -1164,87 +1250,75 @@ function RunsTab({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface overflow-hidden">
-      {/* Top Filter & View Mode Bar */}
-      <div className="border-b border-line bg-surface-raised p-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-2.5">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-ink">Strategy Runs Lab</h2>
-            <span className="rounded bg-surface px-2 py-0.5 font-mono text-[10.5px] text-ink-muted border border-line">
-              ClickHouse strategy_runs &amp; backtest_jobs
-            </span>
-          </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <header className="space-y-3 border-b bg-background p-3 sm:p-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <PageHeadline
+            header="Backtest runs"
+            subheader="Review results, compare runs, and continue a strategy into deployment."
+            className="space-y-1"
+          />
 
-          <div className="flex items-center gap-2">
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded border border-line bg-surface p-0.5 text-[11px] font-medium">
-              <button
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" onClick={() => setNewBacktestOpen(true)}>
+              New backtest
+            </Button>
+            <div className="flex items-center gap-1" role="group" aria-label="Run layout">
+              <Button
                 type="button"
                 onClick={() => setViewMode("split")}
-                className={`flex items-center gap-1.5 rounded px-2.5 py-1 transition-colors ${
-                  viewMode === "split"
-                    ? "bg-surface-raised font-bold text-accent shadow-xs"
-                    : "text-ink-muted hover:text-ink"
-                }`}
+                variant={viewMode === "split" ? "secondary" : "outline"}
+                size="sm"
                 title="Split view: sidebar list + active run inspector"
               >
-                <span>⊞</span> Split Inspector
-              </button>
-              <button
+                Run details
+              </Button>
+              <Button
                 type="button"
                 onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 rounded px-2.5 py-1 transition-colors ${
-                  viewMode === "table"
-                    ? "bg-surface-raised font-bold text-accent shadow-xs"
-                    : "text-ink-muted hover:text-ink"
-                }`}
+                variant={viewMode === "table" ? "secondary" : "outline"}
+                size="sm"
                 title="Full-width strategy run screener table"
               >
-                <span>☰</span> Screener Table
-              </button>
+                Table
+              </Button>
             </div>
 
-            {/* Compare Button */}
             {checkedRunIds.length >= 2 ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setViewMode("split");
                   setIsCompareMode(true);
                 }}
-                className="rounded bg-accent px-3 py-1 text-[11px] font-semibold text-accent-ink shadow-sm hover:opacity-90 transition-opacity"
+                size="sm"
               >
                 Compare ({checkedRunIds.length})
-              </button>
+              </Button>
             ) : null}
 
             {checkedRunIds.length > 0 ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setCheckedRunIds([]);
                   setIsCompareMode(false);
                 }}
-                className="rounded border border-line bg-surface px-2 py-1 text-[11px] font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink"
+                variant="ghost"
+                size="sm"
               >
                 Clear ({checkedRunIds.length})
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
 
-        {/* Universal Run Filter Bar */}
-        <RunFilterBar
-          filters={filters}
-          onChange={setFilters}
-          runs={runs}
-          filteredCount={filteredRuns.length}
-        />
-      </div>
+        <RunFilterBar filters={filters} onChange={setFilters} runs={runs} filteredCount={filteredRuns.length} />
+      </header>
 
       {/* Main Body: Full Table Mode vs Split Inspector Mode */}
       {viewMode === "table" ? (
-        <div className="flex-1 overflow-auto p-4 bg-surface">
+        <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
           <RunScreenerTable
             runs={filteredRuns}
             selectedRunId={selectedRunId}
@@ -1263,9 +1337,9 @@ function RunsTab({
           />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 bg-surface">
+        <div className="flex min-h-0 flex-1 flex-col bg-background lg:flex-row">
           {/* Left Filtered Runs Sidebar */}
-          <aside className="flex w-80 shrink-0 flex-col border-r border-line bg-surface-raised">
+          <aside className="flex h-36 w-full shrink-0 flex-col border-b bg-background lg:h-auto lg:w-80 lg:border-b-0 lg:border-r">
             <JobsStrip
               onSelectRun={setSelectedRunId}
               selectedRunId={selectedRunId}
@@ -1277,8 +1351,23 @@ function RunsTab({
               {runsQuery.isLoading ? (
                 <div className="px-3 py-6 text-[12px] text-ink-muted">Loading runs…</div>
               ) : runsQuery.isError ? (
-                <div className="px-3 py-6 text-[12px] text-danger">
-                  {(runsQuery.error as Error).message}
+                <div className="p-2">
+                  <Alert variant="destructive" className="p-2">
+                    <AlertTitle className="text-[11px]">Backtest runs are unavailable</AlertTitle>
+                    <AlertDescription className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                      <span>{(runsQuery.error as Error).message}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7"
+                        onClick={() => void runsQuery.refetch()}
+                        disabled={runsQuery.isFetching}
+                      >
+                        Retry
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : filteredRuns.length === 0 ? (
                 <div className="px-3 py-8 text-center">
@@ -1309,7 +1398,7 @@ function RunsTab({
           </aside>
 
           {/* Right Active Run Inspector / Compare Pane */}
-          <main className="flex min-w-0 flex-1 flex-col bg-surface-raised overflow-y-auto">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-surface-raised">
             <ActiveBacktestBanner
               jobs={jobs}
               onViewLog={(jobId, irId, status) =>
@@ -1326,6 +1415,10 @@ function RunsTab({
                   setIsCompareMode(false);
                 }}
               />
+            ) : runsQuery.isError ? (
+              <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-destructive" role="alert">
+                Run details are unavailable until the run list loads successfully.
+              </div>
             ) : !selectedRunId ? (
               <div className="flex flex-1 items-center justify-center p-8 text-[13px] text-ink-muted">
                 {runsQuery.isLoading
@@ -1336,10 +1429,10 @@ function RunsTab({
               </div>
             ) : runs.find((r) => r.run_id === selectedRunId)?.status === "failed" ? (
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                <div className="max-w-lg rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 shadow-sm">
-                  <div className="flex items-center justify-center gap-2 text-rose-400">
-                    <span className="text-xl">⚠️</span>
-                    <h3 className="text-base font-bold">Backtest Job Failed</h3>
+                <Card className="max-w-lg space-y-3 p-6 text-left shadow-none">
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant="destructive">Failed</Badge>
+                    <h3 className="text-base font-semibold text-foreground">Backtest run</h3>
                   </div>
                   <p className="mt-2 text-xs text-ink-muted">
                     This run encountered an execution error and did not produce completed performance records in ClickHouse.
@@ -1358,7 +1451,7 @@ function RunsTab({
                     ) : null}
                   </div>
                   <div className="mt-4 flex justify-center gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         const r = runs.find((item) => item.run_id === selectedRunId);
@@ -1368,25 +1461,26 @@ function RunsTab({
                           status: r?.status,
                         });
                       }}
-                      className="rounded bg-rose-500 px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-rose-600 transition-colors"
+                      variant="outline"
+                      size="sm"
                     >
-                      📜 Open Execution Log &amp; Stderr
-                    </button>
+                      View execution log
+                    </Button>
                   </div>
-                </div>
+                </Card>
               </div>
             ) : runs.find((r) => r.run_id === selectedRunId)?.status === "running" ? (
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                <div className="max-w-lg rounded-lg border border-sky-500/30 bg-sky-500/10 p-6 shadow-sm">
-                  <div className="flex items-center justify-center gap-2 text-sky-400">
-                    <span className="h-3 w-3 rounded-full bg-sky-400 animate-pulse" />
-                    <h3 className="text-base font-bold">Backtest Running</h3>
+                <Card className="max-w-lg space-y-3 p-6 text-left shadow-none">
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant="info">Running</Badge>
+                    <h3 className="text-base font-semibold text-foreground">Backtest run</h3>
                   </div>
                   <p className="mt-2 text-xs text-ink-muted">
-                    The LEAN backtest engine is actively executing simulated trades.
+                    The execution engine is processing this simulation.
                   </p>
                   <div className="mt-4 flex justify-center gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => {
                         const r = runs.find((item) => item.run_id === selectedRunId);
@@ -1396,12 +1490,13 @@ function RunsTab({
                           status: r?.status,
                         });
                       }}
-                      className="rounded bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-sky-600 transition-colors"
+                      variant="outline"
+                      size="sm"
                     >
-                      📜 View Live Telemetry Stream
-                    </button>
+                      View run logs
+                    </Button>
                   </div>
-                </div>
+                </Card>
               </div>
             ) : reportQuery.isLoading ? (
               <div className="flex flex-1 items-center justify-center text-[13px] text-ink-muted">
@@ -1418,7 +1513,7 @@ function RunsTab({
                 report={reportQuery.data}
                 runSubTab={section}
                 onRunSubTabChange={(s) => {
-                  if (selectedRunId) navigate(backtestRunPath(selectedRunId, s));
+                  if (selectedRunId) navigate(localePath(generateLocalePath, backtestRunPath(selectedRunId, s)));
                 }}
                 onPromote={
                   onPromoteRun && selectedRunId
@@ -1447,6 +1542,12 @@ function RunsTab({
           onClose={() => setLogModalJob(null)}
         />
       ) : null}
+      <BacktestRunSetupDialog
+        open={newBacktestOpen}
+        onOpenChange={setNewBacktestOpen}
+        initialIrId={filters.irId === "all" ? undefined : filters.irId}
+        onQueued={(irId) => setFilters((current) => ({ ...current, irId }))}
+      />
     </div>
   );
 }
@@ -1472,7 +1573,9 @@ export function BacktestView({
   routeStrategyIrId?: string | null;
 }) {
   const navigate = useNavigate();
+  const generateLocalePath = useGenerateLocalePath();
   const [paperRunId, setPaperRunId] = useState<string | null>(null);
+  const [optimizerCompareRunIds, setOptimizerCompareRunIds] = useState<string[]>([]);
   const [loadedComposeSpec, setLoadedComposeSpec] = useState<BacktestSpecSummary | null>(null);
 
   const handlePromoteRun = useCallback((runId: string) => {
@@ -1481,14 +1584,19 @@ export function BacktestView({
   }, [onTabChange]);
 
   const handleJumpToRun = useCallback((runId: string) => {
-    navigate(backtestRunPath(runId));
-  }, [navigate]);
+    navigate(localePath(generateLocalePath, backtestRunPath(runId)));
+  }, [navigate, generateLocalePath]);
+
+  const handleCompareRuns = useCallback((runIds: string[]) => {
+    setOptimizerCompareRunIds(runIds);
+    onTabChange("runs");
+  }, [onTabChange]);
 
   const navigateToStrategy = useCallback(
     (irId: string | null) => {
-      navigate(strategyPath(irId));
+      navigate(localePath(generateLocalePath, strategyPath(irId)));
     },
-    [navigate],
+    [navigate, generateLocalePath],
   );
 
   const handleEditInComposer = useCallback((run: BacktestRunSummary) => {
@@ -1504,8 +1612,8 @@ export function BacktestView({
       symbols: run.symbols,
       is_template: false,
     });
-    navigate(strategyPath(id));
-  }, [navigate]);
+    navigate(localePath(generateLocalePath, strategyPath(id)));
+  }, [navigate, generateLocalePath]);
 
   const handleEditOptimizedInComposer = useCallback((irId: string, runPoint: any) => {
     setLoadedComposeSpec({
@@ -1515,8 +1623,8 @@ export function BacktestView({
       algorithm_json: null,
       is_template: false,
     });
-    navigate(strategyPath(irId));
-  }, [navigate]);
+    navigate(localePath(generateLocalePath, strategyPath(irId)));
+  }, [navigate, generateLocalePath]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface">
@@ -1530,13 +1638,12 @@ export function BacktestView({
           initialSpec={loadedComposeSpec}
           routeStrategyIrId={routeStrategyIrId}
           onNavigateStrategy={navigateToStrategy}
-          onNavigateToRuns={() => onTabChange("runs")}
-          onNavigateToOptimize={() => onTabChange("optimize")}
         />
       ) : activeTab === "runs" ? (
         <RunsTab
           onPromoteRun={handlePromoteRun}
           onEditInComposer={handleEditInComposer}
+          compareRunIds={optimizerCompareRunIds}
         />
       ) : activeTab === "optimize" ? (
         <div className="flex-1 overflow-y-auto p-2.5 sm:p-4">
@@ -1544,6 +1651,7 @@ export function BacktestView({
             onJumpToRun={handleJumpToRun}
             onPromoteRun={handlePromoteRun}
             onEditInComposer={handleEditOptimizedInComposer}
+            onCompareRuns={handleCompareRuns}
           />
         </div>
       ) : activeTab === "deploy" ? (

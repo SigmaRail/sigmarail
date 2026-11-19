@@ -1,5 +1,5 @@
-import { cn } from "../lib/utils";
 import type { TurnoverResponse } from "../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export function TimeBar({
   datesDesc,
@@ -34,37 +34,31 @@ export function TimeBar({
         <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
           As-of
         </span>
-        <button
+        <Button
           type="button"
           aria-label="Previous trading day"
           disabled={!canOlder}
           onClick={goOlder}
-          className={cn(
-            "rounded border border-line px-2 py-1 font-mono text-xs",
-            canOlder
-              ? "bg-surface-sunk text-ink hover:border-ink-muted"
-              : "cursor-not-allowed text-ink-faint opacity-50",
-          )}
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 font-mono text-xs"
         >
           ←
-        </button>
+        </Button>
         <div className="min-w-[7.5rem] rounded border border-line bg-white px-2 py-1 text-center font-mono text-[13px] font-medium tabular-nums">
           {asOf || "—"}
         </div>
-        <button
+        <Button
           type="button"
           aria-label="Next trading day"
           disabled={!canNewer}
           onClick={goNewer}
-          className={cn(
-            "rounded border border-line px-2 py-1 font-mono text-xs",
-            canNewer
-              ? "bg-surface-sunk text-ink hover:border-ink-muted"
-              : "cursor-not-allowed text-ink-faint opacity-50",
-          )}
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 font-mono text-xs"
         >
           →
-        </button>
+        </Button>
         {loading ? (
           <span className="ml-1 text-[11px] text-ink-faint">updating…</span>
         ) : null}

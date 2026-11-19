@@ -6,6 +6,11 @@ import {
   type OptimizationSweepConfig,
   type SweepParamRange,
 } from "../../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 export const DEFAULT_SWEEPABLE_PARAMS: SweepParamRange[] = [
   { name: "risk_per_trade_pct", label: "Risk Budget % (1R)", target_slot: "Portfolio", min: 0.005, max: 0.02, step: 0.0025 },
@@ -37,12 +42,16 @@ interface EvaluationSettingsPanelProps {
   config: EvaluationConfig;
   onChangeConfig: (updated: EvaluationConfig) => void;
   availableParams?: SweepParamRange[];
+  compact?: boolean;
+  baselineOnly?: boolean;
 }
 
 export function EvaluationSettingsPanel({
   config,
   onChangeConfig,
   availableParams = DEFAULT_SWEEPABLE_PARAMS,
+  compact = false,
+  baselineOnly = false,
 }: EvaluationSettingsPanelProps) {
   const sweep = config.sweep ?? INITIAL_EVALUATION_CONFIG.sweep!;
   const isSweep = config.strategy === "optimization_sweep";
@@ -96,47 +105,41 @@ export function EvaluationSettingsPanel({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-xs space-y-4">
+    <Card className={compact ? "space-y-4 border-0 p-0 shadow-none" : "space-y-4 p-4 shadow-none"}>
       {/* Header & Protocol Segmented Control */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
-        <div>
+      {!baselineOnly ? <div className={`flex flex-col justify-between gap-3 sm:flex-row sm:items-center ${compact ? "" : "border-b border-line pb-3"}`}>
+        {!compact ? <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
             <span>🔬</span>
             <span>Evaluation & Simulation Protocol</span>
           </h3>
-          <p className="mt-0.5 text-[11px] text-ink-muted">
-            Research window, starting cash, and benchmark. These are written into the spec JSON and passed to backtest, optimizer, and future live jobs.
-          </p>
-        </div>
+          <p className="mt-0.5 text-[11px] text-ink-muted">Used only for backtests.</p>
+        </div> : <span className="text-xs font-semibold text-ink">Run type</span>}
 
         {/* Segmented Buttons */}
         <div className="inline-flex rounded-lg border border-line bg-surface-sunk p-1">
-          <button
+          <Button
             type="button"
             onClick={() => setStrategy("baseline")}
-            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              !isSweep
-                ? "bg-accent text-accent-fg shadow-xs"
-                : "text-ink-muted hover:text-ink"
-            }`}
+            size="sm"
+            variant={!isSweep ? "secondary" : "ghost"}
+            aria-pressed={!isSweep}
           >
             <span>🎯</span>
             <span>Baseline</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => setStrategy("optimization_sweep")}
-            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              config.strategy === "optimization_sweep"
-                ? "bg-accent text-accent-fg shadow-xs"
-                : "text-ink-muted hover:text-ink"
-            }`}
+            size="sm"
+            variant={isSweep ? "secondary" : "ghost"}
+            aria-pressed={isSweep}
           >
             <span>⚡</span>
             <span>Parameter Sweep</span>
-          </button>
+          </Button>
         </div>
-      </div>
+      </div> : null}
 
       {/* Date Range & Common Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -144,9 +147,9 @@ export function EvaluationSettingsPanel({
           <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
             Start Date
           </label>
-          <input
+          <Input
             type="date"
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-mono text-ink focus:border-accent focus:outline-none"
+            className="h-9 px-2.5 py-1.5 text-xs font-mono"
             value={config.start_date}
             onChange={(e) => onChangeConfig({ ...config, start_date: e.target.value })}
           />
@@ -155,9 +158,9 @@ export function EvaluationSettingsPanel({
           <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
             End Date
           </label>
-          <input
+          <Input
             type="date"
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-mono text-ink focus:border-accent focus:outline-none"
+            className="h-9 px-2.5 py-1.5 text-xs font-mono"
             value={config.end_date}
             onChange={(e) => onChangeConfig({ ...config, end_date: e.target.value })}
           />
@@ -166,31 +169,29 @@ export function EvaluationSettingsPanel({
           <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
             Initial Capital
           </label>
-          <select
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
-            value={config.initial_cash}
-            onChange={(e) => onChangeConfig({ ...config, initial_cash: Number(e.target.value) })}
-          >
-            <option value={25000}>$25,000 USD (PDT Cash)</option>
-            <option value={50000}>$50,000 USD (Standard Margin)</option>
-            <option value={100000}>$100,000 USD (Institutional Base)</option>
-            <option value={500000}>$500,000 USD (High Capacity)</option>
-          </select>
+          <Select value={String(config.initial_cash)} onValueChange={(value) => onChangeConfig({ ...config, initial_cash: Number(value) })}>
+            <SelectTrigger className="h-9 px-2.5 py-1.5 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25000">$25,000 USD (PDT Cash)</SelectItem>
+              <SelectItem value="50000">$50,000 USD (Standard Margin)</SelectItem>
+              <SelectItem value="100000">$100,000 USD (Institutional Base)</SelectItem>
+              <SelectItem value="500000">$500,000 USD (High Capacity)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
             Benchmark
           </label>
-          <select
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
-            value={config.benchmark}
-            onChange={(e) => onChangeConfig({ ...config, benchmark: e.target.value })}
-          >
-            <option value="SPY">SPY (S&P 500 ETF)</option>
-            <option value="QQQ">QQQ (Nasdaq 100 ETF)</option>
-            <option value="IWM">IWM (Russell 2000 ETF)</option>
-            <option value="BIL">BIL (1-3M T-Bills Risk-Free)</option>
-          </select>
+          <Select value={config.benchmark} onValueChange={(benchmark) => onChangeConfig({ ...config, benchmark })}>
+            <SelectTrigger className="h-9 px-2.5 py-1.5 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="SPY">SPY (S&amp;P 500 ETF)</SelectItem>
+              <SelectItem value="QQQ">QQQ (Nasdaq 100 ETF)</SelectItem>
+              <SelectItem value="IWM">IWM (Russell 2000 ETF)</SelectItem>
+              <SelectItem value="BIL">BIL (1-3M T-Bills Risk-Free)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -224,32 +225,25 @@ export function EvaluationSettingsPanel({
                   {sweep.param_x.target_slot ?? "Model"}
                 </span>
               </div>
-              <select
-                className="w-full rounded border border-line bg-surface px-2 py-1.5 text-xs text-ink font-medium"
-                value={sweep.param_x.name}
-                onChange={(e) => {
-                  const selected = paramOptions.find((p) => p.name === e.target.value);
+              <Select value={sweep.param_x.name} onValueChange={(name) => {
+                  const selected = paramOptions.find((p) => p.name === name);
                   if (selected) {
                     updateSweep({
                       param_x: { ...selected },
                     });
                   }
-                }}
-              >
-                {paramOptions.map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.label ?? p.name}
-                  </option>
-                ))}
-              </select>
+                }}>
+                <SelectTrigger className="h-9 w-full text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>{paramOptions.map((p) => <SelectItem key={p.name} value={p.name}>{p.label ?? p.name}</SelectItem>)}</SelectContent>
+              </Select>
 
               <div className="grid grid-cols-3 gap-2 pt-1">
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-ink-faint">Min</label>
-                  <input
+                  <Input
                     type="number"
                     step="any"
-                    className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                    className="h-8 px-2 py-1 text-xs font-mono"
                     value={sweep.param_x.min}
                     onChange={(e) =>
                       updateSweep({
@@ -260,10 +254,10 @@ export function EvaluationSettingsPanel({
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-ink-faint">Max</label>
-                  <input
+                  <Input
                     type="number"
                     step="any"
-                    className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                    className="h-8 px-2 py-1 text-xs font-mono"
                     value={sweep.param_x.max}
                     onChange={(e) =>
                       updateSweep({
@@ -274,10 +268,10 @@ export function EvaluationSettingsPanel({
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-ink-faint">Step</label>
-                  <input
+                  <Input
                     type="number"
                     step="any"
-                    className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                    className="h-8 px-2 py-1 text-xs font-mono"
                     value={sweep.param_x.step}
                     onChange={(e) =>
                       updateSweep({
@@ -293,11 +287,10 @@ export function EvaluationSettingsPanel({
             <div className="rounded-lg border border-line bg-surface p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-ink">
-                  <input
-                    type="checkbox"
-                    className="rounded"
+                  <Checkbox
                     checked={sweep.use_param_y}
-                    onChange={(e) => updateSweep({ use_param_y: e.target.checked })}
+                    onCheckedChange={(checked) => updateSweep({ use_param_y: checked === true })}
+                    aria-label="Enable secondary sweep parameter"
                   />
                   <span>Secondary Parameter (Axis Y)</span>
                 </label>
@@ -310,32 +303,25 @@ export function EvaluationSettingsPanel({
 
               {sweep.use_param_y && sweep.param_y ? (
                 <>
-                  <select
-                    className="w-full rounded border border-line bg-surface px-2 py-1.5 text-xs text-ink font-medium"
-                    value={sweep.param_y.name}
-                    onChange={(e) => {
-                      const selected = paramOptions.find((p) => p.name === e.target.value);
+                  <Select value={sweep.param_y.name} onValueChange={(name) => {
+                      const selected = paramOptions.find((p) => p.name === name);
                       if (selected) {
                         updateSweep({
                           param_y: { ...selected },
                         });
                       }
-                    }}
-                  >
-                    {paramOptions.map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.label ?? p.name}
-                      </option>
-                    ))}
-                  </select>
+                    }}>
+                    <SelectTrigger className="h-9 w-full text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>{paramOptions.map((p) => <SelectItem key={p.name} value={p.name}>{p.label ?? p.name}</SelectItem>)}</SelectContent>
+                  </Select>
 
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-ink-faint">Min</label>
-                      <input
+                      <Input
                         type="number"
                         step="any"
-                        className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                        className="h-8 px-2 py-1 text-xs font-mono"
                         value={sweep.param_y.min}
                         onChange={(e) =>
                           updateSweep({
@@ -346,10 +332,10 @@ export function EvaluationSettingsPanel({
                     </div>
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-ink-faint">Max</label>
-                      <input
+                      <Input
                         type="number"
                         step="any"
-                        className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                        className="h-8 px-2 py-1 text-xs font-mono"
                         value={sweep.param_y.max}
                         onChange={(e) =>
                           updateSweep({
@@ -360,10 +346,10 @@ export function EvaluationSettingsPanel({
                     </div>
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-ink-faint">Step</label>
-                      <input
+                      <Input
                         type="number"
                         step="any"
-                        className="w-full rounded border border-line bg-surface px-2 py-1 text-xs font-mono"
+                        className="h-8 px-2 py-1 text-xs font-mono"
                         value={sweep.param_y.step}
                         onChange={(e) =>
                           updateSweep({
@@ -388,35 +374,26 @@ export function EvaluationSettingsPanel({
               <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
                 Search Strategy
               </label>
-              <select
-                className="w-full rounded border border-line bg-surface px-2.5 py-1.5 text-xs text-ink font-semibold"
-                value={normalizeSearchStrategy(sweep.strategy_type)}
-                onChange={(e) =>
-                  updateSweep({ strategy_type: normalizeSearchStrategy(e.target.value) })
-                }
-              >
-                <option value="euler">Euler Step-Search</option>
-                <option value="grid">Grid Search (Cartesian Exhaustive)</option>
-              </select>
+              <Select value={normalizeSearchStrategy(sweep.strategy_type)} onValueChange={(strategy_type) => updateSweep({ strategy_type: normalizeSearchStrategy(strategy_type) })}>
+                <SelectTrigger className="h-9 w-full text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="euler">Euler Step-Search</SelectItem><SelectItem value="grid">Grid Search (Cartesian Exhaustive)</SelectItem></SelectContent>
+              </Select>
             </div>
 
             <div>
               <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
                 Optimization Objective
               </label>
-              <select
-                className="w-full rounded border border-line bg-surface px-2.5 py-1.5 text-xs text-ink font-semibold"
-                value={sweep.objective}
-                onChange={(e) =>
-                  updateSweep({ objective: e.target.value as OptimizationSweepConfig["objective"] })
-                }
-              >
-                <option value="sharpe_ratio">Maximize Sharpe Ratio</option>
-                <option value="sortino_ratio">Maximize Sortino Ratio</option>
-                <option value="total_return">Maximize Total Return</option>
-                <option value="calmar_ratio">Maximize Calmar Ratio (Return / Max DD)</option>
-                <option value="min_drawdown">Minimize Drawdown</option>
-              </select>
+              <Select value={sweep.objective} onValueChange={(objective) => updateSweep({ objective: objective as OptimizationSweepConfig["objective"] })}>
+                <SelectTrigger className="h-9 w-full text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sharpe_ratio">Maximize Sharpe Ratio</SelectItem>
+                  <SelectItem value="sortino_ratio">Maximize Sortino Ratio</SelectItem>
+                  <SelectItem value="total_return">Maximize Total Return</SelectItem>
+                  <SelectItem value="calmar_ratio">Maximize Calmar Ratio (Return / Max DD)</SelectItem>
+                  <SelectItem value="min_drawdown">Minimize Drawdown</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -431,6 +408,6 @@ export function EvaluationSettingsPanel({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

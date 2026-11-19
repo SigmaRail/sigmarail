@@ -10,21 +10,21 @@ function resolveStorage(storage?: Storage | null): Storage | null {
   return null;
 }
 
-export function loadFundamentalsRailOpen(storage?: Storage | null): boolean {
+export function loadFundamentalsRailOpen(storage?: Storage | null, defaultOpen = true): boolean {
   const store = resolveStorage(storage);
-  if (!store) return true;
+  if (!store) return defaultOpen;
   try {
     const raw = store.getItem(FUNDAMENTALS_RAIL_STORAGE_KEY);
-    if (raw === null) return true;
+    if (raw === null) return defaultOpen;
     const parsed = JSON.parse(raw);
     if (typeof parsed === "boolean") return parsed;
     if (parsed && typeof parsed === "object" && typeof parsed.open === "boolean") {
       return parsed.open;
     }
   } catch {
-    return true;
+    return defaultOpen;
   }
-  return true;
+  return defaultOpen;
 }
 
 export function saveFundamentalsRailOpen(open: boolean, storage?: Storage | null): void {

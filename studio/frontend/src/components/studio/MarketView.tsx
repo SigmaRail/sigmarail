@@ -13,6 +13,10 @@ import {
 } from "lightweight-charts";
 import { fetchMarketContext, type MarketContextPoint } from "../../api/screens";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { PageHeadline } from "@sb/webapp-core/components/pageHeadline";
 
 const todayIso = () => {
   const d = new Date();
@@ -37,6 +41,7 @@ export function MarketView({
   });
   const [endDate, setEndDate] = useState(initialAsOfDate);
   const [asOfDate, setAsOfDate] = useState(initialAsOfDate);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
   const [submittedRange, setSubmittedRange] = useState<{ start: string; end: string } | null>(() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() - 1);
@@ -61,8 +66,16 @@ export function MarketView({
   const handleInspectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
     setAsOfDate(newDate);
-    setEndDate(newDate);
-    setSubmittedRange((prev) => ({ start: prev?.start || startDate, end: newDate }));
+    onSelectDate?.(newDate);
+
+    const currentRange = submittedRange ?? { start: startDate, end: endDate };
+    if (newDate < currentRange.start) {
+      setStartDate(newDate);
+      setSubmittedRange({ start: newDate, end: currentRange.end });
+    } else if (newDate > currentRange.end) {
+      setEndDate(newDate);
+      setSubmittedRange({ start: currentRange.start, end: newDate });
+    }
   };
 
   const data = query.data ?? [];
@@ -71,15 +84,26 @@ export function MarketView({
   const chartApiRef = useRef<IChartApi | null>(null);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => setIsDarkMode(root.classList.contains("dark")));
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const container = chartContainerRef.current;
     if (!container || data.length === 0) return;
 
+    const chartBg = isDarkMode ? "#09090b" : "#ffffff";
+    const chartText = isDarkMode ? "#a1a1aa" : "#52525b";
+    const chartGrid = isDarkMode ? "#27272a" : "#e4e4e7";
     const chart = createChart(container, {
-      layout: { background: { type: ColorType.Solid, color: "#0f172a" }, textColor: "#94a3b8" },
-      grid: { vertLines: { color: "#1e293b" }, horzLines: { color: "#1e293b" } },
-      rightPriceScale: { borderColor: "#1e293b" },
-      leftPriceScale: { borderColor: "#1e293b" },
-      timeScale: { borderColor: "#1e293b", timeVisible: true, secondsVisible: false },
+      autoSize: true,
+      layout: { background: { type: ColorType.Solid, color: chartBg }, textColor: chartText },
+      grid: { vertLines: { color: chartGrid }, horzLines: { color: chartGrid } },
+      rightPriceScale: { borderColor: chartGrid },
+      leftPriceScale: { borderColor: chartGrid },
+      timeScale: { borderColor: chartGrid, timeVisible: true, secondsVisible: false },
       crosshair: { mode: 1 },
     });
 
@@ -154,7 +178,7 @@ export function MarketView({
       chart.remove();
       chartApiRef.current = null;
     };
-  }, [data, onSelectDate]);
+  }, [data, onSelectDate, isDarkMode]);
 
   const metrics: { key: keyof MarketContextPoint; label: string; type: "tier" | "pct" | "flag" | "score" | "price" | "vix" }[] = useMemo(
     () => [
@@ -221,73 +245,99 @@ export function MarketView({
   const asOfPoint = data.find((d) => d.date === asOfDate) ?? null;
 
   return (
-    <div className={cn("flex flex-col h-[90vh] bg-surface-sunk", className)}>
-      <div className="p-3 border-b border-line flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-lg font-bold text-accent">📈 Market Context</span>
-          <span className="text-xs font-semibold text-ink-muted">Market Regime & VIX Overlay Over Time</span>
-        </div>
+    <div className={cn("flex h-full min-h-0 flex-col overflow-y-auto bg-background lg:overflow-hidden", className)}>
+      <header className="shrink-0 space-y-3 border-b px-3 py-3 sm:px-4">
+        <PageHeadline
+          header="Market context"
+          subheader="Review regime, breadth, and volatility through time."
+          className="space-y-1"
+        />
 
-        <form onSubmit={handleRangeSubmit} className="flex items-center gap-1.5">
-          <span className="text-[10px] text-ink-muted">Range:</span>
-          <input
+        <Card className="flex flex-col gap-3 p-3 shadow-none sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <form onSubmit={handleRangeSubmit} aria-label="Market history date range" className="grid min-w-0 grid-cols-[1fr_auto_1fr_auto] items-end gap-2 sm:flex sm:items-end">
+          <label className="min-w-0 text-xs font-medium text-muted-foreground">From
+          <Input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-lg border border-line bg-surface-sunk px-2 py-1 font-mono text-xs text-ink focus:border-accent focus:outline-none"
+            className="mt-1 block h-9 min-w-0 w-full font-mono text-xs sm:mt-1 sm:w-auto"
           />
-          <span className="text-ink-muted">→</span>
-          <input
+          </label>
+          <span className="pb-2 text-muted-foreground">to</span>
+          <label className="min-w-0 text-xs font-medium text-muted-foreground">Through
+          <Input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-lg border border-line bg-surface-sunk px-2 py-1 font-mono text-xs text-ink focus:border-accent focus:outline-none"
+            className="mt-1 block h-9 min-w-0 w-full font-mono text-xs sm:mt-1 sm:w-auto"
           />
-          <button
+          </label>
+          <Button
             type="submit"
-            className="rounded-lg bg-accent/20 border border-accent/30 px-2 py-1 font-mono text-xs text-accent hover:bg-accent/30 transition-colors"
+            variant="outline"
+            className="h-9 px-3 text-xs"
           >
             Load
-          </button>
+          </Button>
         </form>
 
-        <div className="flex items-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 font-mono text-xs font-bold text-amber-500">
-          <span>📍 Inspect:</span>
-          <input
-            type="date"
-            value={asOfDate}
-            onChange={handleInspectChange}
-            className="bg-transparent text-amber-400 focus:outline-none cursor-pointer font-mono text-xs"
-          />
-        </div>
-      </div>
+        </Card>
+      </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div ref={chartContainerRef} className="flex-1 w-full min-w-0" style={{ minHeight: 600, paddingBottom: 24 }} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-visible lg:flex-row lg:overflow-hidden">
+        <Card aria-label="Market history chart" className="relative min-h-[34rem] w-full min-w-0 flex-1 overflow-hidden rounded-none border-0 bg-background shadow-none lg:min-h-0">
+          {query.isLoading && <div className="absolute inset-0 z-[1] grid place-items-center bg-surface/70 text-sm text-ink-muted">Loading market history…</div>}
+          {query.isError && <div className="absolute inset-x-3 top-3 z-[2] rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger">Market data could not be loaded: {(query.error as Error).message}</div>}
+          <div ref={chartContainerRef} className="h-[34rem] w-full sm:h-[38rem] lg:h-full" />
+        </Card>
 
-        <div className="w-80 border-l border-line bg-surface-sunk p-3 overflow-y-auto flex-shrink-0">
-          <div className="space-y-2 border-b border-line pb-2.5">
+        <Card className="w-full shrink-0 rounded-none border-x-0 border-b-0 border-t p-3 shadow-none lg:w-80 lg:overflow-y-auto lg:border-b lg:border-l lg:border-t-0">
+          <div className="space-y-2 border-b border-line pb-3">
             <div className="flex items-center justify-between">
-              <span className="font-bold uppercase tracking-wider text-accent text-[11px]">Current Session</span>
-              <span className="font-mono text-[10px] text-ink-muted">{asOfDate}</span>
+              <h2 className="text-sm font-semibold">Current Session</h2>
+              <label className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+                <span>As of</span>
+                <Input
+                  aria-label="Inspect date"
+                  type="date"
+                  value={asOfDate}
+                  onChange={handleInspectChange}
+                  className="h-8 w-36 px-2 font-mono text-xs"
+                />
+              </label>
             </div>
-            {asOfPoint && (
-              <div className="grid grid-cols-2 gap-1 text-[10px] font-mono">
-                {metrics.map((m) => (
-                  <div key={m.key} className={cn("rounded border p-1.5", getColor(asOfPoint, m.key).replace("text-", "border-") + "/30")}>
-                    <span className="text-[8.5px] uppercase font-bold text-ink-muted">{m.label}</span>
-                    <div className={cn("text-sm font-bold", getColor(asOfPoint, m.key))}>
+            {asOfPoint ? (
+              <>
+              <div className="grid grid-cols-2 gap-2 font-mono sm:grid-cols-3 lg:grid-cols-2">
+                {metrics.slice(0, 6).map((m) => (
+                  <Card key={m.key} className={cn("rounded-md p-2 shadow-none", getColor(asOfPoint, m.key).replace("text-", "border-") + "/30")}>
+                    <span className="text-[10px] uppercase font-medium text-muted-foreground">{m.label}</span>
+                    <div className={cn("mt-0.5 text-sm font-semibold", getColor(asOfPoint, m.key))}>
                       {formatValue(asOfPoint, m.key)}
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
+              <details className="group pt-1">
+                <summary className="min-h-10 cursor-pointer list-none rounded-md border border-line px-3 py-2 text-xs font-medium text-ink-muted hover:bg-surface-raised [&::-webkit-details-marker]:hidden">All session metrics <span className="float-right group-open:rotate-180">⌄</span></summary>
+                <div className="grid grid-cols-2 gap-2 pt-2 font-mono sm:grid-cols-3 lg:grid-cols-2">
+                  {metrics.slice(6).map((m) => (
+                  <Card key={m.key} className={cn("rounded-md p-2 shadow-none", getColor(asOfPoint, m.key).replace("text-", "border-") + "/30")}>
+                    <span className="text-[10px] uppercase font-medium text-muted-foreground">{m.label}</span>
+                    <div className={cn("mt-0.5 text-sm font-semibold", getColor(asOfPoint, m.key))}>{formatValue(asOfPoint, m.key)}</div>
+                  </Card>
+                  ))}
+                </div>
+              </details>
+              </>
+            ) : (
+              <p className="text-xs text-ink-muted">Choose a date on the chart to inspect its available metrics.</p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <span className="font-bold uppercase tracking-wider text-accent text-[11px]">Metric Guide</span>
-            <div className="grid grid-cols-1 gap-0.5 font-mono text-[10px] text-ink-muted">
+          <details className="group pt-3">
+            <summary className="min-h-10 cursor-pointer list-none rounded-md border border-line px-3 py-2 text-xs font-medium text-ink-muted hover:bg-surface-raised [&::-webkit-details-marker]:hidden">Metric guide <span className="float-right group-open:rotate-180">⌄</span></summary>
+            <div className="grid grid-cols-1 gap-1 pt-2 font-mono text-[10px] text-ink-muted">
               {metrics.map((m) => (
                 <div key={m.key} className="flex items-center gap-1.5 p-1 rounded border border-line/50 hover:bg-surface-raised transition-colors">
                   <span className="w-8 text-center font-bold" style={{ color: getColor({ date: "", [m.key]: 1 } as unknown as MarketContextPoint, m.key).replace("text-", "") }}>
@@ -298,8 +348,8 @@ export function MarketView({
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </details>
+        </Card>
       </div>
     </div>
   );

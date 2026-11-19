@@ -14,6 +14,8 @@ import {
 } from "../MembershipWorkbench";
 import { MembershipOverTime } from "./MembershipOverTime";
 import { useFieldPicker } from "./FieldPickerProvider";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export type UniverseChoice =
   | { kind: "inline" }
@@ -33,6 +35,36 @@ export const REQUIRED_MEMBERSHIP_SELECT = [
 const ENRICH_ONLY_COLS = new Set(["exchange"]);
 
 const MAX_EXTRA_SELECT = 8;
+
+const CANDIDATE_COLUMN_LABELS: Readonly<Record<string, string>> = {
+  ticker: "Ticker",
+  close: "Price",
+  overall_score: "Score",
+  rs_rating: "RS",
+  atr_14_pct: "ATR %",
+  days_in_universe: "Days in universe",
+};
+
+function formatCandidateValue(column: string, value: unknown): string {
+  if (value == null || value === "") return "—";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return String(value);
+
+  if (column === "close") {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numeric);
+  }
+  if (column === "overall_score") return numeric.toFixed(1);
+  if (column === "rs_rating" || column === "days_in_universe") {
+    return Math.round(numeric).toLocaleString("en-US");
+  }
+  if (column === "atr_14_pct") return `${numeric.toFixed(1)}%`;
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(numeric);
+}
 
 /** Table shows first page; scroll loads more from the cached preview. */
 const TABLE_PAGE = 10;
@@ -117,7 +149,7 @@ export function UniverseSlotCard({
   });
   const fields: ScreenField[] = fieldsQuery.data ?? [];
 
-  const [membershipOpen, setMembershipOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [pinnedDate, setPinnedDate] = useState<string | null>(null);
   const [queryDate, setQueryDate] = useState<string>("");
@@ -157,7 +189,7 @@ export function UniverseSlotCard({
 
   // Debounce hover → asof query date (~150ms). Ignored while a click pin is active.
   useEffect(() => {
-    if (!membershipOpen || pinnedDate) return;
+    if (pinnedDate) return;
     const next = hoverDate || asOf;
     if (!next) {
       setQueryDate("");
@@ -165,11 +197,11 @@ export function UniverseSlotCard({
     }
     const t = window.setTimeout(() => setQueryDate(next), 150);
     return () => window.clearTimeout(t);
-  }, [hoverDate, asOf, membershipOpen, pinnedDate]);
+  }, [hoverDate, asOf, pinnedDate]);
 
   useEffect(() => {
-    if (membershipOpen && asOf && !queryDate && !pinnedDate) setQueryDate(asOf);
-  }, [membershipOpen, asOf, queryDate, pinnedDate]);
+    if (asOf && !queryDate && !pinnedDate) setQueryDate(asOf);
+  }, [asOf, queryDate, pinnedDate]);
 
   // Clear pin / chart when evaluation end date or screen changes.
   useEffect(() => {
@@ -205,7 +237,7 @@ export function UniverseSlotCard({
         include_tenure: includeTenure,
         tenure_start: includeTenure ? tenureStart : undefined,
       }),
-    enabled: membershipOpen && Boolean(tableDate),
+    enabled: Boolean(tableDate),
     staleTime: 0,
     placeholderData: keepPreviousData,
   });
@@ -288,42 +320,43 @@ export function UniverseSlotCard({
     });
   }
 
+  function handleOpenSortPicker() {
+    openPicker({
+      use: "sort",
+      fields,
+      title: "Sort candidate stocks",
+      actionLabel: "Sort by this field",
+      initialFieldName: sortField,
+      onPick: (pick) => {
+        if (pick.kind === "field") setSortField(pick.field.name);
+      },
+    });
+  }
+
   return (
-    <div className="space-y-3.5 rounded-lg border border-line bg-surface p-4 shadow-sm">
-      <div className="flex items-center justify-between border-b border-line pb-2.5">
-        <h4 className="text-[13px] font-bold text-ink">1. Universe Selection</h4>
-      </div>
-
-      {/* No tinted inner box: the top level *is* the screen, so the clauses sit on the card. */}
-      <div className="space-y-3 text-[11px]">
-        <FilterTreeSlotEditor filters={screen} fields={fields} onChange={onChangeScreen} />
-      </div>
-
-      <div className="rounded border border-line bg-surface-sunk/40">
-        <button
-          type="button"
-          onClick={() => setMembershipOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted hover:bg-surface-raised/50"
-        >
-          <span>Membership over time</span>
-          <span className="font-mono text-[10px]">{membershipOpen ? "▼" : "▶"}</span>
-        </button>
-
-        {membershipOpen && (
-          <div className="space-y-2 border-t border-line px-2.5 py-2">
-            <MembershipOverTime
-              spec={rangeSpec}
-              asOf={asOf}
-              startDate={tenureStart}
-              onHoverDate={setHoverDate}
-              onPickDate={(date) => {
-                setPinnedDate(date);
-                setQueryDate(date);
-              }}
-            />
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between font-mono text-[10px] text-ink-muted">
+    <Card className="space-y-3.5 p-4 shadow-sm">
+      <FilterTreeSlotEditor filters={screen} fields={fields} onChange={onChangeScreen} />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+          <div className="text-[11px] text-muted-foreground">
+            {asofQuery.isLoading ? "Loading…" : `${asofQuery.data?.count ?? allRows.length} matches`}
+            {tableDate ? ` · ${tableDate}` : ""}
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              onClick={handleOpenSortPicker}
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs"
+              aria-label={`Sort candidate stocks by ${sortField}`}
+            >
+              Sort <span className="max-w-20 truncate font-mono text-muted-foreground">{sortField}</span>
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2 pt-2">
+              <div className="hidden items-center justify-between font-mono text-[10px] text-ink-muted md:flex">
                 <span className="inline-flex items-center gap-1.5">
                   <span>
                     as of{" "}
@@ -335,9 +368,11 @@ export function UniverseSlotCard({
                     ) : null}
                   </span>
                   {pinnedDate && pinnedDate !== asOf ? (
-                    <button
+                    <Button
                       type="button"
-                      className="text-accent underline-offset-2 hover:underline"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-[10px]"
                       onClick={() => {
                         setPinnedDate(null);
                         setHoverDate(null);
@@ -345,7 +380,7 @@ export function UniverseSlotCard({
                       }}
                     >
                       reset
-                    </button>
+                    </Button>
                   ) : null}
                 </span>
                 <span>
@@ -355,56 +390,132 @@ export function UniverseSlotCard({
                     : String(asofQuery.data?.count ?? allRows.length)}
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="hidden flex-wrap items-center gap-1 md:flex">
                 {extraSelect.map((col) => (
-                  <button
+                    <Button
                     key={col}
                     type="button"
                     onClick={() =>
                       setExtraSelect((prev) => prev.filter((c) => c !== col))
                     }
-                    className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-danger hover:text-danger"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 font-mono text-[10px]"
                     title={`Remove ${col}`}
                   >
                     {col} ×
-                  </button>
+                    </Button>
                 ))}
-                <button
+                <Button
                   type="button"
                   onClick={handleAddColumn}
                   disabled={extraSelect.length >= MAX_EXTRA_SELECT}
-                  className="rounded border border-dashed border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-accent disabled:opacity-40"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 border-dashed px-2 font-mono text-[10px]"
                 >
                   + column
-                </button>
+                </Button>
               </div>
               {asofQuery.error && (
                 <p className="font-mono text-[10px] text-danger">
                   {(asofQuery.error as Error).message}
                 </p>
               )}
-              <MembershipAsOfTable
-                columns={previewCols}
-                rows={shownRows}
-                sortField={sortField}
-                sortDir={sortDir}
-                sortableCols={sortableCols}
-                selectedTicker={chartTicker}
-                onSelectTicker={openTickerChart}
-                onSort={handleColumnHeaderClick}
-                onScroll={onTableScroll}
-                loading={asofQuery.isLoading}
-                hint={
-                  chartTicker
-                    ? undefined
-                    : "Click a ticker to open chart + conditions at the as-of date."
-                }
-              />
-              {hasMoreRows ? (
-                <p className="font-mono text-[10px] text-center text-ink-faint">
-                  Scroll for more…
-                </p>
-              ) : null}
+              <div data-testid="universe-candidates-table" className="hidden md:block">
+                <MembershipAsOfTable
+                  columns={previewCols}
+                  rows={shownRows}
+                  columnLabels={CANDIDATE_COLUMN_LABELS}
+                  formatCell={(column, value) => formatCandidateValue(column, value)}
+                  density="comfortable"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  sortableCols={sortableCols}
+                  selectedTicker={chartTicker}
+                  onSelectTicker={openTickerChart}
+                  onSort={handleColumnHeaderClick}
+                  onScroll={onTableScroll}
+                  loading={asofQuery.isLoading}
+                  hint={chartTicker ? undefined : "Select a ticker to view its chart."}
+                />
+              </div>
+              <div className="grid gap-1.5 md:hidden">
+                {shownRows.map((row, index) => {
+                  const ticker = String(row.ticker ?? "").trim().toUpperCase();
+                  const display = (value: unknown, decimals = 0) => {
+                    const n = Number(value);
+                    return value == null || value === "" || !Number.isFinite(n)
+                      ? "—"
+                      : decimals ? n.toFixed(decimals) : String(Math.round(n));
+                  };
+                  return (
+                    <article key={`${ticker}-${index}`} className="rounded-md border border-border bg-background px-3 py-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="w-6 shrink-0 text-right font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
+                          <Button
+                            type="button"
+                            onClick={() => openTickerChart(ticker)}
+                            variant="link"
+                            size="sm"
+                            className="h-8 min-w-11 justify-start p-0 font-mono font-semibold text-accent"
+                            title={`Open ${ticker} chart at ${tableDate}`}
+                          >
+                            {ticker}
+                          </Button>
+                        </div>
+                        <span className="font-mono text-sm font-semibold tabular-nums">${display(row.close, 2)}</span>
+                      </div>
+                      <div className="mt-1 grid grid-cols-3 gap-2 border-t border-border/70 pt-1.5 text-[11px]">
+                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">Score</span><span className="font-mono tabular-nums">{display(row.overall_score)}</span></div>
+                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">RS</span><span className="font-mono tabular-nums">{display(row.rs_rating)}</span></div>
+                        <div><span className="block text-[9px] uppercase tracking-wide text-muted-foreground">ATR</span><span className="font-mono tabular-nums">{display(row.atr_14_pct, 1)}{row.atr_14_pct == null ? "" : "%"}</span></div>
+                      </div>
+                    </article>
+                  );
+                })}
+                {asofQuery.isLoading && !shownRows.length ? (
+                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">Loading…</p>
+                ) : null}
+                {!asofQuery.isLoading && !shownRows.length ? (
+                  <p className="px-2 py-4 text-center text-xs text-muted-foreground">No stocks match this universe on the selected date.</p>
+                ) : null}
+                {hasMoreRows ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-full"
+                    onClick={() => setVisibleRows((n) => Math.min(n + TABLE_PAGE, allRows.length))}
+                  >
+                    Show more · {allRows.length - shownRows.length} remaining
+                  </Button>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                onClick={() => setHistoryOpen((open) => !open)}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full justify-between px-1 text-left text-xs text-muted-foreground"
+                aria-expanded={historyOpen}
+              >
+                <span>Membership history</span>
+                <span aria-hidden="true">{historyOpen ? "▾" : "▸"}</span>
+              </Button>
+              {historyOpen && (
+                <MembershipOverTime
+                  spec={rangeSpec}
+                  asOf={asOf}
+                  startDate={tenureStart}
+                  onHoverDate={setHoverDate}
+                  onPickDate={(date) => {
+                    setPinnedDate(date);
+                    setQueryDate(date);
+                  }}
+                />
+              )}
               {chartTicker ? (
                 <MembershipTickerInspect
                   ticker={chartTicker}
@@ -412,10 +523,8 @@ export function UniverseSlotCard({
                   onClose={() => setChartTicker(null)}
                 />
               ) : null}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }

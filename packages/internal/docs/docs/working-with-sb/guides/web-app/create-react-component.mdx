@@ -1,0 +1,161 @@
+---
+title: How to create a new React component in web application?
+description: Create an example component structure and display it in application
+---
+import BarrelExportsPartial from '../../../shared/partials/_barrel-exports.mdx';
+import ProjectName from '../../../shared/components/ProjectName.component';
+
+In this guide, we will show you how to create a new React component in a web application package using <ProjectName/>.
+The component will be named `ExampleComponent`, and it will display an `Example component message`.
+
+## Create Component Skeleton
+
+First, create a component main file under `packages/webapp/src/shared/components/exampleComponent/`.
+The component file should look like this:
+
+```tsx title="packages/webapp/src/shared/components/exampleComponent/exampleComponent.component.tsx" showLineNumbers
+import { FormattedMessage } from 'react-intl';
+
+import { cn } from '@sb/webapp-core/lib/utils';
+import { H1 } from '@sb/webapp-core/components/typography';
+
+export type ExampleComponentProps = {
+  className?: string;
+};
+
+export const ExampleComponent = ({ className }: ExampleComponentProps) => {
+  return (
+    <div className={cn('flex flex-col gap-4 p-4', className)}>
+      <H1>
+        <FormattedMessage defaultMessage="Example component message" id="ExampleComponent / Header message" />
+      </H1>
+    </div>
+  );
+};
+```
+
+:::info
+
+In this example, we are using:
+- **`react-intl`** for localization - it's recommended to use only localized copy from the start of development
+- **Tailwind CSS** utility classes for styling
+- **`cn()` utility** from `@sb/webapp-core/lib/utils` for conditional class merging
+- **Typography components** from `@sb/webapp-core/components/typography` for consistent text styling
+
+:::
+
+<BarrelExportsPartial />
+
+```tsx title="packages/webapp/src/shared/components/exampleComponent/index.ts" showLineNumbers
+export { ExampleComponent } from './exampleComponent.component';
+export type { ExampleComponentProps } from './exampleComponent.component';
+```
+
+## Create a test for the Component
+
+Create a directory `__tests__` in the component folder that will contain all tests along with the following file:
+
+```tsx title="packages/webapp/src/shared/components/exampleComponent/__tests__/exampleComponent.component.spec.tsx" showLineNumbers
+import { screen } from '@testing-library/react';
+
+import { render } from '../../../../tests/utils/rendering';
+import { ExampleComponent } from '../exampleComponent.component';
+
+describe('ExampleComponent: Component', () => {
+  it('should render without errors', async () => {
+    render(<ExampleComponent />);
+
+    expect(await screen.findByText(/example component message/i)).toBeInTheDocument();
+  });
+});
+```
+:::info
+
+This test will simply check if the component renders without any issues. For more information about testing web
+application components, please visit the
+[Writing tests for webapp](../../tests/webapp) section.
+
+:::
+
+## Create a Storybook File
+
+The last step of creating the component structure will be to create a Storybook file so that the newly created
+component will be displayed along with all other components in Storybook tool.
+
+```tsx title="packages/webapp/src/shared/components/exampleComponent/exampleComponent.stories.tsx" showLineNumbers
+import { Meta, StoryObj } from '@storybook/react';
+
+import { ExampleComponent } from './exampleComponent.component';
+
+type Story = StoryObj<typeof ExampleComponent>;
+
+const meta: Meta<typeof ExampleComponent> = {
+  title: 'Shared/ExampleComponent',
+  component: ExampleComponent,
+};
+
+export default meta;
+
+export const Default: Story = {};
+```
+
+## Display component on application home page
+
+Finally, you can use the ready component on the home page of the app by importing it and displaying it under the
+welcome message:
+
+```jsx title="packages/webapp/src/routes/home/home.component.tsx" showLineNumbers
+...
+import { ExampleComponent } from '../../shared/components/exampleComponent';
+...
+return (
+    <Container>
+        ...
+        <typography.H1>
+            <FormattedMessage defaultMessage="Welcome!" id="Home / title" />
+        </typography.H1>
+
+        // highlight-next-line
+        <ExampleComponent />
+    <Container />
+);
+...
+```
+
+## Generating Components Automatically
+
+:::tip Faster Method
+
+The component structure above can be generated automatically using `plop`:
+
+```bash
+cd packages/webapp
+pnpm run plop
+```
+
+Select "Component" and follow the prompts. This creates all files with correct naming and structure.
+
+See the [Plop guide](/working-with-sb/dev-tools/plop) for more information.
+
+:::
+
+---
+
+## Key Points
+
+- ✅ Use `FormattedMessage` for all user-facing text
+- ✅ Use Tailwind CSS with the `cn()` utility for styling
+- ✅ Export component and types from `index.ts`
+- ✅ Create tests in `__tests__/` folder
+- ✅ Add Storybook stories for visual testing
+
+---
+
+## Related Guides
+
+| Guide | Description |
+|-------|-------------|
+| [Add a Route](/working-with-sb/guides/web-app/new-route) | Create a page for your component |
+| [Form with Mutation](/working-with-sb/graphql/web-app/form-with-mutation) | Add data fetching/saving |
+| [Testing](/working-with-sb/tests/webapp) | Write comprehensive tests |
+| [shadcn/ui](/working-with-sb/shadcn) | Use pre-built UI components |

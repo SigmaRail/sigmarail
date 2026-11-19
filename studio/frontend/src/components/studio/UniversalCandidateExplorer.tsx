@@ -1,7 +1,18 @@
 import { useState, useMemo } from "react";
 import { cn } from "../../lib/utils";
-import { VeraCandidateChart } from "./VeraCandidateChart";
+import { CandidatePriceChart } from "./CandidatePriceChart";
 import type { RankedRow } from "../../types";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 export interface CandidateItem {
   ticker: string;
@@ -111,21 +122,24 @@ export function UniversalCandidateExplorer({
         </div>
 
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="search"
             placeholder="Search ticker/sector…"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            className="rounded border border-line bg-surface px-2.5 py-1 text-[11px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            aria-label="Search candidates by ticker or sector"
+            className="h-9 w-full sm:w-56 px-2.5 py-1 text-[11px]"
           />
           {onOpenUniverseLab ? (
-            <button
+            <Button
               type="button"
               onClick={onOpenUniverseLab}
-              className="rounded bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-ink hover:opacity-90 transition-opacity"
+              variant="default"
+              size="sm"
+              className="h-9 shrink-0 text-[11px]"
             >
               Open Universe Lab
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -159,79 +173,90 @@ export function UniversalCandidateExplorer({
               No universe candidates matching criteria.
             </div>
           ) : (
-            <table className="w-full text-left text-[11px]">
-              <thead className="sticky top-0 z-10 border-b border-line bg-surface-sunk text-ink-faint">
-                <tr>
-                  <th className="px-3 py-1.5">Ticker</th>
-                  <th className="px-2 py-1.5">Price</th>
-                  <th className="px-2 py-1.5">RS</th>
-                  <th className="px-2 py-1.5">TA</th>
-                  <th className="px-2 py-1.5">Sector</th>
-                  {mode === "historical" && <th className="px-2 py-1.5">Decision</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line/60">
-                {filteredCandidates.map((c, idx) => {
-                  const isSelected = c.ticker === effectiveSelectedTicker;
+            <>
+              <div className="space-y-2 p-3 lg:hidden">
+                {filteredCandidates.map((candidate, idx) => {
+                  const isSelected = candidate.ticker === effectiveSelectedTicker;
                   return (
-                    <tr
-                      key={`${c.ticker}-${idx}`}
-                      onClick={() => handleSelect(c.ticker)}
+                    <Button
+                      key={`${candidate.ticker}-${idx}`}
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSelect(candidate.ticker)}
+                      aria-pressed={isSelected}
                       className={cn(
-                        "cursor-pointer transition-colors hover:bg-surface-sunk/60",
-                        isSelected && "bg-accent/15 font-semibold"
+                        "h-auto min-h-14 w-full justify-between gap-3 px-3 py-2 text-left",
+                        isSelected && "border-primary bg-primary/5",
                       )}
                     >
-                      <td className={cn(
-                        "px-3 py-1.5 font-mono font-bold text-ink",
-                        isSelected && "text-accent font-extrabold"
-                      )}>
-                        {c.ticker}
-                      </td>
-                      <td className="px-2 py-1.5 font-mono tabular-nums text-ink">
-                        {c.price != null ? `$${c.price.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="px-2 py-1.5 font-mono tabular-nums text-emerald-400 font-bold">
-                        {c.rs_rating != null ? Math.round(c.rs_rating) : "—"}
-                      </td>
-                      <td className="px-2 py-1.5 font-mono tabular-nums text-ink">
-                        {c.technical_rating != null ? Math.round(c.technical_rating) : "—"}
-                      </td>
-                      <td className="px-2 py-1.5 text-[10px] text-ink-muted truncate max-w-[100px]">
-                        {c.sector || "—"}
-                      </td>
-                      {mode === "historical" && (
-                        <td className="px-2 py-1.5">
-                          {c.decision === "bought" ? (
-                            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-400">
-                              BOUGHT
-                            </span>
-                          ) : c.decision === "rejected_risk" ? (
-                            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-400">
-                              REJECTED
-                            </span>
-                          ) : (
-                            <span className="font-mono text-[9.5px] text-ink-faint">
-                              passed
-                            </span>
-                          )}
-                        </td>
-                      )}
-                    </tr>
+                      <span className="min-w-0">
+                        <span className="block font-mono font-bold text-ink">{candidate.ticker}</span>
+                        <span className="block truncate text-[10px] font-normal text-muted-foreground">{candidate.sector || "—"}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-3 font-mono text-[10px]">
+                        <span>Price <b>{candidate.price != null ? `$${candidate.price.toFixed(2)}` : "—"}</b></span>
+                        <span>RS <b>{candidate.rs_rating != null ? Math.round(candidate.rs_rating) : "—"}</b></span>
+                        {mode === "historical" && (
+                          <Badge variant={candidate.decision === "bought" ? "default" : "secondary"}>
+                            {candidate.decision === "bought" ? "Bought" : candidate.decision === "rejected_risk" ? "Rejected" : "Passed"}
+                          </Badge>
+                        )}
+                      </span>
+                    </Button>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+              <Table containerClassName="hidden max-h-[420px] overflow-auto lg:block">
+                <TableHeader className="sticky top-0 z-10 bg-surface-sunk text-ink-faint">
+                  <TableRow>
+                    <TableHead className="h-auto px-3 py-1.5 text-[10px]">Ticker</TableHead>
+                    <TableHead className="h-auto px-2 py-1.5 text-[10px]">Price</TableHead>
+                    <TableHead className="h-auto px-2 py-1.5 text-[10px]">RS</TableHead>
+                    <TableHead className="h-auto px-2 py-1.5 text-[10px]">TA</TableHead>
+                    <TableHead className="h-auto px-2 py-1.5 text-[10px]">Sector</TableHead>
+                    {mode === "historical" && <TableHead className="h-auto px-2 py-1.5 text-[10px]">Decision</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-line/60">
+                  {filteredCandidates.map((candidate, idx) => {
+                    const isSelected = candidate.ticker === effectiveSelectedTicker;
+                    return (
+                      <TableRow
+                        key={`${candidate.ticker}-${idx}`}
+                        data-state={isSelected ? "selected" : undefined}
+                        className={cn("text-[11px]", isSelected && "bg-accent/15 font-semibold")}
+                      >
+                        <TableCell className={cn("px-3 py-1.5", isSelected && "text-accent")}>
+                          <Button type="button" variant="link" size="sm" aria-pressed={isSelected} onClick={() => handleSelect(candidate.ticker)} className="h-auto min-w-0 justify-start p-0 font-mono text-[11px] font-bold">
+                            {candidate.ticker}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="px-2 py-1.5 font-mono tabular-nums">{candidate.price != null ? `$${candidate.price.toFixed(2)}` : "—"}</TableCell>
+                        <TableCell className="px-2 py-1.5 font-mono font-bold tabular-nums text-emerald-500">{candidate.rs_rating != null ? Math.round(candidate.rs_rating) : "—"}</TableCell>
+                        <TableCell className="px-2 py-1.5 font-mono tabular-nums">{candidate.technical_rating != null ? Math.round(candidate.technical_rating) : "—"}</TableCell>
+                        <TableCell className="max-w-[100px] truncate px-2 py-1.5 text-[10px] text-ink-muted">{candidate.sector || "—"}</TableCell>
+                        {mode === "historical" && (
+                          <TableCell className="px-2 py-1.5">
+                            <Badge variant={candidate.decision === "bought" ? "default" : "secondary"}>
+                              {candidate.decision === "bought" ? "Bought" : candidate.decision === "rejected_risk" ? "Rejected" : "Passed"}
+                            </Badge>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </>
           )}
         </div>
 
-        {/* Right Pane (7 Cols): Native ClickHouse Candlestick Chart */}
-        <div className="lg:col-span-7 flex flex-col bg-surface min-h-[380px] overflow-hidden">
+        {/* Candidate price chart uses the shared stock chart engine. */}
+        <div className="lg:col-span-7 flex min-h-[420px] min-w-0 flex-col overflow-hidden bg-surface">
           {effectiveSelectedTicker ? (
-            <VeraCandidateChart
+            <CandidatePriceChart
               ticker={effectiveSelectedTicker}
               asOfDate={asOfDate}
-              height={390}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-[12px] text-ink-muted">

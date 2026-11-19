@@ -1,21 +1,37 @@
 import { defineConfig } from "vitest/config";
-import { loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { fileURLToPath } from "node:url";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, ".", "SIGMARAIL_");
-  const apiTarget = env.SIGMARAIL_API_TARGET ?? "http://127.0.0.1:8001";
-  const apiProxy = {
-    "/api": { target: apiTarget, changeOrigin: true },
-    "/health": { target: apiTarget, changeOrigin: true },
-  };
+const workspaceRoot = fileURLToPath(new URL("..", import.meta.url));
 
-  return {
-  plugins: [react()],
+const apiProxy = {
+  "/api": {
+    target: "http://127.0.0.1:5001",
+    changeOrigin: true,
+  },
+  "/lbcheck": {
+    target: "http://127.0.0.1:5001",
+    changeOrigin: true,
+  },
+};
+
+export default defineConfig({
+  plugins: [react(), tsconfigPaths({ projects: ["./tsconfig.app.json"], loose: true })],
+  resolve: {
+    // AppTension's shared components import their own package through this alias.
+    // The TS paths plugin intentionally limits itself to frontend/src, so keep the
+    // same core alias available while bundling those shared component sources.
+    alias: [
+      {
+        find: /^@sb\/webapp-core\/(.*)$/,
+        replacement: `${workspaceRoot}/packages/webapp-libs/webapp-core/src/$1`,
+      },
+    ],
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,
-    allowedHosts: ["turnip.tail850cb1.ts.net"],
     proxy: apiProxy,
   },
   preview: {
@@ -26,5 +42,4 @@ export default defineConfig(({ mode }) => {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
-  };
 });

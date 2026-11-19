@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type UIEvent } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchScreenProbe } from "../api/screens";
+import { Button } from "@sb/webapp-core/components/ui/button";
 import type { OrderDirection } from "../types";
-import { cn } from "../lib/utils";
 import { useProgressiveProbeRange } from "../lib/useProgressiveProbeRange";
 import { useDebouncedValue } from "../lib/useDebouncedValue";
 import { ProbeRangeChart } from "./ProbeRangeChart";
@@ -372,14 +372,16 @@ export function AlphaMembershipProbe({
 
   return (
     <div className="rounded border border-line bg-surface-sunk/40">
-      <button
+      <Button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted hover:bg-surface-raised/50"
+        variant="ghost"
+        className="h-auto w-full justify-between rounded-none px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wide text-ink-muted"
+        aria-expanded={open}
       >
         <span>Membership probe</span>
         <span className="font-mono text-[10px]">{open ? "▼" : "▶"}</span>
-      </button>
+      </Button>
 
       {open && (
         <div className="space-y-2 border-t border-line px-2.5 py-2">
@@ -390,36 +392,32 @@ export function AlphaMembershipProbe({
           )}
 
           <div className="flex flex-wrap items-center gap-1">
-            <button
+            <Button
               type="button"
               onClick={() => setCumulative((v) => !v)}
-              className={cn(
-                "rounded border px-1.5 py-0.5 text-[10px] font-mono",
-                cumulative
-                  ? "border-accent bg-accent/15 text-accent-ink"
-                  : "border-line text-ink-muted hover:bg-surface",
-              )}
+              variant={cumulative ? "secondary" : "outline"}
+              size="sm"
+              className="h-auto px-1.5 py-0.5 text-[10px] font-mono"
+              aria-pressed={cumulative}
               title="ON: AND enabled stages (funnel). OFF: one line per enabled stage; full universe table."
             >
               cumulative {cumulative ? "on" : "off"}
-            </button>
+            </Button>
             {toggleAliases.map((id) => {
               const on = enabled.includes(id);
               return (
-                <button
+                <Button
                   key={id}
                   type="button"
                   onClick={() => toggleBinding(id)}
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 text-[10px] font-mono",
-                    on
-                      ? "border-accent bg-accent/15 text-accent-ink"
-                      : "border-line text-ink-muted hover:bg-surface",
-                  )}
+                  variant={on ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-auto px-1.5 py-0.5 text-[10px] font-mono"
+                  aria-pressed={on}
                   title={layerLabels.get(id) || id}
                 >
                   {id}
-                </button>
+                </Button>
               );
             })}
             {(layersQuery.isLoading || (!enabledInit && open)) && (
@@ -467,14 +465,16 @@ export function AlphaMembershipProbe({
                 onNeedEarlierData={extendEarlier}
               />
               {canExtend ? (
-                <button
+                <Button
                   type="button"
                   onClick={extendEarlier}
                   disabled={rangeQuery.isFetching}
-                  className="font-mono text-[10px] text-accent hover:underline disabled:opacity-50"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 font-mono text-[10px]"
                 >
                   {rangeQuery.isFetching ? "Loading…" : `Load earlier (+${chunkDays}d)`}
-                </button>
+                </Button>
               ) : null}
             </>
           )}
@@ -491,9 +491,11 @@ export function AlphaMembershipProbe({
                   ) : null}
                 </span>
                 {pinnedDate && pinnedDate !== asOf ? (
-                  <button
+                  <Button
                     type="button"
-                    className="text-accent underline-offset-2 hover:underline"
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-[10px]"
                     onClick={() => {
                       setPinnedDate(null);
                       setHoverDate(null);
@@ -501,16 +503,18 @@ export function AlphaMembershipProbe({
                     }}
                   >
                     reset
-                  </button>
+                  </Button>
                 ) : null}
-                <button
+                <Button
                   type="button"
                   onClick={applyGateRanking}
-                  className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:border-accent hover:text-accent"
+                  variant="outline"
+                  size="sm"
+                  className="h-auto px-1.5 py-0.5 text-[10px]"
                   title={`Sort by ${gateRankKeys.join(" → ")}`}
                 >
                   Use gate ranking
-                </button>
+                </Button>
               </span>
               <span>
                 sort: {sortKeys.join(" → ") || sortField} {sortDir === "desc" ? "↓" : "↑"} ·
@@ -521,26 +525,30 @@ export function AlphaMembershipProbe({
             </div>
             <div className="flex flex-wrap items-center gap-1">
               {extraSelect.map((col) => (
-                <button
+                <Button
                   key={col}
                   type="button"
                   onClick={() =>
                     setExtraSelect((prev) => prev.filter((c) => c !== col))
                   }
-                  className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-danger hover:text-danger"
+                  variant="outline"
+                  size="sm"
+                  className="h-auto px-1.5 py-0.5 font-mono text-[10px] hover:border-danger hover:text-danger"
                   title={`Remove ${col}`}
                 >
                   {col} ×
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
                 type="button"
                 onClick={handleAddColumn}
                 disabled={extraSelect.length >= MAX_EXTRA_SELECT}
-                className="rounded border border-dashed border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-accent disabled:opacity-40"
+                variant="outline"
+                size="sm"
+                className="h-auto border-dashed px-1.5 py-0.5 font-mono text-[10px]"
               >
                 + column
-              </button>
+              </Button>
             </div>
             {asofQuery.error && (
               <p className="font-mono text-[10px] text-danger">

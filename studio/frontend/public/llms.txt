@@ -94,3 +94,4 @@ Screening Studio embeds a client-side WebMCP server (`/webmcp.js`), enabling AI 
 ### Registered Prompts
 - `audit-strategy-draft`: Guidance prompt auditing the draft against the Five Lean slots and sizing rules.
 - `summarize-active-view`: Summary prompt explaining what the trader currently has open.
+

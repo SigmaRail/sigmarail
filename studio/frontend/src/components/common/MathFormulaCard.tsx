@@ -85,3 +85,4 @@ export function MathFormulaCard({
 }
 
 export default MathFormulaCard;
+

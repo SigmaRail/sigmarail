@@ -302,6 +302,111 @@ export function boolText(node: Record<string, unknown> | undefined | null): stri
   return t ?? "?";
 }
 
+const POSITION_FIELD_LABELS: Record<string, string> = {
+  entry: "entry price",
+  r: "open profit",
+  highest_price: "highest price since entry",
+  current_stop: "current protective stop",
+  quantity: "position size",
+  market_value: "position market value",
+  days_held: "days held",
+};
+
+function naturalOperand(op: OperandAst | undefined | null): string {
+  if (!op) return "the selected value";
+  if (op.type === "pos") return POSITION_FIELD_LABELS[op.field] ?? op.field.replaceAll("_", " ");
+  if (op.type === "ref") {
+    const namespace = { acct: "account", cand: "candidate", hold: "holding", pyr: "pyramid", regime: "market regime" }[op.ns] ?? op.ns;
+    return `${namespace} ${op.field.replaceAll("_", " ")}`;
+  }
+  if (op.type === "col") return op.name.replaceAll("_", " ");
+  if (op.type === "lit") return String(op.value);
+  if (op.type === "formula" && op.op === "*" && op.args.length === 2) {
+    const [left, right] = op.args;
+    const factor = right?.type === "lit" && typeof right.value === "number"
+      ? right
+      : left?.type === "lit" && typeof left.value === "number" ? left : null;
+    const base = factor === right ? left : right;
+    if (factor && base && typeof factor.value === "number" && factor.value > 0 && factor.value <= 1) {
+      const percent = Math.round(factor.value * 100);
+      return `${percent}% of ${naturalOperand(base)}`;
+    }
+  }
+  if (op.type === "formula") {
+    const parts = op.args.map(naturalOperand);
+    const joiner = { "+": " plus ", "-": " minus ", "*": " times ", "/": " divided by " }[op.op];
+    return parts.join(joiner);
+  }
+  if (op.type === "min" || op.type === "max") {
+    return `${op.type === "min" ? "the lower of" : "the higher of"} ${op.args.map(naturalOperand).join(" and ")}`;
+  }
+  return formulaText(op);
+}
+
+function naturalCondition(node: Record<string, unknown> | undefined | null): string {
+  if (!node || typeof node !== "object") return "the condition is met";
+  const type = String(node.type ?? "");
+  if (type === "all" || type === "any") {
+    const items = (Array.isArray(node.items) ? node.items : []) as Record<string, unknown>[];
+    return items.map(naturalCondition).join(type === "all" ? " and " : " or ") || "the condition is met";
+  }
+  if (type === "not") return `not (${naturalCondition(node.item as Record<string, unknown>)})`;
+  const comparisons: Record<string, string> = {
+    gt: "is above",
+    gte: "is at least",
+    lt: "is below",
+    lte: "is at most",
+    eq: "equals",
+    neq: "does not equal",
+  };
+  if (!(type in comparisons)) return boolText(node);
+  const left = node.left as OperandAst | undefined;
+  const right = node.right as OperandAst | undefined;
+  let leftText = naturalOperand(left);
+  let rightText = naturalOperand(right);
+  if (left?.type === "pos" && left.field === "r") {
+    leftText = "open profit";
+    if (right?.type === "lit" && typeof right.value === "number") rightText = `${right.value}R`;
+  }
+  return `${leftText} ${comparisons[type]} ${rightText}`;
+}
+
+function naturalAction(action: RuleAction): string {
+  switch (action.type) {
+    case "exit":
+      return (action.fraction ?? 1) >= 1 ? "close the position" : `sell ${Math.round((action.fraction ?? 1) * 100)}% of the position`;
+    case "trim":
+      return `sell ${Math.round((action.fraction ?? 0) * 100)}% of the position`;
+    case "ratchet_stop":
+      return `${action.mode === "set" ? "set" : "raise (never lower)"} the protective stop to ${naturalOperand(action.to)}`;
+    case "cap_weight":
+      return `cap the position at ${naturalOperand(action.to)} of the portfolio`;
+    case "arm_cooldown":
+      return `block re-entry for ${action.days ?? 0} days`;
+    case "set_flag":
+      return `mark the position ${String(action.flag ?? "flagged").replaceAll("_", " ")}`;
+    case "enter":
+      return `enter at ${naturalOperand(action.size_scale)} of the calculated size`;
+    case "add":
+      return `add at ${naturalOperand(action.size_scale)} of the calculated size`;
+    case "skip":
+      return "skip this candidate";
+    case "resize":
+      return `set the position to ${naturalOperand(action.to)} of the portfolio`;
+    case "displace":
+      return `replace a qualifying holding after ${action.min_incumbent_days ?? 0} days if its open profit is below ${action.max_incumbent_r ?? 0}R`;
+    default:
+      return formatAction(action);
+  }
+}
+
+/** Generated from the active rule AST; unlike the legacy description field, it cannot drift from the selected values. */
+export function summarizeRule(rule: Pick<RuleSpec, "when" | "then">): string {
+  const condition = naturalCondition(rule.when);
+  const actions = rule.then.map(naturalAction);
+  return `When ${condition}, ${actions.join(", then ") || "take no action"}.`;
+}
+
 /** Parse unknown JSON into RuleSpec[]; silently drops invalid entries (best effort). */
 export function parseRules(raw: unknown): RuleSpec[] {
   if (!Array.isArray(raw)) return [];

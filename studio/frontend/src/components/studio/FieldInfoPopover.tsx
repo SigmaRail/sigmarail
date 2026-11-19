@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "../../lib/utils";
 import type { ScreenField } from "../../types";
 import type { FieldPick } from "../../lib/fieldPick";
+import { Button } from "@sb/webapp-core/components/ui/button";
 import { FieldDetailCard } from "./FieldDetailCard";
 import { useFieldPicker } from "./FieldPickerProvider";
 
@@ -88,7 +89,7 @@ export function FieldInfoPopover({
       {trigger ? (
         trigger({ onClick: handleClick, open })
       ) : (
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
@@ -100,9 +101,11 @@ export function FieldInfoPopover({
           onMouseLeave={() => {
             if (!hasCatalog && !controlledShow) setPopoverOpen(false);
           }}
+          variant="ghost"
+          size="icon"
           className={cn(
-            "inline-flex h-4 w-4 flex-shrink-0 cursor-help items-center justify-center rounded-full text-[9px] font-bold transition-colors",
-            open ? "bg-accent/25 text-accent" : "bg-surface-sunk text-ink-muted hover:bg-accent/20 hover:text-accent",
+            "h-8 w-8 min-h-8 min-w-8 flex-shrink-0 rounded-full text-[11px] font-bold",
+            open ? "bg-accent/15 text-accent" : "text-ink-muted hover:bg-accent/10 hover:text-accent",
             glyphClassName,
           )}
           title={
@@ -113,7 +116,7 @@ export function FieldInfoPopover({
           aria-label={`Field info: ${field.label}`}
         >
           ℹ
-        </button>
+        </Button>
       )}
 
       {/* Fallback: lightweight single-field popover (no full catalog available) */}

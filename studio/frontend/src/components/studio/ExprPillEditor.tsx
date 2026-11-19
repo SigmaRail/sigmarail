@@ -5,6 +5,9 @@ import type { PcmBinding, PositionBinding } from "../../lib/slotFieldCatalog";
 import { pcmNamespaces } from "../../lib/slotFieldCatalog";
 import { boolText, defaultBoolNode, defaultOperand, formulaText } from "../../lib/rulesAst";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 /**
  * Pill-based AST editors for C-VERA-EXPR operands and BoolExpr conditions.
@@ -44,12 +47,46 @@ const pillCls =
  *  nested rounded-full ovals are unreadable as containers. */
 const groupCls =
   "inline-flex items-center gap-1 rounded border border-line/70 bg-surface-raised/60 px-1.5 py-0.5 font-mono text-[10px] text-ink";
-const pillInputCls =
-  "rounded border border-line bg-surface px-1 py-0 font-mono text-[10px] text-ink";
-const miniSelectCls =
-  "rounded border border-line bg-surface px-0.5 py-0 text-[10px] text-ink";
-const tinyBtnCls =
-  "rounded border border-line px-1 py-0 text-[9px] text-ink-muted hover:bg-surface-sunk";
+const pillInputCls = "h-6 rounded-md px-1.5 py-0 font-mono text-[10px]";
+
+function InlineSelect({
+  value,
+  onValueChange,
+  options,
+  label,
+  title,
+  className,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  label: string;
+  title?: string;
+  className?: string;
+}) {
+  const safeValue = value || "__none";
+  return (
+    <Select value={safeValue} onValueChange={(next) => next !== "__none" && onValueChange(next)}>
+      <SelectTrigger
+        aria-label={label}
+        title={title}
+        className={cn("h-6 w-auto min-w-9 gap-1 px-1.5 py-0 text-[10px]", className)}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent align="start" className="min-w-0">
+        {safeValue === "__none" ? <SelectItem value="__none" className="py-1 pl-7 pr-2 text-[10px]">?</SelectItem> : null}
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value} className="py-1 pl-7 pr-2 text-[10px]">
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+const tinyBtnCls = "h-6 min-w-6 px-1 py-0 text-[9px]";
 
 function isCmpNode(n: BoolNode): boolean {
   return CMP_OPS.includes(n.type as (typeof CMP_OPS)[number]);
@@ -64,22 +101,14 @@ function OperandTypeSwitch({
 }) {
   const current = OPERAND_TYPES.includes(node?.type as never) ? node.type : "";
   return (
-    <select
+    <InlineSelect
       value={current}
-      onChange={(e) => {
-        if (e.target.value) onChange(defaultOperand(e.target.value));
-      }}
-      className={miniSelectCls}
+      onValueChange={(value) => onChange(defaultOperand(value))}
+      options={OPERAND_TYPES.map((type) => ({ value: type, label: type }))}
+      className="font-mono"
       title="Operand kind"
-      aria-label="operand kind"
-    >
-      {current === "" ? <option value="">?</option> : null}
-      {OPERAND_TYPES.map((t) => (
-        <option key={t} value={t}>
-          {t}
-        </option>
-      ))}
-    </select>
+      label="Operand kind"
+    />
   );
 }
 
@@ -98,7 +127,7 @@ function ColInput({
   );
   return (
     <>
-      <input
+      <Input
         type="text"
         list={listId}
         value={name}
@@ -143,7 +172,7 @@ function PosInput({
   const doc = scoped.find((b) => b.field === field)?.description;
   return (
     <>
-      <input
+      <Input
         type="text"
         list={listId}
         value={field}
@@ -193,22 +222,18 @@ function RefInput({
   const nsKnown = namespaces.includes(ns);
   return (
     <>
-      <select
-        value={nsKnown ? ns : ns}
-        onChange={(e) => onChange({ ns: e.target.value, field })}
-        className={miniSelectCls}
+      <InlineSelect
+        value={ns}
+        onValueChange={(value) => onChange({ ns: value, field })}
+        options={[
+          ...(!nsKnown ? [{ value: ns, label: ns }] : []),
+          ...namespaces.map((namespace) => ({ value: namespace, label: namespace })),
+        ]}
         title="Binding namespace (cand/hold/acct/pyr/regime inside PCM rules)"
-        aria-label="binding namespace"
-      >
-        {!nsKnown ? <option value={ns}>{ns}</option> : null}
-        {namespaces.map((n) => (
-          <option key={n} value={n}>
-            {n}
-          </option>
-        ))}
-      </select>
+        label="Binding namespace"
+      />
       <span className="text-ink-faint">.</span>
-      <input
+      <Input
         type="text"
         list={listId}
         value={field}
@@ -248,20 +273,17 @@ function LitInput({
   const v = node.value;
   if (typeof v === "boolean") {
     return (
-      <select
+      <InlineSelect
         value={String(v)}
-        onChange={(e) => onChange({ ...node, value: e.target.value === "true" })}
-        className={miniSelectCls}
-        aria-label="literal value"
-      >
-        <option value="true">true</option>
-        <option value="false">false</option>
-      </select>
+        onValueChange={(value) => onChange({ ...node, value: value === "true" })}
+        options={[{ value: "true", label: "true" }, { value: "false", label: "false" }]}
+        label="literal value"
+      />
     );
   }
   if (typeof v === "number") {
     return (
-      <input
+      <Input
         type="number"
         step="any"
         value={v}
@@ -274,7 +296,7 @@ function LitInput({
     );
   }
   return (
-    <input
+    <Input
       type="text"
       value={String(v ?? "")}
       onChange={(e) => onChange({ ...node, value: e.target.value })}
@@ -310,19 +332,12 @@ export function OperandEditor({
       <span className="inline-flex items-center gap-1">
         <span className={cn(pillCls, "text-ink-faint")}>∅</span>
         {showTypeSwitch ? (
-          <select
+          <InlineSelect
             value=""
-            onChange={(e) => e.target.value && onChange(defaultOperand(e.target.value))}
-            className={miniSelectCls}
-            aria-label="operand kind"
-          >
-            <option value="">+ type</option>
-            {OPERAND_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            onValueChange={(type) => onChange(defaultOperand(type))}
+            options={OPERAND_TYPES.map((type) => ({ value: type, label: type }))}
+            label="Operand kind"
+          />
         ) : null}
       </span>
     );
@@ -394,23 +409,17 @@ export function OperandEditor({
           {args.map((a, i) => (
             <span key={i} className="inline-flex items-center gap-0.5">
               {i > 0 ? (
-                <select
+                <InlineSelect
                   value={node.op}
-                  onChange={(e) =>
+                  onValueChange={(operator) =>
                     onChange({
                       ...node,
-                      op: e.target.value as "+" | "-" | "*" | "/",
+                      op: operator as "+" | "-" | "*" | "/",
                     })
                   }
-                  className={miniSelectCls}
-                  aria-label="operator"
-                >
-                  {FORMULA_OPS.map((op) => (
-                    <option key={op} value={op}>
-                      {op}
-                    </option>
-                  ))}
-                </select>
+                  options={FORMULA_OPS.map((operator) => ({ value: operator, label: operator }))}
+                  label="Operator"
+                />
               ) : null}
               <OperandEditor
                 value={a}
@@ -420,29 +429,35 @@ export function OperandEditor({
                 fields={fields} posBindings={posBindings} posContext={posContext} pcmBindings={pcmBindings}
               />
               {args.length > 2 ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   className={tinyBtnCls}
                   title="Remove operand"
+                  aria-label="Remove operand"
                   onClick={() =>
                     onChange({ ...node, args: args.filter((_, xi) => xi !== i) })
                   }
                 >
                   ✕
-                </button>
+                </Button>
               ) : null}
             </span>
           ))}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             className={tinyBtnCls}
             title="Add operand"
+            aria-label="Add operand"
             onClick={() =>
               onChange({ ...node, args: [...args, { type: "lit", value: 1 }] })
             }
           >
             +
-          </button>
+          </Button>
         </span>
       );
     }
@@ -464,29 +479,35 @@ export function OperandEditor({
                 fields={fields} posBindings={posBindings} posContext={posContext} pcmBindings={pcmBindings}
               />
               {args.length > 1 ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="icon"
                   className={tinyBtnCls}
                   title="Remove argument"
+                  aria-label="Remove argument"
                   onClick={() =>
                     onChange({ ...node, args: args.filter((_, xi) => xi !== i) })
                   }
                 >
                   ✕
-                </button>
+                </Button>
               ) : null}
             </span>
           ))}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             className={tinyBtnCls}
             title="Add argument"
+            aria-label="Add argument"
             onClick={() =>
               onChange({ ...node, args: [...args, { type: "lit", value: 0 }] })
             }
           >
             +
-          </button>
+          </Button>
           <span className="font-semibold">)</span>
         </span>
       );
@@ -609,21 +630,22 @@ export function BoolExprEditor({
 
   if (!node || typeof node !== "object" || typeof node.type !== "string") {
     return (
-      <button
+      <Button
         type="button"
-        className="rounded-full border border-dashed border-accent/60 bg-accent/5 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:bg-accent/15"
+        variant="outline"
+        size="sm"
+        className="h-6 rounded-full border-dashed border-accent/60 bg-accent/5 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:bg-accent/15"
         onClick={() => onChange(cmpDefault())}
       >
         + condition
-      </button>
+      </Button>
     );
   }
 
   const typeSwitch = (
-    <select
+    <InlineSelect
       value={isCmpNode(node) ? "cmp" : (node.type as string)}
-      onChange={(e) => {
-        const t = e.target.value;
+      onValueChange={(t) => {
         if (t === "cmp") {
           onChange({
             type: "gte",
@@ -638,29 +660,32 @@ export function BoolExprEditor({
           onChange({ type: "not", item: node });
         }
       }}
-      className={miniSelectCls}
       title="Node kind"
-      aria-label="condition kind"
-    >
-      {!isCmpNode(node) && node.type !== "all" && node.type !== "any" && node.type !== "not" ? (
-        <option value={node.type}>{node.type}</option>
-      ) : null}
-      <option value="cmp">cmp</option>
-      <option value="all">all</option>
-      <option value="any">any</option>
-      <option value="not">not</option>
-    </select>
+      label="Condition kind"
+      options={[
+        ...(!isCmpNode(node) && node.type !== "all" && node.type !== "any" && node.type !== "not"
+          ? [{ value: node.type as string, label: node.type as string }]
+          : []),
+        { value: "cmp", label: "cmp" },
+        { value: "all", label: "all" },
+        { value: "any", label: "any" },
+        { value: "not", label: "not" },
+      ]}
+    />
   );
 
   const removeBtn = onRemove ? (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="icon"
       className={tinyBtnCls}
       title="Remove condition"
+      aria-label="Remove condition"
       onClick={onRemove}
     >
       ✕
-    </button>
+    </Button>
   ) : null;
 
   if (isCmpNode(node)) {
@@ -672,18 +697,12 @@ export function BoolExprEditor({
           onChange={(left) => onChange({ ...node, left })}
           fields={fields} posBindings={posBindings} posContext={posContext} pcmBindings={pcmBindings}
         />
-        <select
+        <InlineSelect
           value={node.type as string}
-          onChange={(e) => onChange({ ...node, type: e.target.value })}
-          className={miniSelectCls}
-          aria-label="comparison operator"
-        >
-          {CMP_OPS.map((op) => (
-            <option key={op} value={op}>
-              {CMP_LABELS[op]}
-            </option>
-          ))}
-        </select>
+          onValueChange={(operator) => onChange({ ...node, type: operator })}
+          options={CMP_OPS.map((operator) => ({ value: operator, label: CMP_LABELS[operator] }))}
+          label="Comparison operator"
+        />
         <OperandEditor
           value={node.right as OperandAst}
           onChange={(right) => onChange({ ...node, right })}
@@ -700,11 +719,12 @@ export function BoolExprEditor({
       <span className="inline-flex flex-col gap-1 rounded border border-line/70 bg-surface-raised/40 p-1.5">
         <span className="inline-flex items-center gap-1">
           {typeSwitch}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             className={cn(
-              pillCls,
-              "cursor-pointer font-semibold uppercase",
+              "h-6 rounded-full px-2 py-0 text-[10px] font-mono font-semibold uppercase",
               node.type === "all" ? "text-accent-ink" : "text-info",
             )}
             title="Toggle conjunction"
@@ -713,7 +733,7 @@ export function BoolExprEditor({
             }
           >
             {node.type === "all" ? "all" : "any"}
-          </button>
+          </Button>
           <span className="text-[9px] text-ink-faint">
             {node.type === "all" ? "every condition must hold" : "at least one must hold"}
           </span>
@@ -737,17 +757,21 @@ export function BoolExprEditor({
             />
           ))}
           <span className="inline-flex gap-1">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               className={tinyBtnCls}
               onClick={() =>
                 onChange({ ...node, items: [...items, cmpDefault()] })
               }
             >
               + condition
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               className={tinyBtnCls}
               title="Add nested group"
               onClick={() =>
@@ -755,7 +779,7 @@ export function BoolExprEditor({
               }
             >
               + group
-            </button>
+            </Button>
           </span>
         </span>
       </span>
@@ -822,14 +846,16 @@ export function EditableOperand({
         <code className="text-[10px] leading-snug text-ink break-all">
           {formulaText(value as OperandAst)}
         </code>
-        <button
+        <Button
           type="button"
           onClick={() => setEditing(true)}
-          className={tinyBtnCls}
+          variant="outline"
+          size="sm"
+          className={cn(tinyBtnCls, "min-w-0 px-1.5")}
           title="Open the pill editor for this expression"
         >
           edit
-        </button>
+        </Button>
       </span>
     );
   }
@@ -843,14 +869,16 @@ export function EditableOperand({
         posContext={posContext}
         pcmBindings={pcmBindings}
       />
-      <button
+      <Button
         type="button"
         onClick={() => setEditing(false)}
-        className={cn(tinyBtnCls, "self-center")}
+        variant="outline"
+        size="sm"
+        className={cn(tinyBtnCls, "min-w-0 self-center px-1.5")}
         title="Back to the compact view"
       >
         done
-      </button>
+      </Button>
     </span>
   );
 }

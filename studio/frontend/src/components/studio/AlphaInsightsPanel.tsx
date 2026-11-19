@@ -1,4 +1,6 @@
 import type { ScreenField } from "../../types";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 import type { PipelineDocument } from "../strategy/StrategyDocument";
 import {
   measureAliasesForLookup,
@@ -45,21 +47,17 @@ function InsightPropertySection({
       </div>
       <label className="block">
         <span className="sr-only">Select measure alias for {label}</span>
-        <select
-          value={selected}
-          onChange={(e) => {
-            const v = e.target.value;
-            onPick(v || null);
-          }}
-          className="block w-full max-w-sm rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
-        >
-          <option value="">{emptyLabel}</option>
-          {aliases.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
+        <Select value={selected || "__unset"} onValueChange={(value) => onPick(value === "__unset" ? null : value)}>
+          <SelectTrigger className="block h-8 w-full max-w-sm px-2 py-1 font-mono text-[11px]">
+            <SelectValue placeholder={emptyLabel} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__unset">{emptyLabel}</SelectItem>
+            {aliases.map((a) => (
+              <SelectItem key={a} value={a}>{a}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </label>
       {value && !aliases.includes(value) ? (
         <p className="text-[9px] text-warn">
@@ -153,7 +151,7 @@ export function AlphaInsightsPanel({ document, onPatchBinding }: Props) {
             <span className="text-[10px] font-semibold text-ink">Period</span>
             <span className="text-[9px] text-ink-faint">days (not a measure)</span>
           </div>
-          <input
+          <Input
             type="number"
             min={1}
             step={1}
@@ -164,7 +162,7 @@ export function AlphaInsightsPanel({ document, onPatchBinding }: Props) {
                 alpha_insight_period_days: Number.isFinite(n) && n >= 1 ? n : 1,
               });
             }}
-            className="w-20 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
+            className="h-8 w-24 px-2 py-1 font-mono text-[11px]"
           />
         </label>
       </div>

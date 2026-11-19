@@ -276,6 +276,7 @@ export function StockScreenerDialog({
     enabled: isOpen,
     staleTime: 60_000,
   });
+  const savedScreens = savedQuery.data?.screens ?? [];
   const fieldsQuery = useQuery({
     queryKey: ["screen-fields-dialog"],
     queryFn: fetchFields,
@@ -394,9 +395,8 @@ export function StockScreenerDialog({
       setActivePresetId(null);
       return;
     }
-
     const sId = val.startsWith("screen:") ? val.replace("screen:", "") : val;
-    const s = savedQuery.data?.find((x) => String(x.id) === sId);
+    const s = savedScreens.find((x) => String(x.id) === sId);
     if (s && s.spec) {
       setSelectedScreenKey(val);
       const parsedFilters = specToFilters(s.spec);
@@ -445,23 +445,22 @@ export function StockScreenerDialog({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Presets & Saved Screens dropdown */}
             <select
               value={selectedScreenKey}
               onChange={(e) => handleScreenSelectionChange(e.target.value)}
               className="rounded-md border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink focus:border-accent focus:outline-none"
             >
               <option value="">Load Screen / Template…</option>
-              {savedQuery.data && savedQuery.data.filter((s) => s.is_system).length > 0 && (
+              {savedScreens.filter((s) => s.is_system).length > 0 && (
                 <optgroup label="⭐ System Built-In Screens">
-                  {savedQuery.data.filter((s) => s.is_system).map((s) => (
+                  {savedScreens.filter((s) => s.is_system).map((s) => (
                     <option key={String(s.id)} value={`screen:${s.id}`}>{s.name}</option>
                   ))}
                 </optgroup>
               )}
-              {savedQuery.data && savedQuery.data.filter((s) => !s.is_system).length > 0 && (
+              {savedScreens.filter((s) => !s.is_system).length > 0 && (
                 <optgroup label="💾 My Custom Screens">
-                  {savedQuery.data.filter((s) => !s.is_system).map((s) => (
+                  {savedScreens.filter((s) => !s.is_system).map((s) => (
                     <option key={String(s.id)} value={`screen:${s.id}`}>{s.name}</option>
                   ))}
                 </optgroup>
@@ -516,8 +515,14 @@ export function StockScreenerDialog({
           </div>
         </div>
 
+        {savedScreens.length === 0 && savedQuery.data?.shared_catalog_warning && (
+          <div role="alert" className="border-b border-line bg-sky-50 px-4 py-2 text-xs text-sky-900 dark:bg-sky-950/30 dark:text-sky-200">
+            {savedQuery.data.shared_catalog_warning}
+          </div>
+        )}
+
         {/* Filter Chip Bar */}
-        <div className="border-b border-line bg-surface px-4 py-1.5">
+        <div className="border-b border-line bg-surface px-4 py-1">
           <FilterChipBar
             filterRows={filterRows}
             fields={fieldsQuery.data ?? []}

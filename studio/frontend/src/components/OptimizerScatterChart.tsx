@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import type { OptimizerHeatmapData, OptimizerRunPoint } from "../types";
 import { OptimizerHeatmapChart } from "./OptimizerHeatmapChart";
 import { OptimizerParetoChart } from "./OptimizerParetoChart";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 export function OptimizerScatterChart({
   heatmap,
@@ -101,54 +103,24 @@ export function OptimizerScatterChart({
         </div>
 
         {/* View Mode Pills */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setViewMode("scatter")}
-            className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-              viewMode === "scatter"
-                ? "bg-accent text-accent-ink"
-                : "bg-surface-raised text-ink-muted hover:text-ink border border-line"
-            }`}
-          >
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as typeof viewMode)}>
+          <TabsList className="h-auto flex-wrap justify-start gap-1 p-1">
+          <TabsTrigger value="scatter" className="px-2.5 py-1 text-[11px]">
             ● 2D Parameter Space
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("sensitivity")}
-            className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-              viewMode === "sensitivity"
-                ? "bg-accent text-accent-ink"
-                : "bg-surface-raised text-ink-muted hover:text-ink border border-line"
-            }`}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="sensitivity" className="px-2.5 py-1 text-[11px]">
             📈 1D Sensitivity Slice
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("pareto")}
-            className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-              viewMode === "pareto"
-                ? "bg-accent text-accent-ink"
-                : "bg-surface-raised text-ink-muted hover:text-ink border border-line"
-            }`}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="pareto" className="px-2.5 py-1 text-[11px]">
             🎯 Pareto Frontier
-          </button>
+          </TabsTrigger>
           {strategyType === "grid" && (
-            <button
-              type="button"
-              onClick={() => setViewMode("heatmap")}
-              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                viewMode === "heatmap"
-                  ? "bg-accent text-accent-ink"
-                  : "bg-surface-raised text-ink-muted hover:text-ink border border-line"
-              }`}
-            >
+            <TabsTrigger value="heatmap" className="px-2.5 py-1 text-[11px]">
               ▦ Matrix Heatmap
-            </button>
+            </TabsTrigger>
           )}
-        </div>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Main Visualization Body */}
@@ -238,16 +210,17 @@ export function OptimizerScatterChart({
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
               <span className="text-ink-muted">
                 Color metric:
-                <select
-                  value={metricKey}
-                  onChange={(e) => setMetricKey(e.target.value as any)}
-                  className="ml-1.5 rounded border border-line bg-surface px-2 py-0.5 text-xs text-ink"
-                >
-                  <option value="sharpe_ratio">Sharpe Ratio</option>
-                  <option value="total_return">Total Return</option>
-                  <option value="max_drawdown">Max Drawdown</option>
-                  <option value="stability_score">Stability Index</option>
-                </select>
+                <Select value={metricKey} onValueChange={(value) => setMetricKey(value as typeof metricKey)}>
+                  <SelectTrigger aria-label="Color metric" className="ml-1.5 h-8 w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sharpe_ratio">Sharpe Ratio</SelectItem>
+                    <SelectItem value="total_return">Total Return</SelectItem>
+                    <SelectItem value="max_drawdown">Max Drawdown</SelectItem>
+                    <SelectItem value="stability_score">Stability Index</SelectItem>
+                  </SelectContent>
+                </Select>
               </span>
               <span className="font-mono text-[10px] text-ink-faint">
                 {allPoints.length} evaluated variants

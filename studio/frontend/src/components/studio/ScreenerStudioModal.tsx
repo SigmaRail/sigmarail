@@ -3,8 +3,9 @@ import { RankingsTable } from "../RankingsTable";
 import { ResultsGrid } from "../ResultsGrid";
 import { InspectorPanel } from "../InspectorPanel";
 import { TimeBar } from "../TimeBar";
-import { TradingViewEmbed } from "../TradingViewEmbed";
+import { ExternalChartEmbed } from "../ExternalChartEmbed";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
 import type {
   RankedRow,
   ScreenPreset,
@@ -115,25 +116,29 @@ export function ScreenerStudioModal({
 
           <div className="flex items-center gap-2">
             {onApplyToStrategy && (
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   onApplyToStrategy();
                   onClose();
                 }}
-                className="flex items-center gap-1.5 rounded bg-accent px-3.5 py-1.5 text-xs font-bold text-accent-ink shadow-sm hover:opacity-90 transition-opacity"
+                variant="default"
+                size="sm"
+                className="h-8 px-3.5 text-xs"
               >
                 <span>✓</span>
                 <span>Apply & Link to Strategy</span>
-              </button>
+              </Button>
             )}
-            <button
+            <Button
               type="button"
               onClick={onClose}
-              className="rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-xs font-semibold text-ink-muted hover:text-ink hover:bg-surface-raised transition-colors"
+              variant="outline"
+              size="sm"
+              className="h-8 px-2.5 text-xs"
             >
               ✕ Close
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -165,19 +170,16 @@ export function ScreenerStudioModal({
                 aria-label="Results view"
               >
                 {(["list", "grid"] as ViewMode[]).map((m) => (
-                  <button
+                  <Button
                     key={m}
                     type="button"
                     onClick={() => onViewModeChange(m)}
-                    className={cn(
-                      "rounded px-2.5 py-0.5 text-[11px] font-semibold capitalize transition-colors",
-                      viewMode === m
-                        ? "bg-ink text-white shadow-sm"
-                        : "text-ink-muted hover:text-ink"
-                    )}
+                    variant={viewMode === m ? "secondary" : "ghost"}
+                    size="sm"
+                    className={cn("h-7 px-2.5 text-[11px] capitalize", viewMode === m && "shadow-sm")}
                   >
                     {m}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
@@ -199,7 +201,7 @@ export function ScreenerStudioModal({
                       source={source}
                     />
                   </div>
-                  <TradingViewEmbed
+                  <ExternalChartEmbed
                     symbol={selected?.ticker ?? null}
                     exchange={
                       typeof selected?.exchange === "string"
@@ -222,7 +224,7 @@ export function ScreenerStudioModal({
                     />
                   </div>
                   {selected ? (
-                    <TradingViewEmbed
+                    <ExternalChartEmbed
                       symbol={selected.ticker}
                       exchange={
                         typeof selected.exchange === "string"

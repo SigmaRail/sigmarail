@@ -1,6 +1,15 @@
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { fetchRunAttribution } from "../api/backtests";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
 function formatCurrency(val: number | null | undefined): string {
   if (val == null || Number.isNaN(val)) return "—";
@@ -40,7 +49,7 @@ export function RegimeSectorAttribution({ runId }: { runId: string }) {
   if (attributionQuery.isLoading) {
     return (
       <div className="flex h-64 items-center justify-center text-[12px] text-ink-muted">
-        Analyzing sector and market regime attribution via ClickHouse…
+        Analyzing sector and market regime attribution…
       </div>
     );
   }
@@ -268,50 +277,50 @@ export function RegimeSectorAttribution({ runId }: { runId: string }) {
 
         {/* Sector Table */}
         <div className="mt-5 overflow-x-auto border-t border-line pt-4">
-          <table className="w-full text-left text-[11px]">
-            <thead>
-              <tr className="border-b border-line text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                <th className="py-2 pl-2">Sector</th>
-                <th className="py-2 text-right">Net PnL</th>
-                <th className="py-2 text-right">Trades</th>
-                <th className="py-2 text-right">Win Rate</th>
-                <th className="py-2 text-right">Profit Factor</th>
-                <th className="py-2 text-right">Avg Return</th>
-                <th className="py-2 pl-4">Top Symbols</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line/60 font-mono">
+          <WorkspaceTable className="w-full text-left text-[11px]">
+            <WorkspaceTableHeader>
+              <WorkspaceTableRow className="border-b border-line text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+                <WorkspaceTableHead className="py-2 pl-2">Sector</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 text-right">Net PnL</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 text-right">Trades</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 text-right">Win Rate</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 text-right">Profit Factor</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 text-right">Avg Return</WorkspaceTableHead>
+                <WorkspaceTableHead className="py-2 pl-4">Top Symbols</WorkspaceTableHead>
+              </WorkspaceTableRow>
+            </WorkspaceTableHeader>
+            <WorkspaceTableBody className="divide-y divide-line/60 font-mono">
               {data.sectors.map((sec) => (
-                <tr key={sec.sector} className="hover:bg-surface-sunk/40 transition-colors">
-                  <td className="py-2 pl-2 font-sans font-medium text-ink">
+                <WorkspaceTableRow key={sec.sector} className="hover:bg-surface-sunk/40 transition-colors">
+                  <WorkspaceTableCell className="py-2 pl-2 font-sans font-medium text-ink">
                     {sec.sector}
-                  </td>
-                  <td
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell
                     className={`py-2 text-right font-bold ${
                       sec.total_pnl >= 0 ? "text-accent" : "text-danger"
                     }`}
                   >
                     {formatCurrency(sec.total_pnl)}
-                  </td>
-                  <td className="py-2 text-right text-ink-muted">
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell className="py-2 text-right text-ink-muted">
                     {sec.total_trades}
-                  </td>
-                  <td className="py-2 text-right text-ink">
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell className="py-2 text-right text-ink">
                     {formatPct(sec.win_rate)}
-                  </td>
-                  <td className="py-2 text-right text-ink-muted">
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell className="py-2 text-right text-ink-muted">
                     {sec.profit_factor != null ? sec.profit_factor.toFixed(2) : "—"}
-                  </td>
-                  <td className="py-2 text-right text-ink-muted">
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell className="py-2 text-right text-ink-muted">
                     {formatPct(sec.avg_return_pct)}
-                  </td>
-                  <td className="py-2 pl-4 text-[10px] text-ink-faint truncate max-w-xs">
+                  </WorkspaceTableCell>
+                  <WorkspaceTableCell className="py-2 pl-4 text-[10px] text-ink-faint truncate max-w-xs">
                     {sec.symbols.join(", ")}
-                  </td>
-                </tr>
+                  </WorkspaceTableCell>
+                </WorkspaceTableRow>
               ))}
-            </tbody>
-          </table>
+            </WorkspaceTableBody>
+          </WorkspaceTable>
         </div>
       </div>
 
@@ -327,56 +336,57 @@ export function RegimeSectorAttribution({ runId }: { runId: string }) {
                 Granular industry performance and win rates
               </p>
             </div>
-            <input
+            <Input
               type="text"
               value={industrySearch}
               onChange={(e) => setIndustrySearch(e.target.value)}
+              aria-label="Search industries and sectors"
               placeholder="Search industry or sector..."
-              className="rounded border border-line bg-surface-sunk px-2.5 py-1 text-[11px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+              className="h-9 w-full sm:w-64"
             />
           </div>
 
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
-              <thead>
-                <tr className="border-b border-line text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                  <th className="py-2 pl-2">Industry</th>
-                  <th className="py-2">Sector</th>
-                  <th className="py-2 text-right">Net PnL</th>
-                  <th className="py-2 text-right">Trades</th>
-                  <th className="py-2 text-right">Win Rate</th>
-                  <th className="py-2 text-right">Profit Factor</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line/60 font-mono">
+            <WorkspaceTable className="w-full text-left text-[11px]">
+              <WorkspaceTableHeader>
+                <WorkspaceTableRow className="border-b border-line text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+                  <WorkspaceTableHead className="py-2 pl-2">Industry</WorkspaceTableHead>
+                  <WorkspaceTableHead className="py-2">Sector</WorkspaceTableHead>
+                  <WorkspaceTableHead className="py-2 text-right">Net PnL</WorkspaceTableHead>
+                  <WorkspaceTableHead className="py-2 text-right">Trades</WorkspaceTableHead>
+                  <WorkspaceTableHead className="py-2 text-right">Win Rate</WorkspaceTableHead>
+                  <WorkspaceTableHead className="py-2 text-right">Profit Factor</WorkspaceTableHead>
+                </WorkspaceTableRow>
+              </WorkspaceTableHeader>
+              <WorkspaceTableBody className="divide-y divide-line/60 font-mono">
                 {filteredIndustries.map((ind, idx) => (
-                  <tr key={idx} className="hover:bg-surface-sunk/40 transition-colors">
-                    <td className="py-2 pl-2 font-sans font-medium text-ink">
+                  <WorkspaceTableRow key={idx} className="hover:bg-surface-sunk/40 transition-colors">
+                    <WorkspaceTableCell className="py-2 pl-2 font-sans font-medium text-ink">
                       {ind.industry}
-                    </td>
-                    <td className="py-2 font-sans text-ink-muted text-[10.5px]">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 font-sans text-ink-muted text-[10.5px]">
                       {ind.sector}
-                    </td>
-                    <td
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell
                       className={`py-2 text-right font-bold ${
                         ind.total_pnl >= 0 ? "text-accent" : "text-danger"
                       }`}
                     >
                       {formatCurrency(ind.total_pnl)}
-                    </td>
-                    <td className="py-2 text-right text-ink-muted">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-right text-ink-muted">
                       {ind.total_trades}
-                    </td>
-                    <td className="py-2 text-right text-ink">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-right text-ink">
                       {formatPct(ind.win_rate)}
-                    </td>
-                    <td className="py-2 text-right text-ink-muted">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="py-2 text-right text-ink-muted">
                       {ind.profit_factor != null ? ind.profit_factor.toFixed(2) : "—"}
-                    </td>
-                  </tr>
+                    </WorkspaceTableCell>
+                  </WorkspaceTableRow>
                 ))}
-              </tbody>
-            </table>
+              </WorkspaceTableBody>
+            </WorkspaceTable>
           </div>
         </div>
       ) : null}

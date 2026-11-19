@@ -30,9 +30,17 @@ const SEGMENT_TO_TAB: Record<string, WorkbenchTab> = {
   market: "market",
 };
 
+const LOCALE_SEGMENTS = new Set(["en", "pl", "de", "fr", "es", "zh", "hi", "ar"]);
+
+function routeSegments(pathname: string): string[] {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] && LOCALE_SEGMENTS.has(segments[0])) segments.shift();
+  return segments;
+}
+
 /** Map a URL pathname back to the active workbench tab (defaults to screens). */
 export function tabForPath(pathname: string): WorkbenchTab {
-  const seg = pathname.split("/").filter(Boolean)[0] ?? "";
+  const seg = routeSegments(pathname)[0] ?? "";
   return SEGMENT_TO_TAB[seg] ?? "screens";
 }
 
@@ -44,7 +52,7 @@ export function backtestRunFromPath(pathname: string): {
   runId: string | null;
   section: BacktestSection;
 } {
-  const segs = pathname.split("/").filter(Boolean);
+  const segs = routeSegments(pathname);
   if (segs[0] !== "backtests" || !segs[1]) {
     return { runId: null, section: "overview" };
   }
@@ -69,7 +77,7 @@ export function stockFromPath(pathname: string): {
   ticker: string | null;
   section: StockSection;
 } {
-  const segs = pathname.split("/").filter(Boolean);
+  const segs = routeSegments(pathname);
   if (segs[0] !== "stock" || !segs[1]) return { ticker: null, section: "chart" };
   let raw = segs[1];
   try {
@@ -91,7 +99,7 @@ export function stockPath(ticker: string, section: StockSection = "chart"): stri
 
 /** Parse `/strategies/:irId` — bare `/strategies` returns null (untitled draft). */
 export function strategyIrIdFromPath(pathname: string): string | null {
-  const segs = pathname.split("/").filter(Boolean);
+  const segs = routeSegments(pathname);
   if (segs[0] !== "strategies" || !segs[1]) return null;
   try {
     return decodeURIComponent(segs[1]);

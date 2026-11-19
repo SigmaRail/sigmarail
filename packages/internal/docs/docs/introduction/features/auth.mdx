@@ -1,0 +1,133 @@
+---
+title: Authentication and authorization
+---
+
+import useBaseUrl from "@docusaurus/useBaseUrl";
+
+SaaS Boilerplate comes packed with authentication and authorization functionality that is built-in, making it easy for
+you to secure your SaaS application. The system includes login, signup, and password forgot pages, as well as email
+verification, to ensure that only authorized users can access your application.
+
+### Login and Sign up
+
+The login and signup pages are designed to be simple and user-friendly (and fully customisable). Users can log in with
+their email address and password, or they can use social authentication with Google or Facebook. The signup page
+allows new users to register for an account by providing their email address and password.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/auth/login.png")} alt="Login page" />
+  <img src={useBaseUrl("img/features/auth/signup.png")} alt="Sign up page" />
+</p>
+
+### Password Forgot
+
+In case a user forgets their password, the password forgot page allows them to reset their password by providing their
+email address. An email is sent to the user with a link to reset their password.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/auth/password-forgot.png")} alt="Forgot password page" />
+</p>
+
+### Email Verification
+
+Email verification is a critical part of the authentication process. When a user signs up, an email is sent to their
+email address with a verification link. The user must click on the link to verify their email address.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/auth/verification-email.png")} alt="Email verification message" />
+</p>
+
+### Profile Page
+
+Once a user has logged in, they can access their profile page. From here, they can:
+
+- Edit their first and last name
+- Update their avatar
+- Change their password
+- Enable two-factor authentication (2FA)
+- Manage passkeys for passwordless login
+- View and manage active sessions across devices
+
+2FA adds an additional layer of security to the application, making it more difficult for unauthorized users to access
+user accounts.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/auth/profile.png")} alt="Profile page" />
+</p>
+
+### Active Sessions
+
+Users can view and manage their active sign-in sessions from the Profile page. This allows users to:
+
+- See all devices where they are currently signed in
+- Identify their current session
+- Sign out from other devices remotely
+- Sign out from all other sessions at once
+
+:::info
+Session management is a personal feature. Each user manages their own sessions - organization admins cannot view or manage other users' sessions for privacy reasons.
+:::
+
+### Role Management
+
+User rights are implemented with the role management system. This system allows you to define roles and assign them to
+users. The roles determine what actions a user can perform within the application. For example, you can create an admin
+role that has access to all features of the application, while a standard user role only has access to basic features.
+
+### Enterprise SSO & Passkeys
+
+For enterprise customers, SaaS Boilerplate includes advanced authentication options:
+
+- **SAML 2.0 & OIDC SSO** - Allow enterprise customers to use their identity providers (Okta, Azure AD, etc.)
+- **WebAuthn/Passkeys** - Passwordless authentication using biometrics and security keys
+- **SCIM 2.0** - Automated user provisioning and directory sync
+- **Domain-based SSO Discovery** - Automatically detect when a user's email domain has SSO configured
+- **Per-tenant SSO Configuration** - Each organization can configure their own SSO settings
+
+:::info Where is each feature managed?
+- **SSO/SCIM/Audit Logs** - Organization-level, managed by tenant admins in **Organization Settings → Security**
+- **Passkeys** - Personal credentials, managed by each user in their **Profile → Passkeys**
+- **Active Sessions** - Personal, managed by each user in their **Profile → Active Sessions**
+:::
+
+These features are enabled by default and can be configured via environment variables:
+
+```bash
+VITE_ENABLE_SSO=true          # Enable SSO discovery on login page
+VITE_ENABLE_PASSKEYS=true     # Enable passkey/WebAuthn login
+```
+
+See the [Enterprise SSO Guide](/features/enterprise-sso) for complete setup instructions.
+
+---
+
+## Related Guides
+
+Ready to customize the authentication system? Check out these how-to guides:
+
+| Guide | Description |
+|-------|-------------|
+| [Add a Profile Field](/working-with-sb/users/create-profile-field) | Extend user profiles with custom data |
+| [Add OAuth Provider](/working-with-sb/users/create-oauth-method) | Integrate additional social login options |
+| [Create Custom Role](/working-with-sb/users/create-role) | Define new permission levels |
+| [Admin User Management](/working-with-sb/users/admin-page) | Manage users from the admin panel |
+
+---
+
+## Summary
+
+SaaS Boilerplate provides a robust authentication and authorization system out of the box:
+
+- ✅ Login & signup with email/password
+- ✅ Social authentication (Google, Facebook)
+- ✅ Two-factor authentication (2FA)
+- ✅ Email verification
+- ✅ Password reset flow
+- ✅ Role-based access control
+- ✅ Enterprise SSO (SAML 2.0, OIDC)
+- ✅ WebAuthn/Passkeys
+- ✅ SCIM 2.0 directory sync
+- ✅ Active session management
+- ✅ Security audit logging
+- ✅ Feature flags for all auth methods
+- ✅ Fully customizable

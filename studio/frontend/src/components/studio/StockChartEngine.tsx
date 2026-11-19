@@ -4,8 +4,6 @@ import {
   ColorType,
   CrosshairMode,
   PriceScaleMode,
-  LineType,
-  LineStyle,
   CandlestickSeries,
   LineSeries,
   AreaSeries,
@@ -26,10 +24,13 @@ import type {
   EarningsReportEvent,
   QuarterlyGrowthPoint,
 } from "../../types";
+import { fetchChartPreferences, saveChartPreferences } from "../../api/preferences";
 import {
+  DEFAULTS as DEFAULT_CHART_SETTINGS,
   getTfBag,
-  loadChartSettings,
-  saveChartSettings,
+  loadAccountChartSettings,
+  normalizeChartPaneLayout,
+  saveAccountChartSettings,
   setTfBag,
   type ChartIndicatorKey,
   type ChartRangePreset,
@@ -37,6 +38,12 @@ import {
   type ChartTimeframe,
 } from "../../lib/chartSettings";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+import { Slider } from "@sb/webapp-core/components/ui/slider";
+import { useTheme } from "@sb/webapp-core/hooks/useTheme";
+import { Themes } from "@sb/webapp-core/providers/themeProvider";
 
 interface StockChartEngineProps {
   ticker?: string;
@@ -54,7 +61,6 @@ interface StockChartEngineProps {
   hasMoreHistory?: boolean;
   isLoadingMoreHistory?: boolean;
   onLoadMoreHistory?: () => Promise<void> | void;
-  onOpenForecastModal?: () => void;
   className?: string;
 }
 
@@ -67,12 +73,11 @@ type IndicatorOption = {
   weeklyOnly?: boolean;
 };
 
-/** Candles + ratio overlays (RS, SPY) share this band. Flags sit at 0.73-0.80, volume at top: 0.82. */
-const PRICE_PANE_MARGINS = { top: 0.05, bottom: 0.28 } as const;
+/** Price, relative strength and volume use separate panes and scales. */
+const PRICE_PANE_MARGINS = { top: 0.05, bottom: 0.04 } as const;
 
 const INDICATOR_OPTIONS: IndicatorOption[] = [
-  { key: "rsLine", label: "RS Line", category: "Trend", description: "Relative strength vs SPY, overlaid on price (own scale)" },
-  { key: "earningsLine", label: "Earnings Line", category: "Fundamental", description: "Quarterly EPS $ on a separate scale", weeklyOnly: true },
+  { key: "rsLine", label: "RS Line", category: "Trend", description: "Relative strength vs SPY in its own pane" },
   { key: "earningsFlags", label: "Earnings flags", category: "Events", description: "Report badges with EPS surprise %" },
   { key: "epsLine", label: "EPS Drift", category: "Fundamental", description: "TTM EPS trajectory scaled to median P/E" },
   { key: "fairValueRibbon", label: "Fair Value Ribbon", category: "Valuation", description: "±10% and ±30% intrinsic value bands" },
@@ -135,8 +140,8 @@ function applyWeeklyMovingAverages(weekly: ChartCandlePoint[]): void {
   }
 }
 
-function persistSettings(next: ChartSettingsV2): ChartSettingsV2 {
-  saveChartSettings(next);
+function persistSettings(next: ChartSettingsV2, userId: string | null): ChartSettingsV2 {
+  if (userId) saveAccountChartSettings(userId, next);
   return next;
 }
 
@@ -184,16 +189,38 @@ function nearestCandle(
   return undefined;
 }
 
-const CHART_HEIGHT_STORAGE_KEY = "vera_chart_canvas_height";
+const CHART_HEIGHT_STORAGE_KEY = "sigmarail.chart.canvas-height.v1";
+const LEGACY_CHART_HEIGHT_STORAGE_KEY = "vera_chart_canvas_height";
 function loadSavedChartHeight(): number {
   try {
-    const val = localStorage.getItem(CHART_HEIGHT_STORAGE_KEY);
+    let val = localStorage.getItem(CHART_HEIGHT_STORAGE_KEY);
+    if (val === null) {
+      val = localStorage.getItem(LEGACY_CHART_HEIGHT_STORAGE_KEY);
+      if (val !== null) {
+        localStorage.setItem(CHART_HEIGHT_STORAGE_KEY, val);
+        localStorage.removeItem(LEGACY_CHART_HEIGHT_STORAGE_KEY);
+      }
+    }
     if (val) {
       const num = parseInt(val, 10);
       if (num >= 320 && num <= 850) return num;
     }
   } catch {}
   return 480; // Sensible default provides ample room for candles, flags, and volume
+}
+
+function withLegacyChartSettings(settings: ChartSettingsV2): ChartSettingsV2 {
+  const saved = settings as Partial<ChartSettingsV2>;
+  return {
+    ...DEFAULT_CHART_SETTINGS,
+    ...settings,
+    paneLayout: normalizeChartPaneLayout(saved.paneLayout),
+    chartHeight:
+      typeof saved.chartHeight === "number" && Number.isFinite(saved.chartHeight)
+        ? Math.max(320, Math.min(850, Math.round(saved.chartHeight)))
+        : loadSavedChartHeight(),
+    isLogScale: typeof saved.isLogScale === "boolean" ? saved.isLogScale : false,
+  };
 }
 
 export function StockChartEngine({
@@ -211,20 +238,80 @@ export function StockChartEngine({
   hasMoreHistory = false,
   isLoadingMoreHistory = false,
   onLoadMoreHistory,
-  onOpenForecastModal,
   className,
 }: StockChartEngineProps) {
+  const { theme } = useTheme();
+  const isDarkTheme = theme === Themes.DARK;
+  const chartColors = useMemo(() => {
+    return isDarkTheme
+      ? {
+          background: "#0a0a0a",
+          text: "#a3a3a3",
+          border: "#262626",
+          grid: "rgba(148, 163, 184, 0.12)",
+        }
+      : {
+          background: "#ffffff",
+          text: "#737373",
+          border: "#e5e5e5",
+          grid: "rgba(100, 116, 139, 0.14)",
+        };
+  }, [isDarkTheme]);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartApiRef = useRef<IChartApi | null>(null);
   const lastLogicalRangeRef = useRef<LogicalRange | null>(null);
   const prevTickerRef = useRef<string | undefined>(ticker);
+  const profileUserIdRef = useRef<string | null>(null);
 
-  const [settings, setSettings] = useState<ChartSettingsV2>(() => loadChartSettings());
+  const [settings, setSettings] = useState<ChartSettingsV2>(DEFAULT_CHART_SETTINGS);
+  const paneLayoutRef = useRef(settings.paneLayout);
+  paneLayoutRef.current = settings.paneLayout;
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const timeframe = settings.lastTimeframe;
   const prevTimeframeRef = useRef<ChartTimeframe>(timeframe);
   const bag = getTfBag(settings, timeframe);
   const indicatorConfig = bag.indicators;
   const activeRange = bag.range;
+
+  useEffect(() => {
+    let active = true;
+    void fetchChartPreferences()
+      .then(({ userId, settings: serverSettings, configured }) => {
+        if (!active) return;
+        profileUserIdRef.current = userId;
+        if (!userId) {
+          setSettings(DEFAULT_CHART_SETTINGS);
+        } else if (configured && serverSettings) {
+          setSettings(persistSettings(withLegacyChartSettings(serverSettings), userId));
+        } else {
+          // First-run migration: import this user's scoped browser preferences into the profile.
+          const accountSettings = withLegacyChartSettings(loadAccountChartSettings(userId));
+          setSettings(persistSettings(accountSettings, userId));
+          void saveChartPreferences(accountSettings).catch(() => {});
+        }
+      })
+      .catch(() => {
+        // Wait for the signed-in profile before loading any account-scoped values.
+        if (active) setSettings(DEFAULT_CHART_SETTINGS);
+      })
+      .finally(() => {
+        if (active) setSettingsLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    if (!profileUserIdRef.current) return;
+    const timer = window.setTimeout(() => {
+      void saveChartPreferences(settings).catch(() => {
+        // Local storage remains the offline fallback.
+      });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [settings, settingsLoaded]);
 
   // When switching tickers or switching timeframe, reset preserved zoom range to use default preset
   useEffect(() => {
@@ -241,7 +328,7 @@ export function StockChartEngine({
     }
   }, [timeframe]);
 
-  const [isLogScale, setIsLogScale] = useState(false);
+  const isLogScale = settings.isLogScale;
   const [indicatorMenuOpen, setIndicatorMenuOpen] = useState(false);
   const [indicatorSearch, setIndicatorSearch] = useState("");
   const indicatorMenuRef = useRef<HTMLDivElement | null>(null);
@@ -273,6 +360,7 @@ export function StockChartEngine({
           indicators: partial.indicators ?? current.indicators,
           range: partial.range ?? current.range,
         }),
+        profileUserIdRef.current,
       );
       return next;
     });
@@ -286,16 +374,16 @@ export function StockChartEngine({
           ...cur,
           indicators: { ...cur.indicators, [key]: value },
         }),
+        profileUserIdRef.current,
       );
     });
   };
 
   const setTimeframe = (tf: ChartTimeframe) => {
-    setSettings((prev) => persistSettings({ ...prev, lastTimeframe: tf }));
+    setSettings((prev) => persistSettings({ ...prev, lastTimeframe: tf }, profileUserIdRef.current));
   };
 
   const showRsLine = indicatorConfig.rsLine;
-  const showEarningsLine = timeframe === "1W" && indicatorConfig.earningsLine;
   const showEpsLine = indicatorConfig.epsLine;
   const showEarningsFlags = indicatorConfig.earningsFlags;
   const showFairValueRibbon = indicatorConfig.fairValueRibbon;
@@ -311,7 +399,7 @@ export function StockChartEngine({
 
   const activeIndicatorCount = Object.entries(indicatorConfig).filter(([key, on]) => {
     if (!on) return false;
-    if (key === "earningsLine" && timeframe !== "1W") return false;
+    if (key === "earningsLine") return false;
     return true;
   }).length;
   const filteredIndicators = INDICATOR_OPTIONS.filter((option) => {
@@ -325,18 +413,59 @@ export function StockChartEngine({
     );
   });
 
-    const [chartHeight, setChartHeight] = useState<number>(() => loadSavedChartHeight());
+  const chartHeight = settings.chartHeight;
+  const [isCompactViewport, setIsCompactViewport] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+  );
+  const [viewportHeight, setViewportHeight] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight : 900,
+  );
+  // Keep all panes inside the visible chart workspace even when a larger saved
+  // height is preferred by the user.
+  const availableChartHeight = Math.max(
+    isCompactViewport ? 280 : 340,
+    viewportHeight - (isCompactViewport ? 220 : 160),
+  );
+  const renderedChartHeight = Math.min(
+    chartHeight,
+    availableChartHeight,
+    isCompactViewport ? 420 : Number.MAX_SAFE_INTEGER,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => {
+      setIsCompactViewport(media.matches);
+      setViewportHeight(window.innerHeight);
+    };
+    syncViewport();
+    media.addEventListener("change", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    return () => {
+      media.removeEventListener("change", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
 
   const handleChartHeightChange = (newHeight: number) => {
-    setChartHeight(newHeight);
-    try {
-      localStorage.setItem(CHART_HEIGHT_STORAGE_KEY, String(newHeight));
-    } catch {}
+    setSettings((previous) =>
+      persistSettings({ ...previous, chartHeight: newHeight }, profileUserIdRef.current),
+    );
+  };
+
+  const handleScaleChange = (logScale: boolean) => {
+    setSettings((previous) =>
+      persistSettings({ ...previous, isLogScale: logScale }, profileUserIdRef.current),
+    );
+  };
+
+  const handleResetChartDefaults = () => {
+    lastLogicalRangeRef.current = null;
+    setSettings(persistSettings({ ...DEFAULT_CHART_SETTINGS }, profileUserIdRef.current));
   };
 
 
   const [hoveredCandle, setHoveredCandle] = useState<ChartCandlePoint | null>(null);
-  const [isPlayingReplay, setIsPlayingReplay] = useState(false);
 
   // Filter candles based on blind mode (revealFuture) and apply dynamic customGrowthRate
   const displayDailyCandles = useMemo(() => {
@@ -492,10 +621,11 @@ export function StockChartEngine({
 
   const handleResetView = () => {
     lastLogicalRangeRef.current = null;
+    const defaultRange: ChartRangePreset = timeframe === "1D" ? "1Y" : "2Y";
     if (chartApiRef.current) {
-      applyRangeToChart(chartApiRef.current, "2Y", processedCandles);
+      applyRangeToChart(chartApiRef.current, defaultRange, processedCandles);
       chartApiRef.current.priceScale("right").applyOptions({ autoScale: true });
-      patchActiveBag({ range: "2Y" });
+      patchActiveBag({ range: defaultRange });
     }
   };
 
@@ -521,29 +651,17 @@ export function StockChartEngine({
     return processedCandles[processedCandles.length - 1] || null;
   }, [hoveredCandle, processedCandles, inspectedIndex]);
 
-  // Auto-Replay stepping effect
-  useEffect(() => {
-    if (!isPlayingReplay) return;
-    const interval = setInterval(() => {
-      if (inspectedIndex < processedCandles.length - 1) {
-        const nextDate = processedCandles[inspectedIndex + 1].time;
-        onSelectDate(nextDate);
-      } else {
-        setIsPlayingReplay(false);
-      }
-    }, 600);
-    return () => clearInterval(interval);
-  }, [isPlayingReplay, inspectedIndex, processedCandles, onSelectDate]);
-
   // Apply Range Preset to TimeScale
-  // Apply Range Preset to TimeScale with generous right padding
+  // Apply range presets to observed bars. Forecast dates must not move the
+  // latest actual session away from the right edge on initial load.
   const applyRangeToChart = (chart: IChartApi, range: ChartRangePreset, candlesList: ChartCandlePoint[]) => {
     if (candlesList.length === 0) return;
-    if (!candlesList || candlesList.length === 0) return;
+    const visibleBars = candlesList.filter((c) => !c.is_forecast && c.close !== null && c.close !== undefined);
+    if (visibleBars.length === 0) return;
 
-    const totalBars = candlesList.length;
+    const totalBars = visibleBars.length;
     const lastBarIdx = totalBars - 1;
-    const PADDING_BARS = 18; // Generous space so candles are never covered by right-axis labels
+    const PADDING_BARS = 5;
 
     if (range === "ALL") {
       chart.timeScale().fitContent();
@@ -558,7 +676,7 @@ export function StockChartEngine({
       return;
     }
 
-    const lastCandle = candlesList[lastBarIdx];
+    const lastCandle = visibleBars[lastBarIdx];
     const [ly, lm, ld] = parseIsoDate(lastCandle.time);
     const lastDate = new Date(Date.UTC(ly, lm, ld));
 
@@ -578,7 +696,8 @@ export function StockChartEngine({
       targetFromDate = new Date(lastDate.getTime() - daysBack * 86400000).toISOString().slice(0, 10);
     }
 
-    const fromIdx = Math.max(0, candlesList.findIndex((c) => c.time >= targetFromDate));
+    const foundFromIdx = visibleBars.findIndex((c) => c.time >= targetFromDate);
+    const fromIdx = foundFromIdx < 0 ? 0 : foundFromIdx;
 
     try {
       chart.timeScale().setVisibleLogicalRange({
@@ -597,20 +716,20 @@ export function StockChartEngine({
     const bars = dedupeByTime(processedCandles);
     const container = chartContainerRef.current;
     const width = Math.max(container.clientWidth || 0, 400);
-    const height = Math.max(container.clientHeight || 0, 300);
+    const height = Math.max(container.clientHeight || renderedChartHeight, 260);
 
     const chart = createChart(container, {
       width,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#475569",
+        background: { type: ColorType.Solid, color: chartColors.background },
+        textColor: chartColors.text,
         fontSize: 10,
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
       },
       grid: {
-        vertLines: { color: "rgba(148, 163, 184, 0.18)" },
-        horzLines: { color: "rgba(148, 163, 184, 0.18)" },
+        vertLines: { color: chartColors.grid },
+        horzLines: { color: chartColors.grid },
       },
       crosshair: {
         mode: CrosshairMode.Magnet,
@@ -618,22 +737,42 @@ export function StockChartEngine({
         horzLine: { color: "rgba(59, 130, 246, 0.4)", width: 1, style: 1 },
       },
       timeScale: {
-        borderColor: "rgba(148, 163, 184, 0.35)",
+        borderColor: chartColors.border,
         timeVisible: false,
         secondsVisible: false,
-        rightOffset: 18,
+        rightOffset: 0,
         barSpacing: 8,
       },
       rightPriceScale: {
-        borderColor: "rgba(148, 163, 184, 0.35)",
+        borderColor: chartColors.border,
         autoScale: true,
-        textColor: "#475569",
+        textColor: chartColors.text,
         mode: isLogScale ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
         scaleMargins: { ...PRICE_PANE_MARGINS },
       },
     });
 
     chartApiRef.current = chart;
+
+    // Price, RS and volume share the time axis but keep independent scales.
+    // Saved proportions are profile-wide, so they follow each ticker.
+    const paneLayout = normalizeChartPaneLayout(paneLayoutRef.current);
+    const visiblePriceRatio = showRsLine
+      ? paneLayout.price
+      : paneLayout.price / (paneLayout.price + paneLayout.volume);
+    const visibleRsRatio = showRsLine ? paneLayout.rs : 0;
+    const visibleVolumeRatio = showRsLine
+      ? paneLayout.volume
+      : paneLayout.volume / (paneLayout.price + paneLayout.volume);
+    chart.panes()[0]?.setStretchFactor(visiblePriceRatio);
+    const rsPaneIndex = showRsLine ? 1 : -1;
+    if (showRsLine) {
+      chart.addPane();
+      chart.panes()[rsPaneIndex]?.setStretchFactor(visibleRsRatio);
+    }
+    const volumePaneIndex = showRsLine ? 2 : 1;
+    chart.addPane();
+    chart.panes()[volumePaneIndex]?.setStretchFactor(visibleVolumeRatio);
 
     // 1. Candlestick Series (Primary)
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -664,10 +803,9 @@ export function StockChartEngine({
       color: "#64748b",
       priceFormat: { type: "volume" },
       priceScaleId: "volume_pane",
-    });
+    }, volumePaneIndex);
 
-    chart.priceScale("volume_pane").applyOptions({
-      scaleMargins: { top: 0.82, bottom: 0.0 },
+    chart.priceScale("volume_pane", volumePaneIndex).applyOptions({
       visible: false,
     });
 
@@ -872,30 +1010,23 @@ export function StockChartEngine({
       m30Series.setData(dedupeByTime(m30Data));
     }
 
-    // 5. MarketSurge RS Line — overlay on the price pane with a hidden independent
-    // scale so the ratio (~50 vs SPY) autoscales across candle height, not a 16% strip.
+    // 5. Relative strength has its own pane and scale below price.
     if (showRsLine) {
       const rsLineSeries = chart.addSeries(LineSeries, {
-        color: "#0284c7", // MarketSurge iconic royal blue
+        color: "#0284c7",
         lineWidth: 2,
         title: "RS",
-        priceScaleId: "rs_overlay",
+        priceScaleId: "right",
         priceLineVisible: false,
-      });
+      }, rsPaneIndex);
 
       const rsEmaSeries = chart.addSeries(LineSeries, {
         color: "rgba(56, 189, 248, 0.6)", // Cyan 21 EMA
         lineWidth: 1,
         title: "RS21",
-        priceScaleId: "rs_overlay",
+        priceScaleId: "right",
         priceLineVisible: false,
-      });
-
-      chart.priceScale("rs_overlay").applyOptions({
-        visible: false,
-        autoScale: true,
-        scaleMargins: { ...PRICE_PANE_MARGINS },
-      });
+      }, rsPaneIndex);
 
       const rsData: LineData<Time>[] = dedupeByTime(
         bars
@@ -988,55 +1119,6 @@ export function StockChartEngine({
           .map((c) => ({ time: c.time as Time, value: c.spy_close! })),
       );
       spxSeries.setData(spxData);
-    }
-
-    if (showEarningsLine) {
-      const epsByTime = new Map<string, number>();
-      for (const ev of earningsEvents) {
-        if (ev.eps == null) continue;
-        const t = chartTimeForDate(ev.date, timeframe);
-        epsByTime.set(t, ev.eps);
-      }
-      for (const q of quarterlyGrowth) {
-        if (!q.is_estimate || q.eps == null || !q.report_date) continue;
-        const t = chartTimeForDate(q.report_date, timeframe);
-        epsByTime.set(t, q.eps);
-      }
-      const earningsPoints: LineData<Time>[] = [];
-      for (const [t, value] of [...epsByTime.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-        const candle = nearestCandle(t, bars.filter((c) => !c.is_forecast));
-        if (!candle) continue;
-        earningsPoints.push({ time: candle.time as Time, value });
-      }
-      if (earningsPoints.length > 0) {
-        const earningsSeries = chart.addSeries(LineSeries, {
-          color: "#16a34a",
-          lineWidth: 2,
-          lineStyle: LineStyle.Dashed,
-          lineType: LineType.Curved, // Smooth curve between quarterly points (no jagged steps)
-          lastValueVisible: false,
-          crosshairMarkerVisible: false,
-          priceScaleId: "earnings_eps",
-          priceFormat: { type: "price", precision: 2, minMove: 0.01 },
-        });
-        chart.priceScale("earnings_eps").applyOptions({
-          visible: false, // Don't crowd the right price axis with EPS numbers
-          scaleMargins: { ...PRICE_PANE_MARGINS },
-        });
-        const dedupedEarnings = dedupeByTime(earningsPoints);
-        earningsSeries.setData(dedupedEarnings);
-        // Dot markers at each report date (strictly unique times)
-        createSeriesMarkers(
-          earningsSeries,
-          dedupedEarnings.map((p) => ({
-            time: p.time,
-            position: "inBar" as const,
-            color: "#16a34a",
-            shape: "circle" as const,
-            size: 0.6,
-          })),
-        );
-      }
     }
 
     // 7. Series Markers: Anchor Dates & Quarterly Earnings Report Flags on Candlestick Series
@@ -1245,8 +1327,50 @@ export function StockChartEngine({
     });
     resizeObserver.observe(container);
 
+    // Lightweight Charts exposes its pane separators for direct resizing.
+    // Persist the resulting proportions to the profile so the layout follows
+    // the user when they inspect another symbol.
+    let paneLayoutTimer: number | null = null;
+    const paneObserver = new ResizeObserver(() => {
+      const panes = chart.panes();
+      const heights = panes.map((pane) => pane.getHeight());
+      if (heights.length !== (showRsLine ? 3 : 2) || heights.some((value) => value <= 0)) return;
+      if (paneLayoutTimer !== null) window.clearTimeout(paneLayoutTimer);
+      paneLayoutTimer = window.setTimeout(() => {
+        const total = heights.reduce((sum, value) => sum + value, 0);
+        if (total <= 0) return;
+        const nextVisible = {
+          price: heights[0] / total,
+          rs: showRsLine ? heights[1] / total : 0,
+          volume: heights[showRsLine ? 2 : 1] / total,
+        };
+        setSettings((previous) => {
+          const previousLayout = normalizeChartPaneLayout(previous.paneLayout);
+          const nextLayout = showRsLine
+            ? normalizeChartPaneLayout(nextVisible)
+            : normalizeChartPaneLayout({
+                price: nextVisible.price * (1 - previousLayout.rs),
+                rs: previousLayout.rs,
+                volume: nextVisible.volume * (1 - previousLayout.rs),
+              });
+          if (
+            Math.abs(previousLayout.price - nextLayout.price) < 0.015 &&
+            Math.abs(previousLayout.rs - nextLayout.rs) < 0.015 &&
+            Math.abs(previousLayout.volume - nextLayout.volume) < 0.015
+          ) return previous;
+          return persistSettings({ ...previous, paneLayout: nextLayout }, profileUserIdRef.current);
+        });
+      }, 350);
+    });
+    chart.panes().forEach((pane) => {
+      const element = pane.getHTMLElement();
+      if (element) paneObserver.observe(element);
+    });
+
     return () => {
       resizeObserver.disconnect();
+      paneObserver.disconnect();
+      if (paneLayoutTimer !== null) window.clearTimeout(paneLayoutTimer);
       chart.remove();
       chartApiRef.current = null;
     };
@@ -1262,7 +1386,6 @@ export function StockChartEngine({
     showExpectationTracks,
     showMultipleRibbon,
     showEarningsFlags,
-    showEarningsLine,
     showSpxOverlay,
     showForecast,
     show10Ema,
@@ -1271,14 +1394,16 @@ export function StockChartEngine({
     show200Sma,
     timeframe,
     isLogScale,
+    chartColors,
     historicalMedianPe,
     onSelectDate,
     activeRange,
     earningsEvents,
     quarterlyGrowth,
+    settingsLoaded,
   ]);
 
-  // Handle Range Preset Click with on-demand historical loading
+  // Handle range preset selection with on-demand historical loading
   const handleRangePreset = async (r: ChartRangePreset) => {
     patchActiveBag({ range: r });
     lastLogicalRangeRef.current = null; // Clear preserved zoom so requested preset takes effect
@@ -1290,55 +1415,46 @@ export function StockChartEngine({
     if (chartApiRef.current) {
       applyRangeToChart(chartApiRef.current, r, processedCandles);
     }
-  };// Step helper
-  const handleStepBars = (step: number) => {
-    const newIdx = Math.max(0, Math.min(processedCandles.length - 1, inspectedIndex + step));
-    if (newIdx !== inspectedIndex && processedCandles[newIdx]) {
-      onSelectDate(processedCandles[newIdx].time);
-    }
   };
 
   const isAtScreenDate = inspectedDate === screenAsOfDate;
+  const activeCandleIsForecast = activeCandle?.is_forecast === true;
 
-  // Filter quarterly earnings ribbon items (ordered chronologically, past to future)
-  const ribbonQuarters = useMemo(() => {
-    if (quarterlyGrowth.length === 0) return [];
-    return [...quarterlyGrowth].sort((a, b) => {
-      const ae = a.is_estimate ? 1 : 0;
-      const be = b.is_estimate ? 1 : 0;
-      if (ae !== be) return ae - be;
-      return (a.report_date || "").localeCompare(b.report_date || "");
-    });
-  }, [quarterlyGrowth]);
 
   return (
-    <div className={cn("flex flex-col h-full w-full rounded-lg border border-line bg-surface overflow-hidden", className)}>
+    <div data-testid="stock-chart-engine" className={cn("flex flex-col h-full w-full rounded-lg border border-line bg-surface overflow-hidden", className)}>
       {/* Chart Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-1.5 bg-surface-raised text-[11px]">
+      <div data-testid="stock-chart-toolbar" className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-2 py-2 text-[11px] sm:px-3">
         {/* Active Stats */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {activeCandle && (
-            <div className="flex items-center gap-2 font-mono text-[10.5px]">
-              <span className={cn("font-bold px-1.5 py-0.5 rounded border", isAtScreenDate ? "bg-amber-500/15 border-amber-500/40 text-amber-500" : "bg-emerald-500/15 border-emerald-500/40 text-emerald-500")}>
-                {isAtScreenDate ? `📍 ${activeCandle.time}` : `🔍 ${activeCandle.time}`}
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] sm:gap-x-2.5 sm:text-[10.5px]">
+              <span className={cn("whitespace-nowrap rounded border px-1.5 py-0.5 font-semibold", activeCandleIsForecast ? "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300" : isAtScreenDate ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300" : "border-border bg-background text-muted-foreground")}>
+                {activeCandleIsForecast ? "Forecast" : isAtScreenDate ? "Screen date" : "Inspected"} · {activeCandle.time}
               </span>
-              <span className="text-ink">
-                <strong className="text-ink-muted">O: </strong>${typeof activeCandle.open === "number" ? activeCandle.open.toFixed(2) : "—"}
-              </span>
-              <span className="text-ink">
-                <strong className="text-ink-muted">H: </strong>${typeof activeCandle.high === "number" ? activeCandle.high.toFixed(2) : "—"}
-              </span>
-              <span className="text-ink">
-                <strong className="text-ink-muted">L: </strong>${typeof activeCandle.low === "number" ? activeCandle.low.toFixed(2) : "—"}
-              </span>
-              <span className={cn("font-bold", typeof activeCandle.close === "number" && typeof activeCandle.open === "number" && activeCandle.close >= activeCandle.open ? "text-emerald-500" : "text-rose-500")}>
-                <strong className="text-ink-muted font-normal">C: </strong>${typeof activeCandle.close === "number" ? activeCandle.close.toFixed(2) : "—"}
-              </span>
-              <span className="text-ink-muted hidden xl:inline">
-                Vol: {typeof activeCandle.volume === "number" ? `${(activeCandle.volume / 1e6).toFixed(2)}M` : "—"}
-              </span>
+              {activeCandleIsForecast ? (
+                <span className="whitespace-nowrap text-muted-foreground">No traded OHLC or volume</span>
+              ) : (
+                <>
+                  <span className="whitespace-nowrap text-foreground">
+                    <strong className="text-ink-muted">O: </strong>${typeof activeCandle.open === "number" ? activeCandle.open.toFixed(2) : "—"}
+                  </span>
+                  <span className="whitespace-nowrap text-foreground">
+                    <strong className="text-ink-muted">H: </strong>${typeof activeCandle.high === "number" ? activeCandle.high.toFixed(2) : "—"}
+                  </span>
+                  <span className="whitespace-nowrap text-foreground">
+                    <strong className="text-ink-muted">L: </strong>${typeof activeCandle.low === "number" ? activeCandle.low.toFixed(2) : "—"}
+                  </span>
+                  <span className={cn("whitespace-nowrap font-semibold", typeof activeCandle.close === "number" && typeof activeCandle.open === "number" && activeCandle.close >= activeCandle.open ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+                    <strong className="text-ink-muted font-normal">C: </strong>${typeof activeCandle.close === "number" ? activeCandle.close.toFixed(2) : "—"}
+                  </span>
+                  <span className="text-ink-muted hidden xl:inline">
+                    Vol: {typeof activeCandle.volume === "number" ? `${(activeCandle.volume / 1e6).toFixed(2)}M` : "—"}
+                  </span>
+                </>
+              )}
               {typeof activeCandle.rs_rating === "number" && (
-                <span className="text-sky-400 font-bold hidden sm:inline" title="MarketSurge RS Rating / Ratio">
+                <span className="text-sky-400 font-bold hidden sm:inline" title="Relative strength rating / ratio">
                   RS: {activeCandle.rs_rating.toFixed(0)}
                   {typeof activeCandle.rs_line === "number" && <span className="text-ink-muted font-normal text-[9.5px] ml-1">({activeCandle.rs_line.toFixed(1)})</span>}
                 </span>
@@ -1353,45 +1469,43 @@ export function StockChartEngine({
         </div>
 
         {/* Controls Strip: Timeframe & Indicators & Blind Mode */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {/* Timeframe Switcher */}
-          <div className="inline-flex rounded border border-line bg-surface p-0.5 font-mono text-[10px]">
-            <button
+          <div className="inline-flex items-center rounded-md border border-border bg-muted/40 p-0.5">
+            <Button
               type="button"
+              size="sm"
+              variant={timeframe === "1D" ? "secondary" : "ghost"}
               onClick={() => setTimeframe("1D")}
-              className={cn(
-                "rounded px-2 py-0.5 font-bold transition-colors",
-                timeframe === "1D" ? "bg-accent text-accent-ink shadow-xs" : "text-ink-muted hover:text-ink"
-              )}
+              className="h-7 px-2.5 text-xs"
+              aria-pressed={timeframe === "1D"}
             >
               1D
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
+              variant={timeframe === "1W" ? "secondary" : "ghost"}
               onClick={() => setTimeframe("1W")}
-              className={cn(
-                "rounded px-2 py-0.5 font-bold transition-colors",
-                timeframe === "1W" ? "bg-accent text-accent-ink shadow-xs" : "text-ink-muted hover:text-ink"
-              )}
+              className="h-7 px-2.5 text-xs"
+              aria-pressed={timeframe === "1W"}
             >
               1W
-            </button>
+            </Button>
           </div>
 
           {/* Logarithmic / Linear Scale Toggle */}
-          <button
+          <Button
             type="button"
-            onClick={() => setIsLogScale((p) => !p)}
-            className={cn(
-              "rounded px-2 py-0.5 border font-mono text-[10px] font-bold transition-all",
-              isLogScale
-                ? "border-purple-500/50 bg-purple-500/15 text-purple-400 shadow-xs"
-                : "border-line bg-surface text-ink-muted hover:text-ink"
-            )}
+              onClick={() => handleScaleChange(!isLogScale)}
+            size="sm"
+            variant={isLogScale ? "secondary" : "outline"}
+            className="h-7 px-2.5 text-xs"
+            aria-pressed={isLogScale}
             title={isLogScale ? "Switch to Linear Scale (LIN)" : "Switch to Logarithmic Scale (LOG)"}
           >
             {isLogScale ? "LOG" : "LIN"}
-          </button>
+          </Button>
 
           {/* Range Jump Selector & Lazy Loading Indicator */}
           <div className="flex items-center gap-2">
@@ -1400,67 +1514,59 @@ export function StockChartEngine({
                 <span>⏳</span> Loading historical depth…
               </span>
             )}
-            <div className="hidden sm:inline-flex items-center rounded border border-line bg-surface p-0.5 font-mono text-[9.5px]">
-              {(["3M", "6M", "1Y", "2Y", "6Y", "ALL"] as ChartRangePreset[]).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => handleRangePreset(r)}
-                  className={cn(
-                    "rounded px-1.5 py-0.5 font-semibold transition-colors",
-                    activeRange === r ? "bg-surface-sunk text-accent font-bold" : "text-ink-muted hover:text-ink"
-                  )}
-                  title={r === "6Y" ? "4 Years History + 2 Years Forecast (FAST Graphs Perspective)" : undefined}
-                >
-                  {r === "6Y" ? "6Y (4+2)" : r}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={handleResetView}
-                className="ml-1 rounded border-l border-line pl-1.5 pr-1 py-0.5 font-bold text-accent hover:bg-accent/15 transition-colors"
-                title="Reset view to sensible 2Y default (or right-click chart)"
-              >
-                🔄 Reset
-              </button>
-            </div>
+            <Select value={activeRange} onValueChange={(value) => handleRangePreset(value as ChartRangePreset)}>
+              <SelectTrigger aria-label="Chart range" className="h-7 w-[5.5rem] px-2 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(["3M", "6M", "1Y", "2Y", "6Y", "ALL"] as ChartRangePreset[]).map((range) => (
+                  <SelectItem key={range} value={range}>
+                    {range === "6Y" ? "6Y · 4+2" : range}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              onClick={handleResetView}
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              title="Reset chart view"
+            >
+              Reset
+            </Button>
 
             {/* Chart Height Slider */}
             <div className="hidden md:flex items-center gap-1.5 rounded border border-line bg-surface px-2 py-0.5 font-mono text-[9px] text-ink-muted">
               <span title="Adjust chart vertical canvas height">Height:</span>
-              <input
-                type="range"
+              <Slider
                 min={340}
                 max={750}
                 step={20}
-                value={chartHeight}
-                onChange={(e) => handleChartHeightChange(Number(e.target.value))}
-                className="h-1.5 w-16 cursor-ew-resize accent-accent"
-                title={`Chart canvas height: ${chartHeight}px`}
+                value={[chartHeight]}
+                onValueChange={([height]) => height !== undefined && handleChartHeightChange(height)}
+                className="w-20"
+                aria-label="Chart height"
               />
               <span className="w-8 text-right font-bold text-ink">{chartHeight}px</span>
             </div>
           </div>
 
           <div className="relative">
-            <button
+            <Button
               ref={indicatorButtonRef}
               type="button"
               onClick={() => setIndicatorMenuOpen((open) => !open)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded border px-2 py-1 text-[10px] font-mono font-bold transition-all",
-                indicatorMenuOpen
-                  ? "border-accent/60 bg-accent/15 text-accent"
-                  : "border-line bg-surface text-ink-muted hover:border-accent hover:text-ink"
-              )}
+              variant={indicatorMenuOpen ? "secondary" : "outline"}
+              size="sm"
+              className="h-7 gap-1.5 px-2 text-xs"
+              aria-expanded={indicatorMenuOpen}
               title="Indicator settings"
             >
               <span>Indicators</span>
-              <span className={cn(
-                "inline-flex min-w-[1.25rem] items-center justify-center rounded-full border px-1 text-[9px] font-bold",
-                indicatorMenuOpen ? "border-accent/60 bg-accent/20 text-accent" : "border-line bg-surface-sunk text-ink-muted"
-              )}>{activeIndicatorCount}</span>
-            </button>
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-muted-foreground">{activeIndicatorCount}</span>
+            </Button>
 
             {indicatorMenuOpen && (
               <div
@@ -1468,14 +1574,19 @@ export function StockChartEngine({
                 className="absolute right-0 z-50 mt-2 w-[min(360px,calc(100vw-1rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-2xl shadow-slate-950/25"
               >
                 <div className="border-b border-line bg-surface-raised px-2.5 py-2">
-                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-ink">
-                    {timeframe === "1W" ? "Weekly studies" : "Daily studies"}
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-ink">
+                      {timeframe === "1W" ? "Weekly studies" : "Daily studies"}
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={handleResetChartDefaults}>
+                      Reset defaults
+                    </Button>
                   </div>
-                  <input
+                  <Input
                     value={indicatorSearch}
                     onChange={(event) => setIndicatorSearch(event.target.value)}
                     placeholder="Search indicators..."
-                    className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[11px] font-mono text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                    className="h-8 w-full px-2.5 py-1.5 text-xs"
                   />
                 </div>
 
@@ -1489,9 +1600,11 @@ export function StockChartEngine({
                         const enabled = weeklyOnlyDisabled ? false : indicatorConfig[option.key];
                         const label = timeframe === "1W" ? (option.weeklyLabel ?? option.label) : option.label;
                         return (
-                          <button
+                          <Button
                             key={option.key}
                             type="button"
+                            variant={enabled ? "secondary" : "ghost"}
+                            size="sm"
                             disabled={weeklyOnlyDisabled}
                             onClick={() => {
                               if (weeklyOnlyDisabled) return;
@@ -1506,6 +1619,7 @@ export function StockChartEngine({
                                 ? "border-accent/40 bg-accent/10 text-ink"
                                 : "border-transparent bg-surface hover:border-line hover:bg-surface-raised text-ink-muted"
                             )}
+                            aria-pressed={enabled}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
@@ -1530,53 +1644,30 @@ export function StockChartEngine({
                             >
                               {enabled ? "✓" : ""}
                             </span>
-                          </button>
+                          </Button>
                         );
                       })
                     )}
-                    <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-dashed border-line px-2.5 py-2 text-left opacity-60">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-bold text-ink-muted">Minervini Trend Template (later)</div>
-                        <div className="mt-0.5 text-[10px] text-ink-muted">Not toggleable in this release</div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Forecast Accuracy Button */}
-          {onOpenForecastModal && (
-            <button
-              type="button"
-              onClick={onOpenForecastModal}
-              className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent hover:bg-accent/20 transition-all"
-              title="Open TradingView-style forecast accuracy analysis"
-            >
-              <span>📊 Accuracy</span>
-            </button>
-          )}
-
           {/* Reveal Future / Blind Mode Toggle */}
           {onToggleRevealFuture && (
-            <button
+            <Button
               type="button"
               onClick={() => onToggleRevealFuture(!revealFuture)}
-              className={cn(
-                "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-bold transition-all",
-                revealFuture
-                  ? "border-accent/60 bg-accent/15 text-accent"
-                  : "border-line bg-surface text-ink-muted hover:border-accent hover:text-ink"
-              )}
-              title={
-                revealFuture
-                  ? "Click to hide future candles (Blind flashcard study mode)"
-                  : "Click to reveal forward-walk outcome"
-              }
+              variant={revealFuture ? "secondary" : "outline"}
+              size="sm"
+              className="h-7 px-2 text-xs"
+              aria-pressed={revealFuture}
+              aria-label={revealFuture ? "Hide future chart data" : "Show future chart data"}
+              title={revealFuture ? "Hide forecast data" : "Show forecast data"}
             >
-              <span>{revealFuture ? "👁 Outcome Revealed" : "🙈 Blind Test Mode"}</span>
-            </button>
+              {revealFuture ? "Forecast on" : "Forecast"}
+            </Button>
           )}
         </div>
       </div>
@@ -1584,7 +1675,7 @@ export function StockChartEngine({
       {/* Chart Canvas Area */}
       <div
         className="relative w-full"
-        style={{ height: `${chartHeight}px`, minHeight: "340px" }}
+        style={{ height: `${renderedChartHeight}px`, minHeight: isCompactViewport ? "280px" : "340px" }}
         ref={chartContainerRef}
         onMouseLeave={() => setHoveredCandle(null)}
         onContextMenu={(e) => {
@@ -1592,324 +1683,9 @@ export function StockChartEngine({
           handleResetView();
         }}
         onDoubleClick={handleResetView}
-        title="Double-click or right-click to reset view to 2Y default"
+        title={`Double-click or right-click to reset view to ${timeframe === "1D" ? "1Y" : "2Y"}`}
       />
 
-      {/* Bottom quarterly table: last 8 reported + 2 estimates */}
-      {ribbonQuarters.length > 0 && (
-        <div className="overflow-x-auto border-t border-line bg-surface px-2 py-1 font-mono text-[10px]">
-          <table className="w-full min-w-[560px] text-left">
-            <thead className="text-[8.5px] uppercase text-ink-muted">
-              <tr>
-                <th className="py-0.5 pr-2 font-bold">
-                  <div className="flex items-center gap-1.5">
-                    <span>Quarter</span>
-                    {onOpenForecastModal && (
-                      <button
-                        type="button"
-                        onClick={onOpenForecastModal}
-                        className="rounded border border-accent/40 bg-accent/10 px-1 py-0.2 text-[8px] font-bold text-accent hover:bg-accent/20 transition-colors"
-                        title="View TradingView Forecasts & Accuracy Chart"
-                      >
-                        📊 Accuracy
-                      </button>
-                    )}
-                  </div>
-                </th>
-                {ribbonQuarters.map((q, idx) => (
-                  <th
-                    key={`${q.report_date}-${idx}`}
-                    className={cn(
-                      "cursor-pointer px-1.5 py-0.5 text-right font-bold",
-                      q.is_estimate ? "text-sky-400" : "text-ink",
-                    )}
-                    onClick={() => q.report_date && onSelectDate(q.report_date)}
-                  >
-                    {q.report_date ? q.report_date.slice(2, 7) : "—"}
-                    {q.is_estimate ? " est" : ""}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {/* EPS Actual / Reported */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted font-bold">EPS Act</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const act = q.eps_actual ?? (!q.is_estimate ? q.eps : null);
-                  return (
-                    <td key={`eps-act-${idx}`} className="px-1.5 text-right font-bold text-ink">
-                      {act != null ? act.toFixed(2) : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* EPS Estimate */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">EPS Est</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const est = q.eps_estimate ?? (q.is_estimate ? q.eps : null);
-                  return (
-                    <td key={`eps-est-${idx}`} className="px-1.5 text-right text-ink-muted">
-                      {est != null ? est.toFixed(2) : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* EPS Surprise */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">Surprise</td>
-                {ribbonQuarters.map((q, idx) => {
-                  if (q.is_estimate) {
-                    return (
-                      <td key={`eps-surp-${idx}`} className="px-1.5 text-right text-[9px] text-ink-faint">
-                        —
-                      </td>
-                    );
-                  }
-                  const bm = q.eps_beat_miss;
-                  const pct = q.eps_surprise_pct;
-                  return (
-                    <td
-                      key={`eps-surp-${idx}`}
-                      className={cn(
-                        "px-1.5 text-right font-bold text-[9px]",
-                        bm === "beat" || (pct != null && pct > 0)
-                          ? "text-emerald-500"
-                          : bm === "miss" || (pct != null && pct < 0)
-                          ? "text-rose-500"
-                          : "text-ink-muted",
-                      )}
-                    >
-                      {bm === "beat"
-                        ? `Beat${pct != null ? ` (+${pct.toFixed(0)}%)` : ""}`
-                        : bm === "miss"
-                        ? `Miss${pct != null ? ` (${pct.toFixed(0)}%)` : ""}`
-                        : pct != null
-                        ? `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`
-                        : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* EPS YoY Growth */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">%Chg (YoY)</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const g = q.eps_growth_yoy;
-                  return (
-                    <td
-                      key={`epschg-${idx}`}
-                      className={cn(
-                        "px-1.5 text-right font-bold",
-                        g != null && g > 0 ? "text-emerald-500" : g != null && g < 0 ? "text-rose-500" : "text-ink",
-                      )}
-                    >
-                      {g != null ? `${g > 0 ? "+" : ""}${g.toFixed(0)}%` : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* Sales Actual */}
-              <tr className="border-t border-line/50">
-                <td className="py-0.5 pr-2 text-ink-muted font-bold">Sales Act</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const act = q.revenue_actual ?? (!q.is_estimate ? q.revenue_m : null);
-                  return (
-                    <td key={`sales-act-${idx}`} className="px-1.5 text-right font-bold text-ink">
-                      {act != null ? act.toFixed(0) : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* Sales Estimate */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">Sales Est</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const est = q.revenue_estimate ?? (q.is_estimate ? q.revenue_m : null);
-                  return (
-                    <td key={`sales-est-${idx}`} className="px-1.5 text-right text-ink-muted">
-                      {est != null ? est.toFixed(0) : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* Sales Surprise */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">Surprise</td>
-                {ribbonQuarters.map((q, idx) => {
-                  if (q.is_estimate) {
-                    return (
-                      <td key={`sales-surp-${idx}`} className="px-1.5 text-right text-[9px] text-ink-faint">
-                        —
-                      </td>
-                    );
-                  }
-                  const bm = q.revenue_beat_miss;
-                  const pct = q.revenue_surprise_pct;
-                  return (
-                    <td
-                      key={`sales-surp-${idx}`}
-                      className={cn(
-                        "px-1.5 text-right font-bold text-[9px]",
-                        bm === "beat" || (pct != null && pct > 0)
-                          ? "text-emerald-500"
-                          : bm === "miss" || (pct != null && pct < 0)
-                          ? "text-rose-500"
-                          : "text-ink-muted",
-                      )}
-                    >
-                      {bm === "beat"
-                        ? `Beat${pct != null ? ` (+${pct.toFixed(0)}%)` : ""}`
-                        : bm === "miss"
-                        ? `Miss${pct != null ? ` (${pct.toFixed(0)}%)` : ""}`
-                        : pct != null
-                        ? `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`
-                        : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-              {/* Sales YoY Growth */}
-              <tr>
-                <td className="py-0.5 pr-2 text-ink-muted">%Chg (YoY)</td>
-                {ribbonQuarters.map((q, idx) => {
-                  const g = q.revenue_growth_yoy;
-                  return (
-                    <td
-                      key={`saleschg-${idx}`}
-                      className={cn(
-                        "px-1.5 text-right font-bold",
-                        g != null && g > 0 ? "text-emerald-500" : g != null && g < 0 ? "text-rose-500" : "text-ink",
-                      )}
-                    >
-                      {g != null ? `${g > 0 ? "+" : ""}${g.toFixed(0)}%` : "—"}
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Interactive Time Travel Scrubber Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-surface-raised px-3 py-1.5 text-[11px]">
-        {/* Navigation Step Buttons */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => handleStepBars(-20)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
-            title="Step back 20 bars (~1 month)"
-          >
-            ◀◀ -20
-          </button>
-          <button
-            type="button"
-            onClick={() => handleStepBars(-5)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
-            title="Step back 5 bars (~1 week)"
-          >
-            ◀ -5
-          </button>
-          <button
-            type="button"
-            onClick={() => handleStepBars(-1)}
-            className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink hover:border-accent hover:text-accent transition-colors"
-            title="Step back 1 bar (-1D / -1W)"
-          >
-            ◀ -1 Bar
-          </button>
-
-          {/* Auto Replay Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsPlayingReplay(!isPlayingReplay)}
-            className={cn(
-              "rounded border px-2 py-0.5 font-mono text-[10px] font-bold transition-all",
-              isPlayingReplay
-                ? "border-emerald-500 bg-emerald-500/20 text-emerald-500 animate-pulse"
-                : "border-line bg-surface text-ink hover:border-accent"
-            )}
-            title={isPlayingReplay ? "Pause Replay" : "Play Bar-by-Bar Replay (1 bar / 600ms)"}
-          >
-            {isPlayingReplay ? "⏸ Pause" : "▶ Replay"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleStepBars(1)}
-            className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink hover:border-accent hover:text-accent transition-colors"
-            title="Step forward 1 bar (+1D / +1W)"
-          >
-            +1 Bar ▶
-          </button>
-          <button
-            type="button"
-            onClick={() => handleStepBars(5)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
-            title="Step forward 5 bars (~1 week)"
-          >
-            +5 ▶
-          </button>
-          <button
-            type="button"
-            onClick={() => handleStepBars(20)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
-            title="Step forward 20 bars (~1 month)"
-          >
-            +20 ▶▶
-          </button>
-        </div>
-
-        {/* Timeline Slider Track */}
-        <div className="flex flex-1 items-center gap-2 max-w-[280px] sm:max-w-[400px]">
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, processedCandles.length - 1)}
-            value={inspectedIndex}
-            onChange={(e) => {
-              const idx = Number(e.target.value);
-              if (processedCandles[idx]) {
-                onSelectDate(processedCandles[idx].time);
-              }
-            }}
-            className="w-full h-1.5 bg-surface-sunk rounded-lg appearance-none cursor-pointer accent-emerald-500"
-            title="Scrub timeline across stock history"
-          />
-          <span className="font-mono text-[10px] text-ink-muted whitespace-nowrap">
-            {inspectedIndex + 1}/{processedCandles.length}
-          </span>
-        </div>
-
-        {/* Quick Reset & Latest Jumps */}
-        <div className="flex items-center gap-1.5">
-          {!isAtScreenDate && (
-            <button
-              type="button"
-              onClick={() => onSelectDate(screenAsOfDate)}
-              className="rounded border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-500 hover:bg-amber-500/20 transition-colors"
-              title={`Jump back to original screen date (${screenAsOfDate})`}
-            >
-              📍 Reset to Screen Date
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              if (processedCandles.length > 0) {
-                onSelectDate(processedCandles[processedCandles.length - 1].time);
-              }
-            }}
-            className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink hover:border-accent hover:text-accent transition-colors"
-            title="Jump to latest trading bar"
-          >
-            ⚡ Latest
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

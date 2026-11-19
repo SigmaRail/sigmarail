@@ -8,6 +8,9 @@ import { RuleListEditor } from "./RuleListEditor";
 import { RuleTableTester } from "./RuleTableTester";
 import { EditableOperand } from "./ExprPillEditor";
 import { usePositionBindings } from "../../lib/slotFieldCatalog";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
 
 interface RiskSlotCardProps {
   tranches: ExitTranche[];
@@ -88,28 +91,9 @@ export function RiskSlotCard({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-line bg-surface p-3.5 shadow-sm">
-      <div className="flex items-center justify-between border-b border-line pb-2">
-        <h4 className="text-[12.5px] font-bold text-ink">4. Risk Defense</h4>
-        <span className="font-mono text-[10px] text-ink-muted">
-          SwingProgressiveRiskManagementModel
-        </span>
-      </div>
-
-      <p className="text-[10.5px] text-ink-muted leading-tight">
-        Position lifecycle only — stop loss and profit taking: the rules below sell into
-        strength (tranches), trail and time-stop open positions. Book-level policy lives
-        elsewhere: the regime thermostat and weight caps are on the PCM card, the new-entry
-        gate on Alpha. ATR here is the{" "}
-        <strong className="font-semibold text-ink">live stop</strong>, not Alpha ATR / Insight
-        sizing stop.
-        {hasRules
-          ? ` The ${rules.length} ordered rules below are the complete exit decision table.`
-          : ` T1 sells ${Math.round((t1.sell_pct ?? 0.2) * 100)}% at +${t1.trigger_r}R; runner trails ${(trailingStopPct * 100).toFixed(0)}% under the high.`}
-      </p>
-
+    <Card className="space-y-3 p-3.5 shadow-sm">
       {onChangeRules ? (
-        <div>
+        <>
           <RuleListEditor
             label="Exit rules"
             rules={rules}
@@ -117,16 +101,11 @@ export function RiskSlotCard({
             fields={slotFields}
           />
           <RuleTableTester slot="risk" irId={testIrId ?? null} rules={rules} />
-        </div>
+        </>
       ) : null}
 
-{!hasRules ? (
+      {!hasRules ? (
         <div className="rounded border border-accent/40 bg-accent/5 p-2.5 space-y-2.5">
-          <p className="text-[9px] leading-snug text-ink-faint">
-            Tranches take partial profits into strength as R-multiples accrue (R = entry minus
-            initial stop). Whatever a tranche doesn’t sell becomes the runner, which follows the
-            Chandelier trail.
-          </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {([t1, t2, t3] as const).map((t, i) => (
               <div key={i} className="space-y-1.5 rounded border border-line/60 bg-surface/50 p-2">
@@ -163,20 +142,6 @@ export function RiskSlotCard({
       ) : null}
 
       <div className="rounded border border-accent/40 bg-accent/5 p-2.5 space-y-2.5">
-        {hasRules ? (
-          <p className="text-[9px] leading-snug text-ink-faint">
-            The exit rules above now carry the tranche / time-stop / weight-cap / trail / cooldown
-            flow — those knobs are baked into the rule AST, so they are inert and hidden here.
-            {hasInitStop
-              ? " The initial stop is the expression below — evaluated once at fill against pos.entry / atr / leverage."
-              : " Only the initial stop stays live: it feeds the pos.initial_stop / current_stop fields the stop rules reference."}
-          </p>
-        ) : (
-          <p className="text-[9px] leading-snug text-ink-faint">
-            Selling into strength and protective stops: chandelier trail on the runner, ATR-scaled
-            initial stop, and a cooldown before a stopped-out name can re-enter.
-          </p>
-        )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
           {!hasRules ? (
             <UnitNumberField
@@ -213,14 +178,16 @@ export function RiskSlotCard({
                   Initial stop expression
                 </span>
                 {onChangeInitStop ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-[10px]"
                     title="Clear the init_stop AST so the ATR/max-stop knobs become live again — the next save re-materializes the default expression from them."
                     onClick={() => onChangeInitStop(null)}
-                    className="rounded border border-line px-1.5 py-0.5 text-[9.5px] text-ink-muted hover:bg-surface-sunk"
                   >
                     Reset to knobs
-                  </button>
+                  </Button>
                 ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-1" title={formulaText(initStop as OperandAst)}>
@@ -239,32 +206,18 @@ export function RiskSlotCard({
                   </code>
                 )}
               </div>
-              <p className="text-[9px] leading-snug text-ink-faint">
-                Evaluated once at fill on the position-init context — feeds
-                pos.initial_stop / pos.current_stop / pos.r_unit, which the stop rules above
-                compare against. Click "edit" to open the pill editor
-                (col · pos · ref · lit · formula · min/max · abs · clamp · cond).
-              </p>
             </div>
           ) : null}
           {!hasInitStop ? (
             <div className="space-y-1.5 rounded border border-line/60 bg-surface/50 p-2">
-              <label
-                className="flex items-center gap-1.5 cursor-pointer text-[10.5px] text-ink"
-                title="Place the initial protective stop at ATR × multiplier under entry instead of a fixed percent."
-              >
-                <input
-                  type="checkbox"
+              <div title="Place the initial protective stop at ATR × multiplier under entry instead of a fixed percent.">
+                <Checkbox
                   checked={useAtrStops}
-                  onChange={(e) => onChangeUseAtrStops(e.target.checked)}
-                  className="rounded border-line"
+                  onCheckedChange={(checked) => onChangeUseAtrStops(checked === true)}
+                  label="ATR stop after fill"
+                  className="text-[10.5px]"
                 />
-                <span className="text-[10px] font-semibold">ATR stop after fill</span>
-              </label>
-              <p className="text-[9px] leading-snug text-ink-faint">
-                Scales the protective stop to each name’s volatility instead of one fixed percent
-                — wider on volatile names, tighter on calm ones.
-              </p>
+              </div>
             </div>
           ) : null}
           {!hasInitStop ? (
@@ -351,6 +304,6 @@ export function RiskSlotCard({
         />
       ) : null}
 
-    </div>
+    </Card>
   );
 }

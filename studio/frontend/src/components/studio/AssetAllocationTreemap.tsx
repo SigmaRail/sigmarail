@@ -213,7 +213,7 @@ export function AssetAllocationTreemap({ runId }: { runId: string }) {
             const isHovered = hoveredSymbol?.symbol === r.item.symbol;
             const isWin = r.item.realized_pnl >= 0;
             const pnlAbs = Math.abs(r.item.realized_pnl);
-
+            
             // Color grading based on PnL
             const fillColor = isWin
               ? isHovered

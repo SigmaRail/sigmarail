@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 export function CopyIdBadge({
   id,
@@ -70,24 +71,30 @@ export function CopyIdBadge({
       ) : null}
       <span className="font-semibold select-all">{displayId}</span>
 
-      <button
+      <Button
         type="button"
         onClick={handleCopyId}
-        className="rounded px-1 py-0.2 hover:bg-surface text-[10px] text-ink-muted hover:text-accent transition-colors"
+        variant="ghost"
+        size="sm"
+        className="h-auto min-h-6 rounded px-1 py-0.5 text-[10px] text-ink-muted hover:bg-surface hover:text-accent"
+        aria-label={copied ? "ID copied" : "Copy ID to clipboard"}
         title="Copy ID to clipboard"
       >
         {copied ? "✓ Copied" : "📋"}
-      </button>
+      </Button>
 
       {sqlQuery ? (
-        <button
+        <Button
           type="button"
           onClick={handleCopySql}
-          className="rounded px-1 py-0.2 hover:bg-surface text-[9px] font-sans font-medium text-ink-faint hover:text-accent transition-colors"
+          variant="ghost"
+          size="sm"
+          className="h-auto min-h-6 rounded px-1 py-0.5 text-[9px] font-sans font-medium text-ink-faint hover:bg-surface hover:text-accent"
+          aria-label={copiedSql ? "SQL copied" : "Copy SQL query to clipboard"}
           title={`Copy SQL query: ${sqlQuery}`}
         >
           {copiedSql ? "✓ SQL" : "SQL"}
-        </button>
+        </Button>
       ) : null}
     </span>
   );

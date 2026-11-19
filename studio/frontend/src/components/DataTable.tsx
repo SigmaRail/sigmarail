@@ -8,22 +8,45 @@ import {
   type RowSelectionState,
 } from "@tanstack/react-table";
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import {
+  useTableViewPreferences,
+  saveStoredTableViewPreferences,
+} from "../lib/tablePreferences";
 import { cn } from "../lib/utils";
 import type { ScreenField, IrOperand } from "../types";
 import { FieldInfoPopover } from "./studio/FieldInfoPopover";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@sb/webapp-core/components/ui/dropdown-menu";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 /**
  * GridColumn<T> — a single configurable column definition for the shared
  * DataTable. All columns are toggleable unless `always` is true.
  */
 export interface GridColumn<T> {
-  /** Stable key (also used for localStorage persistence + column visibility) */
+  /** Stable key used to persist this view's column and density preferences. */
   id: string;
   /** Header label */
   label: string;
@@ -75,7 +98,7 @@ export interface DataTableProps<T> {
   rows: T[];
   /** Column config */
   columns: GridColumn<T>[];
-  /** Unique persistence id (used for localStorage column visibility + order) */
+  /** Unique persistence id used for this table's user preferences. */
   viewId: string;
   /** Optional row key accessor (defaults to index) */
   getRowId?: (row: T) => string;
@@ -97,7 +120,7 @@ export interface DataTableProps<T> {
   onSortByChange?: (sortBy: SortSpec[]) => void;
   /** Enable client-side sorting (default true) */
   enableSorting?: boolean;
-  /** Whether column visibility persists to localStorage (default true) */
+  /** Whether column visibility persists to the signed-in profile (default true) */
   persistColumns?: boolean;
   /** Selection mode */
   selectionMode?: "none" | "single" | "multi";
@@ -167,45 +190,6 @@ function formatNum(value: unknown, digits: number): string {
   return Number.isFinite(n) ? n.toFixed(digits) : "—";
 }
 
-/* ---- Storage helpers -------------------------------------------------- */
-
-const toggledKey = (viewId: string) => `sigmarail-studio.table-cols.${viewId}`;
-const densityKey = (viewId: string) => `sigmarail-studio.table-density.${viewId}`;
-
-function loadToggled(viewId: string): Record<string, boolean> | null {
-  try {
-    const raw = localStorage.getItem(toggledKey(viewId));
-    return raw ? (JSON.parse(raw) as Record<string, boolean>) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveToggled(viewId: string, vis: Record<string, boolean>) {
-  try {
-    localStorage.setItem(toggledKey(viewId), JSON.stringify(vis));
-  } catch {
-    /* ignore */
-  }
-}
-
-function loadDensity(viewId: string): "compact" | "comfortable" {
-  try {
-    const raw = localStorage.getItem(densityKey(viewId));
-    return raw === "comfortable" ? "comfortable" : "compact";
-  } catch {
-    return "compact";
-  }
-}
-
-function saveDensity(viewId: string, d: "compact" | "comfortable") {
-  try {
-    localStorage.setItem(densityKey(viewId), d);
-  } catch {
-    /* ignore */
-  }
-}
-
 /* ---- Component --------------------------------------------------------- */
 
 export function DataTable<T>({
@@ -241,9 +225,12 @@ export function DataTable<T>({
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const serverSort = sortMode === "server";
   const selectionEnabled = selectionMode !== "none";
-  const [density, setDensity] = useState<"compact" | "comfortable">(
-    () => loadDensity(viewId),
-  );
+  const tablePreferences = useTableViewPreferences(viewId);
+  const columnsSignature = columns.map((column) => `${column.id}:${column.always ? 1 : 0}`).join("|");
+  const [hydratedViewId, setHydratedViewId] = useState<string | null>(null);
+  const userChangedColumns = useRef(false);
+  const userChangedDensity = useRef(false);
+  const [density, setDensity] = useState<"compact" | "comfortable">("compact");
 
   // Column visibility state
   const defaultColsVisible = useMemo(
@@ -257,19 +244,38 @@ export function DataTable<T>({
     Record<string, boolean>
   >(() => {
     if (visibilityOverride) return { ...defaultColsVisible, ...visibilityOverride };
-    const persisted = loadToggled(viewId);
-    if (persisted) {
-      // merge: only include our known column ids, keep always-on true
-      const merged: Record<string, boolean> = {};
-      columns.forEach((c) => {
-        merged[c.id] = c.always ? true : persisted[c.id] !== false;
-      });
-      return merged;
-    }
     return defaultColsVisible;
   });
 
   // Sync external override
+  useEffect(() => {
+    userChangedColumns.current = false;
+    userChangedDensity.current = false;
+    setHydratedViewId(null);
+  }, [viewId]);
+
+  useEffect(() => {
+    if (!tablePreferences.loaded) return;
+    if (persistColumns && !visibilityOverride && !userChangedColumns.current) {
+      const persisted = tablePreferences.preference?.columns;
+      if (persisted) {
+        const merged: Record<string, boolean> = {};
+        columns.forEach((column) => {
+          merged[column.id] = column.always ? true : persisted[column.id] !== false;
+        });
+        setColumnVisibilityState(merged);
+      }
+    }
+    if (!userChangedDensity.current) {
+      const densityPreference = tablePreferences.preference?.density;
+      setDensity(densityPreference ?? "compact");
+    }
+    if (tablePreferences.preference) {
+      saveStoredTableViewPreferences(viewId, tablePreferences.preference, tablePreferences.userId);
+    }
+    setHydratedViewId(viewId);
+  }, [tablePreferences.loaded, tablePreferences.preference, viewId, visibilityOverride, persistColumns, columnsSignature]);
+
   useEffect(() => {
     if (visibilityOverride) {
       setColumnVisibilityState({ ...defaultColsVisible, ...visibilityOverride });
@@ -279,10 +285,13 @@ export function DataTable<T>({
 
   // Persist on change
   useEffect(() => {
-    if (persistColumns && !visibilityOverride) saveToggled(viewId, columnVisibility);
+    if (persistColumns && !visibilityOverride && hydratedViewId === viewId && userChangedColumns.current) {
+      tablePreferences.save({ columns: columnVisibility });
+      userChangedColumns.current = false;
+    }
     onVisibilityChange?.(columnVisibility);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnVisibility]);
+  }, [columnVisibility, hydratedViewId, viewId, persistColumns, visibilityOverride, tablePreferences.save]);
 
   const table = useReactTable<T>({
     data: rows,
@@ -301,7 +310,10 @@ export function DataTable<T>({
       setSorting(next);
       onSortingChange?.(next);
     },
-    onColumnVisibilityChange: setColumnVisibilityState,
+    onColumnVisibilityChange: (updater) => {
+      userChangedColumns.current = true;
+      setColumnVisibilityState(updater);
+    },
     onRowSelectionChange: (updater) => {
       if (!onSelectedRowsChange) return;
       const next =
@@ -322,19 +334,6 @@ export function DataTable<T>({
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close columns menu on outside click
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    if (menuOpen) document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [menuOpen]);
 
   const compact = density === "compact";
 
@@ -351,94 +350,79 @@ export function DataTable<T>({
           {toolbar}
           <div className="ml-auto flex items-center gap-1.5">
             {showDensityToggle && (
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   const next = compact ? "comfortable" : "compact";
+                  userChangedDensity.current = true;
                   setDensity(next);
-                  saveDensity(viewId, next);
+                  tablePreferences.save({ density: next });
                 }}
-                className="rounded border border-line bg-surface px-2 py-1 font-mono text-[10px] font-bold text-ink-muted hover:bg-surface-sunk"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 font-mono text-[10px] font-bold text-muted-foreground"
                 title="Toggle row density"
               >
                 {compact ? "▤" : "▦"} Density
-              </button>
+              </Button>
             )}
             {showColumnToggle && (
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded border border-line bg-surface px-2 py-1 font-mono text-[10px] font-bold text-ink-muted hover:bg-surface-sunk"
-                  title="Choose displayed columns"
-                >
-                  Columns ▾
-                </button>
-                {menuOpen && (
-                  <div className="absolute right-0 top-full z-30 mt-1 max-h-72 min-w-56 overflow-auto rounded-lg border border-line bg-surface-raised py-1 shadow-lg">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 font-mono text-[10px] font-bold text-muted-foreground">
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-[min(70dvh,28rem)] min-w-56 overflow-y-auto">
                     {columns.map((col) => {
                       const isOn = columnVisibility[col.id] !== false;
                       const fullField = fieldCatalog
                         ? (fieldCatalog.find((f) => f.name === col.id || f.name === col.info?.name) ?? null)
                         : null;
                       return (
-                        <label
-                          key={col.id}
-                          className={cn(
-                            "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs text-ink hover:bg-surface-sunk",
-                            col.always && "opacity-50",
-                          )}
-                          title={col.always ? "Always visible" : col.hint}
-                        >
-                          <input
-                            type="checkbox"
+                        <Fragment key={col.id}>
+                          <DropdownMenuCheckboxItem
                             checked={isOn}
                             disabled={col.always}
-                            onChange={() =>
-                              table.getColumn(col.id)?.toggleVisibility()
-                            }
-                            className="rounded border-line text-accent focus:ring-accent"
-                          />
-                          {col.icon}
-                          <span className="truncate">{col.label}</span>
-                          {(col.info || fullField) && (
-                            <FieldInfoPopover
-                              field={(fullField ?? col.info) as unknown as ScreenField}
-                              fields={fieldCatalog}
-                              className="ml-auto"
-                            />
-                          )}
+                            onCheckedChange={() => table.getColumn(col.id)?.toggleVisibility()}
+                            onSelect={(event) => event.preventDefault()}
+                            className="gap-2 pr-2 text-xs"
+                            title={col.always ? "Always visible" : col.hint}
+                          >
+                            {col.icon}
+                            <span className="truncate">{col.label}</span>
+                            {(col.info || fullField) && (
+                              <FieldInfoPopover
+                                field={(fullField ?? col.info) as unknown as ScreenField}
+                                fields={fieldCatalog}
+                                className="ml-auto"
+                              />
+                            )}
+                          </DropdownMenuCheckboxItem>
                           {col.removable && onRemoveColumn && (
-                            <button
-                              type="button"
-                              title={`Remove ${col.label} column`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
+                            <DropdownMenuItem
+                              onSelect={(event) => {
+                                event.preventDefault();
                                 onRemoveColumn(col.id);
                               }}
-                              className="ml-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-surface-sunk text-[9px] text-ink-muted hover:bg-rose-500/15 hover:text-rose-500"
+                              className="pl-8 text-xs text-destructive"
                             >
-                              −
-                            </button>
+                              Remove {col.label}
+                            </DropdownMenuItem>
                           )}
-                        </label>
+                        </Fragment>
                       );
                     })}
                     {onAddColumn && (
-                      <div className="border-t border-line px-1 py-1">
-                        <button
-                          type="button"
-                          onClick={onAddColumn}
-                          className="w-full rounded px-2 py-1 text-left text-[11px] font-semibold text-accent hover:bg-accent/10"
-                        >
-                          + Add Column
-                        </button>
-                      </div>
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={onAddColumn} className="text-xs font-medium">
+                          + Add column
+                        </DropdownMenuItem>
+                      </>
                     )}
-                  </div>
-                )}
-              </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
@@ -448,7 +432,7 @@ export function DataTable<T>({
       <div
         ref={scrollRef}
         className={cn(
-          "relative overflow-auto",
+          "relative overflow-hidden",
           height === "fill" && "flex-1 min-h-0",
         )}
       >
@@ -457,10 +441,13 @@ export function DataTable<T>({
             Loading…
           </div>
         )}
-        <table className="w-full border-collapse text-left text-[11px] leading-tight">
-          <thead className="sticky top-0 z-[5]">
+        <WorkspaceTable
+          containerClassName={height === "fill" ? "h-full min-h-0" : undefined}
+          className="border-collapse text-left text-[11px] leading-tight"
+        >
+          <WorkspaceTableHeader className="sticky top-0 z-[5]">
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} className="border-b border-line bg-surface-sunk">
+              <WorkspaceTableRow key={hg.id} className="border-b border-line bg-muted/70 hover:bg-muted/70">
                 {hg.headers.map((header) => {
                   const col = header.column;
                   const cfg = columns.find((c) => c.id === col.id);
@@ -532,27 +519,23 @@ export function DataTable<T>({
                     const some = table.getIsSomeRowsSelected();
                     const all = table.getIsAllRowsSelected();
                     return (
-                      <th
+                      <WorkspaceTableHead
                         key={header.id}
-                        className="w-9 px-2 py-1.5 text-center"
+                        className="h-auto w-9 px-2 py-1.5 text-center"
                       >
-                        <input
-                          type="checkbox"
-                          checked={all}
-                          ref={(el) => {
-                            if (el) el.indeterminate = some && !all;
-                          }}
-                          onChange={(e) =>
-                            table.toggleAllRowsSelected(e.target.checked)
-                          }
-                          className="rounded border-line text-accent focus:ring-accent cursor-pointer"
+                        <Checkbox
+                          label=""
+                          checked={some && !all ? "indeterminate" : all}
+                          onCheckedChange={(checked) => table.toggleAllRowsSelected(checked === true)}
+                          aria-label="Select all visible"
                           title="Select all visible"
+                          className="justify-center"
                         />
-                      </th>
+                      </WorkspaceTableHead>
                     );
                   }
                   return (
-                    <th
+                    <WorkspaceTableHead
                       key={header.id}
                       onClick={handleHeaderClick}
                       title={serverSort && canSort ? `${cfg?.hint ?? col.id} (Shift-click to add as secondary sort)` : cfg?.hint}
@@ -603,28 +586,28 @@ export function DataTable<T>({
                             )
                           ))}
                       </span>
-                    </th>
+                    </WorkspaceTableHead>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
             ))}
-          </thead>
-          <tbody className="divide-y divide-line/40">
+          </WorkspaceTableHeader>
+          <WorkspaceTableBody className="divide-y divide-border/60">
             {table.getRowModel().rows.length === 0 && !loading ? (
-              <tr>
-                <td
+              <WorkspaceTableRow>
+                <WorkspaceTableCell
                   colSpan={table.getVisibleLeafColumns().length}
                   className="px-3 py-10 text-center text-ink-muted"
                 >
                   {emptyLabel}
-                </td>
-              </tr>
+                </WorkspaceTableCell>
+              </WorkspaceTableRow>
             ) : null}
             {table.getRowModel().rows.map((row) => {
               const rowCfgClass = rowClassName?.(row.original);
               const highlighted = rowHighlight?.(row.original) ?? false;
               return (
-                <tr
+                <WorkspaceTableRow
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
                   className={cn(
@@ -645,21 +628,20 @@ export function DataTable<T>({
                     // Selection cell (checkbox)
                     if (cell.column.id === "__select") {
                       return (
-                        <td key={cell.id} className="px-2 py-1 text-center">
-                          <input
-                            type="checkbox"
-                            checked={row.getIsSelected()}
-                            onChange={(e) =>
-                              row.toggleSelected(e.target.checked)
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded border-line text-accent focus:ring-accent cursor-pointer"
-                          />
-                        </td>
+                      <WorkspaceTableCell key={cell.id} className="px-2 py-1 text-center">
+                        <Checkbox
+                          label=""
+                          checked={row.getIsSelected()}
+                          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+                          onClick={(event) => event.stopPropagation()}
+                          aria-label="Select row"
+                          className="justify-center"
+                        />
+                      </WorkspaceTableCell>
                       );
                     }
                     return (
-                      <td
+                      <WorkspaceTableCell
                         key={cell.id}
                         className={cn(
                           "px-2.5 font-mono tabular-nums text-ink",
@@ -688,14 +670,14 @@ export function DataTable<T>({
                           cell.column.columnDef.cell,
                           cell.getContext(),
                         )}
-                      </td>
+                      </WorkspaceTableCell>
                     );
                   })}
-                </tr>
+                </WorkspaceTableRow>
               );
             })}
-          </tbody>
-        </table>
+          </WorkspaceTableBody>
+        </WorkspaceTable>
       </div>
     </div>
   );
@@ -743,4 +725,4 @@ function toColumnDefs<T>(
   return defs;
 }
 
-export { toColumnDefs, formatCell, loadToggled, saveToggled };
+export { toColumnDefs, formatCell };

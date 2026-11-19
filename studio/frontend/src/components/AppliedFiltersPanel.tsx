@@ -6,7 +6,9 @@ import {
   operandKind,
   parseOperandInput,
 } from "../lib/irFilters";
-import { cn } from "../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 const OPS: ComparisonOp[] = ["gt", "gte", "lt", "lte", "eq", "neq"];
 
@@ -47,13 +49,15 @@ export function AppliedFiltersPanel({
           </div>
         </div>
         {enabled ? (
-          <button
+          <Button
             type="button"
             onClick={addRow}
-            className="rounded border border-line bg-surface-sunk px-2 py-0.5 text-[11px] font-medium text-ink hover:border-accent hover:bg-accent-soft"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-[11px]"
           >
             + Add
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -115,14 +119,16 @@ function FilterRowEditor({
           {formatOperand(row.left)} {OP_LABELS[row.op]}{" "}
           {formatOperand(row.right)}
         </span>
-        <button
+        <Button
           type="button"
           onClick={onRemove}
-          className="text-[10px] text-danger hover:underline"
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-[10px] text-destructive"
           aria-label="Remove filter"
         >
           Remove
-        </button>
+        </Button>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] gap-1">
         <OperandEditor
@@ -146,19 +152,14 @@ function FilterRowEditor({
             onChange({ left: parseOperandInput(leftKind, text, row.left) })
           }
         />
-        <select
-          value={row.op}
-          onChange={(e) =>
-            onChange({ op: e.target.value as ComparisonOp })
-          }
-          className="h-7 rounded border border-line bg-surface-sunk px-1 font-mono text-[11px]"
-        >
-          {OPS.map((op) => (
-            <option key={op} value={op}>
-              {OP_LABELS[op]}
-            </option>
-          ))}
-        </select>
+        <Select value={row.op} onValueChange={(value) => onChange({ op: value as ComparisonOp })}>
+          <SelectTrigger className="h-8 min-w-14 px-2 font-mono text-[11px]" aria-label="Comparison operator">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {OPS.map((op) => <SelectItem key={op} value={op}>{OP_LABELS[op]}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <OperandEditor
           kind={rightKind}
           value={row.right}
@@ -209,42 +210,35 @@ function OperandEditor({
     <div className="flex min-w-0 flex-col gap-0.5">
       <div className="flex gap-0.5">
         {(["field", "lit", "formula"] as const).map((k) => (
-          <button
+          <Button
             key={k}
             type="button"
             onClick={() => onKindChange(k)}
-            className={cn(
-              "rounded px-1 py-0.5 text-[9px] uppercase tracking-wide",
-              kind === k
-                ? "bg-accent text-white"
-                : "bg-surface-sunk text-ink-muted hover:text-ink",
-            )}
+            variant={kind === k ? "secondary" : "ghost"}
+            size="sm"
+            className="h-6 px-1.5 text-[9px] uppercase tracking-wide"
           >
             {k === "field" ? "field" : k}
-          </button>
+          </Button>
         ))}
       </div>
       {kind === "field" && fieldNames.length > 0 ? (
-        <select
-          value={value.type === "col" ? value.name : ""}
-          onChange={(e) => onTextChange(e.target.value)}
-          className="h-7 w-full truncate rounded border border-line bg-surface-sunk px-1 font-mono text-[11px]"
-        >
-          {!fieldNames.includes(display) ? (
-            <option value={display}>{display}</option>
-          ) : null}
-          {fieldNames.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
+        <Select value={value.type === "col" ? value.name : display} onValueChange={onTextChange}>
+          <SelectTrigger className="h-8 w-full px-2 font-mono text-[11px]" aria-label="Filter field">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {!fieldNames.includes(display) && display ? <SelectItem value={display}>{display}</SelectItem> : null}
+            {fieldNames.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       ) : (
-        <input
+        <Input
           value={display}
           onChange={(e) => onTextChange(e.target.value)}
           placeholder={kind === "formula" ? "col * 1.3" : "value"}
-          className="h-7 w-full rounded border border-line bg-surface-sunk px-1.5 font-mono text-[11px]"
+          aria-label={kind === "formula" ? "Filter formula" : "Filter value"}
+          className="h-8 w-full px-2 font-mono text-[11px]"
         />
       )}
     </div>

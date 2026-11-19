@@ -3,6 +3,9 @@ import { cn } from "../../lib/utils";
 import type { ScreenField, FieldLineageResponse } from "../../types";
 import MathFormulaCard from "../common/MathFormulaCard";
 import FieldEvaluatorDrawer from "./FieldEvaluatorDrawer";
+import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { authenticatedFetch } from "../../api/authenticatedFetch";
 
 /** Shared field-info content card with LaTeX math, caveats, and live evaluator. */
 export function FieldDetailCard({
@@ -26,7 +29,7 @@ export function FieldDetailCard({
     let isMounted = true;
     setLoadingLineage(true);
     const tbl = field.table || "";
-    fetch(`/api/screens/fields/${encodeURIComponent(field.name)}/lineage?table=${encodeURIComponent(tbl)}`)
+    authenticatedFetch(`/api/screens/fields/${encodeURIComponent(field.name)}/lineage?table=${encodeURIComponent(tbl)}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: FieldLineageResponse | null) => {
         if (isMounted) setLineageData(data);
@@ -133,41 +136,15 @@ export function FieldDetailCard({
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-line px-3 pt-2.5 flex-shrink-0 gap-3 text-[10.5px]">
-        <button
-          type="button"
-          onClick={() => setActiveTab("formula")}
-          className={cn(
-            "pb-1 border-b-2 font-medium transition-colors",
-            activeTab === "formula" ? "border-accent text-accent font-bold" : "border-transparent text-ink-muted hover:text-ink"
-          )}
-        >
-          Formula
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("example")}
-          className={cn(
-            "pb-1 border-b-2 font-medium transition-colors",
-            activeTab === "example" ? "border-accent text-accent font-bold" : "border-transparent text-ink-muted hover:text-ink"
-          )}
-        >
-          Live Example
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("lineage")}
-          className={cn(
-            "pb-1 border-b-2 font-medium transition-colors",
-            activeTab === "lineage" ? "border-accent text-accent font-bold" : "border-transparent text-ink-muted hover:text-ink"
-          )}
-        >
-          Lineage Chain
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="min-h-0 flex flex-1 flex-col">
+        <TabsList className="mx-3 mt-2.5 grid h-auto flex-shrink-0 grid-cols-3 p-1">
+          <TabsTrigger value="formula" className="px-2 py-1 text-[10px]">Formula</TabsTrigger>
+          <TabsTrigger value="example" className="px-2 py-1 text-[10px]">Live Example</TabsTrigger>
+          <TabsTrigger value="lineage" className="px-2 py-1 text-[10px]">Lineage Chain</TabsTrigger>
+        </TabsList>
 
       {/* Content Body */}
-      <div className="overflow-y-auto p-3 space-y-2.5 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 space-y-2.5">
         {activeTab === "formula" && (
           <div className="space-y-2.5">
             {/* KaTeX Formula */}
@@ -226,15 +203,12 @@ export function FieldDetailCard({
                     const isSelected = selectedStepId === step;
                     return (
                       <React.Fragment key={idx}>
-                        <button
+                        <Button
                           type="button"
                           onClick={() => setSelectedStepId(isSelected ? null : step)}
-                          className={cn(
-                            "flex items-center gap-1.5 rounded px-1.5 py-0.5 transition-all text-left border",
-                            isSelected
-                              ? "bg-accent text-white font-bold border-accent shadow-sm"
-                              : "bg-surface-sunk border-line hover:border-accent/40 text-ink"
-                          )}
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          className="h-auto gap-1.5 px-1.5 py-0.5 text-left font-mono text-[10px]"
                           title={`Click to inspect transform step ${idx + 1}: ${step}`}
                         >
                           <span
@@ -246,7 +220,7 @@ export function FieldDetailCard({
                             {idx + 1}
                           </span>
                           <span>{step}</span>
-                        </button>
+                        </Button>
                         {idx < lineageChain.length - 1 && (
                           <span className="text-ink-muted/50 text-[9px]">-</span>
                         )}
@@ -271,13 +245,16 @@ export function FieldDetailCard({
                       {selectedNode.table}.{selectedNode.column}
                     </span>
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setSelectedStepId(null)}
-                    className="text-ink-muted hover:text-ink text-[11px] px-1 rounded hover:bg-surface-sunk"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    aria-label="Close transform step details"
                   >
-                    x
-                  </button>
+                    ×
+                  </Button>
                 </div>
 
                 {selectedNode.lineage?.expression && (
@@ -341,6 +318,7 @@ export function FieldDetailCard({
           </div>
         )}
       </div>
+      </Tabs>
     </div>
   );
 }

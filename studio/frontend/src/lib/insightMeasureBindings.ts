@@ -786,3 +786,4 @@ export function applySepaInsightPropertyBindings(
 
   return { bindings, used, missing: [...new Set(missing)] };
 }
+

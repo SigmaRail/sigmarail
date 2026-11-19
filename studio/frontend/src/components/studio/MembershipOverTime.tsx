@@ -15,6 +15,8 @@ import { fetchAsOfRange, fetchUniverseRangeSummary } from "../../api/screens";
 import { RANGE_PRESETS, clampWindow, presetWindow, subtractMonths } from "../../lib/rangePresets";
 import type { UniverseQueryV1 } from "../../types";
 import { ProbeRangeChart } from "../ProbeRangeChart";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
 interface MembershipOverTimeProps {
   /** The screen being charted — only its `where` matters (the summary leans the spec itself). */
@@ -80,38 +82,40 @@ export function MembershipOverTime({
       <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-ink-muted">
         <span className="inline-flex flex-wrap items-center gap-1">
           {RANGE_PRESETS.map((preset) => (
-            <button
+            <Button
               key={preset.id}
               type="button"
               onClick={() => {
                 const window = presetWindow(preset.id, rangeTo || asOf, rangeFloor);
                 if (window) applyWindow(window.from, window.to);
               }}
-              className="rounded border border-line px-1.5 py-0.5 text-ink-muted hover:border-accent hover:text-accent"
+              variant="outline"
+              size="sm"
+              className="h-7 px-1.5 text-[10px] text-ink-muted"
               title={`${preset.label} back from ${rangeTo || asOf}`}
             >
               {preset.label}
-            </button>
+            </Button>
           ))}
         </span>
         <label className="inline-flex items-center gap-1">
           from
-          <input
+          <Input
             type="date"
             value={rangeFrom}
             max={rangeTo || undefined}
             onChange={(e) => applyWindow(e.target.value, rangeTo)}
-            className="rounded border border-line bg-surface px-1 py-0.5 text-ink"
+            className="h-7 w-auto min-w-0 px-1 py-0.5 text-[10px]"
           />
         </label>
         <label className="inline-flex items-center gap-1">
           to
-          <input
+          <Input
             type="date"
             value={rangeTo}
             min={rangeFrom || undefined}
             onChange={(e) => applyWindow(rangeFrom, e.target.value)}
-            className="rounded border border-line bg-surface px-1 py-0.5 text-ink"
+            className="h-7 w-auto min-w-0 px-1 py-0.5 text-[10px]"
           />
         </label>
         {rangeQuery.isFetching ? <span className="text-ink-faint">loading…</span> : null}

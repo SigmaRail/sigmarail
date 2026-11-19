@@ -3,6 +3,17 @@ import { useMemo } from "react";
 import { fetchMultiRunCompare } from "../api/backtests";
 import type { MultiRunCompareRunItem } from "../types";
 import { MultiEquityCurveChart } from "./MultiEquityCurveChart";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 
 const RUN_COLORS = [
   { stroke: "#38bdf8", bg: "bg-sky-500/20 text-sky-300 border-sky-500/40", hex: "#38bdf8" },
@@ -73,19 +84,21 @@ export function MultiRunCompareView({
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-[12px] text-danger">
         {compareQuery.error ? (compareQuery.error as Error).message : "No run comparison data returned."}
-        <button
+        <Button
           type="button"
           onClick={onClose}
-          className="mt-3 rounded border border-line bg-surface px-3 py-1.5 text-[12px] text-ink hover:bg-surface-sunk"
+          className="mt-3"
+          variant="outline"
+          size="sm"
         >
           Back to Single Run
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col p-4 space-y-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div>
@@ -102,202 +115,246 @@ export function MultiRunCompareView({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded border border-line bg-surface px-3 py-1 text-[12px] font-medium text-ink hover:bg-surface-sunk"
-        >
+        <Button type="button" onClick={onClose} variant="outline" size="sm">
           Exit Comparison
-        </button>
+        </Button>
       </div>
 
       {/* Multi-Equity Curve Chart */}
       <MultiEquityCurveChart runs={runs} />
 
       {/* Side-by-Side Comparative Scorecard Table */}
-      <section className="rounded border border-line bg-surface p-3.5">
+      <Card className="p-3.5 shadow-none">
         <h4 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
           Performance Scorecard Matrix
         </h4>
 
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-left text-[11px]">
-            <thead>
-              <tr className="border-b border-line bg-surface-sunk text-ink-faint">
-                <th className="px-3 py-2 font-semibold">Metric</th>
+        <div className="mt-3 space-y-3 md:hidden">
+          {runs.map((run, index) => {
+            const color = RUN_COLORS[index % RUN_COLORS.length];
+            const metrics = [
+              ["Total return", formatPct(run.metrics.total_return)],
+              ["Annual return", formatPct(run.metrics.annual_return)],
+              ["Sharpe ratio", formatNum(run.metrics.sharpe_ratio)],
+              ["Sortino ratio", formatNum(run.metrics.sortino_ratio)],
+              ["Max drawdown", formatPct(run.metrics.max_drawdown)],
+              ["Win rate", formatPct(run.metrics.win_rate)],
+              ["Profit factor", formatNum(run.metrics.profit_factor)],
+              ["Trade expectancy", run.metrics.expectancy == null ? "—" : `+${run.metrics.expectancy.toFixed(3)}`],
+              ["Trades / orders", `${run.metrics.total_trades ?? "—"} / ${run.metrics.total_orders ?? "—"}`],
+              ["Execution fees", formatDollar(run.metrics.total_fees)],
+              ["Win / loss streak", `${run.metrics.max_consecutive_wins ?? "—"} / ${run.metrics.max_consecutive_losses ?? "—"}`],
+            ];
+            return (
+              <Card key={run.run_id} className="p-3 shadow-none">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color.hex }} />
+                      <Button type="button" variant="link" size="sm" className="h-auto min-w-0 justify-start p-0 font-mono" onClick={() => onSelectRun?.(run.run_id)} title={`Inspect run ${run.run_id}`}>
+                        {run.run_id.slice(0, 8)}…{run.run_id.slice(-4)}
+                      </Button>
+                    </div>
+                    <p className="mt-1 break-all text-[11px] text-muted-foreground">{run.ir_id || "No strategy ID"}</p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0">Run {index + 1}</Badge>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {run.period_start || "—"} → {run.period_end || "—"}
+                </p>
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t pt-3">
+                  {metrics.map(([label, value]) => (
+                    <div key={label} className="min-w-0">
+                      <dt className="text-[10px] text-muted-foreground">{label}</dt>
+                      <dd className="mt-0.5 truncate font-mono text-xs font-medium tabular-nums text-foreground" title={value}>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 hidden overflow-x-auto md:block">
+          <WorkspaceTable className="w-full text-left text-[11px]">
+            <WorkspaceTableHeader>
+              <WorkspaceTableRow className="border-b border-line bg-surface-sunk text-ink-faint">
+                <WorkspaceTableHead className="px-3 py-2 font-semibold">Metric</WorkspaceTableHead>
                 {runs.map((r, i) => {
                   const color = RUN_COLORS[i % RUN_COLORS.length];
                   return (
-                    <th key={r.run_id} className="px-3 py-2">
+                    <WorkspaceTableHead key={r.run_id} className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
                         <span
                           className="inline-block h-2 w-2 rounded-full"
                           style={{ backgroundColor: color.hex }}
                         />
-                        <button
+                        <Button
                           type="button"
                           onClick={() => onSelectRun && onSelectRun(r.run_id)}
-                          className="font-mono font-bold text-ink hover:underline"
+                          variant="link"
+                          size="sm"
+                          className="h-auto justify-start p-0 font-mono font-bold text-ink"
                           title={`Inspect run ${r.run_id}`}
                         >
                           {r.run_id.slice(0, 8)}…{r.run_id.slice(-4)}
-                        </button>
+                        </Button>
                       </div>
-                    </th>
+                    </WorkspaceTableHead>
                   );
                 })}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line/60 font-mono">
+              </WorkspaceTableRow>
+            </WorkspaceTableHeader>
+            <WorkspaceTableBody className="divide-y divide-line/60 font-mono">
               {/* Strategy ir_id */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Strategy Model</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Strategy Model</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 text-[10.5px] text-ink break-all">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 text-[10.5px] text-ink break-all">
                     {r.ir_id || "—"}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Period */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Backtest Period</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Backtest Period</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 text-[10.5px] text-ink-muted">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 text-[10.5px] text-ink-muted">
                     {r.period_start || "—"} → {r.period_end || "—"}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Total Return */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Return</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Return</WorkspaceTableCell>
                 {runs.map((r) => {
                   const isBest = r.metrics.total_return != null && r.metrics.total_return === bests.maxRet;
                   return (
-                    <td key={r.run_id} className={`px-3 py-1.5 font-bold tabular-nums ${
+                    <WorkspaceTableCell key={r.run_id} className={`px-3 py-1.5 font-bold tabular-nums ${
                       isBest ? "text-emerald-400 bg-emerald-500/10" : r.metrics.total_return && r.metrics.total_return >= 0 ? "text-emerald-300" : "text-rose-400"
                     }`}>
                       {formatPct(r.metrics.total_return)} {isBest ? "★" : ""}
-                    </td>
+                    </WorkspaceTableCell>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Annual Return */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Annual Return</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Annual Return</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
                     {formatPct(r.metrics.annual_return)}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Sharpe Ratio */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Sharpe Ratio</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Sharpe Ratio</WorkspaceTableCell>
                 {runs.map((r) => {
                   const isBest = r.metrics.sharpe_ratio != null && r.metrics.sharpe_ratio === bests.maxSharpe;
                   return (
-                    <td key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-ink bg-surface-sunk" : "text-ink"}`}>
+                    <WorkspaceTableCell key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-ink bg-surface-sunk" : "text-ink"}`}>
                       {formatNum(r.metrics.sharpe_ratio)} {isBest ? "★" : ""}
-                    </td>
+                    </WorkspaceTableCell>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Sortino Ratio */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Sortino Ratio</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Sortino Ratio</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
                     {formatNum(r.metrics.sortino_ratio)}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Max Drawdown */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Max Drawdown</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Max Drawdown</WorkspaceTableCell>
                 {runs.map((r) => {
                   const isBest = r.metrics.max_drawdown != null && r.metrics.max_drawdown === bests.minDd;
                   return (
-                    <td key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-emerald-400 bg-emerald-500/10" : "text-warn"}`}>
+                    <WorkspaceTableCell key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-emerald-400 bg-emerald-500/10" : "text-warn"}`}>
                       {formatPct(r.metrics.max_drawdown)} {isBest ? "★" : ""}
-                    </td>
+                    </WorkspaceTableCell>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Win Rate */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Win Rate</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Win Rate</WorkspaceTableCell>
                 {runs.map((r) => {
                   const isBest = r.metrics.win_rate != null && r.metrics.win_rate === bests.maxWinRate;
                   return (
-                    <td key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-emerald-400 bg-emerald-500/10" : "text-ink"}`}>
+                    <WorkspaceTableCell key={r.run_id} className={`px-3 py-1.5 tabular-nums ${isBest ? "font-bold text-emerald-400 bg-emerald-500/10" : "text-ink"}`}>
                       {formatPct(r.metrics.win_rate)} {isBest ? "★" : ""}
-                    </td>
+                    </WorkspaceTableCell>
                   );
                 })}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Profit Factor */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Profit Factor</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Profit Factor</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
                     {formatNum(r.metrics.profit_factor)}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Expectancy */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Trade Expectancy</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Trade Expectancy</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-emerald-400">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-emerald-400">
                     {r.metrics.expectancy != null ? `+${r.metrics.expectancy.toFixed(3)}` : "—"}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Total Trades / Orders */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Trades / Orders</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Trades / Orders</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
                     {r.metrics.total_trades ?? "—"} trades · {r.metrics.total_orders ?? "—"} orders
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Total Execution Fees */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Fees ($)</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Total Fees ($)</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink-muted">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink-muted">
                     {formatDollar(r.metrics.total_fees)}
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
+              </WorkspaceTableRow>
 
               {/* Max Streaks */}
-              <tr className="hover:bg-surface-sunk/40">
-                <td className="px-3 py-1.5 font-sans font-medium text-ink-muted">Max Win / Loss Streak</td>
+              <WorkspaceTableRow className="hover:bg-surface-sunk/40">
+                <WorkspaceTableCell className="px-3 py-1.5 font-sans font-medium text-ink-muted">Max Win / Loss Streak</WorkspaceTableCell>
                 {runs.map((r) => (
-                  <td key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
+                  <WorkspaceTableCell key={r.run_id} className="px-3 py-1.5 tabular-nums text-ink">
                     <span className="text-emerald-400">{r.metrics.max_consecutive_wins ?? "—"}W</span>
                     <span className="text-ink-faint"> · </span>
                     <span className="text-rose-400">{r.metrics.max_consecutive_losses ?? "—"}L</span>
-                  </td>
+                  </WorkspaceTableCell>
                 ))}
-              </tr>
-            </tbody>
-          </table>
+              </WorkspaceTableRow>
+            </WorkspaceTableBody>
+          </WorkspaceTable>
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

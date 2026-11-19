@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { fetchRunOrders, fetchTickerCandles } from "../api/backtests";
 import {
   CAMPAIGN_FILL_COLORS,
@@ -11,6 +11,22 @@ import {
 } from "../lib/campaignFills";
 import type { ClosedTradeItem } from "../types";
 import { CopyIdBadge } from "./CopyIdBadge";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableFooter as WorkspaceTableFooter,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
 
 function formatCurrency(val: number | null | undefined): string {
   if (val == null || Number.isNaN(val)) return "—";
@@ -65,15 +81,6 @@ export function TradeCandlestickModal({
   onClose: () => void;
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
 
   const isOpen = trade.status === "OPEN" || !trade.exit_time;
   const entryDate = trade.entry_time.slice(0, 10);
@@ -306,15 +313,16 @@ export function TradeCandlestickModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="full" className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-4xl overflow-hidden border-0 bg-transparent p-0 shadow-none animate-in fade-in duration-150">
       <div className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-lg border border-line bg-surface shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-raised px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-raised px-5 py-3.5 pr-12">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <h2 className="font-mono text-lg font-bold text-ink">
+              <DialogTitle className="font-mono text-lg font-bold text-ink">
                 {trade.symbol}
-              </h2>
+              </DialogTitle>
               <span
                 className={`rounded px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${
                   isLong
@@ -409,11 +417,13 @@ export function TradeCandlestickModal({
               ) : null}
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={handleShareLink}
               title="Copy deep-link to this trade and campaign"
-              className="flex items-center gap-1.5 rounded border border-line bg-surface-sunk px-2.5 py-1 text-xs font-mono font-medium text-ink hover:bg-surface-raised transition-colors"
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5 font-mono text-xs"
             >
               {copiedLink ? (
                 <span className="text-emerald-400 font-bold">✓ Copied</span>
@@ -423,17 +433,13 @@ export function TradeCandlestickModal({
                   <span>Share</span>
                 </>
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-line bg-surface-sunk px-2.5 py-1 text-sm font-medium text-ink hover:bg-surface-raised transition-colors"
-            >
-              ✕
-            </button>
+            </Button>
           </div>
         </div>
+
+        <DialogDescription className="sr-only">
+          Price chart and trade details for {trade.symbol}.
+        </DialogDescription>
 
         {/* Campaign / lot details */}
         <div className="grid grid-cols-2 gap-2 border-b border-line/60 bg-surface-sunk/50 px-5 py-2.5 sm:grid-cols-6 text-[11px]">
@@ -1153,59 +1159,59 @@ export function TradeCandlestickModal({
               </div>
               {fills.length > 0 ? (
                 <div className="overflow-x-auto rounded border border-line">
-                  <table className="w-full text-left text-[11px] font-mono">
-                    <thead className="bg-surface-sunk text-[10px] uppercase tracking-wider text-ink-faint">
-                      <tr>
-                        <th className="px-2 py-1.5">Date</th>
-                        <th className="px-2 py-1.5">Side</th>
-                        <th className="px-2 py-1.5">Role</th>
-                        <th className="px-2 py-1.5 text-right">Qty</th>
-                        <th className="px-2 py-1.5 text-right">Fill</th>
-                        <th className="px-2 py-1.5 text-right">Open after</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <WorkspaceTable className="w-full text-left text-[11px] font-mono">
+                    <WorkspaceTableHeader className="bg-surface-sunk text-[10px] uppercase tracking-wider text-ink-faint">
+                      <WorkspaceTableRow>
+                        <WorkspaceTableHead className="px-2 py-1.5">Date</WorkspaceTableHead>
+                        <WorkspaceTableHead className="px-2 py-1.5">Side</WorkspaceTableHead>
+                        <WorkspaceTableHead className="px-2 py-1.5">Role</WorkspaceTableHead>
+                        <WorkspaceTableHead className="px-2 py-1.5 text-right">Qty</WorkspaceTableHead>
+                        <WorkspaceTableHead className="px-2 py-1.5 text-right">Fill</WorkspaceTableHead>
+                        <WorkspaceTableHead className="px-2 py-1.5 text-right">Open after</WorkspaceTableHead>
+                      </WorkspaceTableRow>
+                    </WorkspaceTableHeader>
+                    <WorkspaceTableBody>
                       {fills.map((f, i) => (
-                        <tr key={`${f.date}-${f.kind}-${i}`} className="border-t border-line/70">
-                          <td className="px-2 py-1 text-ink">{f.date}</td>
-                          <td
+                        <WorkspaceTableRow key={`${f.date}-${f.kind}-${i}`} className="border-t border-line/70">
+                          <WorkspaceTableCell className="px-2 py-1 text-ink">{f.date}</WorkspaceTableCell>
+                          <WorkspaceTableCell
                             className={`px-2 py-1 font-semibold ${
                               f.side === "buy" ? "text-emerald-400" : "text-rose-400"
                             }`}
                           >
                             {f.side.toUpperCase()}
-                          </td>
-                          <td className="px-2 py-1" style={{ color: CAMPAIGN_FILL_COLORS[f.kind] }}>
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1" style={{ color: CAMPAIGN_FILL_COLORS[f.kind] }}>
                             {f.label}
-                          </td>
-                          <td className="px-2 py-1 text-right tabular-nums text-ink">
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 text-right tabular-nums text-ink">
                             {f.side === "buy" ? "+" : "-"}
                             {f.qty.toLocaleString()}
-                          </td>
-                          <td className="px-2 py-1 text-right tabular-nums text-ink">
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 text-right tabular-nums text-ink">
                             ${f.price.toFixed(2)}
-                          </td>
-                          <td className="px-2 py-1 text-right tabular-nums text-ink">
+                          </WorkspaceTableCell>
+                          <WorkspaceTableCell className="px-2 py-1 text-right tabular-nums text-ink">
                             {f.openAfter.toLocaleString()} sh
-                          </td>
-                        </tr>
+                          </WorkspaceTableCell>
+                        </WorkspaceTableRow>
                       ))}
-                    </tbody>
-                    <tfoot className="border-t border-line bg-surface-sunk/60 text-ink">
-                      <tr>
-                        <td className="px-2 py-1.5" colSpan={3}>
+                    </WorkspaceTableBody>
+                    <WorkspaceTableFooter className="border-t border-line bg-surface-sunk/60 text-ink">
+                      <WorkspaceTableRow>
+                        <WorkspaceTableCell className="px-2 py-1.5" colSpan={3}>
                           Bought {shareTotals.bought.toLocaleString()} · sold{" "}
                           {shareTotals.sold.toLocaleString()}
                           {shareTotals.remaining > 0
                             ? ` · runner still open ${shareTotals.remaining.toLocaleString()} sh (LEAN FIFO lots hide this)`
                             : " · flat"}
-                        </td>
-                        <td className="px-2 py-1.5 text-right tabular-nums" colSpan={3}>
+                        </WorkspaceTableCell>
+                        <WorkspaceTableCell className="px-2 py-1.5 text-right tabular-nums" colSpan={3}>
                           Net {shareTotals.remaining.toLocaleString()} sh
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                        </WorkspaceTableCell>
+                      </WorkspaceTableRow>
+                    </WorkspaceTableFooter>
+                  </WorkspaceTable>
                 </div>
               ) : ordersQuery.isFetching ? (
                 <p className="px-1 font-mono text-[10px] text-ink-faint">
@@ -1249,15 +1255,12 @@ export function TradeCandlestickModal({
               </>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-line bg-surface px-3 py-1 font-medium text-ink hover:bg-surface-sunk transition-colors"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Close Chart (Esc)
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

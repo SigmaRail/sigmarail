@@ -1,0 +1,185 @@
+{
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "root": "packages/backend",
+  "projectType": "application",
+  "sourceRoot": "packages/backend",
+  "targets": {
+    "setup": {
+      "executor": "@sb/tools:setup",
+      "options": {
+        "cwd": "packages/backend"
+      }
+    },
+    "build-email-renderer": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["node scripts/copyEmailRenderer.js"],
+        "parallel": false
+      },
+      "dependsOn": [
+        {
+          "projects": ["webapp-emails"],
+          "target": "build"
+        }
+      ]
+    },
+    "compose-build-image": {
+      "executor": "nx:run-commands",
+      "options": {
+        "color": true,
+        "commands": ["docker compose build backend"],
+        "parallel": false
+      },
+      "dependsOn": ["setup", "build-email-renderer"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "color": true,
+        "command": "docker compose run --rm -T backend ./scripts/runtime/run_tests.sh"
+      },
+      "dependsOn": ["compose-build-image"]
+    },
+    "remote-shell": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["node scripts/executeRemote.js"],
+        "parallel": false
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["node scripts/build.js"],
+        "parallel": false
+      },
+      "dependsOn": ["build-email-renderer"]
+    },
+    "build-docs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["node scripts/buildDocs.js"],
+        "parallel": false
+      },
+      "dependsOn": ["compose-build-image"]
+    },
+    "deploy:api": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": [
+          "pnpm cdk deploy *ApiStack",
+          "pnpm nx run tools:upload-service-version api \"url=https://${SB_DOMAIN_API}\""
+        ],
+        "parallel": false
+      }
+    },
+    "deploy:migrations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": [
+          "pnpm cdk deploy *MigrationsStack",
+          "pnpm nx run trigger-migrations-job",
+          "pnpm nx run tools:upload-service-version migrations"
+        ],
+        "parallel": false
+      }
+    },
+    "deploy:celery": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": [
+          "pnpm cdk deploy *CeleryStack",
+          "pnpm nx run tools:upload-service-version celery"
+        ],
+        "parallel": false
+      }
+    },
+    "deploy:mcp-server": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": [
+          "pnpm cdk deploy *McpServerStack",
+          "pnpm nx run tools:upload-service-version mcp-server \"url=https://${SB_DOMAIN_MCP}\""
+        ],
+        "parallel": false
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": [
+          "pnpm cdk deploy *MigrationsStack",
+          "pnpm nx run trigger-migrations-job",
+          "pnpm cdk deploy *ApiStack",
+          "pnpm cdk deploy *CeleryStack"
+        ],
+        "parallel": false
+      }
+    },
+    "diff:api": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["cdk diff *ApiStack"],
+        "parallel": false
+      }
+    },
+    "diff:migrations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["cdk diff *MigrationsStack"],
+        "parallel": false
+      }
+    },
+    "diff:celery": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["cdk diff *CeleryStack"],
+        "parallel": false
+      }
+    },
+    "diff:mcp-server": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["cdk diff *McpServerStack"],
+        "parallel": false
+      }
+    },
+    "trigger-migrations-job": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/backend",
+        "color": true,
+        "commands": ["node ./scripts/triggerMigrationsJob.js"],
+        "parallel": false
+      }
+    }
+  },
+  "tags": ["service"]
+}

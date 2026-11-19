@@ -1,0 +1,18 @@
+{
+  "name": "@sb/webapp-tenants",
+  "version": "5.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit --project tsconfig.lib.json"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "1.3.3",
+    "@sb/webapp-api-client": "workspace:*",
+    "@sb/webapp-core": "workspace:*",
+    "@sb/webapp-notifications": "workspace:*",
+    "lucide-react": "^0.378.0"
+  }
+}

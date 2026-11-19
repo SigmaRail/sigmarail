@@ -1,3 +1,11 @@
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 import { useMemo } from "react";
 import type { MonthlyReturnsResponse } from "../types";
 
@@ -79,35 +87,35 @@ export function MonthlyReturnsHeatmap({
       </div>
 
       <div className="mt-2 overflow-x-auto rounded border border-line bg-surface">
-        <table className="w-full text-center text-[11px]">
-          <thead className="border-b border-line bg-surface-sunk text-ink-faint">
-            <tr>
-              <th className="px-2 py-1.5 text-left font-medium">Year</th>
+        <WorkspaceTable className="min-w-[760px] text-center text-[11px]">
+          <WorkspaceTableHeader className="border-b border-line bg-surface-sunk text-ink-faint">
+            <WorkspaceTableRow>
+              <WorkspaceTableHead className="px-2 py-1.5 text-left font-medium">Year</WorkspaceTableHead>
               {MONTH_NAMES.map((m) => (
-                <th key={m} className="px-1.5 py-1.5 font-medium">
+                <WorkspaceTableHead key={m} className="px-1.5 py-1.5 font-medium">
                   {m}
-                </th>
+                </WorkspaceTableHead>
               ))}
-              <th className="border-l border-line px-2 py-1.5 font-semibold text-ink">
+              <WorkspaceTableHead className="border-l border-line px-2 py-1.5 font-semibold text-ink">
                 YTD
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </WorkspaceTableHead>
+            </WorkspaceTableRow>
+          </WorkspaceTableHeader>
+          <WorkspaceTableBody>
             {years.map((yr) => {
               const yrStr = String(yr);
               const months = data.matrix[yrStr] || {};
               const ytd = months["YTD"];
               return (
-                <tr key={yr} className="border-t border-line/60 hover:bg-surface-sunk/40">
-                  <td className="px-2 py-1 text-left font-mono font-medium text-ink">
+                <WorkspaceTableRow key={yr} className="border-t border-line/60 hover:bg-surface-sunk/40">
+                  <WorkspaceTableCell className="px-2 py-1 text-left font-mono font-medium text-ink">
                     {yr}
-                  </td>
+                  </WorkspaceTableCell>
                   {MONTH_NAMES.map((_, idx) => {
                     const moKey = String(idx + 1);
                     const val = months[moKey];
                     return (
-                      <td
+                      <WorkspaceTableCell
                         key={idx}
                         className={`px-1 py-1 font-mono text-[10.5px] tabular-nums transition-colors ${getCellColor(
                           val,
@@ -115,22 +123,22 @@ export function MonthlyReturnsHeatmap({
                         title={val != null ? `${MONTH_NAMES[idx]} ${yr}: ${formatCell(val)}` : undefined}
                       >
                         {formatCell(val)}
-                      </td>
+                      </WorkspaceTableCell>
                     );
                   })}
-                  <td
+                  <WorkspaceTableCell
                     className={`border-l border-line px-2 py-1 font-mono text-[11px] font-bold tabular-nums ${getCellColor(
                       ytd,
                     )}`}
                     title={`Year ${yr} Total: ${formatCell(ytd)}`}
                   >
                     {formatCell(ytd)}
-                  </td>
-                </tr>
+                  </WorkspaceTableCell>
+                </WorkspaceTableRow>
               );
             })}
-          </tbody>
-        </table>
+          </WorkspaceTableBody>
+        </WorkspaceTable>
       </div>
     </section>
   );

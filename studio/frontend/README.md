@@ -1,40 +1,51 @@
-# Screening Studio — frontend
+# SigmaRail workbench frontend
 
-React + Vite + TypeScript SPA for SigmaRail Studio Phase 1.
+React + Vite + TypeScript product module hosted by the AppTension web application.
 
-Proxies `/api` and `/health` to the Django API at `http://127.0.0.1:8001`.
+The host application is in `packages/webapp`. Run the product module through that host for normal development. The standalone Vite entry remains available for focused UI work and browser checks; its API requests use the configured local Studio API proxy.
 
 ## Run
 
 ```bash
-# Terminal A — API (from SigmaRailStudio/)
-python manage.py runserver 8001
+# Install every frontend package from the repository root
+corepack pnpm install
 
-# Terminal B — SPA
-cd frontend
-npm install
-npm run dev
+# Run the AppTension host (from the repository root)
+corepack pnpm --filter webapp dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
+For isolated product UI work, run commands from this directory with `corepack pnpm dev`.
+The mocked browser suite can be run from the repository root with `corepack pnpm --filter @sigmarail/workbench test:e2e:workbench`.
 
 ## Scripts
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Vite dev server (proxy → :8001) |
-| `npm run build` | Typecheck + production build → `dist/` |
-| `npm run preview` | Serve `dist/` locally |
-| `npm run typecheck` | `tsc -b --noEmit` |
+| `corepack pnpm dev` | Standalone Vite dev server |
+| `corepack pnpm build` | Typecheck + production build → `dist/` |
+| `corepack pnpm preview` | Serve `dist/` locally |
+| `corepack pnpm typecheck` | `tsc -b --noEmit` |
+| `corepack pnpm --filter @sigmarail/workbench test:e2e:workbench` | Mocked browser checks for the mounted workbench |
+
+Install Playwright's Chromium runtime once per machine before the browser suite:
+
+```bash
+corepack pnpm --filter @sigmarail/workbench exec playwright install chromium
+```
 
 ## Stack
 
 - React 19 + TypeScript + Vite 6
 - Tailwind CSS
 - TanStack Query + TanStack Table
+- Shared shell, account, organization, and UI foundation from the host application
 
-## Modes
+## Product routes
 
-- **Screen** — preset library, rankings table, inspector, as-of scrubber + turnover
-- **Backtest** — Phase 2 placeholder
-- **Library** — searchable preset list
+The workbench provides screener, market, charts, watchlists, five-slot strategy authoring, backtests, optimization, paper deployment, and monitoring workflows within the host application's navigation.
+
+Layout changes follow the shared [UI design guardrails](../docs/UI_DESIGN_GUARDRAILS.md): use AppTension primitives, standard breakpoints, persistent workflow navigation, and minimal section surfaces.
+
+## Design guardrails
+
+Use the shared AppTension components and responsive rules in [`docs/UI_DESIGN_GUARDRAILS.md`](../docs/UI_DESIGN_GUARDRAILS.md) when changing product layouts.

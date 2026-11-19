@@ -1,4 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+import { Switch } from "@sb/webapp-core/components/ui/switch";
+import { Card } from "@sb/webapp-core/components/ui/card";
 import type { ScreenField } from "../../types";
 import type { FilterTree, PipelineDocument, Stage } from "../strategy/StrategyDocument";
 import { FilterTreeSlotEditor } from "./FilterTreeSlotEditor";
@@ -15,7 +20,8 @@ import {
 import { countAsSignalAliases, sumColsExpr } from "../../lib/screensHitMeasure";
 import { useFieldPicker } from "./FieldPickerProvider";
 import { ReorderButtons } from "./ReorderButtons";
-import { cn, swapIndex } from "../../lib/utils";
+import { swapIndex } from "../../lib/utils";
+import { summarizeMeasureExpression, summarizeMeasureFilters } from "../../lib/measureSummary";
 
 type Props = {
   document: PipelineDocument;
@@ -48,28 +54,36 @@ function InsightToggle({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant={active ? "secondary" : "outline"}
+      size="sm"
       title={title}
       onClick={onClick}
-      className={cn(
-        "rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
-        active
-          ? "border-accent/60 bg-accent/20 text-accent-ink"
-          : "border-line text-ink-faint hover:bg-surface-sunk",
-      )}
+      className="h-7 px-2 text-[9px] font-semibold uppercase tracking-wide"
     >
       Insight{active ? " ✓" : ""}
-    </button>
+    </Button>
   );
 }
 
-/** Shared measure card chrome (gates + expression measures). */
-function MeasureCard({ children }: { children: ReactNode }) {
+/** Compact AST summary stays visible while the full editor is collapsed. */
+function MeasureCard({ alias, summary, children }: { alias: string; summary: string; children: ReactNode }) {
   return (
-    <div className="rounded border border-violet-500/30 bg-violet-500/5 p-2 space-y-1.5">
-      {children}
-    </div>
+    <Card className="p-0 shadow-none">
+      <details className="[&[open]>summary>span:first-child]:rotate-90">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 px-3 py-2 marker:hidden [&::-webkit-details-marker]:hidden">
+          <span aria-hidden="true" className="text-[10px] text-ink-faint transition-transform">▸</span>
+          <code className="shrink-0 text-[10px] font-semibold text-ink">{alias}</code>
+          <span className="min-w-0 flex-1 truncate text-[11px] text-ink-muted" title={summary || "No rule defined"}>
+            {summary || "No rule defined"}
+          </span>
+        </summary>
+        <div className="space-y-2 border-t border-line/60 p-2">
+          {children}
+        </div>
+      </details>
+    </Card>
   );
 }
 
@@ -99,43 +113,45 @@ function MeasureFilterRow({
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-[10px] text-ink-muted">
-      <label className="flex items-center gap-1">
-        <input
-          type="checkbox"
+      <label className="flex items-center gap-2">
+        <Switch
           checked={enabled}
-          onChange={(e) => {
-            if (e.target.checked) {
+          onCheckedChange={(checked) => {
+            if (checked) {
               commit(setMeasureFilter(document, stageIndex, { op: "gte", value: 1 }));
             } else {
               commit(setMeasureFilter(document, stageIndex, null));
             }
           }}
+          aria-label="Floor (post_where)"
         />
         Floor (post_where)
       </label>
       {enabled ? (
         <>
           <span className="font-mono text-ink-faint">{alias}</span>
-          <select
+          <Select
             value={op}
-            onChange={(e) =>
+            onValueChange={(nextOp) =>
               commit(
                 setMeasureFilter(document, stageIndex, {
-                  op: e.target.value as typeof op,
+                  op: nextOp as typeof op,
                   value,
                 }),
               )
             }
-            className="rounded border border-line bg-surface px-1 py-0.5 font-mono text-[11px] text-ink"
           >
-            <option value="gte">≥</option>
-            <option value="gt">&gt;</option>
-            <option value="lte">≤</option>
-            <option value="lt">&lt;</option>
-            <option value="eq">=</option>
-            <option value="neq">≠</option>
-          </select>
-          <input
+            <SelectTrigger className="h-7 w-16 px-1.5 py-0.5 font-mono text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gte">≥</SelectItem>
+              <SelectItem value="gt">&gt;</SelectItem>
+              <SelectItem value="lte">≤</SelectItem>
+              <SelectItem value="lt">&lt;</SelectItem>
+              <SelectItem value="eq">=</SelectItem>
+              <SelectItem value="neq">≠</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
             type="number"
             value={value}
             onChange={(e) => {
@@ -147,7 +163,7 @@ function MeasureFilterRow({
                 }),
               );
             }}
-            className="w-16 rounded border border-line bg-surface px-1 py-0.5 font-mono text-[11px] text-ink"
+            className="h-7 w-20 px-1.5 py-0.5 font-mono text-[11px]"
           />
         </>
       ) : null}
@@ -339,28 +355,21 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
 
   return (
     <div className="space-y-3 rounded-lg border border-line bg-surface p-3">
-      <div className="border-b border-line/60 pb-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-          Measures
-        </span>
-        <p className="mt-0.5 text-[10px] text-ink-faint leading-tight">
-          Named SELECT columns (filter → 0/1, expr, or L7 field). Insight ✓ → WHERE / shortlist
-          or ORDER BY (field measures required for L7 ties like rs_rating). Timing and setup
-          belong here as bool measures — not Alpha entry_triggers. Bind Direction / Magnitude /
-          Weight / Confidence on Insights.
-        </p>
-      </div>
+      <h3 className="border-b border-line/60 pb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+        Measures
+      </h3>
 
       <div className="space-y-2">
         {rows.map((row, rowIndex) => {
           if (row.kind === "setup") {
             const { stage, stageIndex } = row;
             const alias = (stage.id || "").trim() || "setup_pass";
+            const summary = summarizeMeasureFilters(stage.filters, fields);
             const insightOn = isInsightActive(document, stage);
             return (
-              <MeasureCard key={`setup-${stageIndex}`}>
+              <MeasureCard key={`setup-${stageIndex}`} alias={alias} summary={summary}>
                 <div className="flex flex-wrap items-center gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={alias}
                     onChange={(e) =>
@@ -373,7 +382,7 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                       )
                     }
                     placeholder="setup_pass"
-                    className="w-36 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
+                    className="h-7 w-36 px-1.5 py-0.5 font-mono text-[11px]"
                   />
                   <span className="font-mono text-[10px] text-ink-faint">:= setup</span>
                   <InsightToggle
@@ -398,14 +407,16 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                     onUp={() => moveMeasureRow(rowIndex, -1)}
                     onDown={() => moveMeasureRow(rowIndex, 1)}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => removeStageAt(stageIndex)}
-                    className="text-[12px] text-ink-faint hover:text-danger"
+                    className="h-7 w-7 px-1 text-[12px] text-ink-faint hover:text-danger"
                     title="Remove measure"
                   >
                     ✕
-                  </button>
+                  </Button>
                 </div>
                 <FilterTreeSlotEditor
                   filters={stage.filters}
@@ -420,14 +431,20 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
           const alias = (stage.id || "").trim();
           const isExpr = Boolean(stage.computed_expr);
           const payloadKind = measurePayloadKind(stage);
+          const filterSummary = summarizeMeasureFilters(stage.filters, fields);
+          const expressionSummary = summarizeMeasureExpression(stage.computed_expr, fields);
+          const floorSummary = stage.measure_filter
+            ? `; ${summarizeMeasureFilters([stage.measure_filter], fields)}`
+            : "";
+          const summary = `${isExpr ? expressionSummary : filterSummary}${floorSummary}`;
           const insightOn = Boolean(alias) && isInsightActive(document, stage);
           const isFieldCol =
             isExpr &&
             (stage.computed_expr as { type?: string } | null)?.type === "col";
           return (
-            <MeasureCard key={`m-${stageIndex}`}>
+            <MeasureCard key={`m-${stageIndex}`} alias={alias || "unnamed measure"} summary={summary}>
               <div className="flex flex-wrap items-center gap-2">
-                <input
+                <Input
                   type="text"
                   value={stage.id ?? ""}
                   onChange={(e) =>
@@ -440,7 +457,7 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                     )
                   }
                   placeholder="alias"
-                  className="w-36 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[11px] text-ink"
+                  className="h-7 w-36 px-1.5 py-0.5 font-mono text-[11px]"
                 />
                 <span className="font-mono text-[10px] text-ink-faint">
                   := {isFieldCol ? "field" : isExpr ? "expr" : "filters"}
@@ -464,14 +481,16 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                     <span className="font-mono text-[9px] text-ink-faint">
                       ORDER #{(document.bindings?.alpha_rank ?? []).indexOf(alias) + 1}
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       title="Toggle ASC/DESC"
                       onClick={() => commit(toggleRankDirection(document, alias))}
-                      className="rounded border border-line px-1.5 py-0.5 font-mono text-[9px] text-ink-muted hover:bg-surface-sunk"
+                      className="h-7 px-2 font-mono text-[9px]"
                     >
                       {rankDirection(document, alias).toUpperCase()}
-                    </button>
+                    </Button>
                   </>
                 ) : null}
                 <ReorderButtons
@@ -481,14 +500,16 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                   onUp={() => moveMeasureRow(rowIndex, -1)}
                   onDown={() => moveMeasureRow(rowIndex, 1)}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeStageAt(stageIndex)}
-                  className="text-[12px] text-ink-faint hover:text-danger"
+                  className="h-7 w-7 px-1 text-[12px] text-ink-faint hover:text-danger"
                   title="Remove measure"
                 >
                   ✕
-                </button>
+                </Button>
               </div>
               {!isExpr ? (
                 <FilterTreeSlotEditor
@@ -551,52 +572,58 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
 
         <div className="relative">
           {!addOpen ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setAddOpen(true)}
-              className="w-full rounded border border-dashed border-accent/50 bg-accent/5 py-1.5 text-[11px] font-semibold text-accent-ink hover:bg-accent/10"
+              className="h-8 w-full border-dashed border-accent/50 bg-accent/5 py-1.5 text-[11px] font-semibold text-accent-ink hover:bg-accent/10"
             >
               + Add measure
-            </button>
+            </Button>
           ) : (
             <div className="rounded border border-accent/40 bg-surface p-2 space-y-1.5 shadow-sm">
-              <div className="text-[10px] font-semibold text-ink-muted">Measure definition</div>
-              <p className="text-[9px] text-ink-faint leading-tight">
-                Filters → WHERE · Expr / Field / Shortlist sum → ORDER BY (Insight ✓ on)
-              </p>
               <div className="flex flex-wrap gap-1.5">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setAddOpen(false);
                     addFilterMeasure();
                   }}
-                  className="flex-1 rounded border border-line bg-surface-raised px-2 py-1 text-[10px] font-semibold text-ink hover:bg-surface-sunk"
+                  className="h-8 flex-1 px-2 py-1 text-[10px] font-semibold"
                 >
                   Filters (WHERE)
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setAddOpen(false);
                     addExprMeasure();
                   }}
-                  className="flex-1 rounded border border-line bg-surface-raised px-2 py-1 text-[10px] font-semibold text-ink hover:bg-surface-sunk"
+                  className="h-8 flex-1 px-2 py-1 text-[10px] font-semibold"
                 >
                   Expr (ORDER BY)
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setAddOpen(false);
                     addFieldMeasure();
                   }}
-                  className="flex-1 rounded border border-line bg-surface-raised px-2 py-1 text-[10px] font-semibold text-ink hover:bg-surface-sunk"
+                  className="h-8 flex-1 px-2 py-1 text-[10px] font-semibold"
                 >
                   Field (ORDER BY)
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   disabled={countAsSignalAliases(stages).length === 0}
                   title={
                     countAsSignalAliases(stages).length === 0
@@ -607,17 +634,19 @@ export function AlphaMeasuresPanel({ document, onChange, fields }: Props) {
                     setAddOpen(false);
                     addShortlistSumMeasure();
                   }}
-                  className="flex-1 rounded border border-line bg-surface-raised px-2 py-1 text-[10px] font-semibold text-ink hover:bg-surface-sunk disabled:opacity-40 disabled:hover:bg-surface-raised"
+                  className="h-8 flex-1 px-2 py-1 text-[10px] font-semibold"
                 >
                   Shortlist sum (ORDER BY)
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setAddOpen(false)}
-                  className="rounded border border-line px-2 py-1 text-[10px] text-ink-faint hover:text-ink"
+                  className="h-8 px-2 py-1 text-[10px] text-ink-faint hover:text-ink"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           )}

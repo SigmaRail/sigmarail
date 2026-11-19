@@ -11,6 +11,7 @@ import type {
   CatalogTemplateStatus,
   ScreenTemplateSummary,
 } from "../types";
+import { authenticatedFetch } from "./authenticatedFetch";
 
 export type CatalogTemplateDetail = ScreenTemplateSummary & {
   title?: string;
@@ -19,13 +20,14 @@ export type CatalogTemplateDetail = ScreenTemplateSummary & {
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
+  const headers = new Headers(init?.headers);
+  headers.set("Accept", "application/json");
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await authenticatedFetch(path, {
     ...init,
+    headers,
   });
   if (!res.ok) {
     const text = await res.text();

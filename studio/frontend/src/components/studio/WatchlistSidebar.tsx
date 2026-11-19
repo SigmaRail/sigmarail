@@ -7,6 +7,18 @@ import {
 } from "../../lib/watchlistStore";
 import { fetchStockIntrospection } from "../../api/screens";
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Textarea } from "@sb/webapp-core/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
 
 interface WatchlistSidebarProps {
   activeTicker: string;
@@ -27,6 +39,33 @@ const FLAG_COLORS: Record<WatchlistFlagColor, { dot: string; label: string; bg: 
   purple: { dot: "bg-purple-500", label: "Earnings / Event", bg: "bg-purple-500/15", text: "text-purple-400" },
   none: { dot: "bg-line hover:bg-ink-muted", label: "No Flag", bg: "bg-surface-sunk", text: "text-ink-muted" },
 };
+
+function WatchlistPicker({
+  watchlists,
+  value,
+  onChange,
+  compact = false,
+}: {
+  watchlists: ReturnType<typeof useWatchlists>["watchlists"];
+  value: string;
+  onChange: (value: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={cn("min-w-0 font-mono text-xs font-bold", compact && "h-7 px-2 text-[10px]")}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent align="start">
+        {watchlists.map((watchlist) => (
+          <SelectItem key={watchlist.id} value={watchlist.id}>
+            {watchlist.name} ({watchlist.symbols.length})
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 export function WatchlistSidebar({
   activeTicker,
@@ -128,24 +167,29 @@ export function WatchlistSidebar({
   if (!isOpen) {
     if (variant === "strip") {
       return (
-        <button
+        <Button
           type="button"
           onClick={onToggleOpen}
+          variant="ghost"
+          size="sm"
           className={cn(
             "flex h-7 w-full flex-shrink-0 items-center justify-center gap-1.5 border-t border-line bg-surface-raised font-mono text-[10px] font-bold text-accent hover:bg-surface-sunk",
             className,
           )}
           title="Open watchlist strip"
+          aria-label="Open watchlist strip"
         >
           <span>📑 Watchlist</span>
           <span className="rounded bg-accent/20 px-1 text-[9.5px]">{symbols.length}</span>
-        </button>
+        </Button>
       );
     }
     return (
-      <button
+      <Button
         type="button"
         onClick={onToggleOpen}
+        variant="outline"
+        size="sm"
         className="fixed right-0 top-16 z-30 flex items-center gap-1 rounded-l-lg border-y border-l border-line bg-surface-raised px-2 py-1.5 font-mono text-[11px] font-bold text-accent shadow-lg hover:bg-surface-sunk transition-all"
         title="Open Watchlist Dock ([)"
       >
@@ -154,7 +198,7 @@ export function WatchlistSidebar({
         <span className="rounded bg-accent/20 px-1 py-0.2 text-[9.5px] text-accent">
           {symbols.length}
         </span>
-      </button>
+      </Button>
     );
   }
 
@@ -167,42 +211,38 @@ export function WatchlistSidebar({
         )}
       >
         <div className="flex items-center gap-1.5 border-b border-line bg-surface-raised px-2 py-1">
-          <select
-            value={activeWatchlistId}
-            onChange={(e) => setActiveWatchlistId(e.target.value)}
-            className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink focus:border-accent focus:outline-none"
-          >
-            {watchlists.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name} ({w.symbols.length})
-              </option>
-            ))}
-          </select>
-          <button
+          <WatchlistPicker watchlists={watchlists} value={activeWatchlistId} onChange={setActiveWatchlistId} compact />
+          <Button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-accent"
+            variant="outline"
+            size="sm"
+            className="h-7 px-1.5 text-[10px]"
           >
             Paste
-          </button>
+          </Button>
           <span className="ml-auto font-mono text-[9.5px] text-ink-muted">Space / ↓ cycle</span>
-          <button
+          <Button
             type="button"
             onClick={onToggleOpen}
-            className="rounded border border-line px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-ink"
+            variant="ghost"
+            size="sm"
+            className="h-7 px-1.5 text-[10px]"
           >
             Hide
-          </button>
+          </Button>
         </div>
         <div className="flex flex-1 overflow-x-auto divide-x divide-line/60">
           {filteredSymbols.length === 0 ? (
-            <button
+            <Button
               type="button"
               onClick={() => setShowImportModal(true)}
-              className="px-3 py-2 text-[10.5px] text-accent underline"
+              variant="link"
+              size="sm"
+              className="h-auto px-3 py-2 text-[10.5px]"
             >
               Paste tickers
-            </button>
+            </Button>
           ) : (
             filteredSymbols.map((item) => (
               <div key={item.ticker} className="min-w-[168px] max-w-[200px] flex-shrink-0">
@@ -227,27 +267,32 @@ export function WatchlistSidebar({
           )}
         </div>
         {showImportModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-md space-y-3 rounded-xl border border-line bg-surface p-4 shadow-2xl">
-              <h3 className="text-sm font-bold text-ink">Bulk Add Symbols to "{activeWatchlist?.name}"</h3>
-              <textarea
+          <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+            <DialogContent size="md" className="max-h-[85dvh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Bulk add symbols</DialogTitle>
+                <DialogDescription>
+                  Add tickers to “{activeWatchlist?.name}”. Separate them with commas, spaces, or new lines.
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
                 rows={5}
                 placeholder="UBER, LYFT, DASH, NVDA, AAPL..."
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 autoFocus
-                className="w-full rounded border border-line bg-surface-sunk p-2.5 font-mono text-xs text-ink focus:border-accent focus:outline-none"
+                className="w-full font-mono text-xs"
               />
-              <div className="flex justify-end gap-2 text-xs">
-                <button type="button" onClick={() => setShowImportModal(false)} className="rounded px-3 py-1 text-ink-muted hover:bg-surface-sunk">
+              <DialogFooter>
+                <Button type="button" onClick={() => setShowImportModal(false)} variant="outline">
                   Cancel
-                </button>
-                <button type="button" onClick={handleImport} className="rounded bg-accent px-3 py-1 font-bold text-white hover:bg-accent/90">
-                  Add Symbols
-                </button>
-              </div>
-            </div>
-          </div>
+                </Button>
+                <Button type="button" onClick={handleImport} disabled={!importText.trim()}>
+                  Add symbols
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     );
@@ -264,104 +309,117 @@ export function WatchlistSidebar({
       <div className="flex flex-col gap-2 border-b border-line bg-surface-raised p-2.5">
         <div className="flex items-center justify-between gap-1.5">
           {/* Watchlist Picker */}
-          <select
-            value={activeWatchlistId}
-            onChange={(e) => setActiveWatchlistId(e.target.value)}
-            className="flex-1 rounded border border-line bg-surface px-2 py-1 font-mono text-xs font-bold text-ink focus:border-accent focus:outline-none"
-          >
-            {watchlists.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name} ({w.symbols.length})
-              </option>
-            ))}
-          </select>
+          <div className="min-w-0 flex-1">
+            <WatchlistPicker watchlists={watchlists} value={activeWatchlistId} onChange={setActiveWatchlistId} />
+          </div>
 
           {/* New List Button */}
-          <button
+          <Button
             type="button"
             onClick={() => setShowNewListModal(true)}
-            className="rounded border border-line bg-surface p-1 text-ink-muted hover:text-accent hover:border-accent transition-colors"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0"
             title="Create New Watchlist"
+            aria-label="Create new watchlist"
           >
             ➕
-          </button>
+          </Button>
 
           {/* Bulk Import Button */}
-          <button
+          <Button
             type="button"
             onClick={() => setShowImportModal(true)}
-            className="rounded border border-line bg-surface p-1 text-ink-muted hover:text-accent hover:border-accent transition-colors"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0"
             title="Paste Comma-Separated Symbols"
+            aria-label="Import symbols"
           >
             📋
-          </button>
+          </Button>
 
           {/* Export Button */}
-          <button
+          <Button
             type="button"
             onClick={handleCopyExport}
-            className="rounded border border-line bg-surface p-1 text-ink-muted hover:text-accent hover:border-accent transition-colors"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0"
             title="Copy Tickers to Clipboard"
+            aria-label="Copy tickers to clipboard"
           >
             {copiedExport ? "✓" : "⬇"}
-          </button>
+          </Button>
 
           {/* Close Dock */}
-          <button
+          <Button
             type="button"
             onClick={onToggleOpen}
-            className="rounded border border-line bg-surface p-1 text-ink-muted hover:text-ink transition-colors"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
             title="Hide Watchlist Dock"
+            aria-label="Hide watchlist dock"
           >
             ✕
-          </button>
+          </Button>
         </div>
 
         {/* Flag Quick-Filter Strip */}
         <div className="flex items-center justify-between gap-1 pt-1 border-t border-line/60">
-          <button
+          <Button
             type="button"
             onClick={() => setFilterFlag("all")}
+            variant={filterFlag === "all" ? "default" : "ghost"}
+            size="sm"
             className={cn(
-              "rounded px-1.5 py-0.5 text-[10px] font-mono transition-colors",
-              filterFlag === "all" ? "bg-accent text-white font-bold" : "text-ink-muted hover:bg-surface-sunk"
+              "h-7 px-1.5 font-mono text-[10px]",
+              filterFlag === "all" && "font-bold"
             )}
+            aria-pressed={filterFlag === "all"}
           >
             All ({symbols.length})
-          </button>
+          </Button>
 
           {(["red", "green", "yellow", "blue", "purple"] as WatchlistFlagColor[]).map((col) => {
             const count = symbols.filter((s) => s.flag === col).length;
             if (count === 0 && filterFlag !== col) return null;
             return (
-              <button
+              <Button
                 key={col}
                 type="button"
                 onClick={() => setFilterFlag(filterFlag === col ? "all" : col)}
+                variant={filterFlag === col ? "secondary" : "ghost"}
+                size="sm"
                 className={cn(
-                  "flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono transition-colors",
-                  filterFlag === col ? "bg-surface-sunk border border-line font-bold" : "text-ink-muted hover:bg-surface-sunk"
+                  "h-7 gap-1 px-1.5 font-mono text-[10px]",
+                  filterFlag === col && "font-bold"
                 )}
+                aria-pressed={filterFlag === col}
+                aria-label={`Filter ${FLAG_COLORS[col].label} (${count})`}
               >
                 <span className={cn("inline-block h-2 w-2 rounded-full", FLAG_COLORS[col].dot)} />
                 <span>{count}</span>
-              </button>
+              </Button>
             );
           })}
 
           {watchlists.length > 1 && (
-            <button
+            <Button
               type="button"
               onClick={() => {
                 if (confirm(`Delete watchlist "${activeWatchlist?.name}"?`)) {
                   deleteWatchlist(activeWatchlistId);
                 }
               }}
-              className="ml-auto text-[10px] text-rose-400 hover:underline"
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 px-1.5 text-[10px] text-destructive"
               title="Delete Active Watchlist"
             >
               Delete
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -379,13 +437,15 @@ export function WatchlistSidebar({
           <div className="flex flex-col items-center justify-center p-6 text-center text-ink-muted space-y-2">
             <span className="text-2xl">📑</span>
             <span className="text-xs font-semibold">No symbols in this view</span>
-            <button
+            <Button
               type="button"
               onClick={() => setShowImportModal(true)}
-              className="text-[10.5px] text-accent underline hover:text-white"
+              variant="link"
+              size="sm"
+              className="h-auto px-2 text-[10.5px]"
             >
               Paste tickers (e.g. UBER, LYFT)
-            </button>
+            </Button>
           </div>
         ) : (
           filteredSymbols.map((item) => (
@@ -412,72 +472,77 @@ export function WatchlistSidebar({
 
       {/* New List Modal */}
       {showNewListModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-4 shadow-2xl space-y-3">
-            <h3 className="font-bold text-sm text-ink">Create New Watchlist</h3>
-            <input
+        <Dialog open={showNewListModal} onOpenChange={setShowNewListModal}>
+          <DialogContent size="sm" className="max-h-[85dvh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create watchlist</DialogTitle>
+              <DialogDescription>Name this list so you can organize and revisit symbols.</DialogDescription>
+            </DialogHeader>
+            <Input
               type="text"
               placeholder="e.g. Breakout Compounders"
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateList()}
               autoFocus
-              className="w-full rounded border border-line bg-surface-sunk px-3 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
+              className="w-full text-xs"
             />
-            <div className="flex justify-end gap-2 text-xs">
-              <button
+            <DialogFooter>
+              <Button
                 type="button"
                 onClick={() => setShowNewListModal(false)}
-                className="rounded px-3 py-1 text-ink-muted hover:bg-surface-sunk"
+                variant="ghost"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleCreateList}
-                className="rounded bg-accent px-3 py-1 font-bold text-white hover:bg-accent/90"
+                disabled={!newListName.trim()}
               >
                 Create
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-xl border border-line bg-surface p-4 shadow-2xl space-y-3">
-            <h3 className="font-bold text-sm text-ink">Bulk Add Symbols to "{activeWatchlist?.name}"</h3>
-            <p className="text-[11px] text-ink-muted">
-              Paste comma, space, or newline-separated tickers (e.g. <code className="text-accent">UBER, LYFT, DASH, CRM, NOW, NVDA</code>):
-            </p>
-            <textarea
+        <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+          <DialogContent size="md" className="max-h-[85dvh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Bulk add symbols</DialogTitle>
+              <DialogDescription>
+                Add tickers to “{activeWatchlist?.name}”. Separate them with commas, spaces, or new lines.
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
               rows={5}
               placeholder="UBER, LYFT, DASH, NVDA, AAPL..."
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
               autoFocus
-              className="w-full rounded border border-line bg-surface-sunk p-2.5 font-mono text-xs text-ink focus:border-accent focus:outline-none"
+              className="w-full font-mono text-xs"
             />
-            <div className="flex justify-end gap-2 text-xs">
-              <button
+            <DialogFooter>
+              <Button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="rounded px-3 py-1 text-ink-muted hover:bg-surface-sunk"
+                variant="ghost"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleImport}
-                className="rounded bg-accent px-3 py-1 font-bold text-white hover:bg-accent/90"
+                disabled={!importText.trim()}
               >
-                Add Symbols
-              </button>
-            </div>
-          </div>
-        </div>
+                Add symbols
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
@@ -530,17 +595,20 @@ function WatchlistRow({
       {/* Left: Flag Dot + Ticker + Company Name */}
       <div className="flex items-center gap-2 min-w-0">
         {/* Clickable Flag Dot */}
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onCycleFlag();
           }}
-          className="p-0.5 rounded hover:bg-surface transition-colors"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0 p-0.5"
           title={`Tag: ${flagInfo.label} (Click to cycle)`}
+          aria-label={`Tag ${item.ticker}: ${flagInfo.label}`}
         >
           <span className={cn("block h-2.5 w-2.5 rounded-full transition-transform group-hover:scale-110", flagInfo.dot)} />
-        </button>
+        </Button>
 
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1.5">
@@ -594,17 +662,20 @@ function WatchlistRow({
         </div>
 
         {/* Delete Row Button */}
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
           }}
-          className="opacity-0 group-hover:opacity-100 p-1 text-[10px] text-ink-muted hover:text-rose-400 transition-opacity"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
           title="Remove from Watchlist"
+          aria-label={`Remove ${item.ticker} from watchlist`}
         >
           ✕
-        </button>
+        </Button>
       </div>
     </div>
   );

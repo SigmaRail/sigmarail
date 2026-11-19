@@ -1,6 +1,16 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
-/** In-app name dialog — replaces window.prompt (often blocked in embedded browsers). */
+/** Shared AppTension prompt for short names; replaces window.prompt in embedded browsers. */
 export function NameDialog({
   open,
   title,
@@ -18,86 +28,49 @@ export function NameDialog({
   onConfirm: (value: string) => void;
   onCancel: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
-    if (!open) return;
-    setValue(initialValue);
-    const t = window.setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 0);
-    return () => window.clearTimeout(t);
+    if (open) setValue(initialValue);
   }, [open, initialValue]);
-
-  if (!open) return null;
 
   const trimmed = value.trim();
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
-      role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`${inputId}-title`}
-        className="w-full max-w-sm rounded border border-line bg-surface-raised p-4 shadow-panel"
-      >
-        <h2
-          id={`${inputId}-title`}
-          className="text-sm font-semibold text-ink"
-        >
-          {title}
-        </h2>
-        <label
-          htmlFor={inputId}
-          className="mt-3 block text-[11px] font-semibold uppercase tracking-wider text-ink-faint"
-        >
-          {label}
-        </label>
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && trimmed) {
-              e.preventDefault();
-              onConfirm(trimmed);
-            }
-            if (e.key === "Escape") {
-              e.preventDefault();
-              onCancel();
-            }
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
+      <DialogContent size="sm" className="max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="sr-only">Enter a name and save, or cancel to return.</DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (trimmed) onConfirm(trimmed);
           }}
-          className="mt-1 w-full rounded border border-line bg-surface-sunk px-2.5 py-1.5 text-[13px] text-ink outline-none focus:border-accent"
-        />
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded border border-line bg-surface-sunk px-3 py-1.5 text-[12px] font-medium text-ink hover:border-accent"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!trimmed}
-            onClick={() => onConfirm(trimmed)}
-            className="rounded bg-ink px-3 py-1.5 text-[12px] font-medium text-white hover:bg-ink/90 disabled:opacity-50"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+          className="space-y-1.5"
+        >
+          <label htmlFor={inputId} className="text-sm font-medium text-foreground">
+            {label}
+          </label>
+          <Input
+            id={inputId}
+            autoFocus
+            type="text"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+          />
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!trimmed}>
+              {confirmLabel}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

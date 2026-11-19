@@ -1,4 +1,8 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar } from "@sb/webapp-core/components/ui/calendar/calendar.component";
+import { Popover, PopoverContent, PopoverTrigger } from "@sb/webapp-core/components/ui/popover";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 import { cn } from "../../lib/utils";
 
 interface DateNavigatorProps {
@@ -6,516 +10,276 @@ interface DateNavigatorProps {
   availableDates: string[]; // Descending order (newest first)
   onChangeDate: (date: string) => void;
   className?: string;
+  /** Keep only the date picker when the surrounding workbench needs a compact toolbar. */
+  compact?: boolean;
 }
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+type DatePreset = "latest" | "1w" | "1m" | "3m" | "6m" | "1y" | "2y" | "3y" | "5y" | "ytd";
 
-const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+function fromIsoDate(value: string): Date | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return undefined;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
 export function DateNavigator({
   currentDate,
   availableDates,
   onChangeDate,
   className,
+  compact = false,
 }: DateNavigatorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const selectedDate = useMemo(() => fromIsoDate(currentDate), [currentDate]);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(
+    () => selectedDate ?? new Date(),
+  );
 
-  // Set of available trading dates for fast lookup
+  useEffect(() => {
+    if (selectedDate) setCalendarMonth(selectedDate);
+  }, [selectedDate]);
+
   const dateSet = useMemo(() => new Set(availableDates), [availableDates]);
-
-  // Current index in sorted descending dates list (0 = latest)
   const currentIndex = useMemo(() => {
-    const idx = availableDates.indexOf(currentDate);
-    return idx >= 0 ? idx : 0;
+    const index = availableDates.indexOf(currentDate);
+    return index >= 0 ? index : 0;
   }, [availableDates, currentDate]);
-
   const isLatest = currentIndex === 0;
   const isOldest = currentIndex === availableDates.length - 1;
 
-  // Distinct available years in dataset (newest first)
-  const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    availableDates.forEach((d) => {
-      const y = parseInt(d.slice(0, 4), 10);
-      if (!isNaN(y)) years.add(y);
-    });
-    if (years.size === 0) years.add(new Date().getFullYear());
-    return Array.from(years).sort((a, b) => b - a);
-  }, [availableDates]);
-
-  // Calendar display state (year and month for the calendar grid)
-  const [calYear, setCalYear] = useState(() => {
-    if (currentDate) {
-      const y = parseInt(currentDate.slice(0, 4), 10);
-      if (!isNaN(y)) return y;
-    }
-    return availableYears[0] || new Date().getFullYear();
-  });
-
-  const [calMonth, setCalMonth] = useState(() => {
-    if (currentDate) {
-      const m = parseInt(currentDate.slice(5, 7), 10) - 1;
-      if (!isNaN(m) && m >= 0 && m <= 11) return m;
-    }
-    return new Date().getMonth();
-  });
-
-  // Sync calendar view when currentDate changes externally
-  useEffect(() => {
-    if (currentDate) {
-      const y = parseInt(currentDate.slice(0, 4), 10);
-      const m = parseInt(currentDate.slice(5, 7), 10) - 1;
-      if (!isNaN(y) && !isNaN(m)) {
-        setCalYear(y);
-        setCalMonth(m);
-      }
-    }
-  }, [currentDate]);
-
-  // Click outside listener
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (
-        isOpen &&
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isOpen]);
-
-  // Step helper
   const stepByTradingDays = (daysOffset: number) => {
-    const newIdx = currentIndex + daysOffset;
-    if (newIdx >= 0 && newIdx < availableDates.length) {
-      onChangeDate(availableDates[newIdx]);
+    const nextIndex = currentIndex + daysOffset;
+    if (nextIndex >= 0 && nextIndex < availableDates.length) {
+      onChangeDate(availableDates[nextIndex]);
     }
   };
 
-  // Calendar month days calculation
-  const calendarDays = useMemo(() => {
-    const firstDayOfMonth = new Date(calYear, calMonth, 1);
-    const lastDayOfMonth = new Date(calYear, calMonth + 1, 0);
-
-    // Day of week: 0 is Sunday, 1 is Monday... convert to Monday=0..Sunday=6
-    let startDayOfWeek = firstDayOfMonth.getDay() - 1;
-    if (startDayOfWeek === -1) startDayOfWeek = 6;
-
-    const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean; isTradingDay: boolean }[] = [];
-
-    // Previous month filler days
-    const prevMonthLastDay = new Date(calYear, calMonth, 0).getDate();
-    for (let i = startDayOfWeek - 1; i >= 0; i--) {
-      const d = prevMonthLastDay - i;
-      const prevMonth = calMonth === 0 ? 11 : calMonth - 1;
-      const prevYear = calMonth === 0 ? calYear - 1 : calYear;
-      const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      days.push({
-        dateStr,
-        dayNum: d,
-        isCurrentMonth: false,
-        isTradingDay: dateSet.has(dateStr),
-      });
-    }
-
-    // Current month days
-    for (let d = 1; d <= lastDayOfMonth.getDate(); d++) {
-      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      days.push({
-        dateStr,
-        dayNum: d,
-        isCurrentMonth: true,
-        isTradingDay: dateSet.has(dateStr),
-      });
-    }
-
-    // Next month filler days to complete grid (up to 42 cells = 6 weeks)
-    const remaining = 42 - days.length;
-    for (let d = 1; d <= remaining; d++) {
-      const nextMonth = calMonth === 11 ? 0 : calMonth + 1;
-      const nextYear = calMonth === 11 ? calYear + 1 : calYear;
-      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      days.push({
-        dateStr,
-        dayNum: d,
-        isCurrentMonth: false,
-        isTradingDay: dateSet.has(dateStr),
-      });
-    }
-
-    return days;
-  }, [calYear, calMonth, dateSet]);
-
-  // Formatted day of week name (e.g. "Fri")
-  const dayOfWeekName = useMemo(() => {
-    if (!currentDate) return "";
-    try {
-      const parts = currentDate.split("-").map(Number);
-      const dt = new Date(parts[0], parts[1] - 1, parts[2]);
-      return dt.toLocaleDateString("en-US", { weekday: "short" });
-    } catch {
-      return "";
-    }
-  }, [currentDate]);
-
-  // Jump to nearest trading date if clicking a weekend or unindexed date
-  const handleSelectDay = (dateStr: string) => {
-    if (dateSet.has(dateStr)) {
-      onChangeDate(dateStr);
+  const handleSelectDay = (date: Date | undefined) => {
+    if (!date) return;
+    const dateString = toIsoDate(date);
+    if (dateSet.has(dateString)) {
+      onChangeDate(dateString);
       setIsOpen(false);
       return;
     }
-    // Find nearest earlier available date
-    const nearest = availableDates.find((d) => d <= dateStr);
+    // Keep the existing behavior for weekends and market holidays: choose the
+    // closest earlier session represented in the point-in-time dataset.
+    const nearest = availableDates.find((available) => available <= dateString);
     if (nearest) {
       onChangeDate(nearest);
       setIsOpen(false);
     }
   };
 
-  const handlePrevMonth = () => {
-    if (calMonth === 0) {
-      setCalMonth(11);
-      setCalYear((y) => y - 1);
-    } else {
-      setCalMonth((m) => m - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (calMonth === 11) {
-      setCalMonth(0);
-      setCalYear((y) => y + 1);
-    } else {
-      setCalMonth((m) => m + 1);
-    }
-  };
-
-  // Quick period preset helpers
-  const handleJumpPreset = (
-    preset: "latest" | "1d" | "1w" | "1m" | "3m" | "6m" | "1y" | "2y" | "3y" | "5y" | "ytd"
-  ) => {
+  const handleJumpPreset = (preset: DatePreset) => {
     if (availableDates.length === 0) return;
-
     if (preset === "latest") {
       onChangeDate(availableDates[0]);
-    } else if (preset === "1d") {
-      stepByTradingDays(1);
-    } else if (preset === "1w") {
-      stepByTradingDays(5);
-    } else if (preset === "1m") {
-      stepByTradingDays(21);
-    } else if (preset === "3m") {
-      stepByTradingDays(63);
-    } else if (preset === "6m") {
-      stepByTradingDays(126);
-    } else if (preset === "1y") {
-      stepByTradingDays(252);
-    } else if (preset === "2y") {
-      stepByTradingDays(504);
-    } else if (preset === "3y") {
-      stepByTradingDays(756);
-    } else if (preset === "5y") {
-      stepByTradingDays(1260);
     } else if (preset === "ytd") {
-      const curYear = currentDate.slice(0, 4);
-      const ytdDates = availableDates.filter((d) => d.startsWith(curYear));
-      if (ytdDates.length > 0) {
-        onChangeDate(ytdDates[ytdDates.length - 1]); // Earliest trading day of year
-      }
+      const year = currentDate.slice(0, 4);
+      const datesInYear = availableDates.filter((date) => date.startsWith(year));
+      if (datesInYear.length > 0) onChangeDate(datesInYear[datesInYear.length - 1]);
+    } else {
+      const offsets: Record<Exclude<DatePreset, "latest" | "ytd">, number> = {
+        "1w": 5,
+        "1m": 21,
+        "3m": 63,
+        "6m": 126,
+        "1y": 252,
+        "2y": 504,
+        "3y": 756,
+        "5y": 1260,
+      };
+      stepByTradingDays(offsets[preset]);
     }
     setIsOpen(false);
   };
 
+  const presets: { key: DatePreset; label: string }[] = [
+    { key: "latest", label: "Latest" },
+    { key: "1w", label: "−1 week" },
+    { key: "1m", label: "−1 month" },
+    { key: "3m", label: "−3 months" },
+    { key: "6m", label: "−6 months" },
+    { key: "1y", label: "−1 year" },
+    { key: "2y", label: "−2 years" },
+    { key: "3y", label: "−3 years" },
+    { key: "5y", label: "−5 years" },
+    { key: "ytd", label: "YTD start" },
+  ];
+
+  const latestDate = availableDates[0];
+  const oldestDate = availableDates[availableDates.length - 1];
+
   return (
-    <div className={cn("relative inline-flex items-center gap-1", className)}>
-      {/* Quick Step Buttons */}
-      <div className="inline-flex items-center rounded-md border border-line bg-surface p-0.5 shadow-xs">
-        <button
-          type="button"
-          onClick={() => stepByTradingDays(5)}
-          disabled={isOldest}
-          title="Step back 1 week (-5 trading days)"
-          className="rounded px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:bg-surface-sunk hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-        >
-          ◀◀
-        </button>
-        <button
-          type="button"
-          onClick={() => stepByTradingDays(1)}
-          disabled={isOldest}
-          title="Step back 1 day (-1 trading day)"
-          className="rounded px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:bg-surface-sunk hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-        >
-          ◀
-        </button>
-
-        {/* Date Display & Popover Trigger */}
-        <button
-          ref={triggerRef}
-          type="button"
-          onClick={() => setIsOpen((p) => !p)}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-mono text-[11px] font-semibold transition-all",
-            isOpen
-              ? "bg-accent/15 text-accent ring-1 ring-accent/30"
-              : "hover:bg-surface-sunk text-ink"
-          )}
-          title="Click to open calendar & period navigation"
-        >
-          <span>📅</span>
-          <span>{currentDate || "Select date"}</span>
-          {dayOfWeekName && (
-            <span className="text-[10px] text-ink-muted font-sans font-normal">
-              ({dayOfWeekName})
-            </span>
-          )}
-          <span className="text-[9px] text-ink-muted">▾</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => stepByTradingDays(-1)}
-          disabled={isLatest}
-          title="Step forward 1 day (+1 trading day)"
-          className="rounded px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:bg-surface-sunk hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-        >
-          ▶
-        </button>
-        <button
-          type="button"
-          onClick={() => stepByTradingDays(-5)}
-          disabled={isLatest}
-          title="Step forward 1 week (+5 trading days)"
-          className="rounded px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:bg-surface-sunk hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-        >
-          ▶▶
-        </button>
-      </div>
-
-      {/* Quick Jump to Latest Button (if not on latest) */}
-      {!isLatest && (
-        <button
-          type="button"
-          onClick={() => handleJumpPreset("latest")}
-          className="rounded border border-accent/40 bg-accent/10 px-2 py-0.5 font-mono text-[10px] font-bold text-accent hover:bg-accent/20 transition-all"
-          title="Jump to latest available trading date"
-        >
-          ⚡ Latest
-        </button>
-      )}
-
-      {/* Calendar & Period Navigation Popover */}
-      {isOpen && (
-        <div
-          ref={popoverRef}
-          className="absolute right-0 top-full z-50 mt-1.5 flex flex-col gap-3 rounded-xl border border-accent/40 bg-surface p-3.5 shadow-2xl ring-1 ring-black/10 animate-in fade-in zoom-in-95 duration-100 min-w-[340px]"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-line pb-2">
-            <div>
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-accent">
-                As-Of Date Navigation
-              </h4>
-              <span className="text-[10px] text-ink-muted">
-                {availableDates.length} trading sessions in ClickHouse ({availableDates[availableDates.length - 1]} → {availableDates[0]})
-              </span>
-            </div>
-            <button
+    <div className={cn("inline-flex min-w-0 items-center gap-1", className)}>
+      <div className="inline-flex min-w-0 items-center rounded-md border border-border bg-background p-0.5">
+        {!compact && (
+          <>
+            <Button
               type="button"
-              onClick={() => setIsOpen(false)}
-              className="rounded p-1 text-xs text-ink-muted hover:bg-surface-sunk hover:text-ink"
+              variant="ghost"
+              size="sm"
+              onClick={() => stepByTradingDays(5)}
+              disabled={isOldest}
+              title="Step back one week (five trading sessions)"
+              aria-label="Step back one week"
+              className="h-8 px-1.5 font-mono text-xs"
             >
-              ✕
-            </button>
-          </div>
-
-          {/* Quick Period Presets */}
-          <div>
-            <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-muted mb-1">
-              Quick Period Jumps:
-            </div>
-            <div className="grid grid-cols-5 gap-1 text-[10px] font-mono">
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("latest")}
-                className="rounded border border-line bg-surface-sunk px-1 py-1 text-center font-bold text-accent hover:border-accent hover:bg-accent/10 transition-colors"
-              >
-                ⚡ Latest
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("1w")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -1 Week
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("1m")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -1 Month
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("3m")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -3 Months
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("6m")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -6 Months
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("1y")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -1 Year
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("2y")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -2 Years
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("3y")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -3 Years
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("5y")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                -5 Years
-              </button>
-              <button
-                type="button"
-                onClick={() => handleJumpPreset("ytd")}
-                className="rounded border border-line bg-surface px-1 py-1 text-center text-ink-muted hover:border-accent hover:text-ink transition-colors"
-              >
-                YTD Start
-              </button>
-            </div>
-          </div>
-
-          {/* Month & Year Jump Selector */}
-          <div className="flex items-center justify-between border-t border-line pt-2">
-            <button
+              ◀◀
+            </Button>
+            <Button
               type="button"
-              onClick={handlePrevMonth}
-              className="rounded p-1 text-xs text-ink-muted hover:bg-surface-sunk hover:text-ink transition-colors"
-              title="Previous Month"
+              variant="ghost"
+              size="sm"
+              onClick={() => stepByTradingDays(1)}
+              disabled={isOldest}
+              title="Step back one trading session"
+              aria-label="Step back one trading session"
+              className="h-8 px-1.5 font-mono text-xs"
             >
               ◀
-            </button>
-            <div className="flex items-center gap-1.5">
-              <select
-                value={calMonth}
-                onChange={(e) => setCalMonth(Number(e.target.value))}
-                className="rounded border border-line bg-surface px-2 py-0.5 font-sans text-[11px] font-bold text-ink focus:border-accent focus:outline-none cursor-pointer"
-              >
-                {MONTH_NAMES.map((m, idx) => (
-                  <option key={m} value={idx}>{m}</option>
-                ))}
-              </select>
-
-              <select
-                value={calYear}
-                onChange={(e) => setCalYear(Number(e.target.value))}
-                className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[11px] font-bold text-accent focus:border-accent focus:outline-none cursor-pointer"
-              >
-                {availableYears.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <button
+            </Button>
+          </>
+        )}
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button
               type="button"
-              onClick={handleNextMonth}
-              className="rounded p-1 text-xs text-ink-muted hover:bg-surface-sunk hover:text-ink transition-colors"
-              title="Next Month"
+              variant="ghost"
+              aria-label={`Choose as-of date, currently ${currentDate || "not set"}`}
+              className="h-8 min-w-0 gap-1 px-2 font-mono text-[11px]"
+            >
+              <span aria-hidden="true">📅</span>
+              <span className="truncate">{currentDate || "Select date"}</span>
+              <span aria-hidden="true">▾</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="bottom"
+            sideOffset={6}
+            className="max-h-[min(80dvh,680px)] w-[min(94vw,380px)] overflow-y-auto p-3"
+          >
+            <div className="mb-3 flex items-start justify-between gap-2 border-b pb-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">As-of date</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {availableDates.length} trading sessions
+                  {oldestDate && latestDate ? ` · ${oldestDate} to ${latestDate}` : ""}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Close date picker"
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 shrink-0"
+              >
+                ×
+              </Button>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Quick jumps</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                {presets.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    type="button"
+                    variant={preset.key === "latest" ? "secondary" : "outline"}
+                    size="sm"
+                    disabled={preset.key !== "latest" && preset.key !== "ytd" && availableDates.length === 0}
+                    onClick={() => handleJumpPreset(preset.key)}
+                    className="h-9 whitespace-normal px-2 text-xs"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              month={calendarMonth}
+              onMonthChange={setCalendarMonth}
+              onSelect={handleSelectDay}
+              showYearNavigation
+              weekStartsOn={1}
+              startMonth={oldestDate ? fromIsoDate(oldestDate) : undefined}
+              endMonth={latestDate ? fromIsoDate(latestDate) : undefined}
+              className="mx-auto w-full p-1"
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+              <label htmlFor="as-of-date-direct" className="text-xs text-muted-foreground">
+                Enter a date
+              </label>
+              <Input
+                id="as-of-date-direct"
+                type="date"
+                value={currentDate}
+                min={oldestDate}
+                max={latestDate}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    const chosen = fromIsoDate(event.target.value);
+                    if (chosen) handleSelectDay(chosen);
+                  }
+                }}
+                className="h-9 w-auto min-w-[9.5rem]"
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
+        {!compact && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => stepByTradingDays(-1)}
+              disabled={isLatest}
+              title="Step forward one trading session"
+              aria-label="Step forward one trading session"
+              className="h-8 px-1.5 font-mono text-xs"
             >
               ▶
-            </button>
-          </div>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => stepByTradingDays(-5)}
+              disabled={isLatest}
+              title="Step forward one week (five trading sessions)"
+              aria-label="Step forward one week"
+              className="h-8 px-1.5 font-mono text-xs"
+            >
+              ▶▶
+            </Button>
+          </>
+        )}
+      </div>
 
-          {/* Mini Calendar Grid */}
-          <div>
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-ink-muted mb-1">
-              {DAY_LABELS.map((d) => (
-                <div key={d} className="py-0.5">{d}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((cell, idx) => {
-                const isSelected = cell.dateStr === currentDate;
-                const isAvailable = cell.isTradingDay;
-
-                return (
-                  <button
-                    key={`${cell.dateStr}-${idx}`}
-                    type="button"
-                    onClick={() => handleSelectDay(cell.dateStr)}
-                    disabled={!isAvailable && !cell.isCurrentMonth}
-                    className={cn(
-                      "flex h-6 w-full items-center justify-center rounded text-[11px] font-mono transition-all",
-                      isSelected
-                        ? "bg-accent font-bold text-accent-ink shadow-xs"
-                        : isAvailable
-                        ? cell.isCurrentMonth
-                          ? "bg-surface-sunk font-semibold text-ink hover:bg-accent/20 hover:text-accent cursor-pointer"
-                          : "text-ink-muted/50 hover:bg-surface-sunk cursor-pointer"
-                        : "text-ink-muted/20 cursor-not-allowed"
-                    )}
-                    title={
-                      isSelected
-                        ? `Selected Date: ${cell.dateStr}`
-                        : isAvailable
-                        ? `Available Trading Date: ${cell.dateStr}`
-                        : `No Market Data: ${cell.dateStr}`
-                    }
-                  >
-                    {cell.dayNum}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Footer Direct Input */}
-          <div className="flex items-center justify-between border-t border-line pt-2 text-[10px] text-ink-muted">
-            <span className="font-mono">Direct Input:</span>
-            <input
-              type="date"
-              value={currentDate}
-              onChange={(e) => {
-                if (e.target.value) handleSelectDay(e.target.value);
-              }}
-              className="rounded border border-line bg-surface-sunk px-2 py-0.5 font-mono text-[10.5px] text-ink focus:border-accent focus:outline-none cursor-pointer"
-            />
-          </div>
-        </div>
+      {!compact && !isLatest && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => handleJumpPreset("latest")}
+          title="Jump to latest available trading date"
+          className="h-8 shrink-0 px-2 text-xs"
+        >
+          Latest
+        </Button>
       )}
     </div>
   );

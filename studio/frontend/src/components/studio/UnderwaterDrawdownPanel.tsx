@@ -1,3 +1,11 @@
+import {
+  Table as WorkspaceTable,
+  TableBody as WorkspaceTableBody,
+  TableCell as WorkspaceTableCell,
+  TableHead as WorkspaceTableHead,
+  TableHeader as WorkspaceTableHeader,
+  TableRow as WorkspaceTableRow,
+} from "@sb/webapp-core/components/ui/table";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRunDrawdowns } from "../../api/backtests";
@@ -207,34 +215,34 @@ export function UnderwaterDrawdownPanel({ runId }: { runId: string }) {
           <div className="text-[11px] text-ink-muted">No significant drawdowns recorded.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
-              <thead className="border-b border-line bg-surface text-ink-faint">
-                <tr>
-                  <th className="px-3 py-1.5 font-medium">Rank</th>
-                  <th className="px-3 py-1.5 font-medium">Depth (%)</th>
-                  <th className="px-3 py-1.5 font-medium">Peak Date</th>
-                  <th className="px-3 py-1.5 font-medium">Trough Date</th>
-                  <th className="px-3 py-1.5 font-medium">Recovery Date</th>
-                  <th className="px-3 py-1.5 font-medium">Duration</th>
-                  <th className="px-3 py-1.5 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line/60">
+            <WorkspaceTable className="w-full text-left text-[11px]">
+              <WorkspaceTableHeader className="border-b border-line bg-surface text-ink-faint">
+                <WorkspaceTableRow>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Rank</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Depth (%)</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Peak Date</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Trough Date</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Recovery Date</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Duration</WorkspaceTableHead>
+                  <WorkspaceTableHead className="px-3 py-1.5 font-medium">Status</WorkspaceTableHead>
+                </WorkspaceTableRow>
+              </WorkspaceTableHeader>
+              <WorkspaceTableBody className="divide-y divide-line/60">
                 {episodes.map((ep, idx) => (
-                  <tr key={`${ep.peak_date}-${idx}`} className="hover:bg-surface-sunk/60">
-                    <td className="px-3 py-1.5 font-bold text-ink font-mono">#{idx + 1}</td>
-                    <td className="px-3 py-1.5 font-bold font-mono text-rose-400">
+                  <WorkspaceTableRow key={`${ep.peak_date}-${idx}`} className="hover:bg-surface-sunk/60">
+                    <WorkspaceTableCell className="px-3 py-1.5 font-bold text-ink font-mono">#{idx + 1}</WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5 font-bold font-mono text-rose-400">
                       {(ep.depth_pct * 100).toFixed(2)}%
-                    </td>
-                    <td className="px-3 py-1.5 font-mono text-ink">{ep.peak_date}</td>
-                    <td className="px-3 py-1.5 font-mono text-ink">{ep.trough_date}</td>
-                    <td className="px-3 py-1.5 font-mono text-ink-muted">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5 font-mono text-ink">{ep.peak_date}</WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5 font-mono text-ink">{ep.trough_date}</WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5 font-mono text-ink-muted">
                       {ep.recovery_date || "—"}
-                    </td>
-                    <td className="px-3 py-1.5 font-mono text-ink">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5 font-mono text-ink">
                       {ep.duration_days} days
-                    </td>
-                    <td className="px-3 py-1.5">
+                    </WorkspaceTableCell>
+                    <WorkspaceTableCell className="px-3 py-1.5">
                       <span
                         className={`rounded px-1.5 py-0.5 text-[9.5px] font-bold ${
                           ep.status === "Recovered"
@@ -244,11 +252,11 @@ export function UnderwaterDrawdownPanel({ runId }: { runId: string }) {
                       >
                         {ep.status}
                       </span>
-                    </td>
-                  </tr>
+                    </WorkspaceTableCell>
+                  </WorkspaceTableRow>
                 ))}
-              </tbody>
-            </table>
+              </WorkspaceTableBody>
+            </WorkspaceTable>
           </div>
         )}
       </div>

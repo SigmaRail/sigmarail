@@ -9,6 +9,8 @@ import type {
   ScreenSource,
   UniverseQueryV1,
 } from "../types";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 const FALLBACK_SORT_FIELDS = [
   "rs_rating",
@@ -78,46 +80,43 @@ export function SortPanel({
               <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
                 Sort field
               </span>
-              <select
-                className="w-full rounded border border-line bg-surface-sunk px-2 py-1 font-mono text-[11px] text-ink"
-                value={field}
-                onChange={(e) => onFieldChange(e.target.value)}
-              >
-                {fieldOptions.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              <Select value={field} onValueChange={onFieldChange}>
+                <SelectTrigger className="h-9 w-full font-mono text-[11px]" aria-label="Sort field">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fieldOptions.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </label>
 
             <label className="block">
               <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
                 Direction
               </span>
-              <select
-                className="w-full rounded border border-line bg-surface-sunk px-2 py-1 font-mono text-[11px] text-ink"
-                value={direction}
-                onChange={(e) =>
-                  onDirectionChange(e.target.value as OrderDirection)
-                }
-              >
-                <option value="desc">DESC</option>
-                <option value="asc">ASC</option>
-              </select>
+              <Select value={direction} onValueChange={(value) => onDirectionChange(value as OrderDirection)}>
+                <SelectTrigger className="h-9 w-full font-mono text-[11px]" aria-label="Sort direction">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">DESC</SelectItem>
+                  <SelectItem value="asc">ASC</SelectItem>
+                </SelectContent>
+              </Select>
             </label>
 
             <label className="block">
               <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
                 Limit per day
               </span>
-              <input
+              <Input
                 type="number"
                 min={1}
                 max={500}
-                className="w-full rounded border border-line bg-surface-sunk px-2 py-1 font-mono text-[11px] text-ink"
+                className="h-9 w-full font-mono text-[11px]"
                 value={limit}
                 onChange={(e) => onLimitChange(e.target.value)}
+                aria-label="Limit per day"
               />
             </label>
           </>

@@ -1,0 +1,114 @@
+import { useMutation } from '@apollo/client';
+import editIcon from '@iconify-icons/ion/pencil-sharp';
+import deleteIcon from '@iconify-icons/ion/trash-outline';
+import { FragmentType, getFragmentData } from '@sb/webapp-api-client/graphql';
+import { Button, ButtonVariant, Link } from '@sb/webapp-core/components/buttons';
+import { ConfirmDialog } from '@sb/webapp-core/components/confirmDialog';
+import { Icon } from '@sb/webapp-core/components/icons';
+import { useMediaQuery } from '@sb/webapp-core/hooks';
+import { trackEvent } from '@sb/webapp-core/services/analytics';
+import { media } from '@sb/webapp-core/theme';
+import { useToast } from '@sb/webapp-core/toast';
+import { useGenerateTenantPath } from '@sb/webapp-tenants/hooks';
+import { useCurrentTenant } from '@sb/webapp-tenants/providers';
+import { FormattedMessage, useIntl } from 'react-intl';
+
+import { RoutesConfig } from '{{ routesConfigImport }}';
+import { {{ camelCase name }}ListItemDeleteMutation, {{ camelCase name }}ListItemFragment } from './{{ camelCase name }}ListItem.graphql';
+import { {{ pascalCase name }}DropdownMenu } from './{{ camelCase name }}DropdownMenu';
+
+export type {{ pascalCase name }}ListItemProps = {
+  item: FragmentType<typeof {{ camelCase name }}ListItemFragment>;
+};
+
+export const {{ pascalCase name }}ListItem = ({ item }: {{ pascalCase name }}ListItemProps) => {
+  const { data: currentTenant } = useCurrentTenant();
+  const generateTenantPath = useGenerateTenantPath();
+  const { matches: isDesktop } = useMediaQuery({ above: media.Breakpoint.TABLET });
+  const { toast } = useToast();
+  const intl = useIntl();
+
+  const successMessage = intl.formatMessage({
+    id: '{{ pascalCase name }} form / Delete {{ pascalCase name }} / Success message',
+    defaultMessage: 'Item deleted successfully!',
+  });
+
+  const [commitDeleteMutation, { loading }] = useMutation({{ camelCase name }}ListItemDeleteMutation, {
+    update(cache, { data }) {
+      data?.delete{{ pascalCase name }}?.deletedIds?.forEach((deletedId) => {
+        const normalizedId = cache.identify({ id: deletedId, __typename: '{{ pascalCase name }}Type' });
+        cache.evict({ id: normalizedId });
+      });
+      cache.gc();
+    },
+    onCompleted: (data) => {
+      const ids = data?.delete{{ pascalCase name }}?.deletedIds;
+      trackEvent('crud', 'delete', ids?.join(', '));
+      toast({ description: successMessage, variant: 'success' });
+    },
+  });
+
+  const data = getFragmentData({{ camelCase name }}ListItemFragment, item);
+
+  const handleDelete = () => {
+    if (!currentTenant) return;
+    commitDeleteMutation({
+      variables: {
+        input: { id: data.id, tenantId: currentTenant.id },
+      },
+    });
+  };
+
+  const renderInlineButtons = () => (
+    <div className="flex ml-3 shrink-0 [&>*]:mr-4 [&>*:last-child]:mr-0">
+      <Link
+        variant={ButtonVariant.GHOST}
+        className="border"
+        to={generateTenantPath(RoutesConfig.{{ camelCase name }}.edit, { id: data.id })}
+        icon={<Icon size={14} icon={editIcon} />}
+      >
+        <FormattedMessage id="{{ pascalCase name }} list / Edit link" defaultMessage="Edit" />
+      </Link>
+      <ConfirmDialog
+        onContinue={handleDelete}
+        title={<FormattedMessage id="{{ pascalCase name }} list / Confirm dialog / Title" defaultMessage="Delete {{ pascalCase name }} item" />}
+        variant="destructive"
+        description={
+          <FormattedMessage
+            id="{{ pascalCase name }} list / Confirm dialog / Description"
+            defaultMessage="Are you sure you want to continue?"
+          />
+        }
+      >
+        <Button
+          variant={ButtonVariant.GHOST}
+          className="border"
+          disabled={loading}
+          icon={<Icon size={14} icon={deleteIcon} />}
+        >
+          <FormattedMessage id="{{ pascalCase name }} list / Delete button" defaultMessage="Delete" />
+        </Button>
+      </ConfirmDialog>
+    </div>
+  );
+
+  const renderButtonsMenu = () => (
+    <{{ pascalCase name }}DropdownMenu className="w-40" itemId={data.id} handleDelete={handleDelete} loading={loading} />
+  );
+
+  return (
+    <li className="group">
+      <div className="group flex items-center justify-between w-full min-w-15 p-4 transition focus:outline-none hover:bg-muted/50">
+        <Link
+          className="transition-colors hover:no-underline w-full justify-start min-w-0 max-w-full cursor-pointer flex-1"
+          to={generateTenantPath(RoutesConfig.{{ camelCase name }}.details, { id: data.id })}
+        >
+          <p className="text-base font-medium transition-colors whitespace-nowrap overflow-hidden text-ellipsis hover:text-primary">
+            {data.name}
+          </p>
+        </Link>
+        <div className="flex-shrink-0 ml-4">{isDesktop ? renderInlineButtons() : renderButtonsMenu()}</div>
+      </div>
+    </li>
+  );
+};

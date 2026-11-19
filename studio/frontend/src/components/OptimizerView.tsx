@@ -17,6 +17,39 @@ import type {
   OptimizerRunPoint,
   OptimizerSessionSummary,
 } from "../types";
+import { PageHeadline } from "@sb/webapp-core/components/pageHeadline";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Card } from "@sb/webapp-core/components/ui/card";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@sb/webapp-core/components/ui/alert";
+
+function OptimizerQueryError({
+  title,
+  message,
+  onRetry,
+  isRetrying,
+}: {
+  title: string;
+  message: string;
+  onRetry: () => void;
+  isRetrying: boolean;
+}) {
+  return (
+    <Alert variant="destructive" className="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>{message}</AlertDescription>
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={onRetry} disabled={isRetrying}>
+        Retry
+      </Button>
+    </Alert>
+  );
+}
 
 export function OptimizerView({
   onJumpToRun,
@@ -132,57 +165,89 @@ export function OptimizerView({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-3.5 pb-6">
-      {/* Top Header & Session Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3.5 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div>
-            <span className="text-sm font-bold text-ink">Quant Optimization Workbench</span>
-            <span className="ml-2 font-mono text-xs text-ink-muted">
-              {sessions.length} studies
-            </span>
-          </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-3 pb-6">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b pb-3">
+        <PageHeadline
+          header="Parameter sweeps"
+          subheader="Explore how strategy parameters affect backtest performance."
+          className="space-y-1"
+        />
 
-          {/* Session Selector Pills */}
-          <div className="flex max-w-xl items-center gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 lg:flex-none">
+          {!sessionsQuery.isError ? (
+            <Badge variant="muted">{sessions.length} {sessions.length === 1 ? "study" : "studies"}</Badge>
+          ) : null}
+          <div className="flex max-w-full items-center gap-1.5 overflow-x-auto pb-0.5">
             {sessions.map((s) => {
               const isSelected = (selectedSessionId || sessions[0]?.session_id) === s.session_id;
               return (
-                <button
+                <Button
                   key={s.session_id}
                   type="button"
                   onClick={() => {
                     setSelectedSessionId(s.session_id);
                     setSelectedRunId(null);
                   }}
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                    isSelected
-                      ? "bg-accent text-accent-ink shadow-sm"
-                      : "bg-surface-raised text-ink-muted hover:text-ink border border-line"
-                  }`}
+                  variant={isSelected ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-8 shrink-0"
                 >
                   {s.title || s.session_id}
-                  <span className="ml-1.5 opacity-75 font-mono text-[10px]">
-                    ({s.strategy_type || "euler"})
-                  </span>
-                </button>
+                  {s.is_shared ? <Badge variant="muted" className="ml-2 px-1.5 py-0 text-[9px]">Shared</Badge> : null}
+                </Button>
               );
             })}
           </div>
-        </div>
 
-        {/* Launch New Sweep Button */}
-        <button
+        <Button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-1.5 text-xs font-bold text-accent-ink shadow-sm hover:opacity-90 transition-opacity"
+          size="sm"
         >
-          <span>+</span> Launch New Sweep
-        </button>
-      </div>
+          New sweep
+        </Button>
+        </div>
+      </header>
 
       {/* Main Three-Zone Quant Workspace */}
-      {heatmapData && !heatmapData.error ? (
+      {sessionsQuery.isLoading ? (
+        <Card className="p-6 text-sm text-muted-foreground shadow-none">
+          Loading optimization studies…
+        </Card>
+      ) : sessionsQuery.isError ? (
+        <OptimizerQueryError
+          title="Optimization studies could not be loaded"
+          message={(sessionsQuery.error as Error).message}
+          onRetry={() => void sessionsQuery.refetch()}
+          isRetrying={sessionsQuery.isFetching}
+        />
+      ) : sessions.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center p-8 text-center shadow-none sm:p-12">
+          <p className="text-base font-semibold">No optimization studies yet</p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Start a sweep to compare parameter ranges, review performance surfaces, and inspect the strongest candidates.
+          </p>
+          <Button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="mt-4"
+            size="sm"
+          >
+            Create sweep
+          </Button>
+        </Card>
+      ) : heatmapQuery.isLoading ? (
+        <Card className="p-6 text-sm text-muted-foreground shadow-none">
+          Loading sweep results…
+        </Card>
+      ) : heatmapQuery.isError || heatmapData?.error ? (
+        <OptimizerQueryError
+          title="Sweep results could not be loaded"
+          message={heatmapData?.error || (heatmapQuery.error as Error).message}
+          onRetry={() => void heatmapQuery.refetch()}
+          isRetrying={heatmapQuery.isFetching}
+        />
+      ) : heatmapData ? (
         <div className="flex flex-col space-y-3.5">
           {/* Top Row: Zone A (Scatter / Sensitivity / Pareto) & Zone B (Always-mounted Inspector) */}
           <div className="grid grid-cols-1 gap-3.5 xl:grid-cols-12 min-h-[480px]">
@@ -221,19 +286,19 @@ export function OptimizerView({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-line bg-surface p-12 text-center text-ink-muted">
-          <p className="text-base font-bold text-ink">No Active Optimization Study</p>
-          <p className="mt-1.5 max-w-md text-xs text-ink-faint">
-            Launch a LEAN Native EulerSearch or GridSearch hyperparameter sweep to generate interactive parameter response surfaces, detect plateau vs needle stability, and inspect out-of-sample forward tests.
-          </p>
-          <button
+        <Card className="p-6 text-sm text-muted-foreground shadow-none">
+          Sweep results are not available yet. Retry to load the selected study.
+          <Button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="mt-4 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-ink hover:opacity-90 transition-opacity"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => void heatmapQuery.refetch()}
+            disabled={heatmapQuery.isFetching}
           >
-            🚀 Launch First Sweep
-          </button>
-        </div>
+            Retry
+          </Button>
+        </Card>
       )}
 
       {/* Sweep Launch Modal */}

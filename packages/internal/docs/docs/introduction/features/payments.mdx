@@ -1,0 +1,80 @@
+---
+title: Payments and subscriptions
+description: Integration with Stripe
+---
+import useBaseUrl from "@docusaurus/useBaseUrl";
+import ProjectName from '../../shared/components/ProjectName.component';
+
+
+<ProjectName/> provides a payments and subscriptions functionality seamlessly integrated with Stripe.
+This feature empowers tenants to handle financial transactions and manage subscription plans directly within the application.
+This functionality is divided into two parts:
+
+- **[payments](#payments)**
+- **[subscription management](#subscription-management)**
+
+
+### Payments
+
+The payments functionality allows tenant owners to define payment methods (including multiple cards) that are stored in the
+Stripe merchant account. Tenant owners can edit and update their payment methods at any time.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/payments/card-form.png")} alt="Payment method form" />
+</p>
+
+Tenants can initiate transactions using the payment form, specifying the amount in USD and selecting a stored payment
+method or adding a new card for one-time charges. Successful transactions are recorded in the transaction history for reference.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/payments/payment-form.png")} alt="Payment form" />
+  <img src={useBaseUrl("img/features/subscriptions/transaction-history.png")} alt="Transaction history" />
+</p>
+
+### Subscription management
+
+The subscription management functionality allows tenant owners to select one of the three pre-defined plans in the Stripe admin
+panel: Free, Monthly, and Yearly. The selected plan is automatically registered as an active subscription in the system
+and can be used in the business logic of the application. The system supports changing and canceling subscriptions
+based on the rules defined by the application administrator in Stripe.
+
+<p align="center">
+  <img src={useBaseUrl("img/features/subscriptions/plans.png")} alt="Subscription plans" />
+  <img src={useBaseUrl("img/features/subscriptions/subscriptions.png")} alt="Active subscription" />
+</p>
+
+
+---
+
+## Related Guides
+
+Ready to customize payments for your application?
+
+| Guide | Description |
+|-------|-------------|
+| [Create One-Time Payment Form](/working-with-sb/payments/one-time-payment-form) | Build custom payment flows |
+| [Payments Overview](/working-with-sb/payments) | Complete payments documentation |
+
+---
+
+## Why Pre-built Payments Matter
+
+Having Stripe payments integrated from day one provides:
+
+- **Seamless UX** — Tenants subscribe and pay without leaving your app
+- **Financial Tracking** — All transactions recorded in Stripe dashboard
+- **Scalability** — Stripe supports 135+ currencies and numerous payment methods
+- **PCI Compliance** — Stripe handles sensitive card data securely
+
+---
+
+## Summary
+
+SaaS Boilerplate's payments functionality includes:
+
+- ✅ Multiple payment methods per tenant
+- ✅ Subscription plans (Free, Monthly, Yearly by default)
+- ✅ One-time payments
+- ✅ Transaction history
+- ✅ Stripe webhook handling
+- ✅ Fully customizable plans

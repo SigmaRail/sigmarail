@@ -9,6 +9,7 @@ import type { ChartCandlePoint } from "../../types";
 import { FundamentalsRail } from "./FundamentalsRail";
 import { QuoteHeader } from "./QuoteHeader";
 import { StockChartEngine } from "./StockChartEngine";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 /**
  * MarketSurge-style chart body shared by Charts tab, Screener introspection,
@@ -36,7 +37,10 @@ export function StockIntrospectionPanel({
   >(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [railOpen, setRailOpen] = useState(() => loadFundamentalsRailOpen());
+  const [railOpen, setRailOpen] = useState(() => {
+    const narrow = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+    return loadFundamentalsRailOpen(undefined, !narrow);
+  });
 
   useEffect(() => {
     setActiveTicker(ticker);
@@ -100,44 +104,40 @@ export function StockIntrospectionPanel({
         trailing={
           <div className="flex items-center gap-1.5">
             {activeTicker !== ticker ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => setActiveTicker(ticker)}
-                className="rounded border border-accent/40 bg-accent/20 px-2 py-0.5 font-mono text-[10px] text-accent hover:bg-accent/30"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 font-mono text-[10px]"
+                aria-label={`Return to ${ticker}`}
               >
                 ← {ticker}
-              </button>
+              </Button>
             ) : null}
             {onClose ? (
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-line bg-surface p-1.5 text-xs text-ink-muted hover:bg-surface-sunk hover:text-ink"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                aria-label={`Close ${activeTicker} chart`}
+                title="Close chart"
               >
                 ✕
-              </button>
+              </Button>
             ) : null}
           </div>
         }
       />
 
       <div
-        className={`flex min-h-0 flex-1 overflow-hidden ${
+        className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${
           compact ? "min-h-[360px]" : "min-h-[420px]"
         }`}
       >
-        <FundamentalsRail
-          data={data}
-          open={railOpen}
-          onToggle={() => {
-            const next = !railOpen;
-            setRailOpen(next);
-            saveFundamentalsRailOpen(next);
-          }}
-          onSelectTicker={(t) => setActiveTicker(t)}
-        />
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2">
+        <div data-testid="charts-primary-area" className="flex min-h-[320px] w-full min-w-0 flex-none flex-col p-2 md:min-h-[min(80dvh,800px)]">
           {overviewQuery.isLoading && !data ? (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
               Loading ClickHouse candlestick series…
@@ -170,6 +170,19 @@ export function StockIntrospectionPanel({
             </div>
           )}
         </div>
+
+        <FundamentalsRail
+          data={data}
+          open={railOpen}
+          onToggle={() => {
+            const next = !railOpen;
+            setRailOpen(next);
+            saveFundamentalsRailOpen(next);
+          }}
+          onSelectTicker={(t) => setActiveTicker(t)}
+          ticker={activeTicker}
+          asOfDate={inspectedDate}
+        />
       </div>
     </div>
   );

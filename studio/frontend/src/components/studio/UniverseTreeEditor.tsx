@@ -26,6 +26,8 @@ import type { ScreenField } from "../../types";
 import { cn } from "../../lib/utils";
 import { FilterChipBar } from "./FilterChipBar";
 import { ReorderButtons } from "./ReorderButtons";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
 
 export interface UniverseTreeEditorProps {
   /** A group (wrap a bare comparison with `asGroup` first). */
@@ -103,23 +105,24 @@ export function UniverseTreeEditor({
         )}
       >
         <div className="flex items-center gap-1.5">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={toggleLogic}
             className={cn(
-              "rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide",
+              "h-9 min-w-12 px-2 text-[10px] font-bold uppercase tracking-wide",
               logic === "all" ? "bg-sky-500/20 text-sky-300" : "bg-amber-500/20 text-amber-300",
             )}
             title="Toggle ALL (AND) vs ANY (OR)"
           >
             {logic === "all" ? "ALL" : "ANY"}
-          </button>
-          <input
+          </Button>
+          <Input
             type="text"
             value={node.name ?? (isPrimary ? "membership" : "")}
             onChange={(e) => patch({ name: e.target.value || undefined })}
             placeholder={isPrimary ? "membership" : "name (e.g. code_33)"}
-            className="w-28 rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink"
+            className="h-9 min-w-0 w-full max-w-48 font-mono text-xs"
           />
           {node.items.length === 0 && (
             <span className="text-[10px] italic text-ink-faint">— no conditions yet</span>
@@ -135,14 +138,16 @@ export function UniverseTreeEditor({
             />
           ) : null}
           {!isPrimary && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => onChange(null)}
-              className="rounded border border-line px-1.5 py-0.5 text-[10px] text-danger hover:bg-danger/10"
+              className="h-9 w-9 text-danger hover:bg-danger/10"
               title="Remove group"
             >
               ✕
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -180,13 +185,14 @@ export function UniverseTreeEditor({
           </div>
         )}
 
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={addGroup}
-          className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-dashed border-violet-400/60 bg-violet-500/5 px-2.5 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-500/10"
+          className="mt-1.5 min-h-10 border-dashed border-violet-400/60 bg-violet-500/5 px-3 text-xs font-semibold text-violet-300 hover:bg-violet-500/10"
         >
           + Add Group
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -241,22 +247,25 @@ function NotBox({
           NOT
         </span>
         <span className="flex items-center gap-1">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onRemove}
-            className="rounded border border-line px-1.5 text-[9.5px] text-ink-dim hover:bg-surface"
+            className="min-h-9 px-2 text-xs text-ink-dim"
             title="Keep the group, drop the NOT"
           >
             unwrap
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onDelete}
-            className="rounded border border-line px-1.5 text-[9.5px] text-danger hover:bg-danger/10"
+            className="h-9 w-9 text-danger hover:bg-danger/10"
             title="Remove"
           >
             ✕
-          </button>
+          </Button>
         </span>
       </div>
       <div className="p-1">{children}</div>

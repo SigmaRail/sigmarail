@@ -100,7 +100,7 @@ export function ScreensView({
     queryFn: fetchSavedScreens,
     staleTime: 60_000,
   });
-  const savedScreens = savedScreensQuery.data ?? [];
+  const savedScreens = savedScreensQuery.data?.screens ?? [];
 
   const baseSpec = templateDetailQuery.data?.spec || null;
 
@@ -186,13 +186,14 @@ export function ScreensView({
       if (!saveSpec) throw new Error("Nothing to save");
       const cleanName = payload.name.trim();
       if (!cleanName) throw new Error("Screen name is required.");
-      const body = { name: cleanName, spec: saveSpec };
+      const body = { name: cleanName, description: payload.description, spec: saveSpec };
       if (activeSaved) {
         return updateSavedScreen(activeSaved.id, body);
       }
       return createSavedScreen(body);
     },
-    onSuccess: () => {
+    onSuccess: (screen) => {
+      setActiveSaved(screen);
       setSaveOpen(false);
       savedScreensQuery.refetch();
     },
@@ -207,29 +208,8 @@ export function ScreensView({
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-canvas">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Loading a screen has one entry point: the panel's Load dialog (system screens
-              = templates, plus saved). The template dropdown was a second one. */}
-          {/* The universe is the screen's filter tree (the same UniverseTreeEditor the
-              strategy's Universe Selection uses) — there is no separate hardcoded list. */}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[11px] font-bold text-ink-muted uppercase">📍 As-Of:</span>
-          <input
-            type="date"
-            value={asOfDate}
-            onChange={(e) => {
-              setAsOfDate(e.target.value);
-              onAsOfChange?.(e.target.value);
-            }}
-            className="bg-transparent text-amber-400 focus:outline-none cursor-pointer font-mono text-xs"
-          />
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto p-3">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-canvas">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <InlineScreenerPanel
           spec={inlineSpec}
           activePresetId={null}
@@ -240,6 +220,20 @@ export function ScreensView({
           }}
           presets={templates}
           savedScreens={savedScreens}
+          savedScreensLoading={savedScreensQuery.isLoading}
+          savedScreensError={
+            savedScreensQuery.error instanceof Error ? savedScreensQuery.error.message : null
+          }
+          savedScreensWarning={
+            templates.length === 0 && savedScreens.length === 0
+              ? savedScreensQuery.data?.shared_catalog_warning ?? null
+              : null
+          }
+          onRetrySavedScreens={() => void savedScreensQuery.refetch()}
+          templatesLoading={templatesQuery.isLoading}
+          templatesError={
+            templatesQuery.error instanceof Error ? templatesQuery.error.message : null
+          }
           fields={fieldsQuery.data ?? []}
           onSpecChange={handleInlineSpecChange}
           onSelectPreset={handleSelectTemplate}
@@ -260,6 +254,7 @@ export function ScreensView({
         open={saveOpen}
         defaultName={saveName}
         isUpdate={!!activeSaved}
+        isShared={!!activeSaved?.is_shared}
         error={saveError}
         onCancel={() => setSaveOpen(false)}
         onConfirm={confirmSave}

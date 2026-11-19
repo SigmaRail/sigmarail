@@ -1,0 +1,37 @@
+import { screen, waitFor } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
+
+import { RoutesConfig } from '{{ routesConfigImport }}';
+import { createMockRouterProps, render } from '../../../../tests/utils/rendering';
+import { Edit{{ pascalCase name }} } from '../edit{{ pascalCase name }}.component';
+
+describe('Edit{{ pascalCase name }}: Component', () => {
+  const routePath = ['{{ camelCase name }}', 'edit'];
+
+  const Component = () => (
+    <Routes>
+      <Route path={RoutesConfig.getLocalePath(routePath)} element={<Edit{{ pascalCase name }} />} />
+    </Routes>
+  );
+
+  it('should render page title when data is loaded', async () => {
+    const routerProps = createMockRouterProps(routePath, { id: '1' });
+
+    render(<Component />, { routerProps });
+
+    // The component shows loading skeleton first, then form
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    });
+  });
+
+  it('should render back link', async () => {
+    const routerProps = createMockRouterProps(routePath, { id: '1' });
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /back/i })).toBeInTheDocument();
+    });
+  });
+});

@@ -1,6 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchBacktestJobLog } from "../api/backtests";
+import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
+import { Badge } from "@sb/webapp-core/components/ui/badge";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@sb/webapp-core/components/ui/dialog";
 
 export function LiveLogDrawer({
   jobId,
@@ -29,7 +40,7 @@ export function LiveLogDrawer({
     const raw = logQuery.data?.lines ?? [];
     if (!filterText.trim()) return raw;
     const lower = filterText.toLowerCase();
-    return raw.filter((l) => l.toLowerCase().includes(lower));
+    return raw.filter((line) => line.toLowerCase().includes(lower));
   }, [logQuery.data?.lines, filterText]);
 
   useEffect(() => {
@@ -39,101 +50,84 @@ export function LiveLogDrawer({
   }, [lines, autoScroll]);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="flex h-full w-full max-w-3xl flex-col border-l border-line bg-slate-950 text-slate-100 shadow-2xl">
-        {/* Terminal Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80 px-4 py-3">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        size="xl"
+        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[88dvh] sm:max-h-[88dvh]"
+      >
+        <DialogHeader className="flex flex-col gap-2 border-b px-4 py-3 pr-12 sm:flex-row sm:items-start sm:justify-between sm:px-5">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h3 className="text-[13px] font-bold text-white font-mono">
-                LEAN Execution Log · {jobId.slice(0, 8)}…{jobId.slice(-4)}
-              </h3>
-              <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-300">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                aria-hidden="true"
+                className={isLive ? "h-2.5 w-2.5 rounded-full bg-emerald-500" : "h-2.5 w-2.5 rounded-full bg-muted-foreground"}
+              />
+              <DialogTitle className="text-sm font-semibold">
+                Execution log · {jobId.slice(0, 8)}…{jobId.slice(-4)}
+              </DialogTitle>
+              <Badge variant={isLive ? "success" : "muted"} className="font-mono text-[10px]">
                 {status || "running"}
-              </span>
+              </Badge>
             </div>
             {irId ? (
-              <p className="mt-0.5 truncate text-[11px] text-slate-400 font-mono">
-                model: {irId}
-              </p>
+              <DialogDescription className="mt-1 truncate font-mono text-xs">
+                Strategy: {irId}
+              </DialogDescription>
             ) : null}
           </div>
+          <Checkbox
+            checked={autoScroll}
+            onCheckedChange={(checked) => setAutoScroll(checked === true)}
+            label="Auto-scroll"
+            className="shrink-0"
+          />
+        </DialogHeader>
 
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1 text-[11px] text-slate-400 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={autoScroll}
-                onChange={(e) => setAutoScroll(e.target.checked)}
-                className="rounded border-slate-700 bg-slate-800 text-accent focus:ring-accent"
-              />
-              <span>Auto-scroll</span>
-            </label>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-700 transition-colors"
-            >
-              Close Log ✕
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Bar */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/40 px-4 py-2 text-[11px]">
-          <div className="flex flex-1 items-center gap-2">
-            <span className="text-slate-400">Filter:</span>
-            <input
-              type="text"
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Search output (e.g. Universe, Error, Order)..."
-              className="flex-1 rounded border border-slate-800 bg-slate-950 px-2.5 py-1 font-mono text-[11px] text-slate-200 placeholder:text-slate-600 focus:border-accent focus:outline-none"
-            />
-            {filterText ? (
-              <button
-                type="button"
-                onClick={() => setFilterText("")}
-                className="text-[10px] text-slate-400 hover:text-slate-200"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-          <div className="ml-3 font-mono text-[10px] text-slate-500">
+        <div className="flex flex-col gap-2 border-b bg-muted/30 px-4 py-3 sm:flex-row sm:items-center">
+          <Input
+            type="search"
+            value={filterText}
+            onChange={(event) => setFilterText(event.target.value)}
+            aria-label="Filter log output"
+            placeholder="Filter output by text…"
+            className="h-9 min-w-0 flex-1 font-mono text-xs"
+          />
+          {filterText ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => setFilterText("")}>
+              Clear filter
+            </Button>
+          ) : null}
+          <Badge variant="muted" className="shrink-0 self-start font-mono text-[10px] sm:self-auto">
             {lines.length} lines
-          </div>
+          </Badge>
         </div>
 
-        {/* Console Body */}
         <div
           ref={logContainerRef}
-          className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-relaxed select-text"
+          aria-live={isLive ? "polite" : undefined}
+          className="min-h-0 flex-1 overflow-y-auto bg-slate-950 p-3 font-mono text-[11px] leading-relaxed text-slate-200 select-text sm:p-4"
         >
           {logQuery.isLoading && lines.length === 0 ? (
-            <div className="text-slate-500">Connecting to LEAN container stream…</div>
+            <div className="text-slate-400">Connecting to execution output…</div>
           ) : lines.length === 0 ? (
-            <div className="text-slate-500">
-              {filterText ? "No log lines match the filter query." : "Waiting for initial engine logs…"}
+            <div className="text-slate-400">
+              {filterText ? "No log lines match this filter." : "Waiting for initial engine logs…"}
             </div>
           ) : (
-            lines.map((line, idx) => {
-              let colorClass = "text-slate-300";
+            lines.map((line, index) => {
+              let colorClass = "text-slate-200";
               if (line.includes("ERROR") || line.includes("Exception") || line.includes("failed")) {
-                colorClass = "text-rose-400 font-semibold";
+                colorClass = "font-semibold text-rose-300";
               } else if (line.includes("Universe") || line.includes("symbols")) {
-                colorClass = "text-sky-300 font-semibold";
+                colorClass = "font-semibold text-sky-300";
               } else if (line.includes("Order:") || line.includes("Filled")) {
                 colorClass = "text-emerald-300";
-              } else if (line.includes("ClickHouseDataProvider")) {
-                colorClass = "text-slate-400";
               } else if (line.includes("TRACE:: Debug:")) {
                 colorClass = "text-amber-300";
               }
 
               return (
-                <div key={idx} className={`py-0.5 hover:bg-slate-900/60 ${colorClass}`}>
+                <div key={index} className={`break-words py-0.5 ${colorClass}`}>
                   {line}
                 </div>
               );
@@ -141,14 +135,13 @@ export function LiveLogDrawer({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-800 bg-slate-900/80 px-4 py-2 text-[10px] font-mono text-slate-500">
-          <div>
-            Output path: {logQuery.data?.log_path || "results/" + jobId + "/lean-backtest.log"}
-          </div>
-          <div>{isLive ? "● Streaming live output" : "✓ Run finished"}</div>
+        <div className="flex flex-col gap-1 border-t px-4 py-2 text-[10px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <span className="min-w-0 break-all font-mono">
+            Output: {logQuery.data?.log_path || `results/${jobId}/lean-backtest.log`}
+          </span>
+          <span className="shrink-0">{isLive ? "Streaming live output" : "Run finished"}</span>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

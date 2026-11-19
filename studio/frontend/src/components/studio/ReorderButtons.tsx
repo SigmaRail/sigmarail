@@ -1,4 +1,5 @@
 import { cn } from "../../lib/utils";
+import { Button } from "@sb/webapp-core/components/ui/button";
 
 /** Compact ▲/▼ controls for list reordering. */
 export function ReorderButtons({
@@ -16,24 +17,30 @@ export function ReorderButtons({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-0.5", className)}>
-      <button
+      <Button
         type="button"
         disabled={!canUp}
         onClick={onUp}
+        variant="outline"
+        size="icon"
         title="Move up"
-        className="rounded border border-line px-1 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk disabled:opacity-30 disabled:hover:bg-transparent"
+        aria-label="Move up"
+        className="h-8 w-8 text-ink-muted disabled:opacity-30"
       >
         ▲
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         disabled={!canDown}
         onClick={onDown}
+        variant="outline"
+        size="icon"
         title="Move down"
-        className="rounded border border-line px-1 py-0.5 text-[9px] text-ink-muted hover:bg-surface-sunk disabled:opacity-30 disabled:hover:bg-transparent"
+        aria-label="Move down"
+        className="h-8 w-8 text-ink-muted disabled:opacity-30"
       >
         ▼
-      </button>
+      </Button>
     </span>
   );
 }

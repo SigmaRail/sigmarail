@@ -195,6 +195,7 @@ export type SavedScreen = {
   name: string;
   spec: UniverseQueryV1;
   is_system?: boolean;
+  is_shared?: boolean;
   category?: string;
   description?: string;
   created_at?: string;
@@ -254,6 +255,7 @@ export type RankedRow = ScreenRow & {
 
 export type BacktestRunSummary = {
   run_id: string;
+  is_shared?: boolean;
   strategy_id?: string | null;
   run_timestamp?: string | null;
   period_start?: string | null;
@@ -494,6 +496,8 @@ export type BacktestSpecSummary = {
   notes?: string;
   category?: string;
   is_system?: boolean;
+  /** A legacy record shared across organizations without owner metadata. */
+  is_shared?: boolean;
   is_template?: boolean;
   created_at?: string | null;
   updated_at?: string | null;
@@ -537,6 +541,7 @@ export type SavedBacktestSpec = {
   inserted?: boolean;
   is_template?: boolean;
   category?: string;
+  is_shared?: boolean;
   spec?: Record<string, unknown>;
   notes?: string;
   ir_content_hash?: string | null;
@@ -597,6 +602,7 @@ export type ExecutionProjectsResponse = {
 
 export type BacktestJobListItem = {
   job_id: string;
+  is_shared?: boolean;
   ir_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
@@ -652,7 +658,7 @@ export type BacktestJob = {
   [key: string]: unknown;
 };
 
-export type VeraScreenerFrameworkOverrides = {
+export type ScreenerFrameworkOverrides = {
   max_positions?: number;
   stop_loss_pct?: number;
   max_weight?: number;
@@ -686,6 +692,7 @@ export type FullFrameworkConfig = {
 
 export type LiveDeploymentSummary = {
   deployment_id: string;
+  is_shared?: boolean;
   ir_id?: string | null;
   lean_environment?: string | null;
   brokerage?: string | null;
@@ -799,6 +806,9 @@ export type LeanLiveMetrics = {
 
 export type LocalLiveRuntime = {
   enabled: boolean;
+  remote_start_supported?: boolean;
+  remote_stop_supported?: boolean;
+  remote_liquidation_supported?: boolean;
   mode: "paper" | "live" | "unknown";
   project: string;
   status: string;
@@ -1083,6 +1093,7 @@ export type OptimizerConstraint = {
 
 export type OptimizerSessionSummary = {
   session_id: string;
+  is_shared?: boolean;
   strategy_id: string;
   base_ir_id: string;
   title: string;
@@ -1523,3 +1534,5 @@ export interface RollingStatsResponse {
   count: number;
   error?: string | null;
 }
+
+

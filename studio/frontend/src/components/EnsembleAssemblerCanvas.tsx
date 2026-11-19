@@ -657,7 +657,7 @@ export function EnsembleAssemblerCanvas({
             </span>
           </div>
 
-          {/* Model 1: VeraScreener Alpha */}
+          {/* Model 1: SigmaRail screener Alpha */}
           <div
             className={cn(
               "rounded border p-3 transition-all",
@@ -672,7 +672,7 @@ export function EnsembleAssemblerCanvas({
                   onChange={(e) => setAlphaScreener(e.target.checked)}
                   className="rounded border-line"
                 />
-                Vera Screener Breakout Alpha
+                SigmaRail Breakout Alpha
               </label>
               <span className="font-mono text-[9px] text-ink-faint">VeraScreenerAlphaModel</span>
             </div>
@@ -893,7 +893,7 @@ export function EnsembleAssemblerCanvas({
                   Confidence-Weighted PCM (Native Multi-Alpha Blend)
                 </option>
                 <option value="VeraScreenerPortfolioConstructionModel">
-                  Vera Screener PCM (ATR Volatility Risk Sizing)
+                  SigmaRail Screener PCM (ATR volatility risk sizing)
                 </option>
                 <option value="RiskParityPortfolioConstructionModel">
                   Risk Parity PCM (Inverse-Volatility Sizing)

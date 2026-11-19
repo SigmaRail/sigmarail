@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ScreenField } from "../types";
 import type { Stage } from "../components/strategy/StrategyDocument";
+import { authenticatedFetch } from "../api/authenticatedFetch";
 
 const L7_SLOT_COLS: { name: string; label: string }[] = [
   { name: "atr_14_pct", label: "ATR 14%" },
@@ -30,7 +31,7 @@ let _posBindingsPromise: Promise<PositionBinding[]> | null = null;
 /** Fetch + cache the served position-binding registry (module scope). */
 export function fetchPositionBindings(): Promise<PositionBinding[]> {
   if (!_posBindingsPromise) {
-    _posBindingsPromise = fetch("/api/strategy/position-fields")
+    _posBindingsPromise = authenticatedFetch("/api/strategy/position-fields")
       .then((r) => (r.ok ? r.json() : { fields: [] }))
       .then((d) => (Array.isArray(d?.fields) ? (d.fields as PositionBinding[]) : []))
       .catch(() => [] as PositionBinding[]);
@@ -72,7 +73,7 @@ let _pcmBindingsPromise: Promise<PcmBinding[]> | null = null;
 /** Fetch + cache the PCM binding registry, flattened to {ns, field, …} rows. */
 export function fetchPcmBindings(): Promise<PcmBinding[]> {
   if (!_pcmBindingsPromise) {
-    _pcmBindingsPromise = fetch("/api/strategy/pcm-fields")
+    _pcmBindingsPromise = authenticatedFetch("/api/strategy/pcm-fields")
       .then((r) => (r.ok ? r.json() : { namespaces: {} }))
       .then((d) => {
         const ns = (d?.namespaces ?? {}) as Record<
