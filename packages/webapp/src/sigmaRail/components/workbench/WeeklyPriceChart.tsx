@@ -1,5 +1,7 @@
 import type { ChartCandlePoint } from "../../types";
 import { stockPath } from "../../routes";
+import { useGenerateLocalePath } from "@sb/webapp-core/hooks";
+import { Link } from "react-router-dom";
 
 type WeeklyClose = { week: string; close: number };
 
@@ -45,6 +47,7 @@ export function WeeklyPriceChart({
   asOfDate: string;
   candles: ChartCandlePoint[];
 }) {
+  const generateLocalePath = useGenerateLocalePath();
   const points = weeklyCloses(candles, asOfDate);
   const values = points.map((point) => point.close);
   const min = values.length ? Math.min(...values) : 0;
@@ -76,7 +79,8 @@ export function WeeklyPriceChart({
     ["YTD", ytdPrior],
     ["1Y", findPrior(365)],
   ] as const;
-  const chartHref = `${stockPath(ticker)}?as_of=${encodeURIComponent(asOfDate)}`;
+  const chartPath = generateLocalePath(stockPath(ticker).replace(/^\/+/, ""));
+  const chartHref = `${chartPath}?as_of=${encodeURIComponent(asOfDate)}`;
 
   return (
     <section className="min-w-0 border-b border-line bg-surface px-3 py-3 sm:px-4" aria-label={`${ticker} 52-week price chart`}>
@@ -85,9 +89,9 @@ export function WeeklyPriceChart({
           <h2 className="text-xs font-semibold text-ink">Price · weekly closes</h2>
           <p className="text-[10px] text-ink-muted">52 available weeks through {asOfDate}</p>
         </div>
-        <a href={chartHref} className="shrink-0 rounded border border-line px-2.5 py-1.5 text-[10px] font-semibold text-ink hover:bg-surface-raised">
+        <Link to={chartHref} className="shrink-0 rounded border border-line px-2.5 py-1.5 text-[10px] font-semibold text-ink hover:bg-surface-raised">
           Full chart <span aria-hidden="true">↗</span>
-        </a>
+        </Link>
       </div>
       {points.length < 2 ? (
         <div className="flex h-32 items-center justify-center text-xs text-ink-muted">Not enough weekly price history</div>

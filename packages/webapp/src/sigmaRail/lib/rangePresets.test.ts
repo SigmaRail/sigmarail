@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampWindow, daysBetween, presetWindow, subtractMonths } from "./rangePresets";
+import { clampWindow, daysBetween, membershipHistoryStart, presetWindow, subtractMonths } from "./rangePresets";
 
 describe("subtractMonths", () => {
   it("steps whole months back", () => {
@@ -76,6 +76,20 @@ describe("presetWindow", () => {
   it("returns null for a date it cannot parse", () => {
     expect(presetWindow("1M", "")).toBeNull();
     expect(presetWindow("1M", "23/09/2026")).toBeNull();
+  });
+});
+
+describe("membershipHistoryStart", () => {
+  it("uses a one-year history when the strategy window has no span", () => {
+    expect(membershipHistoryStart("2026-11-10", "2026-11-10")).toBe("2025-11-10");
+  });
+
+  it("preserves an explicit start date before the as-of date", () => {
+    expect(membershipHistoryStart("2026-11-10", "2025-07-01")).toBe("2025-07-01");
+  });
+
+  it("uses the requested start while the as-of date is still loading", () => {
+    expect(membershipHistoryStart("", "2025-07-01")).toBe("2025-07-01");
   });
 });
 

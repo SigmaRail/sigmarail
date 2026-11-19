@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchAsOfRange, fetchFields, previewIr } from "../../api/screens";
 import type { OrderDirection, ScreenField, UniverseQueryV1 } from "../../types";
@@ -73,6 +74,22 @@ const TABLE_PAGE = 10;
 const ASOF_FETCH_LIMIT = 5000;
 const DEFAULT_SORT_FIELD = "overall_score";
 const DEFAULT_SORT_DIR: OrderDirection = "desc";
+const STOCK_REVIEW_HISTORY_KEY = "sigmaRailStockReview";
+
+interface StockReviewHistoryState {
+  ticker: string;
+  asOfDate: string;
+}
+
+function stockReviewFromState(state: unknown): StockReviewHistoryState | null {
+  if (!state || typeof state !== "object") return null;
+  const review = (state as Record<string, unknown>)[STOCK_REVIEW_HISTORY_KEY];
+  if (!review || typeof review !== "object") return null;
+  const { ticker, asOfDate } = review as Record<string, unknown>;
+  return typeof ticker === "string" && typeof asOfDate === "string"
+    ? { ticker, asOfDate }
+    : null;
+}
 
 function yearBackFrom(endDate: string): string {
   if (!endDate) return "";
@@ -142,6 +159,9 @@ export function UniverseSlotCard({
   asOf = "",
   startDate: startDateProp = "",
 }: UniverseSlotCardProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const restoredStockReview = stockReviewFromState(location.state);
   const { openPicker } = useFieldPicker();
   const fieldsQuery = useQuery({
     queryKey: ["screen-fields"],
@@ -166,7 +186,7 @@ export function UniverseSlotCard({
   const [sortField, setSortField] = useState(DEFAULT_SORT_FIELD);
   const [sortDir, setSortDir] = useState<OrderDirection>(DEFAULT_SORT_DIR);
   const [extraSelect, setExtraSelect] = useState<string[]>([]);
-  const [chartTicker, setChartTicker] = useState<string | null>(null);
+  const [chartTicker, setChartTicker] = useState<string | null>(restoredStockReview?.ticker ?? null);
 
   // Range chart is membership counts — sort / extra cols do not affect the line.
   const rangeSpec = useMemo(() => screenTreesToUniverseSpec(screen), [screen]);
@@ -215,8 +235,17 @@ export function UniverseSlotCard({
   // Clear pin / chart when evaluation end date or screen changes.
   useEffect(() => {
     setPinnedDate(null);
-    setChartTicker(null);
-  }, [effectiveAsOf, liveScreenKey]);
+    if (!restoredStockReview) setChartTicker(null);
+  }, [effectiveAsOf, liveScreenKey, restoredStockReview?.ticker]);
+
+  // Restore the interim stock panel when Back returns from its full chart route.
+  useEffect(() => {
+    setChartTicker(restoredStockReview?.ticker ?? null);
+    if (restoredStockReview?.asOfDate) {
+      setPinnedDate(restoredStockReview.asOfDate);
+      setQueryDate(restoredStockReview.asOfDate);
+    }
+  }, [restoredStockReview?.ticker, restoredStockReview?.asOfDate]);
 
   // Reset visible window when the asof date, screen, or sort changes.
   useEffect(() => {
@@ -285,6 +314,24 @@ export function UniverseSlotCard({
       setPinnedDate(tableDate);
       setQueryDate(tableDate);
     }
+    const currentState = location.state && typeof location.state === "object"
+      ? location.state as Record<string, unknown>
+      : {};
+    navigate(`${location.pathname}${location.search}`, {
+      state: {
+        ...currentState,
+        [STOCK_REVIEW_HISTORY_KEY]: { ticker: t, asOfDate: tableDate || effectiveAsOf },
+      },
+      preventScrollReset: true,
+    });
+  }
+
+  function closeTickerReview() {
+    if (restoredStockReview && window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
+    setChartTicker(null);
   }
 
   function handleColumnHeaderClick(col: string) {
@@ -496,7 +543,7 @@ export function UniverseSlotCard({
                 <MembershipTickerInspect
                   ticker={chartTicker}
                   asOfDate={tableDate || ""}
-                  onClose={() => setChartTicker(null)}
+                  onClose={closeTickerReview}
                 />
               ) : null}
         </div>

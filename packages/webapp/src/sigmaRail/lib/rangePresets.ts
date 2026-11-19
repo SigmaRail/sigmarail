@@ -48,6 +48,17 @@ export function subtractMonths(iso: string, months: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/**
+ * Choose the initial membership-history window. A strategy may have a one-day
+ * evaluation period; using that as the chart start collapses history to one point.
+ */
+export function membershipHistoryStart(asOf: string, requestedStart?: string): string {
+  if (ISO.test(requestedStart ?? "") && (!ISO.test(asOf) || requestedStart! < asOf)) {
+    return requestedStart!;
+  }
+  return ISO.test(asOf) ? subtractMonths(asOf, 12) : "";
+}
+
 /** Calendar days between two ISO dates (UTC), or null when either is not a date. */
 export function daysBetween(from: string, to: string): number | null {
   if (!ISO.test(from) || !ISO.test(to)) return null;

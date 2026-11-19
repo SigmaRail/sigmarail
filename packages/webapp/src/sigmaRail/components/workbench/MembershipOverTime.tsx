@@ -12,7 +12,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { fetchAsOfRange, fetchUniverseRangeSummary } from "../../api/screens";
-import { RANGE_PRESETS, clampWindow, presetWindow, subtractMonths } from "../../lib/rangePresets";
+import { RANGE_PRESETS, clampWindow, membershipHistoryStart, presetWindow } from "../../lib/rangePresets";
 import type { UniverseQueryV1 } from "../../types";
 import { ProbeRangeChart } from "../ProbeRangeChart";
 import { Button } from "@sb/webapp-core/components/ui/button";
@@ -41,7 +41,7 @@ export function MembershipOverTime({
 }: MembershipOverTimeProps) {
   // A caller may not have a strategy's evaluation start; default to the last year so the window
   // is always valid (and cheap — the full history is one click away via `Max`).
-  const defaultFrom = startDate || (asOf ? subtractMonths(asOf, 12) : "");
+  const defaultFrom = membershipHistoryStart(asOf, startDate);
   /** Earliest session the service can serve — what `Max` should reach for. */
   const rangeFloor = useQuery({
     queryKey: ["backtest-as-of-range-floor"],

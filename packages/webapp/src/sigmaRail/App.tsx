@@ -18,6 +18,7 @@ import {
   updateSavedScreen,
 } from "./api/screens";
 import { NameDialog } from "./components/NameDialog";
+import { HistoryNavigation } from "./components/HistoryNavigation";
 import { FieldPickerProvider } from "./components/workbench/FieldPickerProvider";
 import { stockFromPath, stockPath, strategyIrIdFromPath, strategyPath, tabForPath, TAB_PATHS } from "./routes";
 import { buildScreenerSearch, readScreenerState } from "./lib/screenerUrl";
@@ -895,6 +896,7 @@ function SigmaRailAppContent() {
 
   return (
     <div className={activeTab === "charts" ? "flex min-h-full flex-col" : "flex h-full min-h-0 flex-col"}>
+      <HistoryNavigation />
       <NameDialog
         open={nameDialog != null}
         title={
