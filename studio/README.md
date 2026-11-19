@@ -1,6 +1,7 @@
-# SigmaRail Studio
+# SigmaRail Studio services
 
-SigmaRail Studio is the research and strategy-authoring application for the SigmaRail project family. It brings together market-data discovery, screener workflows, charts, strategy authoring, backtest review, and a consolidated MCP surface.
+The SigmaRail research and strategy-authoring UI runs in AppTension. This directory
+contains the Django API, MCP host, and supporting services still being migrated.
 
 The AppTension web application owns the SigmaRail UI in
 `packages/webapp/src/sigmaRail/`. The Django REST API and consolidated MCP remain
@@ -17,7 +18,8 @@ remains to be adapted.
 - **SigmaRail Studio services** under `studio/` own the Django REST API, MCP host, and query orchestration during migration.
 - **SigmaRail Lean** will own strategy execution and LEAN integration when that project is migrated.
 
-Studio should consume the published contracts and call explicit data/runtime services. It should not duplicate schema SQL or absorb the LEAN execution engine.
+These services consume published contracts and call explicit data/runtime
+services. They should not duplicate schema SQL or absorb the LEAN execution engine.
 
 ## Current migration status
 
