@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep tablet forecast charts compact in landscape; portrait stays single-column. */
+.forecast-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  .forecast-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @font-face {
   font-family: 'Inter Regular, sans-serif';
   src: url('./assets/fonts/Inter-Regular.woff') format('woff');
