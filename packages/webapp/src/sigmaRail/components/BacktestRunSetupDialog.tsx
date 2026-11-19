@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBacktestSpecs, submitBacktest } from "../api/backtests";
 import { fetchAsOfRange } from "../api/screens";
 import type { EvaluationConfig } from "../types";
-import { INITIAL_EVALUATION_CONFIG, EvaluationSettingsPanel } from "./studio/EvaluationSettingsPanel";
+import { INITIAL_EVALUATION_CONFIG, EvaluationSettingsPanel } from "./workbench/EvaluationSettingsPanel";
 import { evaluationExtraEnv, stampEvaluation } from "../lib/evaluationSpec";
 import { Button } from "@sb/webapp-core/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";

@@ -1,7 +1,7 @@
 import type { ReactNode, UIEvent } from "react";
 import { cn } from "../lib/utils";
 import type { OrderDirection } from "../types";
-import { StockIntrospectionPanel } from "./studio/StockIntrospectionPanel";
+import { StockIntrospectionPanel } from "./workbench/StockIntrospectionPanel";
 import { Button } from "@sb/webapp-core/components/ui/button";
 import {
   Table as WorkspaceTable,

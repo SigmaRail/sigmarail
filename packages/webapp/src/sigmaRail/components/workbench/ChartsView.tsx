@@ -129,7 +129,6 @@ export function ChartsView({
     >
       <QuoteHeader
         ticker={ticker}
-        data={data}
         asOfDate={asOfDate}
         onAsOfDateChange={(d) => {
           setAsOfDate(d);
@@ -143,7 +142,7 @@ export function ChartsView({
       />
 
       <div data-testid="charts-content-flow" className="relative isolate flex w-full min-w-0 flex-col">
-        <StockOverviewPanel data={data} showYearlyEarnings={false} />
+        <StockOverviewPanel ticker={ticker} data={data} showYearlyEarnings={false} />
         <main className="relative isolate z-0 flex w-full min-w-0 flex-col border-b border-border lg:p-2">
           {chartQuery.isLoading && !data ? (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">

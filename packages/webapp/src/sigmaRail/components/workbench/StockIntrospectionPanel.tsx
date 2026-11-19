@@ -142,7 +142,6 @@ export function StockIntrospectionPanel({
     >
       <QuoteHeader
         ticker={activeTicker}
-        data={data}
         asOfDate={asOfDate}
         trailing={
           <div className="flex items-center gap-1.5">
@@ -182,7 +181,7 @@ export function StockIntrospectionPanel({
       >
         {showOverview ? (
           <div className="flex min-w-0 shrink-0 flex-col">
-            <StockOverviewPanel data={data} showYearlyEarnings={false} />
+            <StockOverviewPanel ticker={activeTicker} data={data} showYearlyEarnings={false} />
             {chartPanel}
           </div>
         ) : chartPanel}

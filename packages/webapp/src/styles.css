@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive layout for the SigmaRail stock overview page. */
+.stock-overview-container {
+  container-name: stock-overview;
+  container-type: inline-size;
+}
+
+.stock-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container stock-overview (min-width: 640px) {
+  .stock-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container stock-overview (min-width: 840px) {
+  .stock-overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /* Keep tablet forecast charts compact in landscape; portrait stays single-column. */
 .forecast-chart-grid {
   display: grid;

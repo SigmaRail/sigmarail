@@ -512,6 +512,93 @@ def overlay_street_eps(
     return out
 
 
+def append_missing_quarterly_actuals(
+    quarterly: list[dict[str, Any]],
+    actuals: list[dict[str, Any]],
+    *,
+    as_of: str,
+) -> list[dict[str, Any]]:
+    """Fill quarterly history from reported analyst actuals absent in fundamentals."""
+    periods: dict[str, dict[str, dict[str, Any]]] = {}
+    for item in actuals:
+        period = str(item.get("period_end_date") or "")
+        metric = str(item.get("metric") or "eps")
+        if not period or period > as_of or metric not in {"eps", "sales"}:
+            continue
+        period_rows = periods.setdefault(period, {})
+        previous = period_rows.get(metric)
+        # Prefer a reported row over any consensus snapshot for this period.
+        if previous is None or (previous.get("reported") is None and item.get("reported") is not None):
+            period_rows[metric] = item
+
+    def number(row: dict[str, Any] | None, key: str) -> float | None:
+        value = row.get(key) if row else None
+        try:
+            return float(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    def revenue_m(value: float | None) -> float | None:
+        if value is None:
+            return None
+        return round(value / 1e6, 1) if abs(value) > 1e6 else round(value, 1)
+
+    def surprise_pct(row: dict[str, Any] | None) -> float | None:
+        value = number(row, "surprise_pct")
+        if value is None:
+            return None
+        return round(value * 100 if abs(value) <= 1.5 else value, 1)
+
+    existing_dates = [str(row.get("report_date") or "") for row in quarterly]
+    additions: list[dict[str, Any]] = []
+    for period, metrics in periods.items():
+        eps_row = metrics.get("eps")
+        sales_row = metrics.get("sales")
+        eps_actual = number(eps_row, "reported")
+        sales_actual = revenue_m(number(sales_row, "reported"))
+        if eps_actual is None and sales_actual is None:
+            continue
+
+        period_day = datetime_days(period)
+        if any(
+            date and period_day is not None
+            and abs((datetime_days(date) or 0) - period_day) <= 75
+            for date in existing_dates
+        ):
+            continue
+
+        eps_estimate = number(eps_row, "estimate_at_print")
+        sales_estimate = revenue_m(number(sales_row, "estimate_at_print"))
+        eps_surprise = surprise_pct(eps_row)
+        sales_surprise = surprise_pct(sales_row)
+        additions.append({
+            "report_date": period,
+            "revenue_m": sales_actual,
+            "eps": round(eps_actual, 2) if eps_actual is not None else None,
+            "gross_margin_pct": None,
+            "net_margin_pct": None,
+            "revenue_growth_yoy": None,
+            "eps_growth_yoy": None,
+            "is_estimate": False,
+            "eps_actual": round(eps_actual, 2) if eps_actual is not None else None,
+            "eps_estimate": round(eps_estimate, 2) if eps_estimate is not None else None,
+            "eps_surprise_dollar": round(eps_actual - eps_estimate, 2)
+            if eps_actual is not None and eps_estimate is not None else None,
+            "eps_surprise_pct": eps_surprise,
+            "eps_beat_miss": "beat" if eps_surprise is not None and eps_surprise > 0 else
+            "miss" if eps_surprise is not None and eps_surprise < 0 else None,
+            "revenue_actual": sales_actual,
+            "revenue_estimate": sales_estimate,
+            "revenue_surprise_m": round(sales_actual - sales_estimate, 1)
+            if sales_actual is not None and sales_estimate is not None else None,
+            "revenue_surprise_pct": sales_surprise,
+            "revenue_beat_miss": "beat" if sales_surprise is not None and sales_surprise > 0 else
+            "miss" if sales_surprise is not None and sales_surprise < 0 else None,
+        })
+
+    return sorted([*quarterly, *additions], key=lambda row: str(row.get("report_date") or ""))
+
+
 def overlay_street_eps_on_events(
     events: list[dict[str, Any]],
     actuals: list[dict[str, Any]],

@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { AnnualGrowthPoint, StockIntrospectionData } from "../../types";
 import { cn } from "../../lib/utils";
+import { BookmarkButton } from "./BookmarkButton";
 
 function valueOf(source: Record<string, unknown>, key: string): number | null {
   const value = source[key];
@@ -22,6 +23,33 @@ function pctChange(value: number | null): string {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
+function formatVolume(value: number | null): string {
+  if (value === null) return "—";
+  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(Math.round(value));
+}
+
+function formatMarketCap(value: number | null): string {
+  if (value === null || value === 0) return "—";
+  if (Math.abs(value) >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (Math.abs(value) >= 1e9) return `$${(value / 1e9).toFixed(1)}B`;
+  if (Math.abs(value) >= 1e6) return `$${(value / 1e6).toFixed(0)}M`;
+  return `$${value.toFixed(0)}`;
+}
+
+function changePct(value: number | null): string {
+  if (value === null) return "—";
+  const normalized = Math.abs(value) <= 1.5 ? value * 100 : value;
+  return `${normalized > 0 ? "+" : ""}${normalized.toFixed(1)}%`;
+}
+
+function plainPct(value: number | null): string {
+  if (value === null) return "—";
+  const normalized = Math.abs(value) <= 1.5 ? value * 100 : value;
+  return `${normalized.toFixed(1)}%`;
+}
+
 function shortSales(value: number | null): string {
   if (value === null) return "—";
   return Math.abs(value) >= 1000 ? `$${(value / 1000).toFixed(1)}B` : `$${value.toFixed(0)}M`;
@@ -41,14 +69,23 @@ function growthClass(value: number | null | undefined): string {
 }
 
 export function StockOverviewPanel({
+  ticker,
   data,
   showYearlyEarnings = true,
 }: {
+  ticker?: string;
   data?: StockIntrospectionData | null;
   showYearlyEarnings?: boolean;
 }) {
   const headingId = useId();
   const kpis = (data?.as_of_kpis ?? {}) as Record<string, unknown>;
+  const symbol = ticker || data?.ticker || "";
+  const close = valueOf(kpis, "close");
+  const change = valueOf(kpis, "perf_5d");
+  const high52w = valueOf(kpis, "high_52w");
+  const off52wHigh = close !== null && high52w !== null && high52w > 0
+    ? -((1 - close / high52w) * 100)
+    : null;
   const annual: AnnualGrowthPoint[] = [...(data?.annual_growth ?? [])].sort((a, b) =>
     String(b.year).localeCompare(String(a.year)),
   );
@@ -64,13 +101,31 @@ export function StockOverviewPanel({
   ] as const;
 
   return (
-    <aside className="min-w-0 border-y border-line bg-surface text-xs font-mono">
+    <aside className="stock-overview-container min-w-0 border-y border-line bg-surface text-xs font-mono">
       <section aria-labelledby={`${headingId}-overview`} className="px-3 py-3 sm:px-4">
         <h2 id={`${headingId}-overview`} className="mb-3 text-sm font-bold text-ink">Overview</h2>
-        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+        <div className="stock-overview-grid min-w-0 gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <div className="mb-1 flex min-w-0 items-center justify-between gap-2">
+              <h3 className="truncate text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Trading</h3>
+              {symbol ? <BookmarkButton ticker={symbol} /> : null}
+            </div>
+            <div className="min-w-0">
+              {metric("Price", close === null ? "—" : `$${close.toFixed(2)}`)}
+              <div className={change === null ? "" : change > 0 ? "text-emerald-500" : change < 0 ? "text-rose-500" : ""}>
+                {metric("5-day change", changePct(change))}
+              </div>
+              {metric("Avg volume (50d)", formatVolume(valueOf(kpis, "avg_vol_50d")))}
+              {metric("Market cap", formatMarketCap(valueOf(kpis, "marketcap")))}
+              <div className={off52wHigh === null ? "" : off52wHigh < 0 ? "text-rose-500" : "text-emerald-500"}>
+                {metric("From 52-week high", changePct(off52wHigh))}
+              </div>
+              {metric("ATR", plainPct(valueOf(kpis, "atr_14_pct")))}
+            </div>
+          </div>
           <div>
             <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Ratings</h3>
-            <div className="grid grid-cols-2 gap-x-4">
+            <div className="min-w-0">
               {metric("RS", valueOf(kpis, "rs_rating")?.toFixed(0) ?? "—")}
               {metric("Technical", valueOf(kpis, "technical_rating")?.toFixed(0) ?? "—")}
               {metric("Setup", valueOf(kpis, "setup_quality_rating")?.toFixed(0) ?? "—")}
@@ -81,7 +136,7 @@ export function StockOverviewPanel({
           </div>
           <div>
             <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Company metrics</h3>
-            <div className="grid grid-cols-2 gap-x-4">
+            <div className="min-w-0">
               {fundamentals.map(([label, value]) => <div key={label}>{metric(label, value)}</div>)}
             </div>
           </div>

@@ -14,6 +14,7 @@ from typing import Any
 import datetime
 
 from screens.marketsurge_payload import (
+    append_missing_quarterly_actuals,
     build_annual_growth,
     enrich_as_of_kpis_street,
     ibd_fiscal_year_label,
@@ -956,6 +957,11 @@ def get_stock_introspection(
 
     earnings_events = overlay_street_eps_on_events(earnings_events, analyst_actuals_rows)
     quarterly_growth = overlay_street_eps(quarterly_growth, analyst_actuals_rows)
+    quarterly_growth = append_missing_quarterly_actuals(
+        quarterly_growth,
+        analyst_actuals_rows,
+        as_of=as_of_date,
+    )
 
     quarterly_growth = merge_forward_estimates(
         quarterly_growth,

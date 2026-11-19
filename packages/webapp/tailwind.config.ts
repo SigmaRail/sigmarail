@@ -10,7 +10,6 @@ module.exports = {
     // sibling libraries. Include them explicitly so Tailwind emits their utility
     // classes even when Nx's dependency graph doesn't discover a library edge.
     join(__dirname, '../webapp-libs/*/src/**/*.{js,ts,jsx,tsx}'),
-    join(__dirname, '../../frontend/src/**/*!(*.stories|*.spec).{js,ts,jsx,tsx}'),
   ],
   theme: {
     extend: {

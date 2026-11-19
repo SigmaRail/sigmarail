@@ -31,14 +31,12 @@ jobs:
           python3.11 -m build packages/sigmarail-spec --outdir /tmp/sigmarail-spec-dist
       - name: Run unified Core and Studio suite with one synthetic ClickHouse
         run: python3.11 -m pytest --sigmarail-clickhouse
-      - name: Install frontend dependencies
-        working-directory: studio/frontend
-        run: npm ci
-      - name: Run frontend tests and production build
-        working-directory: studio/frontend
-        run: |
-          npm test
-          npm run build
+      - name: Install AppTension workspace dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Type-check SigmaRail in AppTension
+        run: corepack pnpm --filter webapp run type-check
+      - name: Build the AppTension web application
+        run: corepack pnpm nx run webapp:build
 
   lean-smoke:
     # LEAN's private image and a self-hosted Docker Desktop runner are required.

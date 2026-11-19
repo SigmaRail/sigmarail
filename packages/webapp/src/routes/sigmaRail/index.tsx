@@ -1,9 +1,5 @@
-import StudioWorkbench from '../../../../../studio/frontend/src/App';
+import SigmaRailApplication from '../../sigmaRail/App';
 
-export const SigmaRailWorkbench = () => (
-  <div data-testid="workbench-route-frame" className="flex min-w-0 w-full flex-1 flex-col">
-    <StudioWorkbench embedded />
-  </div>
-);
+export const SigmaRailWorkbench = () => <SigmaRailApplication />;
 
 export default SigmaRailWorkbench;

@@ -64,7 +64,8 @@ function SingleForecastPane({
   const chartW = width - padLeft - padRight;
   const chartH = height - padTop - padBottom;
 
-  // Calculate min/max across all valid values
+  // Calculate min/max across all valid values. A constant zero series should
+  // not invent a negative revenue scale (and should remain legible for EPS).
   const { minVal, maxVal } = useMemo(() => {
     let min = Infinity;
     let max = -Infinity;
@@ -82,12 +83,18 @@ function SingleForecastPane({
       return { minVal: 0, maxVal: 100 };
     }
     if (min === max) {
-      min -= 1;
-      max += 1;
+      if (min === 0) {
+        return title === "Revenue"
+          ? { minVal: 0, maxVal: 1 }
+          : { minVal: -0.1, maxVal: 0.1 };
+      }
+      const constantPadding = Math.max(Math.abs(min) * 0.08, 0.01);
+      min -= constantPadding;
+      max += constantPadding;
     }
     const margin = (max - min) * 0.18;
     return { minVal: min - margin, maxVal: max + margin };
-  }, [points]);
+  }, [points, title]);
 
   const getY = (val: number | null) => {
     if (val === null) return 0;
@@ -176,6 +183,9 @@ function SingleForecastPane({
           {points.map((p, idx) => {
             const x = getX(idx);
             const isHovered = activeIdx === idx;
+            const labelInterval = Math.max(1, Math.ceil(points.length / 8));
+            const showPeriodLabel =
+              points.length <= 8 || idx % labelInterval === 0 || idx === points.length - 1;
             return (
               <g key={`x-${idx}`}>
                 {/* Vertical column highlight on hover */}
@@ -192,18 +202,20 @@ function SingleForecastPane({
                 )}
 
                 {/* X-axis tick label */}
-                <text
-                  x={x}
-                  y={height - 12}
-                  fill={isHovered ? "#38bdf8" : p.isEstimate ? "#38bdf8" : "#a1a1aa"}
-                  fontSize="9.5"
-                  fontWeight={isHovered ? "bold" : "normal"}
-                  textAnchor="middle"
-                  fontFamily="monospace"
-                >
-                  {p.periodLabel}
-                  {p.isEstimate ? "e" : ""}
-                </text>
+                {showPeriodLabel && (
+                  <text
+                    x={x}
+                    y={height - 12}
+                    fill={isHovered ? "#38bdf8" : p.isEstimate ? "#38bdf8" : "#a1a1aa"}
+                    fontSize="9.5"
+                    fontWeight={isHovered ? "bold" : "normal"}
+                    textAnchor="middle"
+                    fontFamily="monospace"
+                  >
+                    {p.periodLabel}
+                    {p.isEstimate ? "e" : ""}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -327,20 +339,22 @@ export function QuarterlyForecastAccuracyChart({
   const [periodMode, setPeriodMode] = useState<PeriodMode>("quarterly");
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  // Shape Quarterly points (ordered chronologically oldest to newest, up to 10 points)
+  // Keep the full reported history returned by the service, then append the
+  // forward consensus periods in chronological order. The pane thins only its
+  // axis labels so every data point remains visible and hoverable.
   const quarterlyPoints = useMemo(() => {
     const list = [...quarterlyGrowth].sort((a, b) => {
-      const ae = a.is_estimate ? 1 : 0;
-      const be = b.is_estimate ? 1 : 0;
-      if (ae !== be) return ae - be;
-      return (a.report_date || "").localeCompare(b.report_date || "");
+      const aDate = a.report_date || (a.is_estimate ? "9999-12-31" : "");
+      const bDate = b.report_date || (b.is_estimate ? "9999-12-31" : "");
+      const dateOrder = aDate.localeCompare(bDate);
+      if (dateOrder !== 0) return dateOrder;
+      return Number(Boolean(a.is_estimate)) - Number(Boolean(b.is_estimate));
     });
-    const recent = list.slice(-10);
 
     const revPoints: ChartPoint[] = [];
     const epsPoints: ChartPoint[] = [];
 
-    for (const q of recent) {
+    for (const q of list) {
       const dateStr = q.report_date || "";
       const periodLabel = dateStr ? dateStr.slice(2, 7) : "—";
 

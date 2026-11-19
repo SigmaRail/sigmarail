@@ -11,10 +11,10 @@ import {
   MembershipTickerInspect,
 } from "./MembershipWorkbench";
 import type { PipelineDocument } from "./strategy/StrategyDocument";
-import { useFieldPicker } from "./studio/FieldPickerProvider";
+import { useFieldPicker } from "./workbench/FieldPickerProvider";
 import {
   REQUIRED_MEMBERSHIP_SELECT,
-} from "./studio/UniverseSlotCard";
+} from "./workbench/UniverseSlotCard";
 
 const TABLE_PAGE = 10;
 const ASOF_FETCH_LIMIT = 5000;

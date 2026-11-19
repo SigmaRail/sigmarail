@@ -92,8 +92,8 @@ export default defineConfig(({ mode }): UserConfig => {
     },
 
     resolve: {
-      // The embedded SigmaRail workbench imports from a sibling package subtree.
-      // Keep router context, just like React context, on the single AppTension copy.
+      // SigmaRail is a feature module in this webapp. Keep router context, just
+      // like React context, on the single AppTension copy.
       dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom'],
       // Vite 6: Default conditions changed - explicitly set if needed
       // Defaults are now: ['module', 'browser', 'development|production']

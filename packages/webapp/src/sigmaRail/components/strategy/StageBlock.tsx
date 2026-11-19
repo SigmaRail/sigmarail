@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { IrOperand, ScreenField } from "../../types";
 import { formatOperandToString, parseArithmeticTokens, tokenize } from "../../lib/formulaParser";
-import { FilterTreeSlotEditor } from "../studio/FilterTreeSlotEditor";
+import { FilterTreeSlotEditor } from "../workbench/FilterTreeSlotEditor";
 import type { EntryTriggerType, FilterGroup, FilterNode, FilterTree, Stage, StageMode } from "./StrategyDocument";
 import { isFilterNot } from "./StrategyDocument";
 import { Button } from "@sb/webapp-core/components/ui/button";

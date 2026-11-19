@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   REQUIRED_MEMBERSHIP_SELECT,
   screenTreesToUniverseSpec,
-} from "../components/studio/UniverseSlotCard";
+} from "../components/workbench/UniverseSlotCard";
 
 describe("screenTreesToUniverseSpec", () => {
   it("builds screener UniverseQueryV1 from empty screen", () => {

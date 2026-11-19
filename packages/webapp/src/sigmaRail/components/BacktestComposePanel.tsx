@@ -20,9 +20,9 @@ import type {
   UniverseQueryV1,
 } from "../types";
 
-import { AlgorithmStudioView, type AssembledFrameworkSpec } from "./studio/AlgorithmStudioView";
-import { SpecLibraryModal } from "./studio/SpecLibraryModal";
-import { SaveStrategyTemplateModal } from "./studio/SaveStrategyTemplateModal";
+import { AlgorithmStudioView, type AssembledFrameworkSpec } from "./workbench/AlgorithmStudioView";
+import { SpecLibraryModal } from "./workbench/SpecLibraryModal";
+import { SaveStrategyTemplateModal } from "./workbench/SaveStrategyTemplateModal";
 import { exitRulesFromDoc, patchExitRules } from "../lib/pipelineSlotBindings";
 import { parseRules } from "../lib/rulesAst";
 import { Button } from "@sb/webapp-core/components/ui/button";

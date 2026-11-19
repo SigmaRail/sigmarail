@@ -1,4 +1,10 @@
-# SigmaRail workbench frontend
+# Retired standalone frontend scaffold
+
+The SigmaRail UI source now lives in `packages/webapp/src/sigmaRail/` and runs
+inside AppTension's authenticated shell. This directory is retained temporarily
+for its browser-test fixtures and configuration; it is not a second application
+entry point. Build and run the product through `packages/webapp` from the
+repository root.
 
 React + Vite + TypeScript product module hosted by the AppTension web application.
 

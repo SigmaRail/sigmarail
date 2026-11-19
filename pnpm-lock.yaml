@@ -687,6 +687,18 @@ importers:
 
   packages/webapp:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.66.0
+        version: 5.90.14(react@19.2.3)
+      '@tanstack/react-table':
+        specifier: ^8.21.2
+        version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      katex:
+        specifier: ^0.18.7
+        version: 0.18.11
+      lightweight-charts:
+        specifier: ^5.2.1
+        version: 5.3.0
       intl:
         specifier: ^1.2.5
         version: 1.2.5
@@ -702,6 +714,9 @@ importers:
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
+      react-router-dom:
+        specifier: ^7.18.3
+        version: 7.18.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
       '@esbuild-plugins/node-globals-polyfill':
         specifier: ^0.2.3

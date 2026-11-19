@@ -18,8 +18,7 @@ import {
   updateSavedScreen,
 } from "./api/screens";
 import { NameDialog } from "./components/NameDialog";
-import { TopBar } from "./components/TopBar";
-import { FieldPickerProvider } from "./components/studio/FieldPickerProvider";
+import { FieldPickerProvider } from "./components/workbench/FieldPickerProvider";
 import { stockFromPath, stockPath, strategyIrIdFromPath, strategyPath, tabForPath, TAB_PATHS } from "./routes";
 import { buildScreenerSearch, readScreenerState } from "./lib/screenerUrl";
 import { whereToAst } from "./lib/screenAst";
@@ -48,12 +47,12 @@ import type {
 } from "./types";
 
 const BacktestView = lazy(() => import("./components/BacktestView").then(({ BacktestView }) => ({ default: BacktestView })));
-const MarketView = lazy(() => import("./components/studio/MarketView").then(({ MarketView }) => ({ default: MarketView })));
+const MarketView = lazy(() => import("./components/workbench/MarketView").then(({ MarketView }) => ({ default: MarketView })));
 const MonitorView = lazy(() => import("./components/MonitorView").then(({ MonitorView }) => ({ default: MonitorView })));
-const ScreenerStudioModal = lazy(() => import("./components/studio/ScreenerStudioModal").then(({ ScreenerStudioModal }) => ({ default: ScreenerStudioModal })));
-const ScreensView = lazy(() => import("./components/studio/ScreensView").then(({ ScreensView }) => ({ default: ScreensView })));
-const ChartsView = lazy(() => import("./components/studio/ChartsView").then(({ ChartsView }) => ({ default: ChartsView })));
-const WatchlistsView = lazy(() => import("./components/studio/WatchlistsView").then(({ WatchlistsView }) => ({ default: WatchlistsView })));
+const ScreenerStudioModal = lazy(() => import("./components/workbench/ScreenerStudioModal").then(({ ScreenerStudioModal }) => ({ default: ScreenerStudioModal })));
+const ScreensView = lazy(() => import("./components/workbench/ScreensView").then(({ ScreensView }) => ({ default: ScreensView })));
+const ChartsView = lazy(() => import("./components/workbench/ChartsView").then(({ ChartsView }) => ({ default: ChartsView })));
+const WatchlistsView = lazy(() => import("./components/workbench/WatchlistsView").then(({ WatchlistsView }) => ({ default: WatchlistsView })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,12 +91,7 @@ function withLocalePath(generateLocalePath: (path: string) => string, path: stri
   return `${generateLocalePath(pathname.replace(/^\/+/, ""))}${search}`;
 }
 
-function StudioApp({ embedded = false }: { embedded?: boolean }) {
-  if (!embedded) return <StudioAppContent embedded={false} />;
-  return <TenantBoundStudioApp />;
-}
-
-function TenantBoundStudioApp() {
+function TenantBoundSigmaRailApp() {
   const queryClient = useQueryClient();
   const { data: currentTenant } = useCurrentTenant();
   const previousTenantId = useRef<string | null>(null);
@@ -120,10 +114,10 @@ function TenantBoundStudioApp() {
     );
   }
 
-  return <StudioAppContent embedded />;
+  return <SigmaRailAppContent />;
 }
 
-function StudioAppContent({ embedded = false }: { embedded?: boolean }) {
+function SigmaRailAppContent() {
   const queryClient = useQueryClient();
 
   // Today's date as YYYY-MM-DD (local time)
@@ -900,7 +894,7 @@ function StudioAppContent({ embedded = false }: { embedded?: boolean }) {
   };
 
   return (
-    <div className={embedded && activeTab === "charts" ? "flex min-h-full flex-col" : "flex h-full min-h-0 flex-col"}>
+    <div className={activeTab === "charts" ? "flex min-h-full flex-col" : "flex h-full min-h-0 flex-col"}>
       <NameDialog
         open={nameDialog != null}
         title={
@@ -915,19 +909,6 @@ function StudioAppContent({ embedded = false }: { embedded?: boolean }) {
         onCancel={() => closeNameDialog(null)}
         onConfirm={(value) => closeNameDialog(value)}
       />
-      {!embedded ? (
-        <TopBar
-          dirty={dirty}
-          saving={saving}
-          onSave={() => {
-            void handleSave();
-          }}
-          onSaveAs={() => {
-            void handleSaveAs();
-          }}
-        />
-      ) : null}
-
       {saveFlash ? (
         <div className="border-b border-accent/30 bg-accent-soft px-4 py-1.5 text-[12px] text-ink">
           {saveFlash}
@@ -1067,11 +1048,11 @@ function StudioAppContent({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-export default function App({ embedded = false }: { embedded?: boolean }) {
+export default function SigmaRailApplication() {
   return (
     <QueryClientProvider client={queryClient}>
       <FieldPickerProvider>
-        <StudioApp embedded={embedded} />
+        <TenantBoundSigmaRailApp />
       </FieldPickerProvider>
     </QueryClientProvider>
   );

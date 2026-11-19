@@ -21,7 +21,7 @@ import {
 } from "../lib/tablePreferences";
 import { cn } from "../lib/utils";
 import type { ScreenField, IrOperand } from "../types";
-import { FieldInfoPopover } from "./studio/FieldInfoPopover";
+import { FieldInfoPopover } from "./workbench/FieldInfoPopover";
 import { Checkbox } from "@sb/webapp-core/components/forms/checkbox";
 import { Button } from "@sb/webapp-core/components/ui/button";
 import {
