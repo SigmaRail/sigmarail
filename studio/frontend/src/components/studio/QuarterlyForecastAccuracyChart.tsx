@@ -9,7 +9,6 @@ interface QuarterlyForecastAccuracyChartProps {
   asOfDate?: string;
   onClose?: () => void;
   className?: string;
-  quarterlyOnly?: boolean;
 }
 
 type PeriodMode = "quarterly" | "annual";
@@ -324,7 +323,6 @@ export function QuarterlyForecastAccuracyChart({
   asOfDate,
   onClose,
   className,
-  quarterlyOnly = false,
 }: QuarterlyForecastAccuracyChartProps) {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("quarterly");
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -424,9 +422,9 @@ export function QuarterlyForecastAccuracyChart({
       )}
     >
       {/* Header with Title, Period Switcher, and Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2.5 mb-2 border-b border-line">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-ink">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pb-2.5 mb-2 border-b border-line">
+        <div className="flex min-w-0 flex-[1_1_16rem] flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="min-w-0 text-sm font-bold text-ink">
             {ticker} Forecasts & Estimates Accuracy
           </span>
           {asOfDate && (
@@ -437,7 +435,7 @@ export function QuarterlyForecastAccuracyChart({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 text-[10.5px]">
+        <div className="flex min-w-0 flex-[1_1_24rem] flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[10.5px]">
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-sky-600 border border-white" />
             <span className="text-ink">Reported</span>
@@ -464,10 +462,11 @@ export function QuarterlyForecastAccuracyChart({
         </div>
 
       {/* Controls: Annual / Quarterly toggle & Close */}
-        <div className="flex items-center gap-2">
-          <div className="inline-flex rounded border border-line bg-surface-sunk p-0.5 text-[10px]">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div role="group" aria-label="Forecast period" className="inline-flex shrink-0 rounded border border-line bg-surface-sunk p-0.5 text-[10px]">
             <button
               type="button"
+              aria-pressed={periodMode === "quarterly"}
               onClick={() => {
                 setPeriodMode("quarterly");
                 setHoveredIdx(null);
@@ -481,23 +480,22 @@ export function QuarterlyForecastAccuracyChart({
             >
               Quarterly
             </button>
-            {!quarterlyOnly && (
-              <button
-                type="button"
-                onClick={() => {
-                  setPeriodMode("annual");
-                  setHoveredIdx(null);
-                }}
-                className={cn(
-                  "rounded px-2.5 py-0.5 font-bold transition-all",
-                  periodMode === "annual"
-                    ? "bg-accent/20 text-accent font-bold shadow-sm"
-                    : "text-ink-muted hover:text-ink"
-                )}
-              >
-                Annual
-              </button>
-            )}
+            <button
+              type="button"
+              aria-pressed={periodMode === "annual"}
+              onClick={() => {
+                setPeriodMode("annual");
+                setHoveredIdx(null);
+              }}
+              className={cn(
+                "rounded px-2.5 py-0.5 font-bold transition-all",
+                periodMode === "annual"
+                  ? "bg-accent/20 text-accent font-bold shadow-sm"
+                  : "text-ink-muted hover:text-ink"
+              )}
+            >
+              Annual
+            </button>
           </div>
 
           {onClose && (

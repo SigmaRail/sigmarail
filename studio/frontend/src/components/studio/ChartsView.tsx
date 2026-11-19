@@ -180,7 +180,7 @@ export function ChartsView({
                   ticker={ticker}
                   asOfDate={inspectedDate}
                   quarterlyGrowth={data.quarterly_growth}
-                  quarterlyOnly
+                  annualGrowth={data.annual_growth}
                 />
               ) : null}
               <FundamentalsRail
