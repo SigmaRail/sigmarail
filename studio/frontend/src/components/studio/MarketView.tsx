@@ -109,10 +109,16 @@ export function MarketView({
 
     chartApiRef.current = chart;
 
+    // The chart starts with one pane. Add only the three additional panes used
+    // below, then give the main price pane most of the available height.
     chart.addPane();
     chart.addPane();
     chart.addPane();
-    chart.addPane();
+    const [pricePane, breadthPane, allocationPane, volatilityPane] = chart.panes();
+    pricePane?.setStretchFactor(4);
+    breadthPane?.setStretchFactor(1);
+    allocationPane?.setStretchFactor(1);
+    volatilityPane?.setStretchFactor(1);
 
     const spyLine = chart.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 2, priceScaleId: "right", title: "SPY" }, 0);
     const vixLine = chart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1, priceScaleId: "left", title: "VIX" }, 0);
