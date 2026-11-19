@@ -423,6 +423,28 @@ export async function fetchStockIntrospection(
   return request<StockIntrospectionData>(`/api/screens/stock-overview?${params.toString()}`);
 }
 
+export interface ScreenSparklinePoint {
+  date: string;
+  close: number;
+}
+
+export interface ScreenSparklineResponse {
+  as_of: string;
+  weeks: number;
+  series: Record<string, ScreenSparklinePoint[]>;
+}
+
+/** Fetch one compact weekly-close series for all visible screener cards. */
+export async function fetchScreenSparklines(
+  tickers: string[],
+  as_of: string,
+): Promise<ScreenSparklineResponse> {
+  return request<ScreenSparklineResponse>("/api/screens/sparklines", {
+    method: "POST",
+    body: JSON.stringify({ tickers, as_of }),
+  });
+}
+
 export function externalChartUrl(
   ticker: string,
   exchange?: string | null,

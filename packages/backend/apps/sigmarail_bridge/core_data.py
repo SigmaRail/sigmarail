@@ -374,6 +374,94 @@ class MarketContextView(APIView):
         return Response([{key: _preview_json_value(value) for key, value in row.items()} for row in rows])
 
 
+class ScreenSparklinesView(APIView):
+    """Return compact weekly close series for a bounded set of screener cards."""
+
+    def post(self, request: Request) -> Response:
+        if not settings.SIGMARAIL_CLICKHOUSE_ENABLED:
+            return Response(
+                {"detail": "Batched screen chart data requires the AppTension ClickHouse query service."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        _, error = _workspace_for_request(request)
+        if error:
+            return error
+
+        body: dict[str, Any] = request.data if isinstance(request.data, dict) else {}
+        raw_tickers = body.get("tickers")
+        if not isinstance(raw_tickers, list) or not raw_tickers:
+            return Response({"detail": "tickers must be a non-empty array."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(raw_tickers) > 100:
+            return Response({"detail": "At most 100 tickers may be requested."}, status=status.HTTP_400_BAD_REQUEST)
+
+        tickers: list[str] = []
+        for raw_ticker in raw_tickers:
+            ticker = str(raw_ticker).strip().upper()
+            if not ticker or len(ticker) > 16 or not all(ch.isalnum() or ch in ".-/" for ch in ticker):
+                return Response({"detail": f"Invalid ticker: {raw_ticker!r}."}, status=status.HTTP_400_BAD_REQUEST)
+            if ticker not in tickers:
+                tickers.append(ticker)
+
+        as_of_raw = str(body.get("as_of") or "").strip()
+        try:
+            as_of = date.fromisoformat(as_of_raw)
+        except ValueError:
+            return Response(
+                {"detail": "as_of must be a valid date in YYYY-MM-DD format."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if as_of.isoformat() != as_of_raw:
+            return Response(
+                {"detail": "as_of must be a valid date in YYYY-MM-DD format."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        start = as_of - timedelta(days=364)
+
+        query = """
+            SELECT
+                ticker,
+                toStartOfWeek(date, 1) AS week_start,
+                argMax(close, (date, lastupdated)) AS weekly_close
+            FROM screener_price_tech_daily
+            WHERE ticker IN %(tickers)s
+              AND date >= toDate(%(start_date)s)
+              AND date <= toDate(%(as_of)s)
+              AND close IS NOT NULL
+            GROUP BY ticker, week_start
+            ORDER BY ticker ASC, week_start DESC
+        """
+        try:
+            client = _clickhouse_client()
+            result = client.query(
+                query,
+                parameters={
+                    "tickers": tuple(tickers),
+                    "start_date": start.isoformat(),
+                    "as_of": as_of.isoformat(),
+                },
+            )
+        except Exception:
+            return Response(
+                {"detail": "Batched screen chart data is unavailable."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        # The inclusive 364-day range can cover 53 calendar week buckets. Keep
+        # the latest 52 and return them oldest-first for a stable left-to-right plot.
+        grouped: dict[str, list[dict[str, Any]]] = {ticker: [] for ticker in tickers}
+        for symbol, week_start, close in result.result_rows:
+            if close is None:
+                continue
+            grouped.setdefault(str(symbol).upper(), []).append(
+                {"date": _preview_json_value(week_start), "close": _preview_json_value(close)}
+            )
+        series = {
+            ticker: sorted(points, key=lambda point: point["date"])[-52:]
+            for ticker, points in grouped.items()
+        }
+        return Response({"as_of": as_of.isoformat(), "weeks": 52, "series": series})
+
+
 def _preview_json_value(value: Any) -> Any:
     if value is None:
         return None

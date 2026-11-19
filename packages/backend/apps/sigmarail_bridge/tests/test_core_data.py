@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -67,6 +67,67 @@ def test_native_dataset_catalog_requires_active_workspace_and_uses_spec_manifest
     assert response.status_code == 200
     assert response.json() == expected
     list_manifest.assert_called_once_with()
+
+
+def test_screen_sparklines_batches_tickers_and_returns_latest_52_weekly_closes(
+    user, tenant, tenant_membership_factory
+):
+    tenant_membership_factory(user=user, tenant=tenant)
+    client = _client(user)
+    first_week = date(2025, 11, 21)
+    rows = [
+        (ticker, first_week + timedelta(days=7 * week), float(week + 1))
+        for ticker in ("ANF", "BVC")
+        for week in range(54)
+    ]
+    clickhouse = Mock()
+    clickhouse.query.return_value = SimpleNamespace(result_rows=rows)
+
+    with (
+        override_settings(SIGMARAIL_CLICKHOUSE_ENABLED=True),
+        patch("apps.sigmarail_bridge.core_data._clickhouse_client", return_value=clickhouse),
+    ):
+        response = client.post(
+            "/api/screens/sparklines",
+            {"tickers": ["ANF", "BVC", "ANF"], "as_of": "2026-11-19"},
+            format="json",
+            HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["weeks"] == 52
+    assert set(payload["series"]) == {"ANF", "BVC"}
+    assert len(payload["series"]["ANF"]) == 52
+    assert payload["series"]["ANF"][0] == {
+        "date": (first_week + timedelta(days=14)).isoformat(),
+        "close": 3.0,
+    }
+    clickhouse.query.assert_called_once()
+    query_args = clickhouse.query.call_args
+    assert query_args.args[0].count("argMax(close, (date, lastupdated))") == 1
+    assert query_args.kwargs["parameters"]["tickers"] == ("ANF", "BVC")
+
+
+def test_screen_sparklines_rejects_invalid_tickers_before_clickhouse(
+    user, tenant, tenant_membership_factory
+):
+    tenant_membership_factory(user=user, tenant=tenant)
+    client = _client(user)
+
+    with (
+        override_settings(SIGMARAIL_CLICKHOUSE_ENABLED=True),
+        patch("apps.sigmarail_bridge.core_data._clickhouse_client") as get_client,
+    ):
+        response = client.post(
+            "/api/screens/sparklines",
+            {"tickers": ["ANF; DROP TABLE stocks"], "as_of": "2026-11-19"},
+            format="json",
+            HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
+        )
+
+    assert response.status_code == 400
+    get_client.assert_not_called()
 
 
 def test_native_query_validates_before_opening_clickhouse(user, tenant, tenant_membership_factory):

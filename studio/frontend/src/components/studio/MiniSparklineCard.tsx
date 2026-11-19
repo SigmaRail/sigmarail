@@ -1,20 +1,21 @@
 /**
  * MiniSparklineCard — compact screener card with SVG price sparkline.
  *
- * Fetches a 90-day history for the ticker and renders a tiny sparkline path.
+ * Renders the batched weekly-close history alongside the screener row.
  * All KPI data comes from the parent RankedRow (no extra API calls).
  */
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchStockIntrospection } from "../../api/screens";
+import type { ScreenSparklinePoint } from "../../api/screens";
 import { BookmarkButton } from "./BookmarkButton";
 import { cn } from "../../lib/utils";
 import type { RankedRow } from "../../types";
 
 interface MiniSparklineCardProps {
   row: RankedRow;
-  asOfDate: string;
   rank: number;
+  sparkline?: ScreenSparklinePoint[];
+  sparklineLoading?: boolean;
+  sparklineError?: string | null;
   onClick: () => void;
 }
 
@@ -37,21 +38,19 @@ function buildSparkPoints(closes: number[], w = 200, h = 56): string {
     .join(" ");
 }
 
-export function MiniSparklineCard({ row, asOfDate, rank, onClick }: MiniSparklineCardProps) {
+export function MiniSparklineCard({
+  row,
+  rank,
+  sparkline = [],
+  sparklineLoading = false,
+  sparklineError = null,
+  onClick,
+}: MiniSparklineCardProps) {
   const ticker = String(row.ticker ?? "");
 
-  // Fetch a compact 90-day price history
-  const historyQuery = useQuery({
-    queryKey: ["sparkline", ticker, asOfDate],
-    queryFn: () => fetchStockIntrospection(ticker, asOfDate, 90, 0),
-    staleTime: 600_000,
-    enabled: !!ticker && !!asOfDate,
-  });
-
   const closes = useMemo(() => {
-    const series = historyQuery.data?.chart_series ?? [];
-    return series.map((p: { close?: number; c?: number }) => Number(p.close ?? p.c ?? 0)).filter((v) => v > 0);
-  }, [historyQuery.data]);
+    return sparkline.map((point) => Number(point.close)).filter((value) => Number.isFinite(value) && value > 0);
+  }, [sparkline]);
 
   const sparkPoints = useMemo(() => buildSparkPoints(closes), [closes]);
 
@@ -106,7 +105,7 @@ export function MiniSparklineCard({ row, asOfDate, rank, onClick }: MiniSparklin
 
       {/* Sparkline */}
       <div className="px-0 py-0 bg-surface-sunk/40 mx-0">
-        {historyQuery.isLoading ? (
+        {sparklineLoading ? (
           <div className="h-14 flex items-center justify-center">
             <div className="h-0.5 w-16 bg-line rounded animate-pulse" />
           </div>
@@ -135,8 +134,15 @@ export function MiniSparklineCard({ row, asOfDate, rank, onClick }: MiniSparklin
               vectorEffect="non-scaling-stroke"
             />
           </svg>
+        ) : sparklineError ? (
+          <div
+            className="h-14 flex items-center justify-center text-[10px] text-danger"
+            title={sparklineError}
+          >
+            Chart unavailable
+          </div>
         ) : (
-          <div className="h-14 flex items-center justify-center text-[10px] text-ink-muted">No chart data</div>
+          <div className="h-14 flex items-center justify-center text-[10px] text-ink-muted">No price history</div>
         )}
       </div>
 

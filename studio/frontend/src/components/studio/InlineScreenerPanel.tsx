@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@sb/webapp-core/components/ui/dialog";
-import { previewScreen, previewIr, fetchAsOfRange } from "../../api/screens";
+import { previewScreen, previewIr, fetchAsOfRange, fetchScreenSparklines } from "../../api/screens";
 import { nextFilterId } from "../../lib/irFilters";
 import {
   emptyGroup,
@@ -420,6 +420,13 @@ export function InlineScreenerPanel({
   // Rows as returned directly from the ClickHouse screen spec query
   const rows: RankedRow[] = rankRows(previewQuery.data?.rows as RankedRow[] | undefined);
   const count = previewQuery.data?.count ?? rows.length;
+  const sparklineTickers = [...new Set(rows.map((row) => String(row.ticker ?? "").trim().toUpperCase()).filter(Boolean))];
+  const sparklinesQuery = useQuery({
+    queryKey: ["screen-sparklines", asOf, sparklineTickers],
+    queryFn: () => fetchScreenSparklines(sparklineTickers, asOf),
+    enabled: viewMode === "grid" && Boolean(asOf) && sparklineTickers.length > 0,
+    staleTime: 600_000,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.__STUDIO_AGENT_BRIDGE__) {
@@ -780,8 +787,10 @@ export function InlineScreenerPanel({
                 <MiniSparklineCard
                   key={`${r.ticker}-${idx}`}
                   row={r}
-                  asOfDate={asOf}
                   rank={idx + 1}
+                  sparkline={sparklinesQuery.data?.series[String(r.ticker ?? "").toUpperCase()] ?? []}
+                  sparklineLoading={sparklinesQuery.isLoading}
+                  sparklineError={sparklinesQuery.error instanceof Error ? sparklinesQuery.error.message : null}
                   onClick={() => onOpenTicker?.(r.ticker)}
                 />
               ))}
