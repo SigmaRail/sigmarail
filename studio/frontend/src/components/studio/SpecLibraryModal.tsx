@@ -181,10 +181,10 @@ export function SpecLibraryModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="full"
-        className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-6xl flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[92dvh] sm:max-h-[92dvh]"
+        className="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-6xl min-h-0 flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[92dvh] sm:max-h-[92dvh]"
       >
         {/* Modal Header */}
-        <DialogHeader className="flex flex-row items-start justify-between gap-3 border-b border-line bg-surface-raised px-4 py-3 pr-12 sm:px-6 sm:py-4">
+        <DialogHeader className="flex shrink-0 flex-row items-start justify-between gap-3 border-b border-line bg-surface-raised px-4 py-3 pr-12 sm:px-6 sm:py-4">
           <div className="flex min-w-0 items-start gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 border border-accent/30 text-accent font-bold">
               📚
@@ -215,7 +215,7 @@ export function SpecLibraryModal({
         </DialogHeader>
 
         {/* Filter & Search Bar */}
-        <div className="flex flex-col gap-3 border-b border-line/60 bg-surface-sunk/60 px-3 py-3 sm:px-6">
+        <div className="shrink-0 flex flex-col gap-3 border-b border-line/60 bg-surface-sunk/60 px-3 py-3 sm:px-6">
           {/* Category Tabs & Schema Filter */}
           <div className="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_auto]">
             <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
@@ -282,7 +282,7 @@ export function SpecLibraryModal({
         </div>
 
         {/* Spec Grid / Card List */}
-        <div className="min-h-0 flex-1 overflow-y-auto bg-surface/50 p-3 sm:p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-surface/50 p-3 sm:p-6 [webkit-overflow-scrolling:touch]">
           {catalogQuery.isLoading || chSpecsQuery.isLoading ? (
             <div className="flex h-64 flex-col items-center justify-center gap-2 text-ink-muted">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />

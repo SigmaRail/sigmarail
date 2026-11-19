@@ -108,11 +108,12 @@ export const Layout = ({ children }: LayoutProps) => {
       >
         {!isAuthRoute && (isWorkbenchRoute ? <Header menuOnly /> : <Header />)}
         <main
+          data-workbench-scroll-root={isWorkbenchRoute ? '' : undefined}
           className={
             isAuthRoute
               ? undefined
               : isWorkbenchRoute
-                ? 'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain'
+                ? 'flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain [webkit-overflow-scrolling:touch]'
                 : 'py-10'
           }
         >

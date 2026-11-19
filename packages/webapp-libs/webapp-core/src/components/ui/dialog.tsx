@@ -33,23 +33,23 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
  * The 'fit' variant allows the dialog to size based on content while respecting min/max constraints.
  */
 const dialogContentVariants = cva(
-  'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed left-[50%] top-[50%] z-50 grid translate-x-[-50%] translate-y-[-50%] gap-3 sm:gap-4 border p-4 sm:p-6 shadow-lg duration-200 sm:rounded-lg',
+  'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-1rem)] max-h-[calc(100dvh-2rem)] min-w-0 translate-x-[-50%] translate-y-[-50%] gap-3 overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 sm:gap-4 sm:p-6 border shadow-lg duration-200 sm:rounded-lg',
   {
     variants: {
       size: {
-        sm: 'w-full max-w-sm',
-        default: 'w-full max-w-lg',
-        md: 'w-full max-w-xl',
-        lg: 'w-full max-w-2xl',
-        xl: 'w-full max-w-4xl',
-        full: 'w-full max-w-[90vw]',
+        sm: 'max-w-sm',
+        default: 'max-w-lg',
+        md: 'max-w-xl',
+        lg: 'max-w-2xl',
+        xl: 'max-w-4xl',
+        full: 'max-w-[90vw]',
         /**
          * 'fit' allows the dialog to size based on content.
          * - min-w ensures forms have adequate space
          * - w-auto allows growing based on content
          * - max-w-[90vw] prevents overflow on small screens
          */
-        fit: 'w-auto min-w-[420px] max-w-[90vw]',
+        fit: 'w-auto min-w-0 max-w-[calc(100vw-1rem)] sm:min-w-[420px] sm:max-w-[90vw]',
       },
     },
     defaultVariants: {
@@ -67,7 +67,13 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
   ({ className, children, testId = 'dialog-icon-container', size, ...props }, ref) => (
     <DialogPortal>
       <DialogOverlay />
-      <DialogPrimitive.Content ref={ref} className={cn(dialogContentVariants({ size }), className)} {...props}>
+      <DialogPrimitive.Content
+        ref={ref}
+        data-dialog-scroll=""
+        className={cn(dialogContentVariants({ size }), className)}
+        {...props}
+        style={{ WebkitOverflowScrolling: 'touch', ...props.style }}
+      >
         {children}
         <DialogPrimitive.Close
           data-testid={testId}

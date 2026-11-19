@@ -110,9 +110,9 @@ export function ScreenPickerDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="md"
-        className="flex max-h-[78dvh] flex-col gap-0 overflow-hidden p-0"
+        className="flex h-[min(42rem,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0"
       >
-        <DialogHeader className="border-b border-border px-4 py-3 pr-12">
+        <DialogHeader className="shrink-0 border-b border-border px-4 py-3 pr-12">
           <DialogTitle className="text-base">Load universe screen</DialogTitle>
           <DialogDescription className="sr-only">
             Choose a system screen or one of your saved screens.{' '}
@@ -120,9 +120,9 @@ export function ScreenPickerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-2">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-2">
           <div
-            className="inline-flex flex-wrap rounded-md border border-border bg-background p-0.5"
+            className="inline-flex min-w-0 flex-wrap rounded-md border border-border bg-background p-0.5"
             aria-label="Filter screens"
           >
             {(
@@ -162,7 +162,7 @@ export function ScreenPickerDialog({
           />
         </div>
 
-        <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+        <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto overscroll-y-contain [webkit-overflow-scrolling:touch]">
           {templatesError && filter !== 'custom' && (
             <div
               role="alert"

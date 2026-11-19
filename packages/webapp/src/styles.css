@@ -119,3 +119,18 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+[data-workbench-scroll-root] {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+[class~='overflow-auto'],
+[class~='overflow-y-auto'],
+[class~='overflow-x-auto'],
+[class~='overflow-scroll'],
+[class~='overflow-y-scroll'],
+[class~='overflow-x-scroll'] {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
