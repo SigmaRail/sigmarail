@@ -123,7 +123,7 @@ export function OptimizerSweepModal({
       strategy_type: strategyType,
       constraints,
       max_concurrent: maxConcurrent,
-      lean_project: "VeraTradingLab",
+      lean_project: "SigmaRailTradingLab",
     });
   }
 

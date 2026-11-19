@@ -262,7 +262,7 @@ def list_backtest_runs(
                 algo_json = d.pop("algorithm_json", None)
                 slots = _parse_framework_slots(algo_json)
                 d.update(slots)
-                d["strategy_id"] = "VeraTradingLab"
+                d["strategy_id"] = "SigmaRailTradingLab"
                 d["run_type"] = "base"
                 d["trigger"] = "job"
                 d["total_return"] = None

@@ -9,7 +9,7 @@ Usage (internal — invoked by runner.run_job when detach=True):
         --job-id UUID --ir-id SPEC_ID \\
         --start-date YYYY-MM-DD --end-date YYYY-MM-DD \\
         [--extra-env '{"KEY":"VAL"}']
-        [--lean-project VeraTradingLab]
+        [--lean-project SigmaRailTradingLab]
 """
 
 from __future__ import annotations

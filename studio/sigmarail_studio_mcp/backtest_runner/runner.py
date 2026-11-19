@@ -2,7 +2,7 @@
 
 Post-run result insertion follows the same pattern as backtest.yml:
   1. find *-summary.json / *.json / *-order-events.json in the output dir
-  2. call VeraTradingLab/scripts/insert_strategy_run.py via subprocess
+  2. call the generated SigmaRail LEAN project's scripts/insert_strategy_run.py via subprocess
      with --run-id = job_id so strategy_runs.run_id matches backtest_jobs.job_id
 """
 

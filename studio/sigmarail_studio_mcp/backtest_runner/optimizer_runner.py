@@ -33,7 +33,7 @@ def build_optimizer_config(
     euler_segments: int = 4,
     max_concurrent: int = 4,
     out_of_sample_days: int = 0,
-    algorithm_type_name: str = "VeraTradingLab",
+    algorithm_type_name: str = "ClickHouseUniverseAlgorithm",
     algorithm_language: str = "Python",
 ) -> dict[str, Any]:
     """Construct a QuantConnect.Optimizer.OptimizationNodePacket JSON dictionary."""
