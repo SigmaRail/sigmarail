@@ -69,7 +69,9 @@ export function StrategyDecisionTimeline({
         </ol>
       ) : (
         <p className="mt-2 rounded border border-dashed border-line px-2.5 py-3 text-[10px] text-ink-muted">
-          No recorded decision events are available{startAt || endAt ? ` from ${startAt ?? "start"} through ${endAt ?? "now"}` : asOf ? ` for ${asOf}` : ""}. This run may predate decision evidence capture.
+          {events.length
+            ? `No recorded decisions match this symbol and selection${startAt || endAt ? ` from ${startAt ?? "start"} through ${endAt ?? "now"}` : asOf ? ` for ${asOf}` : ""}. Other strategy evidence exists outside this selection.`
+            : `No recorded decision events are available${startAt || endAt ? ` from ${startAt ?? "start"} through ${endAt ?? "now"}` : asOf ? ` for ${asOf}` : ""}. This record may predate decision evidence capture.`}
         </p>
       )}
     </section>
