@@ -9,13 +9,14 @@ import { CopyIdBadge } from "../CopyIdBadge";
 import { Button } from "@sb/webapp-core/components/ui/button";
 import { Input } from "@sb/webapp-core/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@sb/webapp-core/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@sb/webapp-core/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -51,10 +52,40 @@ export function SpecLibraryModal({
   const navigate = useNavigate();
   const generateLocalePath = useGenerateLocalePath();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [schemaFilter, setSchemaFilter] = useState<"all" | "modern" | "legacy">("all");
-  const [alphaFilter, setAlphaFilter] = useState<string>("all");
+  const [categoryFilters, setCategoryFilters] = useState<Array<"strategies" | "templates" | "catalog">>([
+    "strategies",
+    "templates",
+    "catalog",
+  ]);
+  const [schemaFilters, setSchemaFilters] = useState<Array<"modern" | "legacy">>(["modern", "legacy"]);
+  const [alphaFilters, setAlphaFilters] = useState<string[] | null>(null);
   const [inspectingJsonSpec, setInspectingJsonSpec] = useState<BacktestSpecSummary | null>(null);
+
+  const toggleCategoryFilter = (filter: "strategies" | "templates" | "catalog", checked: boolean) => {
+    setCategoryFilters((current) =>
+      checked ? [...new Set([...current, filter])] : current.filter((value) => value !== filter),
+    );
+  };
+  const toggleSchemaFilter = (filter: "modern" | "legacy", checked: boolean) => {
+    setSchemaFilters((current) =>
+      checked ? [...new Set([...current, filter])] : current.filter((value) => value !== filter),
+    );
+  };
+  const toggleAlphaFilter = (filter: string, checked: boolean) => {
+    setAlphaFilters((current) => {
+      const selected = current ?? alphaModels;
+      const next = checked
+        ? [...new Set([...selected, filter])]
+        : selected.filter((value) => value !== filter);
+      return next.length === alphaModels.length ? null : next;
+    });
+  };
+  const resetFilters = () => {
+    setSearchTerm("");
+    setCategoryFilters(["strategies", "templates", "catalog"]);
+    setSchemaFilters(["modern", "legacy"]);
+    setAlphaFilters(null);
+  };
 
   const catalogQuery = useQuery({
     queryKey: ["catalog-templates", "strategy", "studio-working"],
@@ -113,7 +144,7 @@ export function SpecLibraryModal({
     return Array.from(s).sort();
   }, [allSpecs]);
 
-  // Counts for tabs
+  // Counts for the library filters
   const counts = useMemo(() => {
     let catalog = 0;
     let templates = 0;
@@ -143,15 +174,17 @@ export function SpecLibraryModal({
   // Filtered specs list
   const filteredSpecs = useMemo(() => {
     return allSpecs.filter((s) => {
-      if (selectedCategory === "catalog" && !(s.is_system || s.catalog_template_id)) return false;
-      if (selectedCategory === "templates" && (!s.is_template || s.is_system)) return false;
-      if (selectedCategory === "strategies" && (s.is_system || s.is_template)) return false;
+      const category = s.is_system || s.catalog_template_id
+        ? "catalog"
+        : s.is_template
+          ? "templates"
+          : "strategies";
+      if (!categoryFilters.includes(category)) return false;
 
       const isModern = Boolean(s.schema_status === "modern" || s.has_pipeline || s.catalog_template_id);
-      if (schemaFilter === "modern" && !isModern) return false;
-      if (schemaFilter === "legacy" && isModern) return false;
+      if (!schemaFilters.includes(isModern ? "modern" : "legacy")) return false;
 
-      if (alphaFilter !== "all" && s.alpha_type !== alphaFilter) return false;
+      if (alphaFilters !== null && !alphaFilters.includes(s.alpha_type ?? "")) return false;
 
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase();
@@ -173,8 +206,17 @@ export function SpecLibraryModal({
 
       return true;
     });
-  }, [allSpecs, selectedCategory, schemaFilter, alphaFilter, searchTerm]);
+  }, [allSpecs, categoryFilters, schemaFilters, alphaFilters, searchTerm]);
 
+  const activeFilterCount =
+    (categoryFilters.length < 3 ? 1 : 0) +
+    (schemaFilters.length < 2 ? 1 : 0) +
+    (alphaFilters !== null ? 1 : 0);
+  const categoryFilterSummary = categoryFilters.length === 3
+    ? "All types"
+    : categoryFilters.length === 0
+      ? "No types"
+      : categoryFilters.map((filter) => ({ strategies: "Strategies", templates: "Templates", catalog: "Catalog" })[filter]).join(", ");
   if (!isOpen) return null;
 
   return (
@@ -215,30 +257,9 @@ export function SpecLibraryModal({
         </DialogHeader>
 
         {/* Filter & Search Bar */}
-        <div className="shrink-0 flex flex-col gap-3 border-b border-line/60 bg-surface-sunk/60 px-3 py-3 sm:px-6">
-          {/* Category Tabs & Schema Filter */}
-          <div className="grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_auto]">
-            <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
-              <TabsList className="grid h-auto w-full grid-cols-4 p-1">
-                <TabsTrigger value="all" className="min-w-0 px-2 py-1.5 text-xs">All ({counts.total})</TabsTrigger>
-                <TabsTrigger value="strategies" className="min-w-0 px-2 py-1.5 text-xs">Strategies ({counts.strategies})</TabsTrigger>
-                <TabsTrigger value="templates" className="min-w-0 px-2 py-1.5 text-xs">Templates ({counts.templates})</TabsTrigger>
-                <TabsTrigger value="catalog" className="min-w-0 px-2 py-1.5 text-xs">Catalog ({counts.catalog})</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <Tabs value={schemaFilter} onValueChange={(value) => setSchemaFilter(value as "all" | "modern" | "legacy")}>
-              <TabsList className="grid h-auto w-full grid-cols-3 p-1 xl:w-auto">
-                <TabsTrigger value="all" className="px-2 py-1.5 text-xs">Any schema</TabsTrigger>
-                <TabsTrigger value="modern" title="Specs with modern multi-stage pipeline documents" className="px-2 py-1.5 text-xs">Modern ({counts.modern})</TabsTrigger>
-                <TabsTrigger value="legacy" title="Legacy AST specs (upgradeable via pipeline decompiler)" className="px-2 py-1.5 text-xs">Legacy ({counts.legacy})</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {/* Search & Alpha Dropdown */}
-          <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+        <div className="shrink-0 border-b border-line/60 bg-surface-sunk/60 px-3 py-2 sm:px-6">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+            <div className="relative min-w-[12rem] flex-1 basis-52">
               <Input
                 type="text"
                 value={searchTerm}
@@ -262,22 +283,51 @@ export function SpecLibraryModal({
               ) : null}
             </div>
 
-            <Select
-              value={alphaFilter}
-              onValueChange={setAlphaFilter}
-            >
-              <SelectTrigger aria-label="Alpha model" className="h-10 w-full text-xs sm:w-[260px]">
-                <SelectValue placeholder="All Alpha Models" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Alpha Models ({alphaModels.length})</SelectItem>
-              {alphaModels.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="h-10 shrink-0 gap-2 px-3 text-xs">
+                  Filters{activeFilterCount ? ` · ${activeFilterCount}` : ""}
+                  <span aria-hidden="true" className="text-ink-muted">▾</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-[min(70dvh,28rem)] w-64 overflow-y-auto">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-ink-muted">Type</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem checked={categoryFilters.includes("strategies")} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => toggleCategoryFilter("strategies", checked)}>
+                  Strategies <span className="ml-auto text-[10px] text-ink-muted">{counts.strategies}</span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={categoryFilters.includes("templates")} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => toggleCategoryFilter("templates", checked)}>
+                  Templates <span className="ml-auto text-[10px] text-ink-muted">{counts.templates}</span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={categoryFilters.includes("catalog")} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => toggleCategoryFilter("catalog", checked)}>
+                  Catalog <span className="ml-auto text-[10px] text-ink-muted">{counts.catalog}</span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-ink-muted">Schema</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem checked={schemaFilters.includes("modern")} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => toggleSchemaFilter("modern", checked)}>
+                  Modern <span className="ml-auto text-[10px] text-ink-muted">{counts.modern}</span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={schemaFilters.includes("legacy")} onSelect={(event) => event.preventDefault()} onCheckedChange={(checked) => toggleSchemaFilter("legacy", checked)}>
+                  Legacy <span className="ml-auto text-[10px] text-ink-muted">{counts.legacy}</span>
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-ink-muted">Alpha model</DropdownMenuLabel>
+                {alphaModels.map((model) => (
+                  <DropdownMenuCheckboxItem
+                    key={model}
+                    checked={alphaFilters === null || alphaFilters.includes(model)}
+                    onSelect={(event) => event.preventDefault()}
+                    onCheckedChange={(checked) => toggleAlphaFilter(model, checked)}
+                  >
+                    <span className="truncate">{model}</span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={resetFilters} className="text-xs">Reset filters</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="hidden min-w-0 text-[10px] text-ink-muted lg:inline" aria-live="polite">
+              {categoryFilterSummary} · {schemaFilters.length === 2 ? "Any schema" : schemaFilters.join(", ")} · {alphaFilters === null ? "All alpha models" : `${alphaFilters.length} alpha models`}
+            </span>
           </div>
         </div>
 
@@ -295,14 +345,10 @@ export function SpecLibraryModal({
               <p className="text-xs text-ink-muted max-w-md">
                 Try adjusting your search query or switching categories. You can save any current 5-slot composition as a template anytime.
               </p>
-              {searchTerm || selectedCategory !== "all" || alphaFilter !== "all" ? (
+              {searchTerm || categoryFilters.length !== 3 || schemaFilters.length !== 2 || alphaFilters !== null ? (
                 <Button
                   type="button"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategory("all");
-                    setAlphaFilter("all");
-                  }}
+                  onClick={resetFilters}
                 variant="outline"
                   className="rounded-md border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface-raised"
                 >
