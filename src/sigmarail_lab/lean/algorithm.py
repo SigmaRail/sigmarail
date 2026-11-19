@@ -32,6 +32,7 @@ from sigmarail_lab.runtime.bar_requirements import (
 )
 from sigmarail_lab.runtime.provider_bridge import prehydrate_tickers
 from sigmarail_lab.runtime.live_snapshot_writer import insert_live_snapshot_from_algorithm
+from sigmarail_lab.runtime.decision_evidence import record_decision
 from sigmarail_lab.runtime.sigmarail_framework_store import SigmaRailFrameworkStore
 from sigmarail_lab.runtime.sigmarail_screener_price_policy import warn_missing_lean_prices
 from sigmarail_lab.runtime.store_backed_loop import (
@@ -63,6 +64,10 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
             return
 
         _spec = _resolved.spec
+        self._strategy_content_hash = _resolved.content_hash_sha256
+        self._strategy_decision_events = []
+        self._strategy_decision_sequence = 0
+        self._decision_universe_rows = {}
         uspec = _spec.effective_universe()
         if uspec is None:
             self.Quit(
@@ -282,6 +287,8 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
                 as_of=self.Time.date(),
                 source="eod_hook",
                 ir_id=ir_id,
+                strategy_content_hash=self._strategy_content_hash,
+                decision_events=self._strategy_decision_events[-500:],
             )
         except Exception as exc:
             self.Debug(f"live_snapshot failed: {exc}")
@@ -349,6 +356,7 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         as_of = (as_of_date - timedelta(days=1)).isoformat()
 
         universe = self._store.get_universe(as_of)
+        self._decision_universe_rows = universe if isinstance(universe, dict) else {}
         for ticker in list(universe) + [t for t in self._always_include_tickers if t not in universe]:
             if ticker not in self._symbols_added:
                 equity = self.AddEquity(ticker, Resolution.Daily)
@@ -402,8 +410,10 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
                 "equity": float(self.Portfolio.TotalPortfolioValue),
                 "holdings": holdings,
                 "candidates": candidates,
+                "decision_events": list(self._strategy_decision_events),
             }
         )
+        self._strategy_decision_events.clear()
         accounting_snapshot = self._accounting_state()
         accounting_snapshot["date"] = self.Time.date().isoformat()
         accounting_snapshot["as_of"] = as_of
@@ -433,8 +443,6 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
 
     def OnOrderEvent(self, order_event):
         """Record each fill with its fee and the account state immediately after it."""
-        if self.LiveMode:
-            return
         try:
             fill_quantity = float(order_event.FillQuantity)
             if not fill_quantity:
@@ -444,18 +452,32 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
                 order = self.Transactions.GetOrderById(int(order_event.OrderId))
             except Exception:
                 order = None
+            symbol = str(order_event.Symbol.Value)
+            event_time = str(getattr(order_event, "UtcTime", self.Time))
+            record_decision(
+                self,
+                ticker=symbol,
+                as_of=(self.Time.date() - timedelta(days=1)).isoformat(),
+                stage="execution",
+                outcome="order filled",
+                reason="LEAN reported an order fill.",
+                inputs={"order_id": int(order_event.OrderId), "order_quantity": getattr(order, "Quantity", None)},
+                outputs={"fill_quantity": fill_quantity, "fill_price": float(order_event.FillPrice), "status": str(order_event.Status)},
+            )
+            if self.LiveMode:
+                return
             self._accounting_fills.append(
                 {
                     "order_id": int(order_event.OrderId),
                     "order_event_id": int(getattr(order_event, "OrderEventId", 0)),
-                    "symbol": str(order_event.Symbol.Value),
+                    "symbol": symbol,
                     "order_quantity": str(order.Quantity) if order is not None else None,
                     "fill_quantity": str(order_event.FillQuantity),
                     "fill_price": str(order_event.FillPrice),
                     "fee_amount": str(fee_value.Amount) if fee_value is not None else None,
                     "fee_currency": str(fee_value.Currency) if fee_value is not None else None,
                     "status": str(order_event.Status),
-                    "event_time": str(getattr(order_event, "UtcTime", self.Time)),
+                    "event_time": event_time,
                     "account_after_fill": self._accounting_state(),
                 }
             )

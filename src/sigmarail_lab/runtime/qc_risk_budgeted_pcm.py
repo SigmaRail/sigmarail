@@ -181,6 +181,7 @@ class RiskBudgetedPortfolioConstructionModel(PortfolioConstructionModel):
         self._last_known_rs: dict[str, float] = {}
         self._displacement_cooldown: dict[str, Any] = {}
         self._pcm_rule_fired: dict[str, set[str]] = {}
+        self._decision_rule_matches_by_ticker: dict[str, list[dict]] = {}
         self._pcm_flags: dict[str, set[str]] = {}
         # Rules contract (mirrors qc_swing_risk): None → generated ladder;
         # non-empty list → authored & authoritative; [] → fail-closed.
@@ -510,6 +511,7 @@ class RiskBudgetedPortfolioConstructionModel(PortfolioConstructionModel):
 
     def CreateTargets(self, algorithm, insights):
         targets = []
+        self._decision_rule_matches_by_ticker = {}
         portfolio_value = float(getattr(algorithm.Portfolio, "TotalPortfolioValue", 0.0) or 100000.0)
         if portfolio_value <= 0:
             return targets
@@ -809,6 +811,14 @@ class RiskBudgetedPortfolioConstructionModel(PortfolioConstructionModel):
                     pass
             if not matched:
                 continue
+            self._decision_rule_matches_by_ticker.setdefault(ticker, []).append({
+                "rule": str(name),
+                "priority": rule.get("priority"),
+                "actions": [
+                    str(action.get("type")) for action in rule.get("then", [])
+                    if isinstance(action, dict) and action.get("type")
+                ],
+            })
             terminal = False
             for action in rule.get("then", []):
                 if not isinstance(action, dict):

@@ -417,6 +417,7 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
         # Last rule evaluation trace (observability): [{rule, matched, ...}] —
         # populated by _evaluate_rules on every call, success or no-match.
         self._last_rule_trace: list[dict] = []
+        self._decision_rule_trace_by_ticker: dict[str, list[dict]] = {}
         # ATR indicator cache: symbol -> ATR indicator
         self._atr_indicators: dict = {}
         # One-shot boot log of the materialized rule table (first ManageRisk call).
@@ -528,10 +529,11 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
         # on a re-entered symbol).
         row = dict(row)
         pos = dict(position) if position else {}
+        ticker = getattr(symbol, "Value", symbol)
         if not row and not pos:
+            self._decision_rule_trace_by_ticker[str(ticker)] = []
             return None
         rules = self._rules if rules is None else rules
-        ticker = getattr(symbol, "Value", symbol)
         try:
             current_weight = 0.0
             holding = None
@@ -707,13 +709,16 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
                 last_hit = (rule, tag)
                 if terminal:
                     self._last_rule_trace = trace
+                    self._decision_rule_trace_by_ticker[str(ticker)] = list(trace)
                     return rule, target, tag
             self._last_rule_trace = trace  # publish the why-not trace either way
+            self._decision_rule_trace_by_ticker[str(ticker)] = list(trace)
             if target_changed and last_hit is not None:
                 rule, tag = last_hit
                 return rule, target, tag
         except Exception as exc:
             self._last_rule_trace = []
+            self._decision_rule_trace_by_ticker[str(ticker)] = []
             try:
                 algorithm.Debug(f"⚠️ RULE ENGINE ERROR [{ticker}]: {exc}")
             except Exception:
@@ -864,6 +869,7 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
         return target
 
     def ManageRisk(self, algorithm, targets):
+        self._decision_rule_trace_by_ticker = {}
         # Boot log: emit the exact rule table once so every run's log proves which
         # decision set was active (generated ladder vs authored rules).
         if not self._rules_logged:

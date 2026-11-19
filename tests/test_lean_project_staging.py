@@ -15,6 +15,7 @@ def test_stages_isolated_project_with_lab_code_and_selected_strategy(tmp_path: P
     assert first.project_name == str(first.root)
     assert (first.root / "main.py").is_file()
     assert (first.root / "sigmarail_lab" / "lean" / "algorithm.py").is_file()
+    assert (first.root / "sigmarail_lab" / "runtime" / "decision_evidence.py").is_file()
     assert (first.root / "sigmarail_spec" / "strategy" / "compiler.py").is_file()
     assert (first.root / "scripts" / "lean_backtest_composite.py").is_file()
 

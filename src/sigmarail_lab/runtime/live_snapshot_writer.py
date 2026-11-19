@@ -54,6 +54,8 @@ def insert_live_snapshot_from_algorithm(
     as_of: date | None = None,
     source: str = "eod_hook",
     ir_id: str = "",
+    strategy_content_hash: str | None = None,
+    decision_events: list[dict[str, Any]] | None = None,
 ) -> None:
     """Write one snapshot row from QCAlgorithm portfolio state."""
     deployment_id = (deployment_id or "").strip()
@@ -73,6 +75,8 @@ def insert_live_snapshot_from_algorithm(
         "cash": cash,
         "positions": json.loads(positions_json),
         "source": source,
+        "strategy_content_hash": strategy_content_hash,
+        "decision_events": list(decision_events or [])[-500:],
     }
 
     row = {
@@ -94,7 +98,7 @@ def insert_live_snapshot_from_algorithm(
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         _post_row("strategy_run_artifacts", {
             "run_id": deployment_id,
-            "strategy_id": "VeraTradingLab",
+            "strategy_id": "SigmaRailTradingLab",
             "run_timestamp": ts,
             "artifact_type": "live_snapshot",
             "artifact_json": json.dumps(payload, separators=(",", ":")),
