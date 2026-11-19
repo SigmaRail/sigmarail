@@ -29,8 +29,8 @@ function shortSales(value: number | null): string {
 
 function metric(label: string, value: string) {
   return (
-    <div className="flex min-w-0 items-center justify-between gap-2 border-b border-line/60 py-1.5 last:border-0">
-      <span className="truncate text-ink-muted">{label}</span>
+    <div className="flex min-w-0 items-center justify-between gap-3 border-b border-line/60 py-2 last:border-0">
+      <span className="min-w-0 text-ink-muted">{label}</span>
       <span className="shrink-0 font-semibold tabular-nums text-ink">{value}</span>
     </div>
   );
@@ -64,23 +64,31 @@ export function StockOverviewPanel({
   ] as const;
 
   return (
-    <aside className="min-w-0 bg-surface text-[11px] font-mono">
-      <section aria-labelledby={`${headingId}-overview`} className="px-3 py-2.5 lg:px-3">
-        <h2 id={`${headingId}-overview`} className="mb-1.5 text-xs font-bold text-ink">Overview</h2>
-        <div className="grid grid-cols-2 gap-x-4">
-          {metric("Relative strength", valueOf(kpis, "rs_rating")?.toFixed(0) ?? "—")}
-          {metric("Technical", valueOf(kpis, "technical_rating")?.toFixed(0) ?? "—")}
-          {metric("Setup", valueOf(kpis, "setup_quality_rating")?.toFixed(0) ?? "—")}
-          {metric("Growth", valueOf(kpis, "growth_rating")?.toFixed(0) ?? "—")}
-          {metric("Overall", valueOf(kpis, "overall_score")?.toFixed(0) ?? "—")}
-          {metric("EPS surprise", pct(valueOf(kpis, "eps_last_surprise_pct_display") ?? valueOf(kpis, "eps_last_surprise_pct")))}
-        </div>
-        <div className="mt-2 border-t border-line/70 pt-1">
-          {fundamentals.map(([label, value]) => <div key={label}>{metric(label, value)}</div>)}
+    <aside className="min-w-0 border-y border-line bg-surface text-xs font-mono">
+      <section aria-labelledby={`${headingId}-overview`} className="px-3 py-3 sm:px-4">
+        <h2 id={`${headingId}-overview`} className="mb-3 text-sm font-bold text-ink">Overview</h2>
+        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+          <div>
+            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Ratings</h3>
+            <div className="grid grid-cols-2 gap-x-4">
+              {metric("RS", valueOf(kpis, "rs_rating")?.toFixed(0) ?? "—")}
+              {metric("Technical", valueOf(kpis, "technical_rating")?.toFixed(0) ?? "—")}
+              {metric("Setup", valueOf(kpis, "setup_quality_rating")?.toFixed(0) ?? "—")}
+              {metric("Growth", valueOf(kpis, "growth_rating")?.toFixed(0) ?? "—")}
+              {metric("Overall", valueOf(kpis, "overall_score")?.toFixed(0) ?? "—")}
+              {metric("EPS surprise", pct(valueOf(kpis, "eps_last_surprise_pct_display") ?? valueOf(kpis, "eps_last_surprise_pct")))}
+            </div>
+          </div>
+          <div>
+            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Company metrics</h3>
+            <div className="grid grid-cols-2 gap-x-4">
+              {fundamentals.map(([label, value]) => <div key={label}>{metric(label, value)}</div>)}
+            </div>
+          </div>
         </div>
       </section>
 
-      {showYearlyEarnings ? <section aria-labelledby={`${headingId}-yearly`} className="border-t border-line px-3 py-2.5">
+      {showYearlyEarnings ? <section aria-labelledby={`${headingId}-yearly`} className="border-t border-line px-3 py-3 sm:px-4">
         <h2 id={`${headingId}-yearly`} className="mb-1.5 text-xs font-bold text-ink">Yearly earnings</h2>
         {annual.length === 0 ? (
           <p className="py-2 text-ink-muted">No annual series</p>

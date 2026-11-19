@@ -4,6 +4,8 @@ import { fetchStockIntrospection } from "../../api/screens";
 import { StockChartEngine } from "./StockChartEngine";
 import { QuoteHeader } from "./QuoteHeader";
 import { StockOverviewPanel } from "./StockOverviewPanel";
+import { FundamentalsRail } from "./FundamentalsRail";
+import { loadFundamentalsRailOpen, saveFundamentalsRailOpen } from "../../lib/fundamentalsRailStorage";
 import { QuarterlyForecastAccuracyChart } from "./QuarterlyForecastAccuracyChart";
 import type { ChartCandlePoint, StockIntrospectionData } from "../../types";
 
@@ -36,6 +38,7 @@ export function ChartsView({
   const [extraHistoryCandles, setExtraHistoryCandles] = useState<ChartCandlePoint[] | null>(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [earningsOpen, setEarningsOpen] = useState(() => loadFundamentalsRailOpen());
 
   useEffect(() => {
     if (initialTicker && initialTicker !== ticker) {
@@ -139,7 +142,8 @@ export function ChartsView({
         onSearchSubmit={handleSelectSymbol}
       />
 
-      <div data-testid="charts-content-flow" className="relative isolate flex w-full min-w-0 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(19rem,25rem)]">
+      <div data-testid="charts-content-flow" className="relative isolate flex w-full min-w-0 flex-col">
+        <StockOverviewPanel data={data} showYearlyEarnings={false} />
         <main className="relative isolate z-0 flex w-full min-w-0 flex-col border-b border-border lg:p-2">
           {chartQuery.isLoading && !data ? (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted animate-pulse">
@@ -179,6 +183,16 @@ export function ChartsView({
                   quarterlyOnly
                 />
               ) : null}
+              <FundamentalsRail
+                data={data}
+                open={earningsOpen}
+                onToggle={() => {
+                  const next = !earningsOpen;
+                  setEarningsOpen(next);
+                  saveFundamentalsRailOpen(next);
+                }}
+                showOverviewTab={false}
+              />
             </>
           ) : (
             <div className="flex h-full items-center justify-center font-mono text-xs text-ink-muted">
@@ -186,9 +200,6 @@ export function ChartsView({
             </div>
           )}
         </main>
-        <aside className="relative isolate z-0 w-full min-w-0 border-line bg-background lg:border-l">
-          <StockOverviewPanel data={data} />
-        </aside>
       </div>
 
     </div>

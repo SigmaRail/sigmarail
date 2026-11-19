@@ -181,7 +181,7 @@ export function StockIntrospectionPanel({
         }`}
       >
         {showOverview ? (
-          <div className="grid min-w-0 shrink-0 grid-cols-1 lg:grid-cols-[minmax(18rem,0.9fr)_minmax(0,2fr)]">
+          <div className="flex min-w-0 shrink-0 flex-col">
             <StockOverviewPanel data={data} showYearlyEarnings={false} />
             {chartPanel}
           </div>
@@ -195,9 +195,7 @@ export function StockIntrospectionPanel({
             setRailOpen(next);
             saveFundamentalsRailOpen(next);
           }}
-          onSelectTicker={(t) => setActiveTicker(t)}
-          ticker={activeTicker}
-          asOfDate={inspectedDate}
+          showOverviewTab={!showOverview}
         />
       </div>
     </div>

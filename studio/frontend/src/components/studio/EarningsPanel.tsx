@@ -1,6 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sb/webapp-core/components/ui/tabs";
 import type { AnnualGrowthPoint, QuarterlyGrowthPoint } from "../../types";
-import { EarningsEstimateChart } from "./EarningsEstimateChart";
 import { Card } from "@sb/webapp-core/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sb/webapp-core/components/ui/table";
 
@@ -102,13 +101,9 @@ function AnnualRows({ rows }: { rows: AnnualGrowthPoint[] }) {
 export function EarningsPanel({
   quarterly,
   annual,
-  ticker,
-  asOfDate,
 }: {
   quarterly: QuarterlyGrowthPoint[];
   annual: AnnualGrowthPoint[];
-  ticker: string;
-  asOfDate?: string;
 }) {
   const quarters = [...quarterly].sort((a, b) => (b.report_date || "").localeCompare(a.report_date || "")).slice(0, 10);
   const years = [...annual].sort((a, b) => String(b.year).localeCompare(String(a.year))).slice(0, 12);
@@ -117,10 +112,9 @@ export function EarningsPanel({
     <section className="space-y-2">
       <p className="text-[9px] text-ink-muted">Reported results, estimates and trends</p>
       <Tabs defaultValue={quarters.length ? "quarterly" : "annual"}>
-        <TabsList className="grid h-8 w-full grid-cols-3">
+        <TabsList className="grid h-8 w-full grid-cols-2">
           <TabsTrigger className="py-1 text-[10px]" value="quarterly">Quarterly</TabsTrigger>
           <TabsTrigger className="py-1 text-[10px]" value="annual">Annual</TabsTrigger>
-          <TabsTrigger className="py-1 text-[10px]" value="charts">Charts</TabsTrigger>
         </TabsList>
         <TabsContent value="quarterly" className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {quarters.length ? quarters.map((point) => <QuarterlyCard key={point.report_date} point={point} />) : (
@@ -129,15 +123,6 @@ export function EarningsPanel({
         </TabsContent>
         <TabsContent value="annual" className="mt-2">
           <AnnualRows rows={years} />
-        </TabsContent>
-        <TabsContent value="charts" className="mt-2">
-          <EarningsEstimateChart
-            ticker={ticker}
-            asOfDate={asOfDate}
-            quarterlyGrowth={quarterly}
-            annualGrowth={annual}
-            className="border-0 bg-transparent p-0 shadow-none"
-          />
         </TabsContent>
       </Tabs>
     </section>

@@ -3,15 +3,12 @@ import type { StockIntrospectionData } from "../../types";
 import { cn } from "../../lib/utils";
 import { EarningsPanel } from "./EarningsPanel";
 import { Button } from "@sb/webapp-core/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@sb/webapp-core/components/ui/table";
 
 interface FundamentalsRailProps {
   data?: StockIntrospectionData | null;
   open: boolean;
   onToggle: () => void;
-  onSelectTicker?: (ticker: string) => void;
-  ticker: string;
-  asOfDate?: string;
+  showOverviewTab?: boolean;
 }
 
 function num(value: unknown): number | null {
@@ -75,15 +72,9 @@ export function FundamentalsRail({
   data,
   open,
   onToggle,
-  onSelectTicker,
-  ticker,
-  asOfDate,
+  showOverviewTab = true,
 }: FundamentalsRailProps) {
   const kpis = (data?.as_of_kpis ?? {}) as Record<string, unknown>;
-  const peers = [...(data?.industry_peers ?? [])].sort(
-    (a, b) => (b.rs_rating ?? 0) - (a.rs_rating ?? 0),
-  );
-
   // Prefer clamped *_display fields only — null means hide (do not fall back to raw)
   const cyRev = num(kpis.eps_cy_rev_pct_90d_display);
   const nyRev = num(kpis.eps_ny_rev_pct_90d_display);
@@ -116,7 +107,9 @@ export function FundamentalsRail({
   return (
     <section data-testid="fundamentals-panel" className="flex w-full min-w-0 flex-shrink-0 flex-col border-t border-border bg-card text-card-foreground text-[11px] font-mono">
       <div className="flex items-center justify-between border-b border-border bg-muted/40 px-2 py-1">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Company data</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {showOverviewTab ? "Company data" : "Earnings & estimates"}
+        </span>
         <div className="flex items-center gap-1.5">
           <Button
             type="button"
@@ -134,11 +127,11 @@ export function FundamentalsRail({
       </div>
 
       <Tabs defaultValue="earnings" className="flex w-full flex-col">
-        <TabsList className="mx-2 mt-2 grid h-8 w-[calc(100%-1rem)] flex-shrink-0 grid-cols-2 sm:w-80">
-          <TabsTrigger className="py-1 text-[10px]" value="overview">Overview</TabsTrigger>
+        <TabsList className={`mx-2 mt-2 grid h-8 w-[calc(100%-1rem)] flex-shrink-0 ${showOverviewTab ? "grid-cols-2 sm:w-80" : "grid-cols-1"}`}>
+          {showOverviewTab ? <TabsTrigger className="py-1 text-[10px]" value="overview">Overview</TabsTrigger> : null}
           <TabsTrigger className="py-1 text-[10px]" value="earnings">Earnings</TabsTrigger>
         </TabsList>
-        <TabsContent value="overview" className="grid gap-x-8 gap-y-4 px-3 py-3 md:grid-cols-2 xl:grid-cols-3">
+        {showOverviewTab ? <TabsContent value="overview" className="grid gap-x-8 gap-y-4 px-3 py-3 md:grid-cols-2">
           <section className="space-y-0.5">
             <div className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-ink-muted">Ratings</div>
             {ratingRow("RS", kpiNum(kpis, "rs_rating"))}
@@ -172,46 +165,11 @@ export function FundamentalsRail({
             {fundRow("P/S", formatNum(kpiNum(kpis, "ps"), 1))}
           </section>
 
-          <section className="border-t border-line pt-2">
-            <div className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-ink-muted">Top RS peers</div>
-            {peers.length === 0 ? (
-              <div className="text-[10px] text-ink-muted">No peers</div>
-            ) : (
-              <Table className="text-left text-[9px]">
-                <TableHeader className="text-[8.5px] uppercase text-muted-foreground">
-                  <TableRow>
-                    <TableHead className="h-6 px-1 py-0.5 font-semibold">Ticker</TableHead>
-                    <TableHead className="h-6 px-1 py-0.5 text-right font-semibold">RS</TableHead>
-                    <TableHead className="h-6 px-1 py-0.5 text-right font-semibold">Close</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {peers.map((peer) => (
-                    <TableRow
-                      key={peer.ticker}
-                      className={cn(onSelectTicker && "cursor-pointer")}
-                      onClick={() => onSelectTicker?.(peer.ticker)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") onSelectTicker?.(peer.ticker);
-                      }}
-                      tabIndex={onSelectTicker ? 0 : undefined}
-                    >
-                      <TableCell className="px-1 py-1 font-semibold text-foreground">{peer.ticker}</TableCell>
-                      <TableCell className="px-1 py-1 text-right">{peer.rs_rating ?? "—"}</TableCell>
-                      <TableCell className="px-1 py-1 text-right">${peer.close.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </section>
-        </TabsContent>
+        </TabsContent> : null}
         <TabsContent value="earnings" className="px-3 py-3">
           <EarningsPanel
             annual={data?.annual_growth ?? []}
             quarterly={data?.quarterly_growth ?? []}
-            ticker={ticker}
-            asOfDate={asOfDate}
           />
         </TabsContent>
       </Tabs>

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
-from functools import lru_cache
 from importlib.resources import files
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -24,6 +24,8 @@ from sigmarail_spec.data_query import DataQueryV1
 
 from .views import DomainAPIRouteView, _workspace_for_request
 
+logger = logging.getLogger(__name__)
+
 
 def _use_domain_api_when_native_data_is_disabled(request: Request):
     if settings.SIGMARAIL_CLICKHOUSE_ENABLED:
@@ -31,7 +33,6 @@ def _use_domain_api_when_native_data_is_disabled(request: Request):
     return DomainAPIRouteView()._dispatch(request)
 
 
-@lru_cache(maxsize=1)
 def _clickhouse_client():
     if not settings.SIGMARAIL_CLICKHOUSE_ENABLED:
         raise RuntimeError("The direct SigmaRail ClickHouse query path is disabled.")
@@ -377,12 +378,20 @@ class MarketContextView(APIView):
 class ScreenSparklinesView(APIView):
     """Return compact weekly close series for a bounded set of screener cards."""
 
+    @staticmethod
+    def _query_client():
+        # During the AppTension cutover, the native data API is opt-in. The
+        # existing Studio chart and overview endpoints still use the shared
+        # SigmaRail database config, so keep this read-only batch endpoint on
+        # that same client until the native query service is enabled locally.
+        if settings.SIGMARAIL_CLICKHOUSE_ENABLED:
+            return _clickhouse_client()
+
+        from screens.ch import get_ch_client
+
+        return get_ch_client()
+
     def post(self, request: Request) -> Response:
-        if not settings.SIGMARAIL_CLICKHOUSE_ENABLED:
-            return Response(
-                {"detail": "Batched screen chart data requires the AppTension ClickHouse query service."},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
         _, error = _workspace_for_request(request)
         if error:
             return error
@@ -431,7 +440,7 @@ class ScreenSparklinesView(APIView):
             ORDER BY ticker ASC, week_start DESC
         """
         try:
-            client = _clickhouse_client()
+            client = self._query_client()
             result = client.query(
                 query,
                 parameters={
@@ -441,6 +450,7 @@ class ScreenSparklinesView(APIView):
                 },
             )
         except Exception:
+            logger.exception("Screener sparkline ClickHouse query failed")
             return Response(
                 {"detail": "Batched screen chart data is unavailable."},
                 status=status.HTTP_502_BAD_GATEWAY,
@@ -591,6 +601,7 @@ class UniversePreviewView(APIView):
                             for values in result.result_rows
                         ]
         except Exception:
+            logger.exception("SigmaRail universe preview ClickHouse query failed")
             return Response(
                 {"detail": "SigmaRail ClickHouse query failed."},
                 status=status.HTTP_502_BAD_GATEWAY,

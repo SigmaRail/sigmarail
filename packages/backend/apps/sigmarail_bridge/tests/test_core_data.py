@@ -109,6 +109,35 @@ def test_screen_sparklines_batches_tickers_and_returns_latest_52_weekly_closes(
     assert query_args.kwargs["parameters"]["tickers"] == ("ANF", "BVC")
 
 
+def test_screen_sparklines_uses_shared_clickhouse_config_during_native_api_cutover(
+    user, tenant, tenant_membership_factory
+):
+    tenant_membership_factory(user=user, tenant=tenant)
+    client = _client(user)
+    clickhouse = Mock()
+    clickhouse.query.return_value = SimpleNamespace(
+        result_rows=[("ANF", date(2026, 11, 16), Decimal("154.00"))]
+    )
+
+    with (
+        override_settings(SIGMARAIL_CLICKHOUSE_ENABLED=False),
+        patch("screens.ch.get_ch_client", return_value=clickhouse) as get_client,
+    ):
+        response = client.post(
+            "/api/screens/sparklines",
+            {"tickers": ["ANF"], "as_of": "2026-11-19"},
+            format="json",
+            HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
+        )
+
+    assert response.status_code == 200
+    assert response.json()["series"]["ANF"] == [
+        {"date": "2026-11-16", "close": 154.0}
+    ]
+    get_client.assert_called_once_with()
+    clickhouse.query.assert_called_once()
+
+
 def test_screen_sparklines_rejects_invalid_tickers_before_clickhouse(
     user, tenant, tenant_membership_factory
 ):

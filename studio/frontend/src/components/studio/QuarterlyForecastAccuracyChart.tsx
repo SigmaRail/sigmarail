@@ -136,7 +136,7 @@ function SingleForecastPane({
   }, [points, minVal, maxVal]);
 
   return (
-    <div className="flex flex-col flex-1 rounded border border-line bg-surface-sunk/40 p-2.5">
+    <div className="flex min-w-0 flex-col rounded border border-line bg-surface-sunk/40 p-2.5">
       <div className="flex items-center justify-between pb-1.5 border-b border-line/60">
         <span className="text-xs font-bold text-ink uppercase tracking-wide">{title}</span>
         <span className="text-[10px] text-ink-muted">{unitLabel}</span>
@@ -514,7 +514,7 @@ export function QuarterlyForecastAccuracyChart({
       </div>
 
       {/* Dual Sub-Charts (Revenue on left, Earnings on right) */}
-      <div className="flex flex-col md:flex-row items-stretch gap-3">
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 landscape:grid-cols-2">
         <SingleForecastPane
           title="Revenue"
           unitLabel="USD (M / B)"
