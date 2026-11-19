@@ -223,6 +223,7 @@ export function SpecLibraryModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         size="full"
+        onOpenAutoFocus={(event) => event.preventDefault()}
         className="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-6xl min-h-0 flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[92dvh] sm:max-h-[92dvh]"
       >
         {/* Modal Header */}
@@ -332,7 +333,11 @@ export function SpecLibraryModal({
         </div>
 
         {/* Spec Grid / Card List */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-surface/50 p-3 sm:p-6 [webkit-overflow-scrolling:touch]">
+        <div
+          data-testid="strategy-library-results"
+          className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-surface/50 p-3 sm:p-6"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {catalogQuery.isLoading || chSpecsQuery.isLoading ? (
             <div className="flex h-64 flex-col items-center justify-center gap-2 text-ink-muted">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
