@@ -621,10 +621,10 @@ def _load_from_clickhouse(ir_id: str) -> dict:
         port=int(os.environ.get("CLICKHOUSE_PORT", "8123")),
         username=os.environ["CLICKHOUSE_USER"],
         password=os.environ["CLICKHOUSE_PASSWORD"],
-        database=os.environ.get("CLICKHOUSE_DATABASE", "vera"),
+        database=os.environ.get("CLICKHOUSE_DATABASE", "sigmarail"),
     )
     rows = client.query(
-        "SELECT algorithm_json FROM vera.strategy_algorithm_specs FINAL WHERE ir_id = "
+        "SELECT algorithm_json FROM strategy_algorithm_specs FINAL WHERE ir_id = "
         f"{{ir:String}}",
         parameters={"ir": ir_id},
     ).result_rows
@@ -647,7 +647,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="vera-spec-lint", description=main.__doc__)
     src = ap.add_mutually_exclusive_group(required=False)
     src.add_argument("spec_json", nargs="?", help="path to a spec JSON file")
-    src.add_argument("--ir-id", help="load from vera.strategy_algorithm_specs")
+    src.add_argument("--ir-id", help="load from strategy_algorithm_specs")
     ap.add_argument("--strict-warnings", action="store_true")
     ap.add_argument("--no-runtime-params", action="store_true",
                     help="skip E200/E201")

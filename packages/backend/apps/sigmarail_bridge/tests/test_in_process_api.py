@@ -2,10 +2,24 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+from rest_framework.parsers import JSONParser
+from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.sigmarail_bridge.in_process_api import dispatch_api_request
-from apps.sigmarail_bridge.views import DomainAPIRouteView
+from apps.sigmarail_bridge.views import DomainAPIRouteView, _forwarded_request_body
+
+pytestmark = pytest.mark.django_db
+
+
+def test_forwarded_json_body_survives_drfs_consumed_stream():
+    payload = {"as_of": "2026-11-10", "spec": {"version": 1}}
+    django_request = APIRequestFactory().post("/api/screens/preview-ir", payload, format="json")
+    request = Request(django_request, parsers=[JSONParser()])
+
+    assert request.data == payload
+    assert _forwarded_request_body(request) == b'{"as_of":"2026-11-10","spec":{"version":1}}'
 
 def test_app_tension_route_executes_domain_api_in_process():
     user = SimpleNamespace(is_authenticated=True, is_anonymous=False, id=1, pk=1)

@@ -2,11 +2,24 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from common.models import TenantDependentModelMixin, TimestampedMixin
 
 
-class WorkspaceScreen(TenantDependentModelMixin, TimestampedMixin):
+class WorkspaceOwnedModelMixin(TenantDependentModelMixin):
+    """Require an explicit tenant for persisted workspace-owned records."""
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.tenant_id is None:
+            raise ValidationError({"tenant": "A tenant must be selected before saving this workspace record."})
+        return super().save(*args, **kwargs)
+
+
+class WorkspaceScreen(WorkspaceOwnedModelMixin, TimestampedMixin):
     """A user-owned universe screen, authorized within its application workspace."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -43,10 +56,29 @@ class WorkspaceScreen(TenantDependentModelMixin, TimestampedMixin):
 
 
 class WorkspaceStrategyReference(TenantDependentModelMixin, TimestampedMixin):
-    """User ownership for a strategy spec persisted by SigmaRail Core."""
+    """Canonical AppTension record for one saved strategy version.
+
+    ``ir_id`` remains the stable wire identifier consumed by the editor and
+    LEAN adapters. The authored and compiled documents live here; ClickHouse
+    is not the source of truth for strategy configuration.
+    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ir_id = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255, blank=True, default="")
+    spec = models.JSONField(null=True, blank=True)
+    pipeline_document = models.JSONField(null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
+    category = models.CharField(max_length=80, blank=True, default="")
+    tags = models.JSONField(default=list, blank=True)
+    spec_schema_version = models.PositiveSmallIntegerField(null=True, blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, default="")
+    compiler_version = models.CharField(max_length=80, blank=True, default="")
+    parent_ir_id = models.CharField(max_length=255, blank=True, default="")
+    parent_content_hash = models.CharField(max_length=64, blank=True, default="")
+    mutation_type = models.CharField(max_length=32, blank=True, default="init")
+    changelog_notes = models.TextField(blank=True, default="")
+    is_template = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -66,11 +98,16 @@ class WorkspaceStrategyReference(TenantDependentModelMixin, TimestampedMixin):
     class Meta:
         ordering = ["ir_id"]
 
+    def save(self, *args, **kwargs):
+        if self.tenant_id is None and not self.is_template:
+            raise ValidationError({"tenant": "A tenant is required for non-template strategy versions."})
+        return super().save(*args, **kwargs)
+
     def __str__(self):
         return self.ir_id
 
 
-class WorkspaceStrategyFrameworkTemplate(TenantDependentModelMixin, TimestampedMixin):
+class WorkspaceStrategyFrameworkTemplate(WorkspaceOwnedModelMixin, TimestampedMixin):
     """A private, tenant-scoped framework template saved by one user."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -118,13 +155,24 @@ class WorkspaceStrategyFrameworkTemplate(TenantDependentModelMixin, TimestampedM
         return self.name
 
 
-class WorkspaceBacktestReference(TenantDependentModelMixin, TimestampedMixin):
-    """Organization ownership for a queued backtest and its result run."""
+class WorkspaceBacktestReference(WorkspaceOwnedModelMixin, TimestampedMixin):
+    """Canonical PostgreSQL control record for a backtest job/run.
+
+    ClickHouse result datasets remain keyed by ``run_id``; job ownership,
+    pinned strategy content and workflow state are authoritative here.
+    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job_id = models.CharField(max_length=255, unique=True)
     run_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     ir_id = models.CharField(max_length=255)
+    strategy_content_hash = models.CharField(max_length=64, blank=True, default="")
+    strategy_snapshot = models.JSONField(null=True, blank=True)
+    configuration = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=24, default="pending")
+    progress = models.JSONField(default=dict, blank=True)
+    result_summary = models.JSONField(null=True, blank=True)
+    error_message = models.TextField(blank=True, default="")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -139,12 +187,16 @@ class WorkspaceBacktestReference(TenantDependentModelMixin, TimestampedMixin):
         return self.job_id
 
 
-class WorkspaceOptimizerReference(TenantDependentModelMixin, TimestampedMixin):
-    """Organization ownership for an optimizer session persisted by SigmaRail Core."""
+class WorkspaceOptimizerReference(WorkspaceOwnedModelMixin, TimestampedMixin):
+    """Canonical PostgreSQL control record for an optimizer session."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     session_id = models.CharField(max_length=255, unique=True)
     base_ir_id = models.CharField(max_length=255)
+    base_strategy_content_hash = models.CharField(max_length=64, blank=True, default="")
+    configuration = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=24, default="pending")
+    result_summary = models.JSONField(null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -159,12 +211,17 @@ class WorkspaceOptimizerReference(TenantDependentModelMixin, TimestampedMixin):
         return self.session_id
 
 
-class WorkspaceDeploymentReference(TenantDependentModelMixin, TimestampedMixin):
-    """Organization ownership for a paper deployment registered by Studio."""
+class WorkspaceDeploymentReference(WorkspaceOwnedModelMixin, TimestampedMixin):
+    """Canonical PostgreSQL control record for a paper/live deployment."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     deployment_id = models.CharField(max_length=255, unique=True)
     ir_id = models.CharField(max_length=255)
+    strategy_content_hash = models.CharField(max_length=64, blank=True, default="")
+    approval_run_id = models.CharField(max_length=255, blank=True, default="")
+    configuration = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=24, default="pending")
+    stopped_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -179,7 +236,7 @@ class WorkspaceDeploymentReference(TenantDependentModelMixin, TimestampedMixin):
         return self.deployment_id
 
 
-class WorkspaceBrokerAccountReference(TenantDependentModelMixin, TimestampedMixin):
+class WorkspaceBrokerAccountReference(WorkspaceOwnedModelMixin, TimestampedMixin):
     """Workspace-owned, non-secret broker profile configuration."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

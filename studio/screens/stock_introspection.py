@@ -108,7 +108,7 @@ def get_stock_introspection(
     LEFT JOIN screener_ownership_daily o FINAL ON p.ticker = o.ticker AND p.date = o.date
     LEFT JOIN screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
     LEFT JOIN daily_valuation dv ON p.ticker = dv.ticker AND p.date = dv.date
-    LEFT JOIN vera.tickers t ON p.ticker = t.ticker
+    LEFT JOIN tickers t ON p.ticker = t.ticker
     WHERE p.ticker = %(ticker)s AND p.date = toDate(%(as_of)s)
     LIMIT 1
     """
@@ -1061,12 +1061,12 @@ def get_stock_introspection(
                 fc.valuation_status
             FROM screener_price_tech_daily p
             INNER JOIN (
-                SELECT ticker, name, industry, sector, siccode, sicindustry FROM vera.tickers
+                SELECT ticker, name, industry, sector, siccode, sicindustry FROM tickers
                 WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
             ) t ON p.ticker = t.ticker
             LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
             WHERE p.date = toDate(%(as_of)s)
-              AND t.siccode = (SELECT siccode FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)
+              AND t.siccode = (SELECT siccode FROM tickers WHERE ticker = %(ticker)s LIMIT 1)
               AND p.ticker != %(ticker)s
               AND p.close > 0
             ORDER BY (p.close * p.avg_vol_20d) DESC
@@ -1091,13 +1091,13 @@ def get_stock_introspection(
                     fc.valuation_status
                 FROM screener_price_tech_daily p
                 INNER JOIN (
-                    SELECT ticker, name, industry, sector, siccode, sicindustry FROM vera.tickers
+                    SELECT ticker, name, industry, sector, siccode, sicindustry FROM tickers
                     WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
                 ) t ON p.ticker = t.ticker
                 LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
                 WHERE p.date = toDate(%(as_of)s)
-                  AND (t.industry = (SELECT industry FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)
-                       OR (t.industry = '' AND t.sector = (SELECT sector FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)))
+                  AND (t.industry = (SELECT industry FROM tickers WHERE ticker = %(ticker)s LIMIT 1)
+                       OR (t.industry = '' AND t.sector = (SELECT sector FROM tickers WHERE ticker = %(ticker)s LIMIT 1)))
                   AND p.ticker != %(ticker)s
                   AND p.close > 0
                 ORDER BY (p.close * p.avg_vol_20d) DESC

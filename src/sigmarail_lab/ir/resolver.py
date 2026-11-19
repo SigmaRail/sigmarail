@@ -155,8 +155,9 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
       1. SIGMARAIL_STRATEGY_PATH — read file when present; if missing but path is the CI
          baseline fixture (``tests/fixtures/ir/baseline.json``), use bundled copy
          (LEAN Docker omits ``.json`` from project sync).
-      2. SIGMARAIL_STRATEGY_ID — fetch algorithm_json through SigmaRail Studio's API
-      3. SIGMARAIL_STRATEGY_BASE64 — inline JSON (optional; capped)
+      2. SIGMARAIL_STRATEGY_BASE64 — immutable inline JSON pinned by the submitting service
+         (optional; capped).
+      3. SIGMARAIL_STRATEGY_ID — fetch algorithm_json through SigmaRail's API
     If none resolve, raise VeraLabResolutionError.
     """
     path = (os.environ.get("SIGMARAIL_STRATEGY_PATH") or "").strip()
@@ -186,10 +187,6 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
             source = "bundled"
         else:
             raise VeraLabResolutionError(f"SIGMARAIL_STRATEGY_PATH is not a file: {path!r} (resolved {p!r})")
-    elif ir_id_env:
-        raw = _fetch_from_sigmarail(ir_id_env, algorithm)
-        source = "api"
-        ir_id = ir_id_env
     elif b64:
         max_b64 = int(os.environ.get("SIGMARAIL_STRATEGY_BASE64_MAX", "1048576"))
         if len(b64) > max_b64:
@@ -199,6 +196,11 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
         except Exception as e:
             raise VeraLabResolutionError(f"Invalid SIGMARAIL_STRATEGY_BASE64: {e}") from e
         source = "base64"
+        ir_id = ir_id_env or None
+    elif ir_id_env:
+        raw = _fetch_from_sigmarail(ir_id_env, algorithm)
+        source = "api"
+        ir_id = ir_id_env
     else:
         raise VeraLabResolutionError(
             "No algorithm JSON: set SIGMARAIL_STRATEGY_PATH, SIGMARAIL_STRATEGY_ID, or SIGMARAIL_STRATEGY_BASE64"

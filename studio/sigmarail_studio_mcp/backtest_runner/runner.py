@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -30,6 +31,8 @@ from sigmarail_studio_mcp.backtest_runner.project_registry import (
     resolve_output_rel,
 )
 from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
+
+logger = logging.getLogger(__name__)
 
 
 def _default_image(project: dict[str, Any] | None = None) -> str:
@@ -147,6 +150,46 @@ def _merge_extra_env(
     merged = dict(extra_env or {})
     merged.setdefault("lean_project", lean_project)
     return merged
+
+
+def _uses_postgres_job_control(extra_env: dict[str, str] | None) -> bool:
+    return bool(str((extra_env or {}).get("SIGMARAIL_STRATEGY_BASE64") or "").strip())
+
+
+def _update_postgres_job(job_id: str, *, status: str, **telemetry: Any) -> bool:
+    """Update AppTension's authoritative job record for pinned strategy runs."""
+    try:
+        import django
+        from django.utils import timezone
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+        django.setup()
+        from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+        progress = {
+            key: telemetry[key]
+            for key in (
+                "progress_pct", "current_sim_date", "elapsed_seconds",
+                "estimated_remaining_seconds", "last_heartbeat", "last_log_line",
+                "started_at", "completed_at", "lean_output_path", "runner_id",
+            )
+            if key in telemetry and telemetry[key] is not None
+        }
+        updates: dict[str, Any] = {"status": status}
+        updates["updated_at"] = timezone.now()
+        if progress:
+            updates["progress"] = {key: (value.isoformat() if hasattr(value, "isoformat") else value)
+                                    for key, value in progress.items()}
+        if telemetry.get("error_message") is not None:
+            updates["error_message"] = str(telemetry["error_message"])
+        if telemetry.get("result_summary") is not None:
+            updates["result_summary"] = telemetry["result_summary"]
+        if telemetry.get("run_id") is not None:
+            updates["run_id"] = telemetry["run_id"]
+        return WorkspaceBacktestReference.objects.filter(job_id=job_id).update(**updates) == 1
+    except Exception:
+        logger.exception("Could not update AppTension backtest record %s", job_id)
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -424,8 +467,13 @@ def tail_log(job_id: str, tail_lines: int = 200) -> dict[str, Any]:
 # Post-run: insert results into strategy_runs via insert_strategy_run.py
 # ---------------------------------------------------------------------------
 
-def _ir_lineage_from_db(ir_id: str) -> tuple[str, str]:
-    """Return (ir_schema_version, ir_content_hash) from strategy_algorithm_specs if present."""
+def _ir_lineage_from_db(ir_id: str, extra_env: dict[str, str] | None = None) -> tuple[str, str]:
+    """Return pinned strategy lineage, falling back to legacy CH for older callers."""
+    extra_env = extra_env or {}
+    pinned_hash = str(extra_env.get("SIGMARAIL_STRATEGY_CONTENT_HASH") or "").strip()
+    pinned_schema = str(extra_env.get("SIGMARAIL_STRATEGY_SCHEMA_VERSION") or "").strip()
+    if pinned_hash:
+        return pinned_schema, pinned_hash
     from sigmarail_studio_mcp.backtest_runner.ch_client import get_client
 
     client = get_client()
@@ -500,6 +548,7 @@ def _insert_strategy_run(
     start_date: str,
     end_date: str,
     image: str,
+    extra_env: dict[str, str] | None = None,
 ) -> None:
     """Replicate the 'Record run in ClickHouse' step from backtest.yml."""
     lean_cli_name = str(project.get("lean_cli_name") or project.get("id"))
@@ -527,7 +576,7 @@ def _insert_strategy_run(
     env.setdefault("CLICKHOUSE_USER", "testuser")
     env.setdefault("CLICKHOUSE_PASSWORD", "testanalysis")
     env.setdefault("CLICKHOUSE_DATABASE", "sigmarail")
-    ir_schema_version, ir_content_hash = _ir_lineage_from_db(ir_id)
+    ir_schema_version, ir_content_hash = _ir_lineage_from_db(ir_id, extra_env)
     repo_name = str(project.get("id") or lean_cli_name)
     commit_sha, git_branch = _engine_git_info(lean_root)
     image_id, image_created = _docker_image_info(image)
@@ -650,7 +699,7 @@ def submit_job(
     extra_env: dict[str, str] | None = None,
     lean_project: str | None = None,
 ) -> str:
-    """INSERT a pending job record into backtest_jobs. Returns the job_id."""
+    """Queue a backtest, leaving job state in PostgreSQL for AppTension runs."""
     from sigmarail_studio_mcp.backtest_runner.ch_client import get_client
 
     lean_project = lean_project or default_project_id()
@@ -658,21 +707,25 @@ def submit_job(
     job_id = job_id or str(uuid.uuid4())
     now = datetime.utcnow()
     merged_env = _merge_extra_env(extra_env, lean_project=lean_project)
-    client = get_client()
-    try:
-        _insert_job_state(
-            client,
-            job_id=job_id,
-            ir_id=ir_id,
-            start_date=start_date,
-            end_date=end_date,
-            status="pending",
-            submitted_at=now,
-            extra_env=json.dumps(merged_env),
-            lean_project=lean_project,
-        )
-    finally:
-        client.close()
+    if _uses_postgres_job_control(merged_env):
+        if not _update_postgres_job(job_id, status="pending", last_heartbeat=now):
+            raise RuntimeError(f"PostgreSQL backtest record was not found for job {job_id}")
+    else:
+        client = get_client()
+        try:
+            _insert_job_state(
+                client,
+                job_id=job_id,
+                ir_id=ir_id,
+                start_date=start_date,
+                end_date=end_date,
+                status="pending",
+                submitted_at=now,
+                extra_env=json.dumps(merged_env),
+                lean_project=lean_project,
+            )
+        finally:
+            client.close()
     return job_id
 
 
@@ -762,27 +815,42 @@ def run_job(
     log_path = output_path / "lean-backtest.log"
     started_at = datetime.utcnow()
 
+    postgres_control = _uses_postgres_job_control(merged_env)
     client = get_client()
     try:
-        original_submitted_at = _fetch_submitted_at(client, job_id) or started_at
-        _insert_job_state(
-            client,
-            job_id=job_id,
-            ir_id=ir_id,
-            start_date=start_date,
-            end_date=end_date,
-            status="running",
-            runner_id=runner_id,
-            submitted_at=original_submitted_at,
-            started_at=started_at,
-            lean_output_path=str(output_path),
-            extra_env=json.dumps(merged_env),
-            lean_project=lean_project,
-        )
+        original_submitted_at = None if postgres_control else _fetch_submitted_at(client, job_id)
+        original_submitted_at = original_submitted_at or started_at
+        if postgres_control:
+            if not _update_postgres_job(
+                job_id, status="running", runner_id=runner_id, started_at=started_at,
+                lean_output_path=str(output_path), last_heartbeat=started_at,
+            ):
+                raise RuntimeError(f"PostgreSQL backtest record was not found for job {job_id}")
+        else:
+            _insert_job_state(
+                client,
+                job_id=job_id,
+                ir_id=ir_id,
+                start_date=start_date,
+                end_date=end_date,
+                status="running",
+                runner_id=runner_id,
+                submitted_at=original_submitted_at,
+                started_at=started_at,
+                lean_output_path=str(output_path),
+                extra_env=json.dumps(merged_env),
+                lean_project=lean_project,
+            )
     finally:
         client.close()
 
     if detach:
+        worker_env = os.environ.copy()
+        studio_root = str(Path(__file__).resolve().parents[2])
+        backend_root = str(Path(studio_root).parent / "packages" / "backend")
+        existing_pythonpath = [part for part in worker_env.get("PYTHONPATH", "").split(os.pathsep) if part]
+        worker_env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys([backend_root, studio_root, *existing_pythonpath]))
+        worker_env.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
         detach_cmd = [
             sys.executable, "-m", "sigmarail_studio_mcp.backtest_runner.run_and_insert",
             "--job-id", job_id,
@@ -799,6 +867,7 @@ def run_job(
                 stdout=log_fh,
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
+                env=worker_env,
             )
         return {
             "job_id": job_id,
@@ -828,11 +897,19 @@ def run_job(
                     est_rem = max(0, int((elapsed / prog) - elapsed)) if prog > 0.02 else 0
 
                     try:
-                        status_rows = client_t.query(
-                            "SELECT status FROM backtest_jobs FINAL WHERE job_id = %(jid)s LIMIT 1",
-                            parameters={"jid": job_id},
-                        ).result_rows
-                        if status_rows and status_rows[0][0] == "cancelled":
+                        if postgres_control:
+                            from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+                            cancelled = WorkspaceBacktestReference.objects.filter(
+                                job_id=job_id, status="cancelled"
+                            ).exists()
+                        else:
+                            status_rows = client_t.query(
+                                "SELECT status FROM backtest_jobs FINAL WHERE job_id = %(jid)s LIMIT 1",
+                                parameters={"jid": job_id},
+                            ).result_rows
+                            cancelled = bool(status_rows and status_rows[0][0] == "cancelled")
+                        if cancelled:
                             proc.terminate()
                             try:
                                 proc.wait(timeout=5)
@@ -843,26 +920,35 @@ def run_job(
                         pass
 
                     try:
-                        _insert_job_state(
-                            client_t,
-                            job_id=job_id,
-                            ir_id=ir_id,
-                            start_date=start_date,
-                            end_date=end_date,
-                            status="running",
-                            runner_id=runner_id,
-                            submitted_at=original_submitted_at,
-                            started_at=started_at,
-                            lean_output_path=str(output_path),
-                            extra_env=json.dumps(merged_env),
-                            lean_project=lean_project,
-                            progress_pct=prog,
-                            current_sim_date=sim_d,
-                            elapsed_seconds=elapsed,
-                            estimated_remaining_seconds=est_rem,
-                            last_heartbeat=datetime.utcnow(),
-                            last_log_line=last_line,
-                        )
+                        if postgres_control:
+                            _update_postgres_job(
+                                job_id, status="running", runner_id=runner_id,
+                                started_at=started_at, lean_output_path=str(output_path),
+                                progress_pct=prog, current_sim_date=sim_d,
+                                elapsed_seconds=elapsed, estimated_remaining_seconds=est_rem,
+                                last_heartbeat=datetime.utcnow(), last_log_line=last_line,
+                            )
+                        else:
+                            _insert_job_state(
+                                client_t,
+                                job_id=job_id,
+                                ir_id=ir_id,
+                                start_date=start_date,
+                                end_date=end_date,
+                                status="running",
+                                runner_id=runner_id,
+                                submitted_at=original_submitted_at,
+                                started_at=started_at,
+                                lean_output_path=str(output_path),
+                                extra_env=json.dumps(merged_env),
+                                lean_project=lean_project,
+                                progress_pct=prog,
+                                current_sim_date=sim_d,
+                                elapsed_seconds=elapsed,
+                                estimated_remaining_seconds=est_rem,
+                                last_heartbeat=datetime.utcnow(),
+                                last_log_line=last_line,
+                            )
                     except Exception:
                         pass
             finally:
@@ -887,16 +973,20 @@ def run_job(
         succeeded = False
 
     is_cancelled = False
-    client = get_client()
-    try:
-        status_rows = client.query(
-            "SELECT status FROM backtest_jobs FINAL WHERE job_id = %(jid)s LIMIT 1",
-            parameters={"jid": job_id},
-        ).result_rows
-        if status_rows and status_rows[0][0] == "cancelled":
-            is_cancelled = True
-    finally:
-        client.close()
+    if postgres_control:
+        from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+        is_cancelled = WorkspaceBacktestReference.objects.filter(job_id=job_id, status="cancelled").exists()
+    else:
+        client = get_client()
+        try:
+            status_rows = client.query(
+                "SELECT status FROM backtest_jobs FINAL WHERE job_id = %(jid)s LIMIT 1",
+                parameters={"jid": job_id},
+            ).result_rows
+            is_cancelled = bool(status_rows and status_rows[0][0] == "cancelled")
+        finally:
+            client.close()
 
     if is_cancelled:
         final_status = "cancelled"
@@ -916,36 +1006,49 @@ def run_job(
                 start_date=start_date,
                 end_date=end_date,
                 image=image,
+                extra_env=merged_env,
             )
         except Exception as exc:
             final_status = "failed"
             error_msg = f"insert_strategy_run failed: {exc}"
 
     elapsed_final = int((completed_at - started_at).total_seconds())
-    client = get_client()
-    try:
-        _insert_job_state(
-            client,
-            job_id=job_id,
-            ir_id=ir_id,
-            start_date=start_date,
-            end_date=end_date,
-            status=final_status,
-            runner_id=runner_id,
-            submitted_at=original_submitted_at,
-            started_at=started_at,
-            completed_at=completed_at,
-            lean_output_path=str(output_path),
-            extra_env=json.dumps(merged_env),
-            error_message=error_msg,
-            lean_project=lean_project,
+    if postgres_control:
+        updated = _update_postgres_job(
+            job_id, status=final_status, runner_id=runner_id,
+            started_at=started_at, completed_at=completed_at,
+            lean_output_path=str(output_path), error_message=error_msg,
             progress_pct=1.0 if final_status == "done" else 0.0,
-            elapsed_seconds=elapsed_final,
-            estimated_remaining_seconds=0,
+            elapsed_seconds=elapsed_final, estimated_remaining_seconds=0,
             last_heartbeat=completed_at,
         )
-    finally:
-        client.close()
+        if not updated:
+            raise RuntimeError(f"Could not persist final PostgreSQL state for job {job_id}")
+    else:
+        client = get_client()
+        try:
+            _insert_job_state(
+                client,
+                job_id=job_id,
+                ir_id=ir_id,
+                start_date=start_date,
+                end_date=end_date,
+                status=final_status,
+                runner_id=runner_id,
+                submitted_at=original_submitted_at,
+                started_at=started_at,
+                completed_at=completed_at,
+                lean_output_path=str(output_path),
+                extra_env=json.dumps(merged_env),
+                error_message=error_msg,
+                lean_project=lean_project,
+                progress_pct=1.0 if final_status == "done" else 0.0,
+                elapsed_seconds=elapsed_final,
+                estimated_remaining_seconds=0,
+                last_heartbeat=completed_at,
+            )
+        finally:
+            client.close()
 
     return {
         "job_id": job_id,
@@ -959,7 +1062,19 @@ def run_job(
 
 
 def cancel_job(job_id: str) -> dict[str, Any]:
-    """Mark job as cancelled in ClickHouse and attempt to terminate matching process."""
+    """Cancel AppTension-owned jobs in PostgreSQL; retain CH for legacy jobs only."""
+    try:
+        from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+        updated = WorkspaceBacktestReference.objects.filter(job_id=job_id).exclude(
+            status__in=("done", "failed", "cancelled")
+        ).update(status="cancelled", error_message="Cancelled by user")
+        if updated:
+            return {"job_id": job_id, "status": "cancelled", "cancelled": True}
+        if WorkspaceBacktestReference.objects.filter(job_id=job_id).exists():
+            return {"job_id": job_id, "status": "already_finished", "cancelled": False}
+    except Exception:
+        logger.exception("Could not cancel AppTension backtest job %s", job_id)
     from sigmarail_studio_mcp.backtest_runner.ch_client import get_client
 
     client = get_client()

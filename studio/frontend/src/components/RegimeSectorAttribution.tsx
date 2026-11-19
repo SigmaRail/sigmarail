@@ -133,7 +133,7 @@ export function RegimeSectorAttribution({ runId }: { runId: string }) {
             </h3>
             <p className="text-[11px] text-ink-muted">
               Performance segmented by S&P 500 breadth (% above 200-day SMA) from{" "}
-              <code className="font-mono text-[10px]">vera.market_regime_signals</code>
+              <code className="font-mono text-[10px]">market_regime_signals</code>
             </p>
           </div>
         </div>

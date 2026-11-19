@@ -1589,6 +1589,7 @@ class BacktestJobsListView(APIView):
         start_date = str(body.get("start_date") or "").strip()
         end_date = str(body.get("end_date") or "").strip()
         lean_project = str(body.get("lean_project") or "SigmaRailTradingLab").strip()
+        job_id = str(body.get("job_id") or "").strip() or None
         if not ir_id:
             return Response({"detail": "ir_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         if not start_date:
@@ -1607,6 +1608,7 @@ class BacktestJobsListView(APIView):
                 lean_project=lean_project,
                 immediate=immediate,
                 extra_env=extra_env,
+                job_id=job_id,
             )
         except Exception as exc:
             return Response(

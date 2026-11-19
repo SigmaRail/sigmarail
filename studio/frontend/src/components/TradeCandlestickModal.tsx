@@ -594,7 +594,7 @@ export function TradeCandlestickModal({
         <div className="flex-1 overflow-y-auto p-5">
           {candlesQuery.isLoading ? (
             <div className="flex h-72 items-center justify-center text-[12px] text-ink-muted">
-              Fetching daily OHLCV candles from ClickHouse <code className="font-mono ml-1">vera.sep</code>…
+              Fetching daily OHLCV candles from ClickHouse <code className="font-mono ml-1">sep</code>…
             </div>
           ) : candlesQuery.isError ? (
             <div className="flex h-72 items-center justify-center text-[12px] text-danger">
@@ -1228,7 +1228,7 @@ export function TradeCandlestickModal({
             <span>
               ClickHouse source:{" "}
               <code className="text-ink font-semibold">
-                {candlesQuery.data?.source || "vera.daily_prices"}
+                {candlesQuery.data?.source || "daily_prices"}
               </code>
               {candles.length > 0 ? ` · ${candles.length} bars` : ""}
             </span>

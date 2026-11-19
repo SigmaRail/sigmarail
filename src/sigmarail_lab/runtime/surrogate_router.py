@@ -1,6 +1,6 @@
 """Surrogate Router for routing single-stock / sector insights to leveraged ETF surrogates.
 
-Maintains canonical mappings (backed by ClickHouse vera.etf_surrogate_catalog and offline fallback)
+Maintains canonical mappings (backed by the configured ClickHouse database and offline fallback)
 and handles historical inception date boundaries, minimum ADV liquidity floors, and dynamic
 QuantConnect security subscription.
 """
@@ -156,7 +156,7 @@ class SurrogateRouter:
         self._build_reverse_map()
 
     def _load_catalog(self, client: Any = None) -> None:
-        """Query ClickHouse vera.etf_surrogate_catalog if client is available."""
+    """Query the configured ClickHouse etf_surrogate_catalog when available."""
         if client is None:
             try:
                 from vera.database import get_client
@@ -171,7 +171,7 @@ class SurrogateRouter:
             sql = """
                 SELECT underlying_ticker, surrogate_ticker, leverage_factor,
                        category, direction, inception_date, is_active
-                FROM vera.etf_surrogate_catalog FINAL
+                FROM etf_surrogate_catalog FINAL
                 WHERE is_active = 1 AND direction = 'bull'
                 ORDER BY leverage_factor DESC
             """

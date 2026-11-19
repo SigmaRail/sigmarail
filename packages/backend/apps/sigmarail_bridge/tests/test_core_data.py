@@ -172,7 +172,7 @@ def test_clickhouse_client_is_created_with_readonly_setting():
     ):
         _clickhouse_client()
 
-    assert create.call_args.kwargs["settings"] == {"readonly": 1}
+    assert create.call_args.kwargs["settings"] == {"readonly": 2}
     assert create.call_args.kwargs["username"] == "studio_reader"
     _clickhouse_client.cache_clear()
 

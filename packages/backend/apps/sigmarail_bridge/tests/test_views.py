@@ -92,33 +92,22 @@ def test_authenticated_bridge_rejects_a_workspace_without_membership(user, tenan
     request_upstream.assert_not_called()
 
 
-def test_strategy_catalog_marks_legacy_records_shared_and_hides_other_workspaces(
+def test_strategy_catalog_reads_postgres_and_hides_other_workspaces(
     user, tenant, tenant_factory, tenant_membership_factory
 ):
     other_workspace = tenant_factory()
     tenant_membership_factory(user=user, creator=user, tenant=tenant)
     WorkspaceStrategyReference.objects.create(
-        tenant=tenant, created_by=user, owner_user=user, ir_id="mine", synced=True
+        tenant=tenant, created_by=user, owner_user=user, ir_id="mine", title="My strategy",
+        spec={"SchemaVersion": 2}, synced=True,
     )
-    WorkspaceStrategyReference.objects.create(tenant=other_workspace, ir_id="other", synced=True)
-    upstream_request = httpx.Request("GET", "http://studio-api.internal:8001/api/backtests/specs?limit=10")
-    upstream_response = httpx.Response(
-        200,
-        request=upstream_request,
-        json={
-            "specs": [
-                {"ir_id": "legacy", "is_system": False},
-                {"ir_id": "system", "is_system": True},
-                {"ir_id": "mine", "is_system": False},
-                {"ir_id": "other", "is_system": False},
-            ],
-            "count": 4,
-        },
+    WorkspaceStrategyReference.objects.create(
+        tenant=other_workspace, ir_id="other", title="Other strategy", spec={"SchemaVersion": 2}, synced=True,
     )
     client = APIClient()
     client.force_authenticate(user=user)
 
-    with patch("apps.sigmarail_bridge.views.dispatch_api_request", return_value=upstream_response) as upstream:
+    with patch("apps.sigmarail_bridge.views.dispatch_api_request") as upstream:
         response = client.get(
             "/api/backtests/specs?limit=10",
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
@@ -126,27 +115,17 @@ def test_strategy_catalog_marks_legacy_records_shared_and_hides_other_workspaces
 
     assert response.status_code == 200
     records = {item["ir_id"]: item for item in response.json()["specs"]}
-    assert set(records) == {"legacy", "system", "mine"}
-    assert records["legacy"]["is_shared"] is True
-    assert records["system"]["is_shared"] is False
+    assert set(records) == {"mine"}
     assert records["mine"]["is_shared"] is False
-    assert response.json()["count"] == 3
-    assert upstream.call_args.args[1] == "/api/backtests/specs"
-    assert upstream.call_args.kwargs["query"] == "limit=10"
+    assert response.json()["count"] == 1
+    upstream.assert_not_called()
 
 
 def test_new_strategy_save_registers_workspace_ownership(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = APIClient()
     client.force_authenticate(user=user)
-    existing_request = httpx.Request("GET", "http://studio-api.internal:8001/api/backtests/specs/tenant-owned")
-    saved_request = httpx.Request("POST", "http://studio-api.internal:8001/api/backtests/specs")
-    responses = [
-        httpx.Response(404, request=existing_request, json={"detail": "not found"}),
-        httpx.Response(201, request=saved_request, json={"ir_id": "tenant-owned", "title": "Owned strategy"}),
-    ]
-
-    with patch("apps.sigmarail_bridge.views.dispatch_api_request", side_effect=responses) as upstream:
+    with patch("apps.sigmarail_bridge.views.dispatch_api_request") as upstream:
         response = client.post(
             "/api/backtests/specs",
             {"ir_id": "tenant-owned", "title": "Owned strategy", "spec": {"SchemaVersion": 2}},
@@ -160,18 +139,16 @@ def test_new_strategy_save_registers_workspace_ownership(user, tenant, tenant_me
     assert reference.tenant == tenant
     assert reference.created_by == user
     assert reference.synced is True
-    assert upstream.call_count == 2
-    assert upstream.call_args.args[0] == "POST"
+    assert reference.spec == {"SchemaVersion": 2}
+    assert len(reference.content_hash) == 64
+    upstream.assert_not_called()
 
 
-def test_existing_unowned_strategy_cannot_be_saved_in_place(user, tenant, tenant_membership_factory):
+def test_strategy_save_does_not_query_clickhouse_for_existing_ids(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = APIClient()
     client.force_authenticate(user=user)
-    existing_request = httpx.Request("GET", "http://studio-api.internal:8001/api/backtests/specs/shared")
-    existing_response = httpx.Response(200, request=existing_request, json={"ir_id": "shared"})
-
-    with patch("apps.sigmarail_bridge.views.dispatch_api_request", return_value=existing_response) as upstream:
+    with patch("apps.sigmarail_bridge.views.dispatch_api_request") as upstream:
         response = client.post(
             "/api/backtests/specs",
             {"ir_id": "shared", "title": "Changed", "spec": {"SchemaVersion": 2}},
@@ -179,10 +156,9 @@ def test_existing_unowned_strategy_cannot_be_saved_in_place(user, tenant, tenant
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
 
-    assert response.status_code == 403
-    assert response.json()["code"] == "strategy_shared_read_only"
-    upstream.assert_called_once()
-    assert not WorkspaceStrategyReference.objects.filter(ir_id="shared").exists()
+    assert response.status_code == 201
+    assert response.json()["ir_id"] == "shared"
+    upstream.assert_not_called()
 
 
 def test_strategy_spec_read_and_mutation_are_scoped_to_owning_workspace(
@@ -211,7 +187,7 @@ def test_strategy_spec_read_and_mutation_are_scoped_to_owning_workspace(
     upstream.assert_not_called()
 
 
-def test_shared_strategy_pipeline_mutations_are_rejected(user, tenant, tenant_membership_factory):
+def test_strategy_pipeline_mutation_requires_postgres_owned_version(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = APIClient()
     client.force_authenticate(user=user)
@@ -224,9 +200,59 @@ def test_shared_strategy_pipeline_mutations_are_rejected(user, tenant, tenant_me
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
 
-    assert response.status_code == 403
-    assert response.json()["code"] == "strategy_shared_read_only"
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Strategy spec not found."
     upstream.assert_not_called()
+
+
+def test_pipeline_edit_forks_a_strategy_that_has_an_existing_backtest(user, tenant, tenant_membership_factory):
+    tenant_membership_factory(user=user, tenant=tenant)
+    reference = WorkspaceStrategyReference.objects.create(
+        tenant=tenant,
+        created_by=user,
+        owner_user=user,
+        ir_id="frozen-strategy",
+        title="Frozen strategy",
+        spec={"SchemaVersion": 2},
+        pipeline_document={"version": 1},
+        content_hash="a" * 64,
+        synced=True,
+    )
+    WorkspaceBacktestReference.objects.create(
+        tenant=tenant,
+        created_by=user,
+        ir_id=reference.ir_id,
+        job_id="frozen-job",
+        run_id="frozen-job",
+        strategy_snapshot=reference.spec,
+        strategy_content_hash=reference.content_hash,
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    patched_pipeline = {"version": 1, "notes": "edited"}
+    compiled_spec = {"SchemaVersion": 2, "edited": True}
+
+    with (
+        patch("screens.pipeline_ops.apply_pipeline_ops", return_value=(patched_pipeline, ["edited note"])),
+        patch("screens.pipeline_ops.compile_and_hash", return_value=(compiled_spec, "ignored")),
+    ):
+        response = client.post(
+            "/api/backtests/specs/frozen-strategy/pipeline-ops",
+            {"ops": [{"op": "set"}], "dry_run": False},
+            format="json",
+            HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
+        )
+
+    assert response.status_code == 200
+    assert response.json()["ir_id"] == "frozen-strategy-v2"
+    reference.refresh_from_db()
+    assert reference.spec == {"SchemaVersion": 2}
+    assert reference.content_hash == "a" * 64
+    fork = WorkspaceStrategyReference.objects.get(ir_id="frozen-strategy-v2")
+    assert fork.spec == compiled_spec
+    assert fork.parent_ir_id == reference.ir_id
+    assert fork.parent_content_hash == reference.content_hash
+    assert fork.mutation_type == "fork"
 
 
 @pytest.mark.parametrize(
@@ -265,6 +291,10 @@ def test_strategy_execution_writes_cannot_reference_another_workspace_strategy(
 
 def test_submitted_backtest_is_assigned_to_the_active_workspace(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
+    WorkspaceStrategyReference.objects.create(
+        tenant=tenant, owner_user=user, created_by=user, ir_id="strategy-a",
+        spec={"SchemaVersion": 2}, spec_schema_version=2, content_hash="f" * 64, synced=True,
+    )
     client = APIClient()
     client.force_authenticate(user=user)
     upstream_request = httpx.Request("POST", "http://studio-api.internal:8001/api/backtests/jobs")
@@ -280,7 +310,7 @@ def test_submitted_backtest_is_assigned_to_the_active_workspace(user, tenant, te
     with patch("apps.sigmarail_bridge.views.dispatch_api_request", side_effect=submit) as upstream:
         response = client.post(
             "/api/backtests/jobs",
-            {"ir_id": "shared-legacy", "start_date": "2025-01-01", "end_date": "2026-01-01"},
+            {"ir_id": "strategy-a", "start_date": "2025-01-01", "end_date": "2026-01-01"},
             format="json",
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
@@ -289,14 +319,17 @@ def test_submitted_backtest_is_assigned_to_the_active_workspace(user, tenant, te
     assert response.json()["is_shared"] is False
     reference = WorkspaceBacktestReference.objects.get(job_id=response.json()["job_id"])
     assert reference.run_id == reference.job_id
-    assert reference.ir_id == "shared-legacy"
+    assert reference.ir_id == "strategy-a"
     assert reference.tenant == tenant
     assert reference.created_by == user
     forwarded_payload = json.loads(upstream.call_args.kwargs["content"])
     assert forwarded_payload["job_id"] == reference.job_id
+    assert reference.strategy_snapshot == {"SchemaVersion": 2}
+    assert reference.strategy_content_hash == "f" * 64
+    assert forwarded_payload["extra_env"]["SIGMARAIL_STRATEGY_BASE64"]
 
 
-def test_backtest_catalog_hides_other_workspaces_and_marks_legacy_rows_shared(
+def test_backtest_catalog_hides_other_workspaces_and_unassigned_legacy_rows(
     user, tenant, tenant_factory, tenant_membership_factory
 ):
     other_workspace = tenant_factory()
@@ -338,14 +371,17 @@ def test_backtest_catalog_hides_other_workspaces_and_marks_legacy_rows_shared(
 
     assert response.status_code == 200
     runs = {run["run_id"]: run for run in response.json()["runs"]}
-    assert set(runs) == {"owned-job", "legacy-run"}
+    assert set(runs) == {"owned-job"}
     assert runs["owned-job"]["is_shared"] is False
-    assert runs["legacy-run"]["is_shared"] is True
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 1
 
 
 def test_optimizer_launch_assigns_session_variants_and_jobs_to_workspace(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
+    WorkspaceStrategyReference.objects.create(
+        tenant=tenant, created_by=user, owner_user=user, ir_id="shared-base",
+        title="Base strategy", spec={"SchemaVersion": 2}, content_hash="b" * 64, synced=True,
+    )
     client = APIClient()
     client.force_authenticate(user=user)
     upstream_request = httpx.Request("POST", "http://studio-api.internal:8001/api/backtests/optimize")
@@ -362,14 +398,20 @@ def test_optimizer_launch_assigns_session_variants_and_jobs_to_workspace(user, t
     with patch("apps.sigmarail_bridge.views.dispatch_api_request", return_value=upstream_response):
         response = client.post(
             "/api/backtests/optimize",
-            {"base_ir_id": "shared-base"},
+            {
+                "base_ir_id": "shared-base", "param_x_name": "stop_distance", "param_x_values": [1, 2],
+                "start_date": "2025-01-01", "end_date": "2026-01-01",
+            },
             format="json",
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
 
     assert response.status_code == 201
     assert response.json()["is_shared"] is False
-    assert WorkspaceOptimizerReference.objects.get(session_id="workspace-session").tenant == tenant
+    optimizer = WorkspaceOptimizerReference.objects.get(session_id="workspace-session")
+    assert optimizer.tenant == tenant
+    assert optimizer.base_strategy_content_hash == "b" * 64
+    assert optimizer.configuration["param_x_name"] == "stop_distance"
     strategy = WorkspaceStrategyReference.objects.get(ir_id="owned-variant")
     assert strategy.tenant == tenant
     assert strategy.synced is True
@@ -378,7 +420,7 @@ def test_optimizer_launch_assigns_session_variants_and_jobs_to_workspace(user, t
     assert backtest.run_id == "variant-job"
 
 
-def test_optimizer_session_catalog_hides_other_workspaces_and_keeps_legacy_shared(
+def test_optimizer_session_catalog_hides_other_workspaces_and_unassigned_legacy_sessions(
     user, tenant, tenant_factory, tenant_membership_factory
 ):
     other_workspace = tenant_factory()
@@ -408,13 +450,21 @@ def test_optimizer_session_catalog_hides_other_workspaces_and_keeps_legacy_share
 
     assert response.status_code == 200
     sessions = {item["session_id"]: item for item in response.json()["sessions"]}
-    assert set(sessions) == {"legacy-session"}
-    assert sessions["legacy-session"]["is_shared"] is True
-    assert response.json()["count"] == 1
+    assert sessions == {}
+    assert response.json()["count"] == 0
 
 
 def test_paper_deployment_registration_is_assigned_to_the_active_workspace(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
+    WorkspaceStrategyReference.objects.create(
+        tenant=tenant, created_by=user, owner_user=user, ir_id="shared-legacy",
+        spec={"SchemaVersion": 2}, content_hash="c" * 64, synced=True,
+    )
+    WorkspaceBacktestReference.objects.create(
+        tenant=tenant, created_by=user, ir_id="shared-legacy", job_id="shared-run",
+        run_id="shared-run", strategy_content_hash="c" * 64, strategy_snapshot={"SchemaVersion": 2},
+        status="done",
+    )
     client = APIClient()
     client.force_authenticate(user=user)
     upstream_request = httpx.Request("POST", "http://studio-api.internal:8001/api/live/deployments")
@@ -441,10 +491,13 @@ def test_paper_deployment_registration_is_assigned_to_the_active_workspace(user,
     assert reference.tenant == tenant
     assert reference.created_by == user
     assert reference.ir_id == "shared-legacy"
+    assert reference.strategy_content_hash == "c" * 64
+    assert reference.approval_run_id == "shared-run"
+    assert reference.configuration["approval_backtest_run_id"] == "shared-run"
     assert json.loads(upstream.call_args.kwargs["content"])["deployment_id"] == reference.deployment_id
 
 
-def test_deployment_catalog_hides_other_workspaces_and_marks_legacy_shared(
+def test_deployment_catalog_hides_other_workspaces_and_unassigned_legacy_deployments(
     user, tenant, tenant_factory, tenant_membership_factory
 ):
     other_workspace = tenant_factory()
@@ -477,9 +530,8 @@ def test_deployment_catalog_hides_other_workspaces_and_marks_legacy_shared(
 
     assert response.status_code == 200
     deployments = {item["deployment_id"]: item for item in response.json()["deployments"]}
-    assert set(deployments) == {"legacy-deployment"}
-    assert deployments["legacy-deployment"]["is_shared"] is True
-    assert response.json()["count"] == 1
+    assert deployments == {}
+    assert response.json()["count"] == 0
 
 
 @pytest.mark.parametrize(
@@ -524,7 +576,7 @@ def test_detail_and_compare_routes_reject_other_workspace_records(
     upstream.assert_not_called()
 
 
-def test_shared_legacy_backtest_cannot_be_cancelled(user, tenant, tenant_membership_factory):
+def test_unassigned_legacy_backtest_cannot_be_cancelled(user, tenant, tenant_membership_factory):
     tenant_membership_factory(user=user, tenant=tenant)
     client = APIClient()
     client.force_authenticate(user=user)
@@ -537,8 +589,7 @@ def test_shared_legacy_backtest_cannot_be_cancelled(user, tenant, tenant_members
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
 
-    assert response.status_code == 403
-    assert response.json()["code"] == "shared_backtest_read_only"
+    assert response.status_code == 404
     upstream.assert_not_called()
 
 

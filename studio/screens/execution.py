@@ -302,6 +302,7 @@ def submit_backtest_job(
     lean_project: str = "SigmaRailTradingLab",
     immediate: bool = False,
     extra_env: dict[str, str] | None = None,
+    job_id: str | None = None,
 ) -> dict[str, Any]:
     """Enqueue (and optionally run) a backtest job."""
     if not runner_available():
@@ -314,6 +315,7 @@ def submit_backtest_job(
         end_date=end_date,
         lean_project=lean_project,
         extra_env=extra_env,
+        job_id=job_id,
     )
     result: dict[str, Any] = {
         "job_id": job_id,
@@ -400,6 +402,21 @@ def cancel_backtest_job(job_id: str) -> dict[str, Any]:
 
 def _resolve_log_path(job_id: str) -> Path | None:
     from screens.backtest_jobs import get_job_status
+
+    try:
+        from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+        reference = WorkspaceBacktestReference.objects.filter(job_id=job_id).first()
+        if reference is not None:
+            progress = reference.progress if isinstance(reference.progress, dict) else {}
+            output_path = str(progress.get("lean_output_path") or "").strip()
+            if output_path:
+                candidate = Path(output_path) / "lean-backtest.log"
+                if candidate.is_file():
+                    return candidate
+    except Exception:
+        # The AppTension model is unavailable to standalone legacy callers.
+        pass
 
     client = get_ch_client()
     try:

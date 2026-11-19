@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import re
 import uuid
 
 from django.db import IntegrityError
+from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
+from django.http.request import RawPostDataException
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
+from django.utils import timezone
 from graphql_relay import from_global_id
 from rest_framework import status
 from rest_framework.request import Request
@@ -65,6 +70,30 @@ def _serialize_workspace_screen(screen: WorkspaceScreen) -> dict:
         "created_at": screen.created_at.isoformat() if screen.created_at else None,
         "updated_at": screen.updated_at.isoformat() if screen.updated_at else None,
     }
+
+
+def _forwarded_request_body(request: Request) -> bytes | None:
+    """Return a request body without rereading a stream already parsed by DRF."""
+    raw_request = request._request
+    raw_body = getattr(raw_request, "_body", None)
+    if raw_body is not None:
+        return raw_body or None
+
+    try:
+        body = raw_request.body
+    except RawPostDataException:
+        data = request.data
+        content_type = (request.content_type or "").split(";", 1)[0].strip().lower()
+        if content_type == "application/json" or content_type.endswith("+json"):
+            return json.dumps(data, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        if hasattr(data, "urlencode"):
+            return data.urlencode().encode("utf-8") or None
+        if isinstance(data, dict):
+            from urllib.parse import urlencode
+
+            return urlencode(data, doseq=True).encode("utf-8") or None
+        return None
+    return body or None
 
 
 def _save_broker_account_metadata(reference, payload: dict, *, overwrite: bool) -> None:
@@ -174,52 +203,92 @@ def _domain_json_response(upstream) -> Response:
     return Response(payload, status=upstream.status_code)
 
 
+def _strategy_json(reference: WorkspaceStrategyReference) -> dict:
+    """Serialize an authored strategy without consulting the analytical store."""
+    algorithm_json = json.dumps(reference.spec or {}, separators=(",", ":"), sort_keys=True)
+    pipeline_json = (
+        json.dumps(reference.pipeline_document, separators=(",", ":"), sort_keys=True)
+        if isinstance(reference.pipeline_document, dict)
+        else ""
+    )
+    try:
+        from screens.backtest import _parse_framework_slots
+        from screens.backtest_jobs import _extract_screener_summary
+
+        slot_summary = _parse_framework_slots(algorithm_json)
+        screener_summary = _extract_screener_summary(algorithm_json)
+    except Exception:
+        slot_summary = {}
+        screener_summary = {"has_screener": False, "source": None, "rules_count": 0, "order_by": None}
+    return {
+        "ir_id": reference.ir_id,
+        "title": reference.title or reference.ir_id,
+        "spec_schema_version": reference.spec_schema_version or 1,
+        "notes": reference.notes,
+        "category": reference.category or ("Custom Template" if reference.is_template else "Custom Spec"),
+        "is_system": False,
+        "is_template": reference.is_template,
+        "has_pipeline": bool(reference.pipeline_document),
+        "schema_status": "modern" if reference.pipeline_document else "legacy",
+        "created_at": reference.created_at.isoformat() if reference.created_at else None,
+        "updated_at": reference.updated_at.isoformat() if reference.updated_at else None,
+        "algorithm_json": algorithm_json,
+        "spec": reference.spec or {},
+        "pipeline_document": reference.pipeline_document,
+        "pipeline_json": pipeline_json,
+        "ir_content_hash": reference.content_hash or hashlib.sha256(algorithm_json.encode("utf-8")).hexdigest(),
+        "compiler_version": reference.compiler_version,
+        "lineage": {
+            "parent_ir_id": reference.parent_ir_id or None,
+            "parent_content_hash": reference.parent_content_hash or None,
+            "mutation_type": reference.mutation_type or "init",
+            "changelog_notes": reference.changelog_notes,
+            "author_agent": "user",
+        },
+        "is_shared": reference.is_shared,
+        "screener_summary": screener_summary,
+        **slot_summary,
+    }
+
+
+def _accessible_strategy(workspace, user, ir_id: str):
+    reference = WorkspaceStrategyReference.objects.filter(ir_id=ir_id).first()
+    if reference is None or reference.tenant_id != workspace.id:
+        return None
+    if reference.owner_user_id != user.id and not reference.is_shared and not reference.is_template:
+        return None
+    if not isinstance(reference.spec, dict):
+        return None
+    return reference
+
+
 class WorkspaceStrategySpecsView(APIView):
-    """Keep strategy payloads in SigmaRail Core and user ownership in PostgreSQL."""
+    """Authoritative strategy catalog and saves in AppTension PostgreSQL."""
 
     def get(self, request: Request) -> Response:
         workspace, error = _workspace_for_request(request)
         if error:
             return error
         try:
-            upstream = _dispatch_domain_api(
-                "GET",
-                "/api/backtests/specs",
-                query=request.META.get("QUERY_STRING", ""),
-                request=request,
-            )
-            payload = upstream.json()
-        except (InProcessDispatchError, ValueError):
-            return Response({"detail": "Strategy catalog is unavailable."}, status=status.HTTP_502_BAD_GATEWAY)
-        if upstream.status_code >= 400:
-            return _domain_json_response(upstream)
-        if not isinstance(payload, dict) or not isinstance(payload.get("specs"), list):
-            return Response(
-                {"detail": "SigmaRail API returned an invalid strategy catalog."}, status=status.HTTP_502_BAD_GATEWAY
-            )
-
-        ir_ids = [str(item.get("ir_id", "")) for item in payload["specs"] if isinstance(item, dict)]
-        owners = {ref.ir_id: ref for ref in WorkspaceStrategyReference.objects.filter(ir_id__in=ir_ids)}
-        visible = []
-        for record in payload["specs"]:
-            if not isinstance(record, dict):
-                continue
-            item = dict(record)
-            reference = owners.get(str(item.get("ir_id", "")))
-            if reference is not None:
-                if not reference.synced:
-                    continue
-                if reference.tenant_id != workspace.id:
-                    continue
-                if reference.owner_user_id != request.user.id and not reference.is_shared:
-                    continue
-                item["is_shared"] = reference.is_shared
-            else:
-                item["is_shared"] = not bool(item.get("is_system"))
-            visible.append(item)
-        payload["specs"] = visible
-        payload["count"] = len(visible)
-        return Response(payload, status=upstream.status_code)
+            limit = max(1, min(int(request.query_params.get("limit") or 50), 200))
+        except (TypeError, ValueError):
+            return Response({"detail": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+        search = request.query_params.get("search", "").strip().casefold()
+        references = WorkspaceStrategyReference.objects.filter(tenant=workspace).filter(
+            Q(owner_user=request.user) | Q(is_shared=True) | Q(is_template=True)
+        ).exclude(spec__isnull=True)
+        records = [_strategy_json(reference) for reference in references]
+        if search:
+            records = [
+                record for record in records
+                if search in " ".join((record["ir_id"], record["title"], record["notes"], record["category"])).casefold()
+            ]
+        template_filter = request.query_params.get("is_template")
+        if template_filter is not None:
+            want_templates = template_filter.casefold() in {"true", "1", "yes"}
+            records = [record for record in records if record["is_template"] is want_templates]
+        records.sort(key=lambda record: (record["created_at"] or "", record["ir_id"]), reverse=True)
+        return Response({"specs": records[:limit], "count": min(len(records), limit), "total": len(records)})
 
     def post(self, request: Request) -> Response:
         workspace, error = _workspace_for_request(request)
@@ -251,83 +320,77 @@ class WorkspaceStrategySpecsView(APIView):
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-        if reference is None:
-            try:
-                existing = _dispatch_domain_api("GET", f"/api/backtests/specs/{ir_id}", request=request)
-            except InProcessDispatchError:
-                return Response({"detail": "Could not verify the strategy ID."}, status=status.HTTP_502_BAD_GATEWAY)
-            if existing.status_code != status.HTTP_404_NOT_FOUND:
-                if existing.status_code >= 400:
-                    return _domain_json_response(existing)
-                return Response(
-                    {
-                        "detail": "Existing shared strategies are read-only. Fork the strategy to save a user-owned copy.",
-                        "code": "strategy_shared_read_only",
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            try:
-                reference = WorkspaceStrategyReference.objects.create(
-                    tenant=workspace,
-                    created_by=request.user,
-                    owner_user=request.user,
-                    ir_id=ir_id,
-                )
-            except IntegrityError:
-                return Response(
-                    {"detail": "This strategy ID is already owned by another workspace."},
-                    status=status.HTTP_409_CONFLICT,
-                )
-
+        pipeline = body.get("pipeline_document")
+        if pipeline is not None and not isinstance(pipeline, dict):
+            return Response({"detail": "pipeline_document must be an object"}, status=status.HTTP_400_BAD_REQUEST)
+        if reference is not None and reference.is_shared:
+            return Response({"detail": "Shared strategies are read-only. Fork the strategy to save a copy.",
+                             "code": "strategy_shared_read_only"}, status=status.HTTP_403_FORBIDDEN)
+        raw_spec = json.dumps(body["spec"], separators=(",", ":"), sort_keys=True)
+        content_hash = hashlib.sha256(raw_spec.encode("utf-8")).hexdigest()
+        expected_hash = str(body.get("expected_hash") or "").strip()
+        if reference is not None and expected_hash and reference.content_hash and expected_hash != reference.content_hash:
+            return Response({"detail": "expected_hash mismatch", "ir_content_hash": reference.content_hash,
+                             "code": "conflict"}, status=status.HTTP_409_CONFLICT)
+        fork_parent = reference
+        if reference is not None and (
+            bool(body.get("force_new_version"))
+            or WorkspaceBacktestReference.objects.filter(ir_id=ir_id).exists()
+        ):
+            version = 2
+            while WorkspaceStrategyReference.objects.filter(ir_id=f"{ir_id}-v{version}").exists():
+                version += 1
+            ir_id = f"{ir_id}-v{version}"
+            reference = None
+        is_new = reference is None
         try:
-            upstream = _dispatch_domain_api(
-                "POST",
-                "/api/backtests/specs",
-                content=json.dumps(body, separators=(",", ":")).encode("utf-8"),
-                request=request,
-            )
-        except InProcessDispatchError:
-            if reference is not None and not reference.synced:
-                reference.delete()
-            return Response({"detail": "Strategy save service is unavailable."}, status=status.HTTP_502_BAD_GATEWAY)
-
-        result = _domain_json_response(upstream)
-        if result.status_code >= 400:
-            if reference is not None and not reference.synced:
-                reference.delete()
-            return result
-        reference.synced = True
-        reference.save(update_fields=["synced", "updated_at"])
-        if isinstance(result.data, dict):
-            result.data["is_shared"] = False
-        return result
+            with transaction.atomic():
+                if reference is None:
+                    reference = WorkspaceStrategyReference(
+                        tenant=workspace, created_by=request.user, owner_user=request.user, ir_id=ir_id,
+                    )
+                    if fork_parent is not None:
+                        reference.parent_ir_id = fork_parent.ir_id
+                        reference.parent_content_hash = fork_parent.content_hash
+                        reference.mutation_type = "fork"
+                reference.title = title
+                reference.spec = body["spec"]
+                reference.pipeline_document = pipeline
+                reference.notes = str(body.get("notes") or "")
+                reference.category = str(body.get("category") or "").strip()
+                reference.tags = body.get("tags") if isinstance(body.get("tags"), list) else []
+                reference.spec_schema_version = int(body.get("spec_schema_version") or 1)
+                reference.content_hash = content_hash
+                reference.compiler_version = str(body.get("compiler_version") or "")
+                if fork_parent is None:
+                    reference.parent_ir_id = str(body.get("parent_ir_id") or "")
+                    reference.parent_content_hash = str(body.get("parent_content_hash") or "")
+                    reference.mutation_type = str(body.get("mutation_type") or "init")
+                elif reference.mutation_type != "fork":
+                    reference.mutation_type = str(body.get("mutation_type") or "edit")
+                reference.changelog_notes = str(body.get("changelog_notes") or "")
+                reference.is_template = bool(body.get("is_template", False))
+                reference.is_shared = False
+                reference.synced = True
+                reference.save()
+        except IntegrityError:
+            return Response({"detail": "This strategy ID is already owned by another workspace."},
+                            status=status.HTTP_409_CONFLICT)
+        result = _strategy_json(reference)
+        return Response(result, status=status.HTTP_201_CREATED if is_new else status.HTTP_200_OK)
 
 
 class WorkspaceStrategySpecDetailView(APIView):
-    """Read a shared legacy strategy or a user-owned strategy spec."""
+    """Read a strategy version from its PostgreSQL source of truth."""
 
     def get(self, request: Request, ir_id: str) -> Response:
         workspace, error = _workspace_for_request(request)
         if error:
             return error
-        reference = WorkspaceStrategyReference.objects.filter(ir_id=ir_id).first()
-        if reference is not None:
-            if (
-                not reference.synced
-                or reference.tenant_id != workspace.id
-                or (reference.owner_user_id != request.user.id and not reference.is_shared)
-            ):
-                return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            upstream = _dispatch_domain_api("GET", f"/api/backtests/specs/{ir_id}", request=request)
-        except InProcessDispatchError:
-            return Response({"detail": "Strategy service is unavailable."}, status=status.HTTP_502_BAD_GATEWAY)
-        result = _domain_json_response(upstream)
-        if upstream.status_code == status.HTTP_200_OK and isinstance(result.data, dict):
-            result.data["is_shared"] = (
-                reference.is_shared if reference is not None else not bool(result.data.get("is_system"))
-            )
-        return result
+        reference = _accessible_strategy(workspace, request.user, ir_id)
+        if reference is None:
+            return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(_strategy_json(reference))
 
 
 class WorkspaceSavedScreensView(APIView):
@@ -487,7 +550,152 @@ class DomainAPIRouteView(APIView):
             return workspace_error
 
         path = request.path_info.removeprefix("/api/").strip("/")
-        forwarded_content = request.body or None
+        forwarded_content = _forwarded_request_body(request)
+
+        # AppTension/PostgreSQL owns job lifecycle state. ClickHouse is used
+        # below only for completed analytical run data.
+        if request.method == "GET" and path == "backtests/jobs":
+            try:
+                limit = max(1, min(int(request.query_params.get("limit") or 20), 200))
+            except (TypeError, ValueError):
+                return Response({"detail": "limit must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
+            jobs = WorkspaceBacktestReference.objects.filter(tenant=workspace)
+            status_filter = request.query_params.get("status", "").strip()
+            if status_filter:
+                jobs = jobs.filter(status=status_filter)
+            records = []
+            for job in jobs[:limit]:
+                progress = job.progress if isinstance(job.progress, dict) else {}
+                records.append({
+                    "job_id": job.job_id,
+                    "run_id": job.run_id or job.job_id,
+                    "ir_id": job.ir_id,
+                    "status": job.status,
+                    "start_date": job.configuration.get("start_date", ""),
+                    "end_date": job.configuration.get("end_date", ""),
+                    "submitted_at": job.created_at.isoformat() if job.created_at else None,
+                    "created_at": job.created_at.isoformat() if job.created_at else None,
+                    "updated_at": job.updated_at.isoformat() if job.updated_at else None,
+                    "progress": progress,
+                    **progress,
+                    "error_message": job.error_message,
+                    "lean_output_path": progress.get("lean_output_path", ""),
+                    "is_shared": False,
+                })
+            return Response({"jobs": records, "count": len(records)})
+
+        direct_job_match = re.fullmatch(r"backtests/jobs/([^/]+)", path)
+        if request.method == "GET" and direct_job_match:
+            job = WorkspaceBacktestReference.objects.filter(
+                tenant=workspace,
+            ).filter(
+                Q(job_id=direct_job_match.group(1)) | Q(run_id=direct_job_match.group(1))
+            ).first()
+            if job is None:
+                return Response({"detail": "not found"}, status=status.HTTP_404_NOT_FOUND)
+            progress = job.progress if isinstance(job.progress, dict) else {}
+            return Response({
+                "job_id": job.job_id,
+                "run_id": job.run_id or job.job_id,
+                "ir_id": job.ir_id,
+                "status": job.status,
+                **(job.configuration if isinstance(job.configuration, dict) else {}),
+                **progress,
+                "progress": progress,
+                "error_message": job.error_message,
+                "strategy_content_hash": job.strategy_content_hash,
+                "is_shared": False,
+            })
+
+        if request.method == "GET" and (head_match := re.fullmatch(r"backtests/specs/([^/]+)/head", path)):
+            reference = _accessible_strategy(workspace, request.user, head_match.group(1))
+            if reference is None:
+                return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
+            record = _strategy_json(reference)
+            return Response({
+                "ir_id": reference.ir_id,
+                "ir_content_hash": record["ir_content_hash"],
+                "updated_at": record["updated_at"],
+                "title": record["title"],
+            })
+
+        if request.method == "POST" and (ops_match := re.fullmatch(r"backtests/specs/([^/]+)/pipeline-ops", path)):
+            reference = _accessible_strategy(workspace, request.user, ops_match.group(1))
+            if reference is None:
+                return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
+            body = request.data if isinstance(request.data, dict) else {}
+            ops = body.get("ops")
+            if not isinstance(ops, list) or not ops:
+                return Response({"detail": "ops must be a non-empty array"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            current = _strategy_json(reference)["ir_content_hash"]
+            expected_hash = str(body.get("expected_hash") or "").strip()
+            if expected_hash and expected_hash != current:
+                return Response({"detail": "expected_hash mismatch", "ir_content_hash": current,
+                                 "code": "conflict"}, status=status.HTTP_409_CONFLICT)
+            if not isinstance(reference.pipeline_document, dict):
+                return Response({"detail": "spec has no authored pipeline_document",
+                                 "code": "missing_pipeline"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                from screens.pipeline_ops import apply_pipeline_ops, compile_and_hash
+
+                patched, changelog = apply_pipeline_ops(reference.pipeline_document, ops)
+                compiled, _ = compile_and_hash(patched)
+            except ValueError as exc:
+                return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            raw = json.dumps(compiled, separators=(",", ":"), sort_keys=True)
+            new_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+            out = {
+                "ir_id": reference.ir_id,
+                "dry_run": bool(body.get("dry_run", True)),
+                "pipeline_document": patched,
+                "spec": compiled,
+                "ir_content_hash": new_hash,
+                "previous_hash": current,
+                "changelog": changelog,
+            }
+            if out["dry_run"]:
+                return Response(out)
+            # Once a strategy has produced a run, preserve the exact version
+            # used by that run. Pipeline edits create a lineage-linked fork.
+            saved_reference = reference
+            if WorkspaceBacktestReference.objects.filter(ir_id=reference.ir_id).exists():
+                version = 2
+                while WorkspaceStrategyReference.objects.filter(
+                    ir_id=f"{reference.ir_id}-v{version}"
+                ).exists():
+                    version += 1
+                saved_reference = WorkspaceStrategyReference.objects.create(
+                    tenant=workspace,
+                    created_by=request.user,
+                    owner_user=request.user,
+                    ir_id=f"{reference.ir_id}-v{version}",
+                    title=reference.title,
+                    notes=reference.notes,
+                    category=reference.category,
+                    tags=reference.tags,
+                    spec_schema_version=reference.spec_schema_version,
+                    compiler_version=reference.compiler_version,
+                    parent_ir_id=reference.ir_id,
+                    parent_content_hash=reference.content_hash,
+                    mutation_type="fork",
+                    changelog_notes=str(body.get("changelog_notes") or "Pipeline edit fork"),
+                    is_template=False,
+                    synced=True,
+                )
+            saved_reference.pipeline_document = patched
+            saved_reference.spec = compiled
+            saved_reference.content_hash = new_hash
+            if saved_reference is reference:
+                saved_reference.changelog_notes = str(body.get("changelog_notes") or reference.changelog_notes)
+                saved_reference.mutation_type = "edit"
+            saved_reference.save(update_fields=[
+                "pipeline_document", "spec", "content_hash", "changelog_notes", "mutation_type", "updated_at",
+            ])
+            out["ir_id"] = saved_reference.ir_id
+            out["saved"] = _strategy_json(saved_reference)
+            return Response(out)
+
         backtest_reference = None
         deployment_reference = None
         deployment_reference_created = False
@@ -499,23 +707,26 @@ class DomainAPIRouteView(APIView):
         run_match = re.match(r"^backtests/runs/([^/]+)(?:/|$)", path)
         optimizer_match = re.match(r"^backtests/optimize/sessions/([^/]+)(?:/|$)", path)
         record_id = job_match.group(1) if job_match else run_match.group(1) if run_match else None
-        record_reference = WorkspaceBacktestReference.objects.filter(job_id=record_id).first() if record_id else None
+        record_reference = (
+            WorkspaceBacktestReference.objects.filter(Q(job_id=record_id) | Q(run_id=record_id)).first()
+            if record_id
+            else None
+        )
         if record_reference is not None and record_reference.tenant_id != workspace.id:
             return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
-        if job_match and job_match.group(2) == "cancel" and request.method == "POST" and record_reference is None:
-            return Response(
-                {
-                    "detail": "Shared legacy backtests are read-only and cannot be cancelled.",
-                    "code": "shared_backtest_read_only",
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if record_id and record_reference is None:
+            # Legacy ClickHouse rows without a PostgreSQL ownership record have
+            # no trustworthy tenant mapping. Keep them quarantined until an
+            # operator explicitly assigns them to a workspace.
+            return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
         optimizer_reference = (
             WorkspaceOptimizerReference.objects.filter(session_id=optimizer_match.group(1)).first()
             if optimizer_match
             else None
         )
         if optimizer_reference is not None and optimizer_reference.tenant_id != workspace.id:
+            return Response({"detail": "Optimizer session not found."}, status=status.HTTP_404_NOT_FOUND)
+        if optimizer_match and optimizer_reference is None:
             return Response({"detail": "Optimizer session not found."}, status=status.HTTP_404_NOT_FOUND)
         deployment_match = re.match(r"^live/deployments/([^/]+)(?:/|$)", path)
         deployment_reference = (
@@ -524,6 +735,8 @@ class DomainAPIRouteView(APIView):
             else None
         )
         if deployment_reference is not None and deployment_reference.tenant_id != workspace.id:
+            return Response({"detail": "Deployment not found."}, status=status.HTTP_404_NOT_FOUND)
+        if deployment_match and deployment_reference is None:
             return Response({"detail": "Deployment not found."}, status=status.HTTP_404_NOT_FOUND)
         broker_account_match = re.match(r"^live/accounts/([^/]+)(?:/(.*))?$", path)
         broker_profile_id = broker_account_match.group(1) if broker_account_match else None
@@ -549,7 +762,9 @@ class DomainAPIRouteView(APIView):
                 item.strip() for item in request.query_params.get("run_ids", "").split(",") if item.strip()
             ]
             if any(
-                WorkspaceBacktestReference.objects.filter(job_id=run_id).exclude(tenant_id=workspace.id).exists()
+                not WorkspaceBacktestReference.objects.filter(
+                    (Q(job_id=run_id) | Q(run_id=run_id)), tenant=workspace
+                ).exists()
                 for run_id in requested_run_ids
             ):
                 return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -557,13 +772,21 @@ class DomainAPIRouteView(APIView):
             ir_id = request.query_params.get("ir_id", "").strip()
             run_id = request.query_params.get("approval_backtest_run_id", "").strip()
             strategy_reference = WorkspaceStrategyReference.objects.filter(ir_id=ir_id).first() if ir_id else None
-            run_reference = WorkspaceBacktestReference.objects.filter(job_id=run_id).first() if run_id else None
+            run_reference = (
+                WorkspaceBacktestReference.objects.filter(Q(job_id=run_id) | Q(run_id=run_id)).first()
+                if run_id
+                else None
+            )
+            if ir_id and strategy_reference is None:
+                return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
             if strategy_reference is not None and (
                 strategy_reference.tenant_id != workspace.id
                 or (strategy_reference.owner_user_id != request.user.id and not strategy_reference.is_shared)
             ):
                 return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
             if run_reference is not None and run_reference.tenant_id != workspace.id:
+                return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
+            if run_id and run_reference is None:
                 return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Backtest submission, optimizer launch, and paper deployment accept a
@@ -590,6 +813,18 @@ class DomainAPIRouteView(APIView):
                 ir_id = str(request_payload.get(body_strategy_key) or "").strip()
                 if ir_id:
                     reference = WorkspaceStrategyReference.objects.filter(ir_id=ir_id).first()
+                    if path == "live/deployments" and reference is not None and (
+                        reference.tenant_id != workspace.id
+                        or (reference.owner_user_id != request.user.id and not reference.is_shared)
+                    ):
+                        return Response({"detail": "Strategy spec not found."}, status=status.HTTP_404_NOT_FOUND)
+                    if path == "live/deployments" and not _accessible_strategy(
+                        workspace, request.user, ir_id
+                    ):
+                        return Response(
+                            {"detail": "This action requires a saved strategy version in this workspace."},
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     if reference is not None and (
                         not reference.synced
                         or reference.tenant_id != workspace.id
@@ -602,13 +837,28 @@ class DomainAPIRouteView(APIView):
 
             if path == "live/deployments" and isinstance(request_payload, dict):
                 approval_run_id = str(request_payload.get("approval_backtest_run_id") or "").strip()
+                ir_id = str(request_payload.get("ir_id") or "").strip()
+                strategy_reference = _accessible_strategy(workspace, request.user, ir_id) if ir_id else None
+                if strategy_reference is None:
+                    return Response(
+                        {"detail": "Deployment requires a saved strategy version in this workspace."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
                 run_reference = (
-                    WorkspaceBacktestReference.objects.filter(job_id=approval_run_id).first()
+                    WorkspaceBacktestReference.objects.filter(
+                        Q(job_id=approval_run_id) | Q(run_id=approval_run_id)
+                    ).first()
                     if approval_run_id
                     else None
                 )
                 if run_reference is not None and run_reference.tenant_id != workspace.id:
                     return Response({"detail": "Backtest record not found."}, status=status.HTTP_404_NOT_FOUND)
+                if run_reference is not None and run_reference.strategy_content_hash != strategy_reference.content_hash:
+                    return Response(
+                        {"detail": "Approved backtest does not match the selected strategy version.",
+                         "code": "strategy_hash_mismatch"},
+                        status=status.HTTP_409_CONFLICT,
+                    )
 
             if path == "live/local-runtime" and isinstance(request_payload, dict):
                 action = str(request_payload.get("action") or "").strip()
@@ -664,8 +914,31 @@ class DomainAPIRouteView(APIView):
             if path == "backtests/jobs" and isinstance(request_payload, dict):
                 ir_id = str(request_payload.get("ir_id") or "").strip()
                 if ir_id:
+                    strategy = _accessible_strategy(workspace, request.user, ir_id)
+                    if strategy is None:
+                        return Response({"detail": "Strategy spec not found in this workspace."},
+                                        status=status.HTTP_404_NOT_FOUND)
                     job_id = str(request_payload.get("job_id") or "").strip() or str(uuid.uuid4())
                     request_payload["job_id"] = job_id
+                    algorithm_json = json.dumps(strategy.spec, separators=(",", ":"), sort_keys=True)
+                    strategy_hash = strategy.content_hash or hashlib.sha256(
+                        algorithm_json.encode("utf-8")
+                    ).hexdigest()
+                    extra_env = request_payload.get("extra_env")
+                    if extra_env is None:
+                        extra_env = {}
+                    if not isinstance(extra_env, dict):
+                        return Response({"detail": "extra_env must be an object"},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    # The LEAN worker receives the immutable version selected at
+                    # queue time. It does not resolve an editable spec from CH.
+                    extra_env = dict(extra_env)
+                    extra_env["SIGMARAIL_STRATEGY_BASE64"] = base64.b64encode(
+                        algorithm_json.encode("utf-8")
+                    ).decode("ascii")
+                    extra_env["SIGMARAIL_STRATEGY_CONTENT_HASH"] = strategy_hash
+                    extra_env["SIGMARAIL_STRATEGY_SCHEMA_VERSION"] = str(strategy.spec_schema_version or 1)
+                    request_payload["extra_env"] = extra_env
                     try:
                         backtest_reference = WorkspaceBacktestReference.objects.create(
                             tenant=workspace,
@@ -674,6 +947,16 @@ class DomainAPIRouteView(APIView):
                             job_id=job_id,
                             # SigmaRail's runner uses the job ID as its strategy_runs run ID.
                             run_id=job_id,
+                            strategy_content_hash=strategy_hash,
+                            strategy_snapshot=strategy.spec,
+                            configuration={
+                                key: value for key, value in request_payload.items()
+                                if key not in {"extra_env", "job_id", "ir_id"}
+                            }
+                            | {
+                                "strategy_title": strategy.title,
+                                "strategy_schema_version": strategy.spec_schema_version or 1,
+                            },
                         )
                     except IntegrityError:
                         return Response(
@@ -686,6 +969,12 @@ class DomainAPIRouteView(APIView):
                 ir_id = str(request_payload.get("ir_id") or "").strip()
                 deployment_id = str(request_payload.get("deployment_id") or "").strip() or str(uuid.uuid4())
                 if ir_id:
+                    strategy_reference = _accessible_strategy(workspace, request.user, ir_id)
+                    if strategy_reference is None:
+                        return Response(
+                            {"detail": "Deployment requires a saved strategy version in this workspace."},
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     request_payload["deployment_id"] = deployment_id
                     try:
                         deployment_reference = WorkspaceDeploymentReference.objects.create(
@@ -693,6 +982,12 @@ class DomainAPIRouteView(APIView):
                             created_by=request.user,
                             ir_id=ir_id,
                             deployment_id=deployment_id,
+                            strategy_content_hash=strategy_reference.content_hash,
+                            approval_run_id=str(request_payload.get("approval_backtest_run_id") or "").strip(),
+                            configuration={
+                                key: value for key, value in request_payload.items()
+                                if key not in {"deployment_id", "ir_id"}
+                            },
                         )
                         deployment_reference_created = True
                     except IntegrityError:
@@ -724,13 +1019,12 @@ class DomainAPIRouteView(APIView):
                         },
                         status=status.HTTP_403_FORBIDDEN,
                     )
-            elif request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            else:
                 return Response(
                     {
-                        "detail": "Shared legacy strategies are read-only. Fork the strategy before saving changes.",
-                        "code": "strategy_shared_read_only",
+                        "detail": "Strategy spec not found in this workspace.",
                     },
-                    status=status.HTTP_403_FORBIDDEN,
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
         headers = {name: value for name in self.request_headers if (value := request.headers.get(name)) is not None}
@@ -849,6 +1143,10 @@ class DomainAPIRouteView(APIView):
                 deployment_reference.deployment_id = actual_deployment_id
                 deployment_reference.save(update_fields=["deployment_id", "updated_at"])
             if isinstance(deployment, dict):
+                deployment_reference.status = str(deployment.get("status") or deployment_reference.status)[:24]
+                if deployment_reference.status in {"stopped", "failed", "cancelled"}:
+                    deployment_reference.stopped_at = timezone.now()
+                deployment_reference.save(update_fields=["deployment_id", "status", "stopped_at", "updated_at"])
                 deployment["is_shared"] = False
 
         if deployment_reference is not None and path != "live/local-runtime" and isinstance(response_payload, dict):
@@ -857,19 +1155,27 @@ class DomainAPIRouteView(APIView):
             ).strip()
             if actual_deployment_id != deployment_reference.deployment_id:
                 deployment_reference.deployment_id = actual_deployment_id
-                deployment_reference.save(update_fields=["deployment_id", "updated_at"])
+            response_status = str(response_payload.get("status") or deployment_reference.status)[:24]
+            deployment_reference.status = response_status
+            deployment_reference.save(update_fields=["deployment_id", "status", "updated_at"])
             response_payload["is_shared"] = False
 
         if path == "backtests/optimize" and request.method == "POST" and upstream.status_code < 400:
             session_id = str(response_payload.get("session_id") or "").strip()
             base_ir_id = str(response_payload.get("base_ir_id") or "").strip()
             if session_id and base_ir_id:
+                base_strategy = WorkspaceStrategyReference.objects.filter(
+                    tenant=workspace, ir_id=base_ir_id
+                ).first()
                 optimizer_reference, _ = WorkspaceOptimizerReference.objects.get_or_create(
                     session_id=session_id,
                     defaults={
                         "tenant": workspace,
                         "created_by": request.user,
                         "base_ir_id": base_ir_id,
+                        "base_strategy_content_hash": base_strategy.content_hash if base_strategy else "",
+                        "configuration": request_payload if isinstance(request_payload, dict) else {},
+                        "status": str(response_payload.get("status") or "running")[:24],
                     },
                 )
                 response_payload["is_shared"] = optimizer_reference.tenant_id != workspace.id
@@ -906,14 +1212,10 @@ class DomainAPIRouteView(APIView):
         if record_reference is not None and isinstance(response_payload, dict):
             response_payload["is_shared"] = False
 
-        if record_id and record_reference is None and isinstance(response_payload, dict):
-            response_payload["is_shared"] = True
         if optimizer_reference is not None and isinstance(response_payload, dict):
             response_payload["is_shared"] = False
-        if optimizer_match and optimizer_reference is None and isinstance(response_payload, dict):
-            response_payload["is_shared"] = True
         if deployment_match and isinstance(response_payload, dict):
-            response_payload["is_shared"] = deployment_reference is None
+            response_payload["is_shared"] = False
 
         if request.method == "GET" and path in {"backtests/jobs", "backtests/runs"}:
             list_key = "jobs" if path == "backtests/jobs" else "runs"
@@ -924,7 +1226,14 @@ class DomainAPIRouteView(APIView):
                     for record in records
                     if isinstance(record, dict)
                 ]
-                owners = {ref.job_id: ref for ref in WorkspaceBacktestReference.objects.filter(job_id__in=identifiers)}
+                owner_refs = WorkspaceBacktestReference.objects.filter(
+                    Q(job_id__in=identifiers) | Q(run_id__in=identifiers)
+                )
+                owners = {}
+                for ref in owner_refs:
+                    owners[ref.job_id] = ref
+                    if ref.run_id:
+                        owners[ref.run_id] = ref
                 visible = []
                 for record in records:
                     if not isinstance(record, dict):
@@ -932,9 +1241,9 @@ class DomainAPIRouteView(APIView):
                     item = dict(record)
                     identifier = str(item.get("job_id") or item.get("run_id") or "")
                     owner = owners.get(identifier)
-                    if owner is not None and owner.tenant_id != workspace.id:
+                    if owner is None or owner.tenant_id != workspace.id:
                         continue
-                    item["is_shared"] = owner is None
+                    item["is_shared"] = False
                     visible.append(item)
                 response_payload[list_key] = visible
                 response_payload["count"] = len(visible)
@@ -958,9 +1267,9 @@ class DomainAPIRouteView(APIView):
                         continue
                     item = dict(session)
                     owner = owners.get(str(item.get("session_id") or ""))
-                    if owner is not None and owner.tenant_id != workspace.id:
+                    if owner is None or owner.tenant_id != workspace.id:
                         continue
-                    item["is_shared"] = owner is None
+                    item["is_shared"] = False
                     visible_sessions.append(item)
                 response_payload["sessions"] = visible_sessions
                 response_payload["count"] = len(visible_sessions)
@@ -981,9 +1290,9 @@ class DomainAPIRouteView(APIView):
                         continue
                     item = dict(deployment)
                     owner = owners.get(str(item.get("deployment_id") or ""))
-                    if owner is not None and owner.tenant_id != workspace.id:
+                    if owner is None or owner.tenant_id != workspace.id:
                         continue
-                    item["is_shared"] = owner is None
+                    item["is_shared"] = False
                     visible_deployments.append(item)
                 response_payload["deployments"] = visible_deployments
                 response_payload["count"] = len(visible_deployments)

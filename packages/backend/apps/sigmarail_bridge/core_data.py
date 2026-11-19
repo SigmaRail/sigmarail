@@ -47,7 +47,9 @@ def _clickhouse_client():
         secure=settings.SIGMARAIL_CLICKHOUSE_SECURE,
         connect_timeout=10,
         send_receive_timeout=30,
-        settings={"readonly": 1},
+        # Level 2 remains read-only but permits safe per-query limits such as
+        # max_execution_time emitted by SigmaRail's query compiler.
+        settings={"readonly": 2},
     )
 
 

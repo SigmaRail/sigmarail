@@ -915,7 +915,7 @@ def get_run_attribution(client: Any, run_id: str) -> dict[str, Any]:
         try:
             sec_rows = client.query(
                 "SELECT ticker, argMax(sector, lastupdated) AS sector, argMax(industry, lastupdated) AS industry"
-                " FROM vera.tickers WHERE ticker IN %(syms)s GROUP BY ticker",
+                " FROM tickers WHERE ticker IN %(syms)s GROUP BY ticker",
                 parameters={"syms": symbols},
             ).result_rows
             sec_map = {r[0]: (r[1] or "Unclassified", r[2] or "Unclassified") for r in sec_rows}
@@ -928,7 +928,7 @@ def get_run_attribution(client: Any, run_id: str) -> dict[str, Any]:
     try:
         reg_rows = client.query(
             "SELECT date, pct_stocks_above_sma200, is_bear_market_active, market_regime_signal"
-            " FROM vera.market_regime_signals FINAL ORDER BY date ASC"
+            " FROM market_regime_signals FINAL ORDER BY date ASC"
         ).result_rows
         reg_dates = [r[0] for r in reg_rows]
     except Exception:
@@ -1126,13 +1126,13 @@ def get_ticker_candles(
 
     # Try tables in order of coverage: daily_prices (ETFs & stocks) -> screener_price_tech_daily -> sep
     candidate_tables = [
-        "vera.daily_prices",
-        "vera.screener_price_tech_daily",
-        "vera.sep",
+        "daily_prices",
+        "screener_price_tech_daily",
+        "sep",
     ]
 
     rows = None
-    resolved_table = "vera.daily_prices"
+    resolved_table = "daily_prices"
     for tbl in candidate_tables:
         try:
             sql = (
@@ -1168,7 +1168,7 @@ def get_ticker_candles(
     try:
         t_rows = client.query(
             "SELECT argMax(name, lastupdated), argMax(sector, lastupdated), argMax(industry, lastupdated), argMax(category, lastupdated)"
-            " FROM vera.tickers WHERE ticker = %(ticker)s GROUP BY ticker",
+            " FROM tickers WHERE ticker = %(ticker)s GROUP BY ticker",
             parameters={"ticker": ticker},
         ).result_rows
         if t_rows:
@@ -1321,7 +1321,7 @@ def get_run_benchmark_comparison(
 
     # Query benchmark from ClickHouse (try screener_price_tech_daily first, fallback to sep)
     bench_rows = client.query(
-        "SELECT date, close FROM vera.screener_price_tech_daily"
+        "SELECT date, close FROM screener_price_tech_daily"
         " WHERE ticker = %(sym)s AND date >= %(s)s AND date <= %(e)s"
         " ORDER BY date",
         parameters={"sym": benchmark, "s": start_date, "e": end_date},
@@ -1329,7 +1329,7 @@ def get_run_benchmark_comparison(
 
     if not bench_rows:
         bench_rows = client.query(
-            "SELECT date, close FROM vera.sep"
+            "SELECT date, close FROM sep"
             " WHERE ticker = %(sym)s AND date >= %(s)s AND date <= %(e)s"
             " ORDER BY date",
             parameters={"sym": benchmark, "s": start_date, "e": end_date},
