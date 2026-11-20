@@ -79,7 +79,9 @@ export function clampWindow(from: string, to: string): { from: string; to: strin
   return { from, to };
 }
 
-/** Inclusive from-to window for a preset, ending at `to` (the screen's latest date). */
+/** Inclusive from-to window for a preset, ending at `to` (the screen's latest date).
+ * The known data floor applies only to Max; fixed spans must never collapse to the floor.
+ */
 export function presetWindow(
   id: RangePresetId,
   to: string,
@@ -94,6 +96,6 @@ export function presetWindow(
   else if (id === "YTD") from = `${to.slice(0, 4)}-01-01`;
   else from = floor && ISO.test(floor) ? floor : subtractMonths(to, MAX_YEARS * 12);
 
-  if (floor && ISO.test(floor) && from < floor) from = floor;
+  if (id === "MAX" && floor && ISO.test(floor) && from < floor) from = floor;
   return clampWindow(from, to);
 }

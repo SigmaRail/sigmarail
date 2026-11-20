@@ -86,7 +86,10 @@ export function MembershipOverTime({
               key={preset.id}
               type="button"
               onClick={() => {
-                const window = presetWindow(preset.id, rangeTo || asOf, rangeFloor);
+                // Fixed spans must keep their requested duration. A late or incomplete
+                // availability-floor response can otherwise clamp 2Y back to the end date.
+                const floor = preset.id === "MAX" ? rangeFloor : undefined;
+                const window = presetWindow(preset.id, rangeTo || asOf, floor);
                 if (window) applyWindow(window.from, window.to);
               }}
               variant="outline"

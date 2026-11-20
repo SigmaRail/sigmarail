@@ -51,10 +51,13 @@ describe("presetWindow", () => {
     expect(presetWindow("MAX", TO)?.from).toBe(subtractMonths(TO, 360));
   });
 
-  it("never goes before the data floor, and never inverts", () => {
-    expect(presetWindow("2Y", TO, "2026-01-01")?.from).toBe("2026-01-01");
-    expect(presetWindow("1Y", "2019-04-01", "2019-04-01")?.from).toBe("2019-04-01");
-    // however old the floor is, it is the floor — there is no width cap
+  it("keeps fixed spans intact when a later data floor is supplied", () => {
+    expect(presetWindow("2Y", TO, "2026-01-01")?.from).toBe("2024-09-23");
+    expect(presetWindow("1Y", "2019-04-01", "2019-04-01")?.from).toBe("2018-04-01");
+  });
+
+  it("uses the data floor for Max without imposing a width cap", () => {
+    // however old the floor is, Max reaches it
     expect(presetWindow("MAX", TO, TOO_OLD)?.from).toBe(TOO_OLD);
   });
 
