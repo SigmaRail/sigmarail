@@ -8,10 +8,17 @@ from typing import Any
 def get_ch_client() -> Any:
     """Return a fresh ClickHouse client.
 
-    Studio and Core share SigmaRail's database configuration and test-mode
-    safety checks. A fresh client per request also avoids sharing a
-    clickhouse-connect client across concurrent DRF requests.
+    AppTension's configured direct query path is the canonical connection in
+    deployed environments. The legacy SigmaRail config-file fallback remains
+    available for local Studio-only runs and tests.
     """
+    from django.conf import settings
+
+    if getattr(settings, "SIGMARAIL_CLICKHOUSE_ENABLED", False):
+        from apps.sigmarail_bridge.core_data import _clickhouse_client
+
+        return _clickhouse_client()
+
     import clickhouse_connect
 
     from sigmarail.config import get_database_config

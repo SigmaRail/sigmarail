@@ -90,6 +90,7 @@ class DataPopulator:
 
     # Marts whose rows must track vendor price rewrites (sep/sfp lastupdated).
     PRICE_PIPELINE_TARGETS = frozenset({
+        'daily_prices',
         'daily_metrics',
         'daily_metrics_derived',
         'daily_price_sequence',
@@ -129,12 +130,14 @@ class DataPopulator:
     # Cap auto lookback so one split does not force a full 1998→today universe refresh.
     AUTO_RECALC_MAX_LOOKBACK_DAYS = 730
     AUTO_RECALC_EVENT_LOOKBACK_DAYS = 14
+    PRICE_COVERAGE_LOOKBACK_DAYS = 730
 
     def __init__(self):
         """Initialize the DataPopulator."""
         self.client = get_client()
         if not self.client:
             raise RuntimeError(f"Failed to get ClickHouse client for mode '{app_config.mode}'")
+        self._price_coverage_gap_start: Optional[str] = None
 
         # Define chunk size mappings
         self.chunk_size_mappings = {
@@ -357,6 +360,15 @@ class DataPopulator:
         """
         if os.environ.get('SIGMARAIL_POPULATE_FORCE_CHUNKS', '').strip().lower() in ('1', 'true', 'yes'):
             return False
+        if (
+            self._price_coverage_gap_start
+            and target_table in self.PRICE_PIPELINE_TARGETS
+            and chunk_end >= self._price_coverage_gap_start
+        ):
+            # A partial daily_prices insert invalidates every downstream
+            # price-derived mart for the affected range, even when target
+            # timestamps make the chunk appear populated.
+            return False
         try:
             result = self.client.query(
                 f"""
@@ -559,8 +571,21 @@ class DataPopulator:
                 for local in discover_transform_specs()
                 if local.view_name and local.path
             }
+            managed_specs: List[TransformSpec] = []
             for spec in specs:
                 spec.path = file_by_view.get(spec.view_name)
+                if (
+                    spec.view_name
+                    and spec.view_name.startswith('xform_heal_')
+                    and spec.path is None
+                ):
+                    logger.warning(
+                        "Ignoring orphaned healing transform view not defined in this source tree: %s",
+                        spec.view_name,
+                    )
+                    continue
+                managed_specs.append(spec)
+            specs = managed_specs
         else:
             specs = discover_transform_specs()
 
@@ -1207,11 +1232,72 @@ class DataPopulator:
                 else:
                     earliest_date = source_date
 
+        # Timestamps alone cannot detect a partial INSERT: a target can have a
+        # recent lastupdated value while thousands of source tickers are absent.
+        # daily_prices is the canonical price spine, so compare its ticker
+        # coverage with the SEP/SFP source on each session before trusting it.
+        if target == 'daily_prices':
+            coverage_gap = self._get_daily_prices_coverage_gap_start()
+            if coverage_gap:
+                earliest_date = min(earliest_date, coverage_gap) if earliest_date else coverage_gap
+
         # Filter out 1970-01-01 (means nothing needs updating)
         if earliest_date == '1970-01-01':
             return None
 
         return earliest_date
+
+    def _get_daily_prices_coverage_gap_start(self) -> Optional[str]:
+        """Return the earliest recent date where the price spine misses source tickers.
+
+        ``lastupdated`` freshness cannot reveal a partially inserted date. Compare
+        distinct ticker coverage after applying the canonical SEP/SFP ticker labels.
+        This bounded check also drives downstream price marts to refresh from the
+        same date when a gap is found.
+        """
+        from datetime import date, timedelta
+
+        start = (date.today() - timedelta(days=self.PRICE_COVERAGE_LOOKBACK_DAYS)).strftime('%Y-%m-%d')
+        try:
+            result = self.client.query(f"""
+                WITH
+                source_rows AS (
+                    SELECT p.date, p.ticker
+                    FROM sep AS p FINAL
+                    INNER JOIN tickers AS t FINAL
+                        ON t.ticker = p.ticker AND t.`table` = 'SEP'
+                    WHERE p.date >= toDate('{start}')
+                    UNION ALL
+                    SELECT p.date, p.ticker
+                    FROM sfp AS p FINAL
+                    INNER JOIN tickers AS t FINAL
+                        ON t.ticker = p.ticker AND t.`table` = 'SFP'
+                    WHERE p.date >= toDate('{start}')
+                ),
+                expected AS (
+                    SELECT date, uniqExact(ticker) AS expected_tickers
+                    FROM source_rows
+                    GROUP BY date
+                ),
+                actual AS (
+                    SELECT date, uniqExact(ticker) AS actual_tickers
+                    FROM daily_prices FINAL
+                    WHERE date >= toDate('{start}')
+                    GROUP BY date
+                )
+                SELECT toString(min(e.date))
+                FROM expected AS e
+                LEFT JOIN actual AS a USING (date)
+                WHERE ifNull(a.actual_tickers, 0) < e.expected_tickers
+            """)
+            if result.result_rows and result.result_rows[0][0]:
+                value = str(result.result_rows[0][0])
+                return None if value == '1970-01-01' else value
+        except Exception as e:
+            # Fail closed: if the completeness check is unavailable, do not
+            # force a broad rewrite or hide the normal freshness result.
+            logger.warning("Could not check daily_prices source coverage: %s", e)
+        return None
 
     def _get_sep_incremental_start_date(self) -> Optional[str]:
         """Return earliest date where sep/sfp is out-of-sync with daily_metrics, or None if unavailable.
@@ -1341,6 +1427,14 @@ class DataPopulator:
                 force_refresh,
                 enabled=auto_recalc_events,
             )
+            self._price_coverage_gap_start = None
+            if not explicit_start and not force_refresh:
+                self._price_coverage_gap_start = self._get_daily_prices_coverage_gap_start()
+                if self._price_coverage_gap_start:
+                    logger.warning(
+                        "daily_prices has incomplete source coverage since %s; refreshing price-derived marts from that date",
+                        self._price_coverage_gap_start,
+                    )
 
             if force_refresh and not explicit_start:
                 logger.info("Force refresh enabled with no explicit start date; defaulting to 1999-01-01")
@@ -1366,6 +1460,13 @@ class DataPopulator:
             for spec in sql_files:
                 label = self._transform_label(spec)
                 file_start = self._resolve_transform_start_date(spec, explicit_start, force_refresh)
+                if (
+                    not explicit_start
+                    and not force_refresh
+                    and self._price_coverage_gap_start
+                    and spec.target in self.PRICE_PIPELINE_TARGETS
+                ):
+                    file_start = min(file_start, self._price_coverage_gap_start)
                 logger.info(f"Processing transform: {label} ({file_start} to {end_date})")
                 print(f"🔄 Processing: {label} ({file_start} → {end_date})", flush=True)
 
