@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 from functools import lru_cache
-from importlib.resources import files
 from typing import Any
 
 from rest_framework import status
@@ -17,14 +15,42 @@ from .views import _workspace_for_request
 
 @lru_cache(maxsize=1)
 def _load_catalog() -> dict[str, Any]:
-    resource = files("apps.sigmarail_bridge").joinpath("data", "screen_templates.json")
-    catalog = json.loads(resource.read_text(encoding="utf-8"))
-    if not isinstance(catalog, dict) or catalog.get("schema_version") != 1:
-        raise ValueError("invalid packaged screen template catalog")
-    templates = catalog.get("templates")
-    details = catalog.get("details")
-    if not isinstance(templates, list) or not isinstance(details, dict):
-        raise ValueError("invalid packaged screen template catalog")
+    # SigmaRail owns the built-in v1 screener specs. Read that catalog directly
+    # instead of depending on a generated JSON bundle that is not shipped with
+    # the application image.
+    from sigmarail.features.template_catalog import list_templates, summary_row
+
+    templates: list[dict[str, Any]] = []
+    details: dict[str, dict[str, Any]] = {}
+    records = list_templates(kind="screener", include_body=True)
+    for record in records:
+        spec = record.get("body")
+        if (
+            not isinstance(spec, dict)
+            or spec.get("version") != 1
+            or spec.get("from") != "daily_screener"
+        ):
+            continue
+        template_id = record.get("id")
+        if not isinstance(template_id, str) or not template_id:
+            continue
+        templates.append(summary_row(record))
+        details[template_id] = {
+            "id": template_id,
+            "screen_ir": "universe_query_v1",
+            "spec": spec,
+        }
+
+    # Preserve the established UI ids as aliases for their SigmaRail presets.
+    preset_aliases = {
+        "minervini_trend_template": ("minervini_tt", "Minervini Trend Template (Standard)"),
+        "canslim_template": ("canslim", "CANSLIM Leader Filter"),
+    }
+    for alias, (target, label) in preset_aliases.items():
+        if target not in details:
+            continue
+        templates.append({"id": alias, "label": label, "status": "active"})
+        details[alias] = {**details[target], "id": alias}
 
     template_ids: set[str] = set()
     for template in templates:
@@ -50,7 +76,7 @@ def _load_catalog() -> dict[str, Any]:
             or not isinstance(spec.get("where"), dict)
         ):
             raise ValueError(f"invalid universe query document for template {template_id!r}")
-    return catalog
+    return {"schema_version": 1, "templates": templates, "details": details}
 
 
 def packaged_universe_screens() -> list[dict[str, Any]]:
@@ -86,7 +112,7 @@ def _catalog_response(request: Request) -> tuple[dict[str, Any] | None, Response
         return None, error
     try:
         return _load_catalog(), None
-    except (OSError, ValueError):
+    except (ImportError, OSError, ValueError):
         return None, Response(
             {"detail": "The packaged universe screen catalog is unavailable."},
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
