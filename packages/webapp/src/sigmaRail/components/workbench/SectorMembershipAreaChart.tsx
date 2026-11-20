@@ -88,17 +88,7 @@ export function SectorMembershipAreaChart({
     const normalized = Math.min(1, Math.max(0, (viewX - PLOT.left) / plotWidth));
     return Math.round(normalized * (dates.length - 1));
   };
-  const hoveredDate = hoverIndex == null ? null : dates[hoverIndex] ?? null;
   const memberLine = data.totals.map((count, index) => `${xAt(index)},${yMembersAt(count)}`).join(" ");
-  const hoveredSectors = hoverIndex == null
-    ? []
-    : data.sectors
-        .map((sector, index) => ({
-          sector,
-          percent: data.percentages[hoverIndex]?.[index] ?? 0,
-          color: sectorColor(sector).hex,
-        }))
-        .filter((item) => item.percent > 0.01);
 
   return (
     <div className="space-y-1.5">
@@ -151,20 +141,6 @@ export function SectorMembershipAreaChart({
             </text>
           ))}
         </svg>
-        {hoveredDate ? (
-          <div className="pointer-events-none absolute right-2 top-2 max-h-[calc(100%-1rem)] max-w-[min(18rem,85%)] overflow-auto rounded border border-line bg-popover/95 px-2 py-1.5 text-[9px] shadow-panel">
-            <div className="mb-1 font-mono text-ink">{hoveredDate} · {data.totals[hoverIndex!] ?? 0} members</div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-              {hoveredSectors.map((item) => (
-                <span key={item.sector} className="flex items-center gap-1 truncate text-ink-muted" title={item.sector}>
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="truncate">{item.sector}</span>
-                  <span className="ml-auto font-mono text-ink">{item.percent.toFixed(1)}%</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-ink-muted">
         <span className="inline-flex items-center gap-1">
