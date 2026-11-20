@@ -154,6 +154,3 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["apps", "common", "config", "utils"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"apps/sigmarail_bridge/data/screen_templates.json" = "apps/sigmarail_bridge/data/screen_templates.json"
-

@@ -34,7 +34,6 @@ ARG SIGMARAIL_BUILD_TREE=unknown
 WORKDIR /pkgs
 
 COPY ${SIGMARAIL_SOURCE_DIR}/packages/backend/uv.lock ${SIGMARAIL_SOURCE_DIR}/packages/backend/pyproject.toml /pkgs/
-COPY ${SIGMARAIL_SOURCE_DIR}/packages/backend/apps/sigmarail_bridge/data/screen_templates.json /pkgs/apps/sigmarail_bridge/data/screen_templates.json
 RUN uv sync --frozen \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
