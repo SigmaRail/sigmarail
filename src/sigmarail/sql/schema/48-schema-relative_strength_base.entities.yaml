@@ -100,9 +100,8 @@ entities:
 - id: sigmarail.mart.relative_strength_base.pool
   kind: concept
   title: pool
-  definition: 'Instrument classification provenance (tickers.table: stocks or funds). relative_strength_ranks
-    percentiles are a single shared universe (the shared Sharadar universe); pool is informational for a future fund-segmented
-    RS.'
+  definition: 'Normalized instrument pool (stocks/funds) derived from Sharadar TICKERS labels SEP/SFP. relative_strength_ranks
+    percentiles are a single shared universe; pool is informational for future fund-segmented RS.'
   binds:
     column: pool
     table: relative_strength_base

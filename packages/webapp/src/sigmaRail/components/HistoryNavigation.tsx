@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { Button } from "@sb/webapp-core/components/ui/button";
+import { RuntimeStatus } from "./RuntimeStatus";
 
 function currentHistoryIndex(): number {
   const index = window.history.state?.idx;
@@ -58,6 +59,7 @@ export function HistoryNavigation() {
       >
         <ArrowRight className="h-4 w-4" />
       </Button>
+      <RuntimeStatus />
     </header>
   );
 }

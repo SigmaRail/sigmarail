@@ -16,6 +16,25 @@ from apps.sigmarail_bridge.models import (
 pytestmark = pytest.mark.django_db
 
 
+def test_runtime_identity_reports_build_metadata_without_tenant_context(user, monkeypatch):
+    client = APIClient()
+    client.force_authenticate(user=user)
+    monkeypatch.setenv("SIGMARAIL_BUILD_REVISION", "abc123")
+    monkeypatch.setenv("SIGMARAIL_BUILD_BRANCH", "481")
+    monkeypatch.setenv("SIGMARAIL_BUILD_TREE", "/srv/sigmarail")
+
+    response = client.get("/api/runtime/identity")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "sigmarail-api",
+        "revision": "abc123",
+        "branch": "481",
+        "source_tree": "/srv/sigmarail",
+        "image": "unknown",
+    }
+
+
 def test_bridge_requires_an_authenticated_user():
     client = APIClient()
 

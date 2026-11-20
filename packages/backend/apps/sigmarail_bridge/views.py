@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
 import uuid
 
@@ -30,6 +31,21 @@ from .models import (
     WorkspaceStrategyReference,
 )
 from .in_process_api import InProcessDispatchError, dispatch_api_request
+
+
+class RuntimeIdentityView(APIView):
+    """Expose non-secret build identity so a running API can certify its source."""
+
+    def get(self, request):
+        return Response(
+            {
+                "service": "sigmarail-api",
+                "revision": os.environ.get("SIGMARAIL_BUILD_REVISION", "unknown"),
+                "branch": os.environ.get("SIGMARAIL_BUILD_BRANCH", "unknown"),
+                "source_tree": os.environ.get("SIGMARAIL_BUILD_TREE", "unknown"),
+                "image": os.environ.get("SIGMARAIL_IMAGE_ID", "unknown"),
+            }
+        )
 
 
 def _workspace_for_request(request: Request):

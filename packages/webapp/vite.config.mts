@@ -1,4 +1,5 @@
 import dns from 'dns';
+import { execFileSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -21,6 +22,15 @@ dns.setDefaultResultOrder('verbatim');
 
 export default defineConfig(({ mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd());
+  const git = (args: string[]) => {
+    try { return execFileSync('git', args, { cwd: __dirname, encoding: 'utf8' }).trim(); }
+    catch { return 'unknown'; }
+  };
+  const buildIdentity = {
+    revision: env.SIGMARAIL_BUILD_REVISION || git(['rev-parse', '--short=12', 'HEAD']),
+    branch: env.SIGMARAIL_BUILD_BRANCH || git(['branch', '--show-current']),
+    source_tree: env.SIGMARAIL_BUILD_TREE || git(['rev-parse', '--show-toplevel']),
+  };
 
 
   // expose .env as process.env instead of import.meta since jest does not import meta yet
@@ -65,7 +75,7 @@ export default defineConfig(({ mode }): UserConfig => {
       host: 'localhost',
     },
 
-    define: envWithProcessPrefix,
+    define: { ...envWithProcessPrefix, __SIGMARAIL_BUILD__: JSON.stringify(buildIdentity) },
 
     css: {
       postcss: {

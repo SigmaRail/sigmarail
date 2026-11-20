@@ -32,6 +32,7 @@ from .strategy_framework_templates import (
 )
 from .views import (
     DomainAPIRouteView,
+    RuntimeIdentityView,
     WorkspaceSavedScreenDetailView,
     WorkspaceSavedScreensView,
     WorkspaceStrategySpecDetailView,
@@ -43,6 +44,7 @@ urlpatterns = []
 
 urlpatterns.extend(
     [
+        path("runtime/identity", RuntimeIdentityView.as_view(), name="runtime-identity"),
         path("data/datasets", CoreDatasetsView.as_view(), name="core-datasets"),
         path("data/datasets/<path:dataset_id>", CoreDatasetView.as_view(), name="core-dataset"),
         path("data/query", CoreQueryView.as_view(), name="core-query"),

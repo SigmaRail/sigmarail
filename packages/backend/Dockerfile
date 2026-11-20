@@ -27,6 +27,9 @@ RUN curl -fsS https://deb.nodesource.com/setup_20.x | bash - \
 COPY --from=chamber /chamber /bin/chamber
 
 ARG SIGMARAIL_SOURCE_DIR=.
+ARG SIGMARAIL_BUILD_REVISION=unknown
+ARG SIGMARAIL_BUILD_BRANCH=unknown
+ARG SIGMARAIL_BUILD_TREE=unknown
 
 WORKDIR /pkgs
 
@@ -65,6 +68,9 @@ RUN ./scripts/runtime/build_static.sh
 FROM backend_build AS backend
 COPY --from=static_files /app/static /app/static
 ENV PYTHONPATH=/workspace:/pkgs/.venv/lib/python3.11/site-packages \
-    PATH=$PATH:/pkgs/.venv/bin
+    PATH=$PATH:/pkgs/.venv/bin \
+    SIGMARAIL_BUILD_REVISION=${SIGMARAIL_BUILD_REVISION} \
+    SIGMARAIL_BUILD_BRANCH=${SIGMARAIL_BUILD_BRANCH} \
+    SIGMARAIL_BUILD_TREE=${SIGMARAIL_BUILD_TREE}
 
 CMD ["./scripts/runtime/run.sh"]
