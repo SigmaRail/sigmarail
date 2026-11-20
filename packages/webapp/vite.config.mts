@@ -27,7 +27,7 @@ export default defineConfig(({ mode }): UserConfig => {
     catch { return 'unknown'; }
   };
   const buildIdentity = {
-    revision: env.SIGMARAIL_BUILD_REVISION || git(['rev-parse', '--short=12', 'HEAD']),
+    revision: env.SIGMARAIL_BUILD_REVISION || git(['rev-parse', 'HEAD']),
     branch: env.SIGMARAIL_BUILD_BRANCH || git(['branch', '--show-current']),
     source_tree: env.SIGMARAIL_BUILD_TREE || git(['rev-parse', '--show-toplevel']),
   };
