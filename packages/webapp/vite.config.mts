@@ -31,6 +31,35 @@ export default defineConfig(({ mode }): UserConfig => {
     branch: env.SIGMARAIL_BUILD_BRANCH || git(['branch', '--show-current']),
     source_tree: env.SIGMARAIL_BUILD_TREE || git(['rev-parse', '--show-toplevel']),
   };
+  const runtimeIdentityPlugin = {
+    name: 'sigmarail-runtime-identity',
+    configurePreviewServer(server: any) {
+      server.middlewares.use('/runtime/identity', (_request: any, response: any) => {
+        const address = server.httpServer.address();
+        let tailscale: unknown = { status: 'unavailable' };
+        try {
+          tailscale = JSON.parse(execFileSync('tailscale', ['serve', 'status', '--json'], {
+            cwd: __dirname,
+            encoding: 'utf8',
+            timeout: 1500,
+          }));
+        } catch (error) {
+          tailscale = { status: 'unavailable', detail: error instanceof Error ? error.message : 'command failed' };
+        }
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'application/json');
+        response.setHeader('Cache-Control', 'no-store');
+        response.end(JSON.stringify({
+          service: 'sigmarail-ui',
+          ...buildIdentity,
+          dirty: Boolean(git(['status', '--porcelain', '--untracked-files=no'])),
+          process: { pid: process.pid, cwd: process.cwd(), port: typeof address === 'object' && address ? address.port : null },
+          browser_origin: env.SIGMARAIL_RUNTIME_BROWSER_ORIGIN || null,
+          tailscale,
+        }));
+      });
+    },
+  };
 
 
   // expose .env as process.env instead of import.meta since jest does not import meta yet
@@ -84,6 +113,7 @@ export default defineConfig(({ mode }): UserConfig => {
     },
 
     plugins: [
+      runtimeIdentityPlugin,
       legacy(),
       react(),
       viteTsConfigPaths({

@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import socket
 import uuid
 
 from django.db import IntegrityError
@@ -43,7 +44,17 @@ class RuntimeIdentityView(APIView):
                 "revision": os.environ.get("SIGMARAIL_BUILD_REVISION", "unknown"),
                 "branch": os.environ.get("SIGMARAIL_BUILD_BRANCH", "unknown"),
                 "source_tree": os.environ.get("SIGMARAIL_BUILD_TREE", "unknown"),
+                "container": socket.gethostname(),
                 "image": os.environ.get("SIGMARAIL_IMAGE_ID", "unknown"),
+                "ports": {
+                    "container": os.environ.get("SIGMARAIL_RUNTIME_API_CONTAINER_PORT", "5001"),
+                    "published": os.environ.get("SIGMARAIL_RUNTIME_API_HOST_PORT", "unknown"),
+                },
+                "tailscale": {
+                    "host": os.environ.get("SIGMARAIL_RUNTIME_TAILSCALE_HOST", "unknown"),
+                    "port": os.environ.get("SIGMARAIL_RUNTIME_TAILSCALE_PORT", "unknown"),
+                    "target": os.environ.get("SIGMARAIL_RUNTIME_TAILSCALE_TARGET", "unknown"),
+                },
             }
         )
 
