@@ -1484,8 +1484,14 @@ class DataPopulator:
                     merge_table = self._transform_target_table(spec)
 
                     for idx, (chunk_start, chunk_end) in enumerate(chunks):
+                        gap_refresh = bool(
+                            self._price_coverage_gap_start
+                            and spec.target in self.PRICE_PIPELINE_TARGETS
+                            and chunk_end >= self._price_coverage_gap_start
+                        )
+                        chunk_force_refresh = force_refresh or gap_refresh
                         if (
-                            not force_refresh
+                            not chunk_force_refresh
                             and merge_table
                             and self._chunk_dates_already_populated(
                                 merge_table, chunk_start, chunk_end
@@ -1496,14 +1502,19 @@ class DataPopulator:
                                 f"({merge_table} already has trading days in range)"
                             )
                             continue
-                        logger.info(f"    Processing chunk: {chunk_start} to {chunk_end}")
+                        logger.info(
+                            "    Processing chunk: %s to %s%s",
+                            chunk_start,
+                            chunk_end,
+                            " (force refresh for source-key gap)" if gap_refresh and not force_refresh else "",
+                        )
                         if not self._execute_transform_for_chunk_with_recovery(
                             spec,
                             chunk_start,
                             chunk_end,
                             chunk_size_days,
                             merge_table=merge_table,
-                            force_refresh=force_refresh,
+                            force_refresh=chunk_force_refresh,
                         ):
                             raise Exception(f"Failed to execute {label} for chunk {chunk_start} to {chunk_end}")
 
