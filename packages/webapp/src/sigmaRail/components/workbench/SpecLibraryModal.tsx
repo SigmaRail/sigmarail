@@ -545,7 +545,7 @@ export function SpecLibraryModal({
                           onClose();
                         }}
                         variant="default"
-                        className="rounded-lg bg-accent text-accent-fg px-3.5 py-1.5 text-xs font-semibold hover:opacity-90 shadow-sm transition-all"
+                        className="rounded-lg bg-accent text-accent-foreground px-3.5 py-1.5 text-xs font-semibold hover:opacity-90 shadow-sm transition-all"
                       >
                         Open
                       </Button>
@@ -593,7 +593,7 @@ export function SpecLibraryModal({
                   onClose();
                 }}
                 variant="default"
-                className="rounded-lg bg-accent text-accent-fg px-4 py-1.5 text-xs font-semibold hover:opacity-90"
+                className="rounded-lg bg-accent text-accent-foreground px-4 py-1.5 text-xs font-semibold hover:opacity-90"
               >
                 📥 Load This Spec into Composer
               </Button>

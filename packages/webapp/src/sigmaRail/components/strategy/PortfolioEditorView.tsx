@@ -153,7 +153,7 @@ export function PortfolioEditorView() {
         <button
           type="button"
           onClick={() => void doCompile()}
-          className="rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-fg hover:opacity-90"
+          className="rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-foreground hover:opacity-90"
         >
           Compile Portfolio
         </button>

@@ -49,20 +49,6 @@ const CANDIDATE_COLUMN_LABELS: Readonly<Record<string, string>> = {
   sector: "Sector",
 };
 
-const SECTOR_BAR_COLORS = [
-  "bg-sky-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-violet-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-  "bg-indigo-500",
-  "bg-lime-500",
-  "bg-pink-500",
-  "bg-teal-500",
-];
-
 type NumericSummary = {
   count: number;
   mean: number;
@@ -70,6 +56,60 @@ type NumericSummary = {
   median: number;
   q3: number;
 };
+
+type SectorSortKey =
+  | "alpha"
+  | "sector"
+  | "count"
+  | "share"
+  | "rsMean"
+  | "rsQ1"
+  | "rsMedian"
+  | "rsQ3"
+  | "scoreQ1"
+  | "scoreMedian"
+  | "scoreQ3"
+  | "atrMedian";
+
+type SectorSummary = {
+  sector: string;
+  alphaOrder: number;
+  count: number;
+  share: number;
+  rs: NumericSummary | null;
+  score: NumericSummary | null;
+  atr: NumericSummary | null;
+};
+
+const SECTOR_METRIC_COLUMNS: { key: Exclude<SectorSortKey, "alpha">; label: string; align: "left" | "right" }[] = [
+  { key: "sector", label: "Sector", align: "left" },
+  { key: "count", label: "Members", align: "right" },
+  { key: "share", label: "Share", align: "right" },
+  { key: "rsMean", label: "RS mean", align: "right" },
+  { key: "rsQ1", label: "RS P25", align: "right" },
+  { key: "rsMedian", label: "RS median", align: "right" },
+  { key: "rsQ3", label: "RS P75", align: "right" },
+  { key: "scoreQ1", label: "Score P25", align: "right" },
+  { key: "scoreMedian", label: "Score median", align: "right" },
+  { key: "scoreQ3", label: "Score P75", align: "right" },
+  { key: "atrMedian", label: "ATR P50", align: "right" },
+];
+
+function sectorSortValue(row: SectorSummary, key: Exclude<SectorSortKey, "alpha">): string | number | null {
+  switch (key) {
+    case "sector": return row.sector;
+    case "count": return row.count;
+    case "share": return row.share;
+    case "rsMean": return row.rs?.mean ?? null;
+    case "rsQ1": return row.rs?.q1 ?? null;
+    case "rsMedian": return row.rs?.median ?? null;
+    case "rsQ3": return row.rs?.q3 ?? null;
+    case "scoreQ1": return row.score?.q1 ?? null;
+    case "scoreMedian": return row.score?.median ?? null;
+    case "scoreQ3": return row.score?.q3 ?? null;
+    case "atrMedian": return row.atr?.median ?? null;
+  }
+}
 
 function summarizeNumericField(rows: ScreenRow[], field: string): NumericSummary | null {
   const values = rows
@@ -238,6 +278,11 @@ export function UniverseSlotCard({
   const [visibleRows, setVisibleRows] = useState(TABLE_PAGE);
   const [sortField, setSortField] = useState(DEFAULT_SORT_FIELD);
   const [sortDir, setSortDir] = useState<OrderDirection>(DEFAULT_SORT_DIR);
+  const [sectorFilter, setSectorFilter] = useState("");
+  const [sectorSort, setSectorSort] = useState<{ key: SectorSortKey; direction: "asc" | "desc" }>({
+    key: "alpha",
+    direction: "asc",
+  });
   const [extraSelect, setExtraSelect] = useState<string[]>([]);
   const [chartTicker, setChartTicker] = useState<string | null>(restoredStockReview?.ticker ?? null);
 
@@ -349,8 +394,9 @@ export function UniverseSlotCard({
     }
     // allRows is already ordered by the active Alpha/result sort; Map preserves
     // first occurrence so sector rows follow the same ranking instead of size.
-    return [...groups.entries()].map(([sector, members]) => ({
+    return [...groups.entries()].map(([sector, members], alphaOrder): SectorSummary => ({
       sector,
+      alphaOrder,
       count: members.length,
       share: allRows.length ? members.length / allRows.length * 100 : 0,
       rs: summarizeNumericField(members, "rs_rating"),
@@ -358,7 +404,31 @@ export function UniverseSlotCard({
       atr: summarizeNumericField(members, "atr_14_pct"),
     }));
   }, [allRows]);
+  const visibleSectors = useMemo(() => {
+    const query = sectorFilter.trim().toLocaleLowerCase();
+    const rows = sectorMix.filter((row) => !query || row.sector.toLocaleLowerCase().includes(query));
+    const key = sectorSort.key;
+    if (key === "alpha") return rows;
+    const direction = sectorSort.direction === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const left = sectorSortValue(a, key);
+      const right = sectorSortValue(b, key);
+      if (left == null && right != null) return 1;
+      if (right == null && left != null) return -1;
+      if (left == null || right == null) return a.alphaOrder - b.alphaOrder;
+      const comparison = typeof left === "string" && typeof right === "string"
+        ? left.localeCompare(right)
+        : Number(left) - Number(right);
+      return comparison === 0 ? a.alphaOrder - b.alphaOrder : comparison * direction;
+    });
+  }, [sectorMix, sectorFilter, sectorSort]);
   const universeRs = useMemo(() => summarizeNumericField(allRows, "rs_rating"), [allRows]);
+
+  function handleSectorSort(key: Exclude<SectorSortKey, "alpha">) {
+    setSectorSort((current) => current.key === key
+      ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+      : { key, direction: key === "sector" ? "asc" : "desc" });
+  }
 
   const previewCols = useMemo(() => {
     const preferred = [
@@ -624,7 +694,7 @@ export function UniverseSlotCard({
                 >
                   <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <h3 id="universe-sector-mix-title" className="text-xs font-semibold">
-                      Sector composition
+                      Sector summary
                     </h3>
                     <p className="font-mono text-[10px] text-muted-foreground">
                       {asofQuery.data?.as_of ? `As of ${asofQuery.data.as_of} · ` : ""}
@@ -634,53 +704,79 @@ export function UniverseSlotCard({
                       {universeRs
                         ? ` · ${asofQuery.data?.count != null && asofQuery.data.count > allRows.length ? "Returned" : "Universe"} RS median ${formatRating(universeRs.median)}`
                         : ""}
-                      {sectorMix.length ? " · Alpha order by first-ranked member" : ""}
+                      {sectorSort.key === "alpha" ? " · Alpha order" : ` · Sorted by ${SECTOR_METRIC_COLUMNS.find((column) => column.key === sectorSort.key)?.label ?? sectorSort.key} ${sectorSort.direction}`}
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-x-5 gap-y-2 sm:grid-cols-2">
-                    {sectorMix.map(({ sector, count, share, rs, score, atr }, index) => (
-                      <div key={sector} className="min-w-0">
-                        <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
-                          <span className="flex min-w-0 items-center gap-2 truncate" title={sector}>
-                            <span className={`h-2 w-2 shrink-0 rounded-sm ${SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]}`} />
-                            <span className="truncate">{sector}</span>
-                          </span>
-                          <span className="shrink-0 font-mono text-muted-foreground">
-                            {count.toLocaleString()} · {share.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div
-                          className="h-1.5 overflow-hidden rounded-full bg-muted/70"
-                          role="progressbar"
-                          aria-label={`${sector} share of returned members`}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={Number(share.toFixed(1))}
-                        >
-                          <div
-                            className={`h-full rounded-full ${SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]}`}
-                            style={{ width: `${share}%` }}
-                          />
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[9px] leading-relaxed text-muted-foreground">
-                          {rs ? (
-                            <span title="Relative-strength rating: mean and 25th, 50th, and 75th percentiles">
-                              RS mean {rs.mean.toFixed(1)} · P25/P50/P75 {formatRating(rs.q1)}/{formatRating(rs.median)}/{formatRating(rs.q3)}
-                            </span>
-                          ) : null}
-                          {score ? (
-                            <span title="Alpha score: 25th, 50th, and 75th percentiles">
-                              Score P25/P50/P75 {score.q1.toFixed(1)}/{score.median.toFixed(1)}/{score.q3.toFixed(1)}
-                            </span>
-                          ) : null}
-                          {atr ? (
-                            <span title="14-day average true range percentage: median">
-                              ATR P50 {atr.median.toFixed(1)}%
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <input
+                      type="search"
+                      value={sectorFilter}
+                      onChange={(event) => setSectorFilter(event.target.value)}
+                      aria-label="Filter sectors"
+                      placeholder="Filter sectors…"
+                      className="h-8 w-full max-w-xs rounded border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground"
+                    />
+                    {sectorSort.key !== "alpha" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 text-[10px]"
+                        onClick={() => setSectorSort({ key: "alpha", direction: "asc" })}
+                      >
+                        Reset to Alpha order
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="overflow-x-auto rounded border border-line">
+                    <table className="w-full min-w-[1050px] border-collapse text-left text-[11px]">
+                      <thead className="bg-surface-sunk text-ink-muted">
+                        <tr>
+                          {SECTOR_METRIC_COLUMNS.map(({ key, label, align }) => (
+                            <th
+                              key={key}
+                              scope="col"
+                              aria-sort={sectorSort.key === key
+                                ? sectorSort.direction === "asc" ? "ascending" : "descending"
+                                : "none"}
+                              className={`whitespace-nowrap border-b border-line px-2.5 py-2 font-semibold ${align === "right" ? "text-right" : "text-left"}`}
+                            >
+                              <button
+                                type="button"
+                                className="hover:text-ink focus-visible:outline-none focus-visible:underline"
+                                onClick={() => handleSectorSort(key)}
+                              >
+                                {label}{sectorSort.key === key ? (sectorSort.direction === "asc" ? " ↑" : " ↓") : ""}
+                              </button>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleSectors.map(({ sector, count, share, rs, score, atr }) => (
+                          <tr key={sector} className="border-b border-line/70 last:border-0 hover:bg-surface-sunk/40">
+                            <th scope="row" className="whitespace-nowrap px-2.5 py-2 font-medium text-ink">{sector}</th>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{count.toLocaleString()}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{share.toFixed(1)}%</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? rs.mean.toFixed(1) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q1) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.median) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q3) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q1.toFixed(1) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.median.toFixed(1) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q3.toFixed(1) : "—"}</td>
+                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{atr ? `${atr.median.toFixed(1)}%` : "—"}</td>
+                          </tr>
+                        ))}
+                        {!visibleSectors.length ? (
+                          <tr>
+                            <td colSpan={SECTOR_METRIC_COLUMNS.length} className="px-3 py-5 text-center text-muted-foreground">
+                              No sectors match this filter.
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
                   </div>
                 </section>
               ) : null}
