@@ -355,6 +355,26 @@ def _apply_test_clickhouse_env_overrides(database: DatabaseConfig) -> DatabaseCo
     return database
 
 
+def _apply_local_clickhouse_keyring(database: DatabaseConfig) -> DatabaseConfig:
+    """Use the native credential store only when local config has no password.
+
+    Test mode deliberately skips this fallback so a missing test credential can never
+    silently resolve to a local production credential.
+    """
+    if app_config.mode == "test" or database.password.strip():
+        return database
+    try:
+        from sigmarail.credentials import get_clickhouse_credentials
+
+        credentials = get_clickhouse_credentials()
+    except Exception as exc:
+        logger.debug("No local ClickHouse credential available from the OS vault: %s", exc)
+        return database
+    if not credentials:
+        return database
+    return database.model_copy(update=credentials)
+
+
 def load_typed_config() -> RootConfig:
     global _root_config_cache
     if _root_config_cache is not None and app_config._config_cache is not None:
@@ -363,6 +383,7 @@ def load_typed_config() -> RootConfig:
     raw = _load_config_internal()
     database = DatabaseConfig.model_validate(raw.get("database", {}))
     database = _apply_test_clickhouse_env_overrides(database)
+    database = _apply_local_clickhouse_keyring(database)
     data = DataConfig.model_validate(raw.get("data", {}))
     sharadar_raw = dict(raw.get("sharadar") or {})
     if "base_url" in sharadar_raw:

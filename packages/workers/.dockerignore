@@ -1,0 +1,7 @@
+node_modules
+**/node_modules
+.serverless
+.pytest_cache
+__pypackages__
+.venv
+.esbuild

@@ -1,0 +1,8 @@
+include AGENTS.md README.md
+recursive-include docs *.md
+recursive-include examples *.py *.json
+recursive-include src/sigmarail_spec/data *.json
+recursive-include metadata *.json
+recursive-include spec *.json
+recursive-include tests *.py
+recursive-include tools *.py

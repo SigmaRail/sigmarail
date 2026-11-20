@@ -1,0 +1,4976 @@
+{
+  "boolean_schema": {
+    "$defs": {
+      "AbsExpr": {
+        "additionalProperties": false,
+        "description": "Absolute value operand.",
+        "properties": {
+          "arg": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Arg"
+          },
+          "type": {
+            "const": "abs",
+            "default": "abs",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "arg"
+        ],
+        "title": "AbsExpr",
+        "type": "object"
+      },
+      "AllExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllExpr",
+                  "any": "#/$defs/AnyExpr",
+                  "between": "#/$defs/ColBetweenExpr",
+                  "col_eq": "#/$defs/ColEqExpr",
+                  "col_gte": "#/$defs/ColGteExpr",
+                  "col_lte": "#/$defs/ColLteExpr",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "in_tickers": "#/$defs/InTickersExpr",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "neq": "#/$defs/CmpNeq",
+                  "not": "#/$defs/NotExpr",
+                  "regime": "#/$defs/RegimeExpr",
+                  "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                  "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                  "signal": "#/$defs/SignalExpr",
+                  "signal_compare": "#/$defs/SignalCompareExpr"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllExpr"
+                },
+                {
+                  "$ref": "#/$defs/AnyExpr"
+                },
+                {
+                  "$ref": "#/$defs/NotExpr"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                },
+                {
+                  "$ref": "#/$defs/CmpNeq"
+                },
+                {
+                  "$ref": "#/$defs/ColGteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColLteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColEqExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColBetweenExpr"
+                },
+                {
+                  "$ref": "#/$defs/InTickersExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalCompareExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "all",
+            "default": "all",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AllExpr",
+        "type": "object"
+      },
+      "AnyExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllExpr",
+                  "any": "#/$defs/AnyExpr",
+                  "between": "#/$defs/ColBetweenExpr",
+                  "col_eq": "#/$defs/ColEqExpr",
+                  "col_gte": "#/$defs/ColGteExpr",
+                  "col_lte": "#/$defs/ColLteExpr",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "in_tickers": "#/$defs/InTickersExpr",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "neq": "#/$defs/CmpNeq",
+                  "not": "#/$defs/NotExpr",
+                  "regime": "#/$defs/RegimeExpr",
+                  "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                  "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                  "signal": "#/$defs/SignalExpr",
+                  "signal_compare": "#/$defs/SignalCompareExpr"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllExpr"
+                },
+                {
+                  "$ref": "#/$defs/AnyExpr"
+                },
+                {
+                  "$ref": "#/$defs/NotExpr"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                },
+                {
+                  "$ref": "#/$defs/CmpNeq"
+                },
+                {
+                  "$ref": "#/$defs/ColGteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColLteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColEqExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColBetweenExpr"
+                },
+                {
+                  "$ref": "#/$defs/InTickersExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalCompareExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "any",
+            "default": "any",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AnyExpr",
+        "type": "object"
+      },
+      "BindingRef": {
+        "additionalProperties": false,
+        "description": "Namespaced runtime binding (C-VERA-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
+        "properties": {
+          "field": {
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "ns": {
+            "minLength": 1,
+            "title": "Ns",
+            "type": "string"
+          },
+          "type": {
+            "const": "ref",
+            "default": "ref",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ns",
+          "field"
+        ],
+        "title": "BindingRef",
+        "type": "object"
+      },
+      "ClampExpr": {
+        "additionalProperties": false,
+        "description": "``clamp(value, min, max)`` — the quant's bound; ``min(max(value, lo), hi)``.",
+        "properties": {
+          "max": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Min"
+          },
+          "type": {
+            "const": "clamp",
+            "default": "clamp",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "min",
+          "max"
+        ],
+        "title": "ClampExpr",
+        "type": "object"
+      },
+      "CmpEq": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "eq",
+            "default": "eq",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpEq",
+        "type": "object"
+      },
+      "CmpGt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gt",
+            "default": "gt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGt",
+        "type": "object"
+      },
+      "CmpGte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gte",
+            "default": "gte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGte",
+        "type": "object"
+      },
+      "CmpLt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lt",
+            "default": "lt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLt",
+        "type": "object"
+      },
+      "CmpLte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lte",
+            "default": "lte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLte",
+        "type": "object"
+      },
+      "CmpNeq": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "neq",
+            "default": "neq",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpNeq",
+        "type": "object"
+      },
+      "ColBetweenExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Min"
+          },
+          "type": {
+            "const": "between",
+            "default": "between",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "column",
+          "min",
+          "max"
+        ],
+        "title": "ColBetweenExpr",
+        "type": "object"
+      },
+      "ColEqExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_eq",
+            "default": "col_eq",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColEqExpr",
+        "type": "object"
+      },
+      "ColGteExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_gte",
+            "default": "col_gte",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColGteExpr",
+        "type": "object"
+      },
+      "ColLteExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_lte",
+            "default": "col_lte",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColLteExpr",
+        "type": "object"
+      },
+      "ColRef": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "type": {
+            "const": "col",
+            "default": "col",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ColRef",
+        "type": "object"
+      },
+      "CondExpr": {
+        "additionalProperties": false,
+        "description": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
+        "properties": {
+          "otherwise": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Otherwise"
+          },
+          "then": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Then"
+          },
+          "type": {
+            "const": "cond",
+            "default": "cond",
+            "title": "Type",
+            "type": "string"
+          },
+          "when": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllExpr",
+                "any": "#/$defs/AnyExpr",
+                "between": "#/$defs/ColBetweenExpr",
+                "col_eq": "#/$defs/ColEqExpr",
+                "col_gte": "#/$defs/ColGteExpr",
+                "col_lte": "#/$defs/ColLteExpr",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "in_tickers": "#/$defs/InTickersExpr",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "neq": "#/$defs/CmpNeq",
+                "not": "#/$defs/NotExpr",
+                "regime": "#/$defs/RegimeExpr",
+                "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                "signal": "#/$defs/SignalExpr",
+                "signal_compare": "#/$defs/SignalCompareExpr"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllExpr"
+              },
+              {
+                "$ref": "#/$defs/AnyExpr"
+              },
+              {
+                "$ref": "#/$defs/NotExpr"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              },
+              {
+                "$ref": "#/$defs/CmpNeq"
+              },
+              {
+                "$ref": "#/$defs/ColGteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColLteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColEqExpr"
+              },
+              {
+                "$ref": "#/$defs/ColBetweenExpr"
+              },
+              {
+                "$ref": "#/$defs/InTickersExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalCompareExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+              }
+            ],
+            "title": "When"
+          }
+        },
+        "required": [
+          "when",
+          "then",
+          "otherwise"
+        ],
+        "title": "CondExpr",
+        "type": "object"
+      },
+      "FormulaExpr": {
+        "additionalProperties": false,
+        "description": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "title": "Args",
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "+",
+              "-",
+              "*",
+              "/"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "type": {
+            "const": "formula",
+            "default": "formula",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "args"
+        ],
+        "title": "FormulaExpr",
+        "type": "object"
+      },
+      "InTickersExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Tickers",
+            "type": "array"
+          },
+          "type": {
+            "const": "in_tickers",
+            "default": "in_tickers",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tickers"
+        ],
+        "title": "InTickersExpr",
+        "type": "object"
+      },
+      "LitVal": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "lit",
+            "default": "lit",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "LitVal",
+        "type": "object"
+      },
+      "MaxExpr": {
+        "additionalProperties": false,
+        "description": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Args",
+            "type": "array"
+          },
+          "type": {
+            "const": "max",
+            "default": "max",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "title": "MaxExpr",
+        "type": "object"
+      },
+      "MinExpr": {
+        "additionalProperties": false,
+        "description": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Args",
+            "type": "array"
+          },
+          "type": {
+            "const": "min",
+            "default": "min",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "title": "MinExpr",
+        "type": "object"
+      },
+      "NotExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllExpr",
+                "any": "#/$defs/AnyExpr",
+                "between": "#/$defs/ColBetweenExpr",
+                "col_eq": "#/$defs/ColEqExpr",
+                "col_gte": "#/$defs/ColGteExpr",
+                "col_lte": "#/$defs/ColLteExpr",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "in_tickers": "#/$defs/InTickersExpr",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "neq": "#/$defs/CmpNeq",
+                "not": "#/$defs/NotExpr",
+                "regime": "#/$defs/RegimeExpr",
+                "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                "signal": "#/$defs/SignalExpr",
+                "signal_compare": "#/$defs/SignalCompareExpr"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllExpr"
+              },
+              {
+                "$ref": "#/$defs/AnyExpr"
+              },
+              {
+                "$ref": "#/$defs/NotExpr"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              },
+              {
+                "$ref": "#/$defs/CmpNeq"
+              },
+              {
+                "$ref": "#/$defs/ColGteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColLteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColEqExpr"
+              },
+              {
+                "$ref": "#/$defs/ColBetweenExpr"
+              },
+              {
+                "$ref": "#/$defs/InTickersExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalCompareExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+              }
+            ],
+            "title": "Item"
+          },
+          "type": {
+            "const": "not",
+            "default": "not",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "title": "NotExpr",
+        "type": "object"
+      },
+      "PosRef": {
+        "additionalProperties": false,
+        "description": "Runtime position binding (C-VERA-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "type": {
+            "const": "pos",
+            "default": "pos",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "PosRef",
+        "type": "object"
+      },
+      "RegimeAllowsEntriesExpr": {
+        "additionalProperties": false,
+        "description": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "default": 1,
+            "title": "Eq"
+          },
+          "type": {
+            "const": "regime_allows_entries",
+            "default": "regime_allows_entries",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "RegimeAllowsEntriesExpr",
+        "type": "object"
+      },
+      "RegimeExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Eq"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "gte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gte"
+          },
+          "source": {
+            "default": "regime",
+            "title": "Source",
+            "type": "string"
+          },
+          "type": {
+            "const": "regime",
+            "default": "regime",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "RegimeExpr",
+        "type": "object"
+      },
+      "RegimeMartAllowsEntriesExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "default": 1,
+            "title": "Eq"
+          },
+          "type": {
+            "const": "regime_mart_allows_entries",
+            "default": "regime_mart_allows_entries",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "RegimeMartAllowsEntriesExpr",
+        "type": "object"
+      },
+      "SignalCompareExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "title": "Left",
+            "type": "string"
+          },
+          "op": {
+            "enum": [
+              "lt",
+              "lte",
+              "gt",
+              "gte",
+              "eq"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "right": {
+            "title": "Right",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "type": {
+            "const": "signal_compare",
+            "default": "signal_compare",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "left",
+          "op",
+          "right"
+        ],
+        "title": "SignalCompareExpr",
+        "type": "object"
+      },
+      "SignalExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Eq"
+          },
+          "gt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gt"
+          },
+          "gte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gte"
+          },
+          "lt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lt"
+          },
+          "lte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lte"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "type": {
+            "const": "signal",
+            "default": "signal",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "column"
+        ],
+        "title": "SignalExpr",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "all": "#/$defs/AllExpr",
+        "any": "#/$defs/AnyExpr",
+        "between": "#/$defs/ColBetweenExpr",
+        "col_eq": "#/$defs/ColEqExpr",
+        "col_gte": "#/$defs/ColGteExpr",
+        "col_lte": "#/$defs/ColLteExpr",
+        "eq": "#/$defs/CmpEq",
+        "gt": "#/$defs/CmpGt",
+        "gte": "#/$defs/CmpGte",
+        "in_tickers": "#/$defs/InTickersExpr",
+        "lt": "#/$defs/CmpLt",
+        "lte": "#/$defs/CmpLte",
+        "neq": "#/$defs/CmpNeq",
+        "not": "#/$defs/NotExpr",
+        "regime": "#/$defs/RegimeExpr",
+        "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+        "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+        "signal": "#/$defs/SignalExpr",
+        "signal_compare": "#/$defs/SignalCompareExpr"
+      },
+      "propertyName": "type"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/AllExpr"
+      },
+      {
+        "$ref": "#/$defs/AnyExpr"
+      },
+      {
+        "$ref": "#/$defs/NotExpr"
+      },
+      {
+        "$ref": "#/$defs/CmpGt"
+      },
+      {
+        "$ref": "#/$defs/CmpGte"
+      },
+      {
+        "$ref": "#/$defs/CmpLt"
+      },
+      {
+        "$ref": "#/$defs/CmpLte"
+      },
+      {
+        "$ref": "#/$defs/CmpEq"
+      },
+      {
+        "$ref": "#/$defs/CmpNeq"
+      },
+      {
+        "$ref": "#/$defs/ColGteExpr"
+      },
+      {
+        "$ref": "#/$defs/ColLteExpr"
+      },
+      {
+        "$ref": "#/$defs/ColEqExpr"
+      },
+      {
+        "$ref": "#/$defs/ColBetweenExpr"
+      },
+      {
+        "$ref": "#/$defs/InTickersExpr"
+      },
+      {
+        "$ref": "#/$defs/SignalExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeExpr"
+      },
+      {
+        "$ref": "#/$defs/SignalCompareExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+      }
+    ]
+  },
+  "limits": {
+    "max_boolean_depth": 24,
+    "max_formula_depth": 8
+  },
+  "nodes": [
+    {
+      "fields": [
+        "type",
+        "arg"
+      ],
+      "id": "expression.node.abs",
+      "summary": "Absolute value operand.",
+      "type": "abs"
+    },
+    {
+      "fields": [
+        "type",
+        "items",
+        "name"
+      ],
+      "id": "expression.node.all",
+      "summary": "",
+      "type": "all"
+    },
+    {
+      "fields": [
+        "type",
+        "items",
+        "name"
+      ],
+      "id": "expression.node.any",
+      "summary": "",
+      "type": "any"
+    },
+    {
+      "fields": [
+        "type",
+        "column",
+        "min",
+        "max"
+      ],
+      "id": "expression.node.between",
+      "summary": "",
+      "type": "between"
+    },
+    {
+      "fields": [
+        "type",
+        "value",
+        "min",
+        "max"
+      ],
+      "id": "expression.node.clamp",
+      "summary": "``clamp(value, min, max)`` — the quant's bound; ``min(max(value, lo), hi)``.",
+      "type": "clamp"
+    },
+    {
+      "fields": [
+        "type",
+        "name",
+        "offset"
+      ],
+      "id": "expression.node.col",
+      "summary": "",
+      "type": "col"
+    },
+    {
+      "fields": [
+        "type",
+        "column",
+        "value"
+      ],
+      "id": "expression.node.col_eq",
+      "summary": "",
+      "type": "col_eq"
+    },
+    {
+      "fields": [
+        "type",
+        "column",
+        "value"
+      ],
+      "id": "expression.node.col_gte",
+      "summary": "",
+      "type": "col_gte"
+    },
+    {
+      "fields": [
+        "type",
+        "column",
+        "value"
+      ],
+      "id": "expression.node.col_lte",
+      "summary": "",
+      "type": "col_lte"
+    },
+    {
+      "fields": [
+        "type",
+        "when",
+        "then",
+        "otherwise"
+      ],
+      "id": "expression.node.cond",
+      "summary": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.",
+      "type": "cond"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.eq",
+      "summary": "",
+      "type": "eq"
+    },
+    {
+      "fields": [
+        "type",
+        "op",
+        "args"
+      ],
+      "id": "expression.node.formula",
+      "summary": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+      "type": "formula"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.gt",
+      "summary": "",
+      "type": "gt"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.gte",
+      "summary": "",
+      "type": "gte"
+    },
+    {
+      "fields": [
+        "type",
+        "tickers"
+      ],
+      "id": "expression.node.in_tickers",
+      "summary": "",
+      "type": "in_tickers"
+    },
+    {
+      "fields": [
+        "type",
+        "value"
+      ],
+      "id": "expression.node.lit",
+      "summary": "",
+      "type": "lit"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.lt",
+      "summary": "",
+      "type": "lt"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.lte",
+      "summary": "",
+      "type": "lte"
+    },
+    {
+      "fields": [
+        "type",
+        "args"
+      ],
+      "id": "expression.node.max",
+      "summary": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+      "type": "max"
+    },
+    {
+      "fields": [
+        "type",
+        "args"
+      ],
+      "id": "expression.node.min",
+      "summary": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+      "type": "min"
+    },
+    {
+      "fields": [
+        "type",
+        "left",
+        "right"
+      ],
+      "id": "expression.node.neq",
+      "summary": "",
+      "type": "neq"
+    },
+    {
+      "fields": [
+        "type",
+        "item"
+      ],
+      "id": "expression.node.not",
+      "summary": "",
+      "type": "not"
+    },
+    {
+      "fields": [
+        "type",
+        "field"
+      ],
+      "id": "expression.node.pos",
+      "summary": "Runtime position binding (C-VERA-EXPR-V2).",
+      "type": "pos"
+    },
+    {
+      "fields": [
+        "type",
+        "ns",
+        "field"
+      ],
+      "id": "expression.node.ref",
+      "summary": "Namespaced runtime binding (C-VERA-EXPR-V2).",
+      "type": "ref"
+    },
+    {
+      "fields": [
+        "type",
+        "field",
+        "source",
+        "eq",
+        "gte"
+      ],
+      "id": "expression.node.regime",
+      "summary": "",
+      "type": "regime"
+    },
+    {
+      "fields": [
+        "type",
+        "eq"
+      ],
+      "id": "expression.node.regime_allows_entries",
+      "summary": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+      "type": "regime_allows_entries"
+    },
+    {
+      "fields": [
+        "type",
+        "eq"
+      ],
+      "id": "expression.node.regime_mart_allows_entries",
+      "summary": "",
+      "type": "regime_mart_allows_entries"
+    },
+    {
+      "fields": [
+        "type",
+        "ticker",
+        "column",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "eq"
+      ],
+      "id": "expression.node.signal",
+      "summary": "",
+      "type": "signal"
+    },
+    {
+      "fields": [
+        "type",
+        "ticker",
+        "left",
+        "op",
+        "right"
+      ],
+      "id": "expression.node.signal_compare",
+      "summary": "",
+      "type": "signal_compare"
+    }
+  ],
+  "spec_schema": {
+    "$defs": {
+      "AbsExpr": {
+        "additionalProperties": false,
+        "description": "Absolute value operand.",
+        "properties": {
+          "arg": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Arg"
+          },
+          "type": {
+            "const": "abs",
+            "default": "abs",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "arg"
+        ],
+        "title": "AbsExpr",
+        "type": "object"
+      },
+      "AllExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllExpr",
+                  "any": "#/$defs/AnyExpr",
+                  "between": "#/$defs/ColBetweenExpr",
+                  "col_eq": "#/$defs/ColEqExpr",
+                  "col_gte": "#/$defs/ColGteExpr",
+                  "col_lte": "#/$defs/ColLteExpr",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "in_tickers": "#/$defs/InTickersExpr",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "neq": "#/$defs/CmpNeq",
+                  "not": "#/$defs/NotExpr",
+                  "regime": "#/$defs/RegimeExpr",
+                  "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                  "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                  "signal": "#/$defs/SignalExpr",
+                  "signal_compare": "#/$defs/SignalCompareExpr"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllExpr"
+                },
+                {
+                  "$ref": "#/$defs/AnyExpr"
+                },
+                {
+                  "$ref": "#/$defs/NotExpr"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                },
+                {
+                  "$ref": "#/$defs/CmpNeq"
+                },
+                {
+                  "$ref": "#/$defs/ColGteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColLteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColEqExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColBetweenExpr"
+                },
+                {
+                  "$ref": "#/$defs/InTickersExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalCompareExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "all",
+            "default": "all",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AllExpr",
+        "type": "object"
+      },
+      "AnyExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllExpr",
+                  "any": "#/$defs/AnyExpr",
+                  "between": "#/$defs/ColBetweenExpr",
+                  "col_eq": "#/$defs/ColEqExpr",
+                  "col_gte": "#/$defs/ColGteExpr",
+                  "col_lte": "#/$defs/ColLteExpr",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "in_tickers": "#/$defs/InTickersExpr",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "neq": "#/$defs/CmpNeq",
+                  "not": "#/$defs/NotExpr",
+                  "regime": "#/$defs/RegimeExpr",
+                  "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                  "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                  "signal": "#/$defs/SignalExpr",
+                  "signal_compare": "#/$defs/SignalCompareExpr"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllExpr"
+                },
+                {
+                  "$ref": "#/$defs/AnyExpr"
+                },
+                {
+                  "$ref": "#/$defs/NotExpr"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                },
+                {
+                  "$ref": "#/$defs/CmpNeq"
+                },
+                {
+                  "$ref": "#/$defs/ColGteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColLteExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColEqExpr"
+                },
+                {
+                  "$ref": "#/$defs/ColBetweenExpr"
+                },
+                {
+                  "$ref": "#/$defs/InTickersExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeExpr"
+                },
+                {
+                  "$ref": "#/$defs/SignalCompareExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+                },
+                {
+                  "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "any",
+            "default": "any",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AnyExpr",
+        "type": "object"
+      },
+      "BindingRef": {
+        "additionalProperties": false,
+        "description": "Namespaced runtime binding (C-VERA-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
+        "properties": {
+          "field": {
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "ns": {
+            "minLength": 1,
+            "title": "Ns",
+            "type": "string"
+          },
+          "type": {
+            "const": "ref",
+            "default": "ref",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ns",
+          "field"
+        ],
+        "title": "BindingRef",
+        "type": "object"
+      },
+      "ClampExpr": {
+        "additionalProperties": false,
+        "description": "``clamp(value, min, max)`` — the quant's bound; ``min(max(value, lo), hi)``.",
+        "properties": {
+          "max": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Min"
+          },
+          "type": {
+            "const": "clamp",
+            "default": "clamp",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "min",
+          "max"
+        ],
+        "title": "ClampExpr",
+        "type": "object"
+      },
+      "CmpEq": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "eq",
+            "default": "eq",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpEq",
+        "type": "object"
+      },
+      "CmpGt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gt",
+            "default": "gt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGt",
+        "type": "object"
+      },
+      "CmpGte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gte",
+            "default": "gte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGte",
+        "type": "object"
+      },
+      "CmpLt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lt",
+            "default": "lt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLt",
+        "type": "object"
+      },
+      "CmpLte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lte",
+            "default": "lte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLte",
+        "type": "object"
+      },
+      "CmpNeq": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "neq",
+            "default": "neq",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpNeq",
+        "type": "object"
+      },
+      "ColBetweenExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Min"
+          },
+          "type": {
+            "const": "between",
+            "default": "between",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "column",
+          "min",
+          "max"
+        ],
+        "title": "ColBetweenExpr",
+        "type": "object"
+      },
+      "ColEqExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_eq",
+            "default": "col_eq",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColEqExpr",
+        "type": "object"
+      },
+      "ColGteExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_gte",
+            "default": "col_gte",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColGteExpr",
+        "type": "object"
+      },
+      "ColLteExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "type": {
+            "const": "col_lte",
+            "default": "col_lte",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "ColLteExpr",
+        "type": "object"
+      },
+      "ColRef": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "type": {
+            "const": "col",
+            "default": "col",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ColRef",
+        "type": "object"
+      },
+      "CondExpr": {
+        "additionalProperties": false,
+        "description": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
+        "properties": {
+          "otherwise": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Otherwise"
+          },
+          "then": {
+            "discriminator": {
+              "mapping": {
+                "abs": "#/$defs/AbsExpr",
+                "clamp": "#/$defs/ClampExpr",
+                "col": "#/$defs/ColRef",
+                "cond": "#/$defs/CondExpr",
+                "formula": "#/$defs/FormulaExpr",
+                "lit": "#/$defs/LitVal",
+                "max": "#/$defs/MaxExpr",
+                "min": "#/$defs/MinExpr",
+                "pos": "#/$defs/PosRef",
+                "ref": "#/$defs/BindingRef"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/PosRef"
+              },
+              {
+                "$ref": "#/$defs/BindingRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "$ref": "#/$defs/MinExpr"
+              },
+              {
+                "$ref": "#/$defs/MaxExpr"
+              },
+              {
+                "$ref": "#/$defs/ClampExpr"
+              },
+              {
+                "$ref": "#/$defs/AbsExpr"
+              },
+              {
+                "$ref": "#/$defs/CondExpr"
+              }
+            ],
+            "title": "Then"
+          },
+          "type": {
+            "const": "cond",
+            "default": "cond",
+            "title": "Type",
+            "type": "string"
+          },
+          "when": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllExpr",
+                "any": "#/$defs/AnyExpr",
+                "between": "#/$defs/ColBetweenExpr",
+                "col_eq": "#/$defs/ColEqExpr",
+                "col_gte": "#/$defs/ColGteExpr",
+                "col_lte": "#/$defs/ColLteExpr",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "in_tickers": "#/$defs/InTickersExpr",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "neq": "#/$defs/CmpNeq",
+                "not": "#/$defs/NotExpr",
+                "regime": "#/$defs/RegimeExpr",
+                "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                "signal": "#/$defs/SignalExpr",
+                "signal_compare": "#/$defs/SignalCompareExpr"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllExpr"
+              },
+              {
+                "$ref": "#/$defs/AnyExpr"
+              },
+              {
+                "$ref": "#/$defs/NotExpr"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              },
+              {
+                "$ref": "#/$defs/CmpNeq"
+              },
+              {
+                "$ref": "#/$defs/ColGteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColLteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColEqExpr"
+              },
+              {
+                "$ref": "#/$defs/ColBetweenExpr"
+              },
+              {
+                "$ref": "#/$defs/InTickersExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalCompareExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+              }
+            ],
+            "title": "When"
+          }
+        },
+        "required": [
+          "when",
+          "then",
+          "otherwise"
+        ],
+        "title": "CondExpr",
+        "type": "object"
+      },
+      "FormulaExpr": {
+        "additionalProperties": false,
+        "description": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "title": "Args",
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "+",
+              "-",
+              "*",
+              "/"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "type": {
+            "const": "formula",
+            "default": "formula",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "args"
+        ],
+        "title": "FormulaExpr",
+        "type": "object"
+      },
+      "InTickersExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Tickers",
+            "type": "array"
+          },
+          "type": {
+            "const": "in_tickers",
+            "default": "in_tickers",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tickers"
+        ],
+        "title": "InTickersExpr",
+        "type": "object"
+      },
+      "LitVal": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "lit",
+            "default": "lit",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "LitVal",
+        "type": "object"
+      },
+      "MaxExpr": {
+        "additionalProperties": false,
+        "description": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Args",
+            "type": "array"
+          },
+          "type": {
+            "const": "max",
+            "default": "max",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "title": "MaxExpr",
+        "type": "object"
+      },
+      "MinExpr": {
+        "additionalProperties": false,
+        "description": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+        "properties": {
+          "args": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "abs": "#/$defs/AbsExpr",
+                  "clamp": "#/$defs/ClampExpr",
+                  "col": "#/$defs/ColRef",
+                  "cond": "#/$defs/CondExpr",
+                  "formula": "#/$defs/FormulaExpr",
+                  "lit": "#/$defs/LitVal",
+                  "max": "#/$defs/MaxExpr",
+                  "min": "#/$defs/MinExpr",
+                  "pos": "#/$defs/PosRef",
+                  "ref": "#/$defs/BindingRef"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/PosRef"
+                },
+                {
+                  "$ref": "#/$defs/BindingRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                },
+                {
+                  "$ref": "#/$defs/MinExpr"
+                },
+                {
+                  "$ref": "#/$defs/MaxExpr"
+                },
+                {
+                  "$ref": "#/$defs/ClampExpr"
+                },
+                {
+                  "$ref": "#/$defs/AbsExpr"
+                },
+                {
+                  "$ref": "#/$defs/CondExpr"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Args",
+            "type": "array"
+          },
+          "type": {
+            "const": "min",
+            "default": "min",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "title": "MinExpr",
+        "type": "object"
+      },
+      "NotExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllExpr",
+                "any": "#/$defs/AnyExpr",
+                "between": "#/$defs/ColBetweenExpr",
+                "col_eq": "#/$defs/ColEqExpr",
+                "col_gte": "#/$defs/ColGteExpr",
+                "col_lte": "#/$defs/ColLteExpr",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "in_tickers": "#/$defs/InTickersExpr",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "neq": "#/$defs/CmpNeq",
+                "not": "#/$defs/NotExpr",
+                "regime": "#/$defs/RegimeExpr",
+                "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+                "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+                "signal": "#/$defs/SignalExpr",
+                "signal_compare": "#/$defs/SignalCompareExpr"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllExpr"
+              },
+              {
+                "$ref": "#/$defs/AnyExpr"
+              },
+              {
+                "$ref": "#/$defs/NotExpr"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              },
+              {
+                "$ref": "#/$defs/CmpNeq"
+              },
+              {
+                "$ref": "#/$defs/ColGteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColLteExpr"
+              },
+              {
+                "$ref": "#/$defs/ColEqExpr"
+              },
+              {
+                "$ref": "#/$defs/ColBetweenExpr"
+              },
+              {
+                "$ref": "#/$defs/InTickersExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeExpr"
+              },
+              {
+                "$ref": "#/$defs/SignalCompareExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+              },
+              {
+                "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+              }
+            ],
+            "title": "Item"
+          },
+          "type": {
+            "const": "not",
+            "default": "not",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "title": "NotExpr",
+        "type": "object"
+      },
+      "PosRef": {
+        "additionalProperties": false,
+        "description": "Runtime position binding (C-VERA-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "type": {
+            "const": "pos",
+            "default": "pos",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "PosRef",
+        "type": "object"
+      },
+      "RegimeAllowsEntriesExpr": {
+        "additionalProperties": false,
+        "description": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "default": 1,
+            "title": "Eq"
+          },
+          "type": {
+            "const": "regime_allows_entries",
+            "default": "regime_allows_entries",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "RegimeAllowsEntriesExpr",
+        "type": "object"
+      },
+      "RegimeExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Eq"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "gte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gte"
+          },
+          "source": {
+            "default": "regime",
+            "title": "Source",
+            "type": "string"
+          },
+          "type": {
+            "const": "regime",
+            "default": "regime",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "RegimeExpr",
+        "type": "object"
+      },
+      "RegimeMartAllowsEntriesExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "default": 1,
+            "title": "Eq"
+          },
+          "type": {
+            "const": "regime_mart_allows_entries",
+            "default": "regime_mart_allows_entries",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "RegimeMartAllowsEntriesExpr",
+        "type": "object"
+      },
+      "SignalCompareExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "title": "Left",
+            "type": "string"
+          },
+          "op": {
+            "enum": [
+              "lt",
+              "lte",
+              "gt",
+              "gte",
+              "eq"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "right": {
+            "title": "Right",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "type": {
+            "const": "signal_compare",
+            "default": "signal_compare",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "left",
+          "op",
+          "right"
+        ],
+        "title": "SignalCompareExpr",
+        "type": "object"
+      },
+      "SignalExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "eq": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Eq"
+          },
+          "gt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gt"
+          },
+          "gte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gte"
+          },
+          "lt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lt"
+          },
+          "lte": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lte"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "type": {
+            "const": "signal",
+            "default": "signal",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "column"
+        ],
+        "title": "SignalExpr",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "abs": "#/$defs/AbsExpr",
+        "all": "#/$defs/AllExpr",
+        "any": "#/$defs/AnyExpr",
+        "between": "#/$defs/ColBetweenExpr",
+        "clamp": "#/$defs/ClampExpr",
+        "col": "#/$defs/ColRef",
+        "col_eq": "#/$defs/ColEqExpr",
+        "col_gte": "#/$defs/ColGteExpr",
+        "col_lte": "#/$defs/ColLteExpr",
+        "cond": "#/$defs/CondExpr",
+        "eq": "#/$defs/CmpEq",
+        "formula": "#/$defs/FormulaExpr",
+        "gt": "#/$defs/CmpGt",
+        "gte": "#/$defs/CmpGte",
+        "in_tickers": "#/$defs/InTickersExpr",
+        "lit": "#/$defs/LitVal",
+        "lt": "#/$defs/CmpLt",
+        "lte": "#/$defs/CmpLte",
+        "max": "#/$defs/MaxExpr",
+        "min": "#/$defs/MinExpr",
+        "neq": "#/$defs/CmpNeq",
+        "not": "#/$defs/NotExpr",
+        "pos": "#/$defs/PosRef",
+        "ref": "#/$defs/BindingRef",
+        "regime": "#/$defs/RegimeExpr",
+        "regime_allows_entries": "#/$defs/RegimeAllowsEntriesExpr",
+        "regime_mart_allows_entries": "#/$defs/RegimeMartAllowsEntriesExpr",
+        "signal": "#/$defs/SignalExpr",
+        "signal_compare": "#/$defs/SignalCompareExpr"
+      },
+      "propertyName": "type"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/AllExpr"
+      },
+      {
+        "$ref": "#/$defs/AnyExpr"
+      },
+      {
+        "$ref": "#/$defs/NotExpr"
+      },
+      {
+        "$ref": "#/$defs/CmpGt"
+      },
+      {
+        "$ref": "#/$defs/CmpGte"
+      },
+      {
+        "$ref": "#/$defs/CmpLt"
+      },
+      {
+        "$ref": "#/$defs/CmpLte"
+      },
+      {
+        "$ref": "#/$defs/CmpEq"
+      },
+      {
+        "$ref": "#/$defs/CmpNeq"
+      },
+      {
+        "$ref": "#/$defs/ColGteExpr"
+      },
+      {
+        "$ref": "#/$defs/ColLteExpr"
+      },
+      {
+        "$ref": "#/$defs/ColEqExpr"
+      },
+      {
+        "$ref": "#/$defs/ColBetweenExpr"
+      },
+      {
+        "$ref": "#/$defs/InTickersExpr"
+      },
+      {
+        "$ref": "#/$defs/SignalExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeExpr"
+      },
+      {
+        "$ref": "#/$defs/SignalCompareExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeMartAllowsEntriesExpr"
+      },
+      {
+        "$ref": "#/$defs/RegimeAllowsEntriesExpr"
+      },
+      {
+        "$ref": "#/$defs/ColRef"
+      },
+      {
+        "$ref": "#/$defs/PosRef"
+      },
+      {
+        "$ref": "#/$defs/BindingRef"
+      },
+      {
+        "$ref": "#/$defs/LitVal"
+      },
+      {
+        "$ref": "#/$defs/FormulaExpr"
+      },
+      {
+        "$ref": "#/$defs/MinExpr"
+      },
+      {
+        "$ref": "#/$defs/MaxExpr"
+      },
+      {
+        "$ref": "#/$defs/ClampExpr"
+      },
+      {
+        "$ref": "#/$defs/AbsExpr"
+      },
+      {
+        "$ref": "#/$defs/CondExpr"
+      }
+    ]
+  },
+  "version": "C-VERA-EXPR-V1"
+}

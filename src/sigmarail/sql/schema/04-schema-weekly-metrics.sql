@@ -114,7 +114,7 @@ ticker_freshness_check AS (
     WHERE dm.date BETWEEN toMonday(CAST({chunk_start_date:String}, 'Date')) AND toMonday(CAST({chunk_end_date:String}, 'Date'))
     GROUP BY dm.ticker
 ),
--- Get source freshness per ticker (routed by tickers.table)
+-- Get source freshness per ticker using Sharadar's returned SEP/SFP ticker labels.
 source_freshness_check AS (
     SELECT
         ticker,
@@ -123,12 +123,12 @@ source_freshness_check AS (
     FROM (
         SELECT p.ticker, p.lastupdated
         FROM sep AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
         WHERE p.date BETWEEN toMonday(CAST({chunk_start_date:String}, 'Date')) - INTERVAL 400 DAY AND toMonday(CAST({chunk_end_date:String}, 'Date'))
         UNION ALL
         SELECT p.ticker, p.lastupdated
         FROM sfp AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
         WHERE p.date BETWEEN toMonday(CAST({chunk_start_date:String}, 'Date')) - INTERVAL 400 DAY AND toMonday(CAST({chunk_end_date:String}, 'Date'))
     ) s
     GROUP BY ticker
@@ -160,17 +160,17 @@ price_data_with_adjustments AS (
         p.open,
         p.close
     FROM (
-        -- Route by tickers.table (do not merge SEP and SFP on ticker string alone)
+        -- Route by Sharadar's returned tickers.table labels (do not merge on ticker alone)
         SELECT
             p.ticker, p.date, p.open, p.high, p.low, p.close, p.volume, p.closeadj
         FROM sep AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
         WHERE p.date BETWEEN toMonday(CAST({chunk_start_date:String}, 'Date')) - INTERVAL 400 DAY AND toMonday(CAST({chunk_end_date:String}, 'Date'))
         UNION ALL
         SELECT
             p.ticker, p.date, p.open, p.high, p.low, p.close, p.volume, p.closeadj
         FROM sfp AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
         WHERE p.date BETWEEN toMonday(CAST({chunk_start_date:String}, 'Date')) - INTERVAL 400 DAY AND toMonday(CAST({chunk_end_date:String}, 'Date'))
     ) p
     -- NEW: Only process tickers that need updating

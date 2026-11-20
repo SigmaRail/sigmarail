@@ -129,7 +129,8 @@ ticker_freshness_check AS (
     WHERE dm.date BETWEEN {chunk_start_date:String} AND {chunk_end_date:String}
     GROUP BY dm.ticker
 ),
--- Get source freshness per ticker (routed by tickers.table — never merge SEP∪SFP on string alone)
+-- Get source freshness per ticker using Sharadar's returned SEP/SFP ticker labels.
+-- API request filters use stocks/funds, but the TICKERS table stores SEP/SFP.
 source_freshness_check AS (
     SELECT
         ticker,
@@ -138,12 +139,12 @@ source_freshness_check AS (
     FROM (
         SELECT p.ticker, p.lastupdated
         FROM sep AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
         WHERE p.date BETWEEN {chunk_start_date:String} AND toDate({chunk_end_date:String})
         UNION ALL
         SELECT p.ticker, p.lastupdated
         FROM sfp AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
         WHERE p.date BETWEEN {chunk_start_date:String} AND toDate({chunk_end_date:String})
     ) s
     GROUP BY ticker
@@ -206,7 +207,8 @@ price_data_with_adjustments AS (
             ELSE 1.0
         END AS adj_factor
     FROM (
-        -- Route prices by tickers.table (Sharadar identity). Do not argMax across
+        -- Route prices by Sharadar's returned tickers.table identity (SEP/SFP).
+        -- Do not argMax across
         -- sep∪sfp on ticker string — recycled symbols (e.g. BNY bank vs CEF) are
         -- different issuers; fund history lives under successor keys (BNY1).
         SELECT
@@ -220,7 +222,7 @@ price_data_with_adjustments AS (
             p.closeadj,
             p.closeunadj
         FROM sep AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
         WHERE p.date BETWEEN (SELECT start_date FROM lookback_start_date) AND toDate({chunk_end_date:String})
         UNION ALL
         SELECT
@@ -234,7 +236,7 @@ price_data_with_adjustments AS (
             p.closeadj,
             p.closeunadj
         FROM sfp AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
         WHERE p.date BETWEEN (SELECT start_date FROM lookback_start_date) AND toDate({chunk_end_date:String})
     ) p
     -- Join with the global trade day sequence to get a stable timeunit for the EMA.

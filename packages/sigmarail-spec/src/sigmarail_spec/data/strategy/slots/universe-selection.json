@@ -1,0 +1,31 @@
+{
+  "capability_types": {
+    "ClickHouseUniverseSelectionModel": null,
+    "CoarseFundamentalUniverseSelectionModel": null,
+    "CompositeUniverseSelectionModel": null,
+    "HighRoeQualityUniverseSelectionModel": null,
+    "ManualUniverseSelectionModel": null,
+    "ScreenerStoreUniverseSelectionModel": null,
+    "VeraScreenerUniverseSelectionModel": [
+      "store"
+    ]
+  },
+  "contract_refs": {
+    "authoring": "sigmarail-spec://v1/strategy/authoring",
+    "execution": "sigmarail-spec://v1/strategy/execution",
+    "expression_core": "sigmarail-spec://v1/expressions/core",
+    "runtime_capabilities": "sigmarail-spec://v1/strategy/runtime-capabilities"
+  },
+  "purpose": "Select dated candidates through universe queries.",
+  "slot": "UniverseSelection",
+  "type_ids": [
+    "ClickHouseUniverseSelectionModel",
+    "CoarseFundamentalUniverseSelectionModel",
+    "CompositeUniverseSelectionModel",
+    "HighRoeQualityUniverseSelectionModel",
+    "ManualUniverseSelectionModel",
+    "ScreenerStoreUniverseSelectionModel",
+    "VeraScreenerUniverseSelectionModel"
+  ],
+  "version": 1
+}

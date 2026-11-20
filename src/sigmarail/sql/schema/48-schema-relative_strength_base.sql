@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS relative_strength_base
     `performance_q3` Nullable(Float64) COMMENT 'Third quarter back, days 64-126.',
     `performance_q4` Nullable(Float64) COMMENT 'Most recent quarter, days 1-63 (equals performance_3m).',
     `price_relative_ratio` Nullable(Float64) COMMENT 'Price relative ratio versus SPY (closeadj / spy_closeadj).',
-    `pool` LowCardinality(String) DEFAULT 'stocks' COMMENT 'Instrument classification provenance (tickers.table: stocks or funds). relative_strength_ranks percentiles are a single shared universe (the shared Sharadar universe); pool is informational for a future fund-segmented RS.',
+    `pool` LowCardinality(String) DEFAULT 'stocks' COMMENT 'Normalized instrument pool (stocks/funds) derived from Sharadar TICKERS labels SEP/SFP. relative_strength_ranks percentiles are a single shared universe; pool is informational for future fund-segmented RS.',
     `lastupdated` DateTime('America/New_York') DEFAULT now() COMMENT 'Timestamp of the last update to this record.'
 )
 ENGINE = ReplacingMergeTree(lastupdated)
@@ -110,7 +110,11 @@ base AS (
         dmd.perf_q3 AS perf_q3,
         dmd.perf_q4 AS perf_q4,
         if(sp.spy_close > 0, dm.`close` / sp.spy_close, NULL) AS price_relative_ratio_raw,
-        coalesce(t.`table`, 'stocks') AS pool
+        multiIf(
+            t.`table` IN ('SEP', 'stocks'), 'stocks',
+            t.`table` IN ('SFP', 'funds'), 'funds',
+            'unknown'
+        ) AS pool
     FROM daily_metrics dm FINAL
     INNER JOIN updates_dates ud ON dm.date = ud.date
     LEFT JOIN tickers t FINAL ON dm.ticker = t.ticker

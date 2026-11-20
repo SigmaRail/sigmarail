@@ -11,5 +11,7 @@ venv/
 config.yaml
 config-*.yaml
 data/
+!packages/sigmarail-spec/src/sigmarail_spec/data/
+!packages/sigmarail-spec/src/sigmarail_spec/data/**/*.json
 logs/
 .DS_Store

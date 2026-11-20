@@ -1,0 +1,43 @@
+import { Body, Container, Head, Heading, Html, Preview, Section, Text } from '@react-email/components';
+
+import { EmailComponentProps } from '../../types';
+import { button, container, heading, main, paragraph } from '../styles';
+
+export type {{ pascalCase name }}Props = EmailComponentProps & {
+  // Add your custom props here
+  userName?: string;
+};
+
+export const Subject = () => '{{ subject }}';
+
+export const Template = ({ userName = 'User' }: {{ pascalCase name }}Props) => {
+  return (
+    <Html>
+      <Head />
+      <Preview>{{ subject }}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={heading}>{{ pascalCase name }}</Heading>
+
+          <Section>
+            <Text style={paragraph}>Hello {userName},</Text>
+
+            <Text style={paragraph}>
+              This is your {{ pascalCase name }} email template. Customize this content to match your needs.
+            </Text>
+
+            <Text style={paragraph}>
+              You can add more sections, buttons, images, and other components from @react-email/components.
+            </Text>
+          </Section>
+
+          <Text style={paragraph}>
+            Best regards,
+            <br />
+            The Team
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};

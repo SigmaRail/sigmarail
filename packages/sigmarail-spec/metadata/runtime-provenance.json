@@ -1,0 +1,14 @@
+{
+  "runtime": "C-VERA-EXPR-V1 and its row evaluator/entry-trigger lowering",
+  "bootstrapped_from": {
+    "repository": "mdiggory/VeraSpec",
+    "revision": "a747830b20934e1438a85996da6e471b06b34166",
+    "files": [
+      "src/vera_spec/expr.py",
+      "src/vera_spec/evaluate.py",
+      "src/vera_spec/entry_trigger_ast.py"
+    ]
+  },
+  "ownership": "The copied implementation is canonical in sigmarail_spec. This record is historical provenance only; the spec build does not read VeraSpec runtime sources.",
+  "scope_note": "The expression runtime is included to preserve the current Vera Studio and TradingLab consumer contract. SigmaRail SQL core currently has no AST query parser or evaluator, so this does not claim that SigmaRail database commands execute these expressions."
+}

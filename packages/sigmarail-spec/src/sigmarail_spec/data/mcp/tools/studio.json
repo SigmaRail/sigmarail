@@ -1,0 +1,184 @@
+{
+  "domain": "studio",
+  "tools": [
+    {
+      "description": "Vera daily OHLCV Chart.js embed (from screener_price_tech_daily).",
+      "id": "studio.mcp.tool.chart_price_embed",
+      "input_schema": {
+        "properties": {
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "lookback_days": {
+            "title": "Lookback Days",
+            "type": "integer"
+          },
+          "show_rsi": {
+            "title": "Show Rsi",
+            "type": "boolean"
+          },
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "title": "chart_price_embedArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "chart_price_embed",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "chart_price_embedDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "TradingView advanced-chart embed payload.",
+      "id": "studio.mcp.tool.chart_tv_embed",
+      "input_schema": {
+        "properties": {
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "interval": {
+            "title": "Interval",
+            "type": "string"
+          },
+          "studies": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Studies"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          }
+        },
+        "title": "chart_tv_embedArguments",
+        "type": "object"
+      },
+      "module": "screening",
+      "name": "chart_tv_embed",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "chart_tv_embedDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Canonical Studio React-Router URL for a section/subview (LLM-shareable).",
+      "id": "studio.mcp.tool.studio_navigate",
+      "input_schema": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "section_view": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section View"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          }
+        },
+        "title": "studio_navigateArguments",
+        "type": "object"
+      },
+      "module": "studio",
+      "name": "studio_navigate",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "studio_navigateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Context-pack for one backtest run (report/trades/equity/spec/warnings).",
+      "id": "studio.mcp.tool.studio_run_context",
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "trades_limit": {
+            "title": "Trades Limit",
+            "type": "integer"
+          }
+        },
+        "title": "studio_run_contextArguments",
+        "type": "object"
+      },
+      "module": "backtesting",
+      "name": "studio_run_context",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "studio_run_contextDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}

@@ -1,0 +1,3116 @@
+schema {
+  query: Query
+  mutation: ApiMutation
+  subscription: ApiSubscription
+}
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
+"""
+The `BigInt` scalar type represents non-fractional whole numeric values.
+`BigInt` is not constrained to 32-bit like the `Int` type and thus is a less
+compatible type.
+"""
+scalar BigInt
+"""
+Allows use of a JSON String for input / output from the GraphQL schema.
+
+Use of this type is *not recommended* as you lose the benefits of having a defined, static
+schema (one of the key benefits of GraphQL).
+"""
+scalar JSONString
+"""
+The `GenericScalar` scalar type represents a generic
+GraphQL scalar value that could be:
+String, Boolean, Int, Float, List or Object.
+"""
+scalar GenericScalar
+"The `Decimal` scalar type represents a python Decimal."
+scalar Decimal
+"""
+Create scalar that ignores normal serialization/deserialization, since
+that will be handled by the multipart request spec
+"""
+scalar Upload
+type Query {
+  "Get backup configuration for a tenant"
+  backupConfig(tenantId: ID!): BackupConfigType
+  "Get backup records for a tenant"
+  backupRecords(tenantId: ID!, before: String, after: String, first: Int, last: Int): BackupRecordConnection
+  "Get all available backup modules"
+  availableBackupModules(tenantId: ID!): [BackupModuleType]
+  "Get all available models for a specific module"
+  availableBackupModels(tenantId: ID!, moduleId: String!): [BackupModelType]
+  "Get restore records for a tenant"
+  restoreRecords(tenantId: ID!, before: String, after: String, first: Int, last: Int): RestoreRecordConnection
+  "Tenant members who have backup.manage permission (for email recipients)"
+  backupEligibleRecipients(tenantId: ID!): [TenantMembershipType]
+  "Get all active locales"
+  availableLocales: [LocaleType]
+  "Get the default locale"
+  defaultLocale: LocaleType
+  "Get translation sync status (admin only)"
+  translationSyncStatus: TranslationSyncStatusType
+  "Get translation progress for all locales"
+  localeProgress: [LocaleProgressType]
+  ssoConnections(tenantId: ID!, before: String, after: String, first: Int, last: Int): SSOConnectionConnection
+  ssoConnection(tenantId: ID!, id: ID): SSOConnectionType
+  scimTokens(tenantId: ID!, before: String, after: String, first: Int, last: Int): SCIMTokenConnection
+  ssoAuditLogs(tenantId: ID!, eventType: String, userEmail: String, success: Boolean, startDate: String, endDate: String, search: String, before: String, after: String, first: Int, last: Int): SSOAuditLogConnection
+  tenantPasskeys(tenantId: ID!, search: String): [TenantPasskeyType]
+  myPasskeys(before: String, after: String, first: Int, last: Int): PasskeyConnection
+  mySessions(before: String, after: String, first: Int, last: Int): SSOSessionConnection
+  myDevices(before: String, after: String, first: Int, last: Int): UserDeviceConnection
+  ssoDiscover(email: String!): SSODiscoveryResultType
+  allTenants(before: String, after: String, first: Int, last: Int): TenantConnection
+  tenant(id: ID): TenantType
+  allActionLogs(tenantId: ID!, 
+    "Filter by entity type"
+    entityType: String,
+    "Filter by action type"
+    actionType: String,
+    "Filter by actor email"
+    actorEmail: String,
+    "Filter logs from this datetime"
+    fromDatetime: DateTime,
+    "Filter logs until this datetime"
+    toDatetime: DateTime,
+    "Search in entity name, actor email, or metadata"
+    search: String,before: String, after: String, first: Int, last: Int  ): ActionLogConnection
+  allPermissions(
+    "Filter by category"
+    category: PermissionCategory,before: String, after: String, first: Int, last: Int  ): PermissionConnection
+  allOrganizationRoles(tenantId: ID!, before: String, after: String, first: Int, last: Int): OrganizationRoleConnection
+  organizationRole(id: ID!): OrganizationRoleType
+  "Get all permission codes for the current user in a tenant"
+  currentUserPermissions(tenantId: ID!): [String]
+  "Get all organization roles for the current user in a tenant"
+  currentUserOrganizationRoles(tenantId: ID!): [OrganizationRoleType]
+  allSubscriptionPlans(before: String, after: String, first: Int, last: Int): StripePriceConnection
+  activeSubscription(tenantId: ID): SubscriptionScheduleType
+  allPaymentMethods(tenantId: ID, before: String, after: String, first: Int, last: Int): PaymentMethodConnection
+  allCharges(tenantId: ID, before: String, after: String, first: Int, last: Int): ChargeConnection
+  charge(id: ID, tenantId: ID): StripeChargeType
+  paymentIntent(id: ID, tenantId: ID): StripePaymentIntentType
+  currentUser: CurrentUserType
+  hasUnreadNotifications: Boolean
+  unreadNotificationsCount: Int
+  allNotifications(before: String, after: String, first: Int, last: Int): NotificationConnection
+  crudDemoItem(id: ID, tenantId: ID): CrudDemoItemType
+  allCrudDemoItems(tenantId: ID, before: String, after: String, first: Int, last: Int): CrudDemoItemConnection
+  allContentfulDemoItemFavorites(before: String, after: String, first: Int, last: Int): ContentfulDemoItemFavoriteConnection
+  allDocumentDemoItems(before: String, after: String, first: Int, last: Int): DocumentDemoItemConnection
+  node(
+    "The ID of the object"
+    id: ID!
+  ): Node
+}
+"GraphQL type for BackupConfig."
+type BackupConfigType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "The ID of the object"
+  id: ID!
+  "Whether periodic backups are enabled for this tenant"
+  enabled: Boolean!
+  "Interval between backups in hours (minimum 1 hour)"
+  backupIntervalHours: Int!
+  "Number of days to retain backup files (minimum 1 day)"
+  retentionDays: Int!
+  "List of user IDs (as GraphQL global IDs)"
+  emailRecipients: [ID]
+  "List of module IDs selected for backup"
+  selectedModules: [String]
+  "List of specific model names selected"
+  selectedModels: [String]
+  "List of model names excluded from backup"
+  excludedModels: [String]
+}
+"Connection class for paginated BackupRecord lists."
+type BackupRecordConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [BackupRecordEdge]!
+}
+"The Relay compliant `PageInfo` type, containing data necessary to paginate this connection."
+type PageInfo {
+  "When paginating forwards, are there more items?"
+  hasNextPage: Boolean!
+  "When paginating backwards, are there more items?"
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+"A Relay edge containing a `BackupRecord` and its cursor."
+type BackupRecordEdge {
+  "The item at the end of the edge"
+  node: BackupRecordType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for BackupRecord."
+type BackupRecordType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  tenant: TenantType
+  "The ID of the object"
+  id: ID!
+  "The backup configuration that triggered this backup"
+  backupConfig: BackupConfigType
+  "Storage path to the backup file"
+  filePath: String!
+  "Size of the backup file in bytes"
+  fileSize: BigInt
+  "Current status of the backup"
+  status: BackupBackupRecordStatusChoices!
+  "Error message if backup failed"
+  errorMessage: String!
+  "Count of records per model type in this backup"
+  modelCounts: JSONString!
+  "Whether this backup file is encrypted at rest"
+  isEncrypted: Boolean
+  "The backup record that was restored"
+  restoreRecords(offset: Int, before: String, after: String, first: Int, last: Int): RestoreRecordTypeConnection!
+  "Signed download URL for the backup file"
+  downloadUrl: String
+}
+type TenantType implements Node {
+  id: ID!
+  name: String
+  slug: String
+  type: String
+  billingEmail: String
+  actionLoggingEnabled: Boolean
+  userMemberships: [TenantMembershipType]
+  membership: TenantMembershipType!
+}
+type TenantMembershipType implements Node {
+  id: ID!
+  role: TenantUserRole
+  inviteeEmailAddress: String
+  invitationAccepted: Boolean
+  userId: ID
+  invitationToken: String
+  firstName: String
+  lastName: String
+  userEmail: String
+  avatar: String
+  organizationRoles: [OrganizationRoleType]
+  effectivePermissions: [String]
+}
+"GraphQL type for OrganizationRole - custom roles per tenant."
+type OrganizationRoleType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  id: ID!
+  "Display name of the role"
+  name: String!
+  "Description of the role's purpose"
+  description: String!
+  systemRoleType: SystemRoleType
+  color: RoleColor
+  permissions: [PermissionType]
+  isSystemRole: Boolean
+  isOwnerRole: Boolean
+  memberCount: Int
+}
+"GraphQL type for Permission model - available permissions in the system."
+type PermissionType implements Node {
+  id: ID!
+  "Unique permission code (e.g., 'dashboard.projects.edit')"
+  code: String!
+  "Human-readable name for display"
+  name: String!
+  "Detailed description of what this permission allows"
+  description: String!
+  "Category for grouping (multitenancy or app-defined)"
+  category: String
+  "System permissions cannot be deleted"
+  isSystem: Boolean!
+  "Order within category for UI display"
+  sortOrder: Int!
+  "Display label for the category"
+  categoryLabel: String
+  "Optional description (app-defined categories only)"
+  categoryDescription: String
+}
+type RestoreRecordTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [RestoreRecordTypeEdge]!
+}
+"A Relay edge containing a `RestoreRecordType` and its cursor."
+type RestoreRecordTypeEdge {
+  "The item at the end of the edge"
+  node: RestoreRecordType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for RestoreRecord."
+type RestoreRecordType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "The ID of the object"
+  id: ID!
+  "The backup record that was restored"
+  backupRecord: BackupRecordType!
+  "Current status of the restoration"
+  status: BackupRestoreRecordStatusChoices!
+  "Strategy used for handling conflicting records during restore"
+  conflictStrategy: BackupRestoreRecordConflictStrategyChoices!
+  "Detailed counts per model: {ModelName: {created: N, updated: N, skipped: N, failed: N}}"
+  modelCounts: JSONString!
+  "Error message if restoration failed"
+  errorMessage: String!
+  "When the restoration started processing"
+  startedAt: DateTime
+  "When the restoration completed or failed"
+  completedAt: DateTime
+  "Total records created across all models"
+  totalCreated: Int
+  "Total records updated across all models"
+  totalUpdated: Int
+  "Total records skipped across all models"
+  totalSkipped: Int
+  "Total records failed across all models"
+  totalFailed: Int
+}
+"GraphQL type for a backup module."
+type BackupModuleType {
+  "Module identifier"
+  id: String
+  "Human-readable module name"
+  name: String
+  "Module description"
+  description: String
+  "Number of models in this module"
+  modelCount: Int
+}
+"GraphQL type for a backupable model."
+type BackupModelType {
+  "Django app label"
+  appLabel: String
+  "Model class name"
+  modelName: String
+  "Human-readable model name"
+  displayName: String
+  "Full model name (app_label.ModelName)"
+  fullName: String
+}
+"Connection class for paginated RestoreRecord lists."
+type RestoreRecordConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [RestoreRecordEdge]!
+}
+"A Relay edge containing a `RestoreRecord` and its cursor."
+type RestoreRecordEdge {
+  "The item at the end of the edge"
+  node: RestoreRecordType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for Locale model."
+type LocaleType implements Node {
+  "The ID of the object"
+  id: ID!
+  "Locale code (e.g., 'en', 'pl', 'de', 'en-US')"
+  code: String!
+  "Language name in English (e.g., 'English', 'Polish')"
+  name: String!
+  "Language name in native language (e.g., 'English', 'Polski')"
+  nativeName: String!
+  "Whether this is the default/fallback locale"
+  isDefault: Boolean!
+  "Whether this locale is available to users"
+  isActive: Boolean!
+  "Right-to-left language (e.g., Arabic, Hebrew)"
+  rtl: Boolean!
+  translationProgress: Float
+}
+"Type for translation sync status."
+type TranslationSyncStatusType {
+  totalKeys: Int
+  activeKeys: Int
+  deprecatedKeys: Int
+}
+"Type for locale translation progress."
+type LocaleProgressType {
+  code: String
+  name: String
+  publishedTranslations: Int
+  progress: Float
+}
+type SSOConnectionConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [SSOConnectionEdge]!
+}
+"A Relay edge containing a `SSOConnection` and its cursor."
+type SSOConnectionEdge {
+  "The item at the end of the edge"
+  node: SSOConnectionType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for SSO connections."
+type SSOConnectionType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  id: ID!
+  "Display name for this SSO connection"
+  name: String!
+  connectionType: SsoTenantSSOConnectionConnectionTypeChoices!
+  status: SsoTenantSSOConnectionStatusChoices!
+  "List of email domains allowed to use this SSO connection"
+  allowedDomains: JSONString!
+  "When enabled, users from allowed domains must use SSO to access this tenant. Password login will not grant access."
+  enforceSso: Boolean!
+  "Automatically create users on first SSO login"
+  jitProvisioningEnabled: Boolean!
+  "Mapping of IdP groups to tenant roles"
+  groupRoleMapping: JSONString!
+  samlEntityId: String!
+  samlSsoUrl: String!
+  "Single Logout URL"
+  samlSloUrl: String!
+  samlNameIdFormat: SsoTenantSSOConnectionSamlNameIdFormatChoices!
+  samlWantAssertionsSigned: Boolean!
+  samlWantResponseSigned: Boolean!
+  "Mapping of SAML attributes to user fields"
+  samlAttributeMapping: JSONString!
+  oidcIssuer: String!
+  oidcClientId: String!
+  oidcAuthorizationEndpoint: String!
+  oidcTokenEndpoint: String!
+  oidcUserinfoEndpoint: String!
+  oidcJwksUri: String!
+  "Space-separated list of OAuth scopes"
+  oidcScopes: String!
+  "Mapping of OIDC claims to user fields"
+  oidcClaimMapping: JSONString!
+  lastLoginAt: DateTime
+  loginCount: Int!
+  isActive: Boolean
+  isSaml: Boolean
+  isOidc: Boolean
+  spMetadataUrl: String
+  spAcsUrl: String
+  spEntityId: String
+  oidcCallbackUrl: String
+  oidcLoginUrl: String
+}
+type SCIMTokenConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [SCIMTokenEdge]!
+}
+"A Relay edge containing a `SCIMToken` and its cursor."
+type SCIMTokenEdge {
+  "The item at the end of the edge"
+  node: SCIMTokenType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for SCIM tokens."
+type SCIMTokenType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  id: ID!
+  "Display name for this token"
+  name: String!
+  "First 8 chars of token for identification"
+  tokenPrefix: String!
+  isActive: Boolean!
+  expiresAt: DateTime
+  lastUsedAt: DateTime
+  lastUsedIp: String
+  requestCount: Int!
+  isValid: Boolean
+  isExpired: Boolean
+}
+type SSOAuditLogConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [SSOAuditLogEdge]!
+}
+"A Relay edge containing a `SSOAuditLog` and its cursor."
+type SSOAuditLogEdge {
+  "The item at the end of the edge"
+  node: SSOAuditLogType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for SSO audit logs."
+type SSOAuditLogType implements Node {
+  createdAt: DateTime!
+  id: ID!
+  eventType: SsoSSOAuditLogEventTypeChoices!
+  eventDescription: String!
+  ipAddress: String
+  metadata: JSONString!
+  success: Boolean!
+  errorMessage: String!
+  userEmail: String
+  connectionName: String
+}
+type TenantPasskeyType {
+  id: ID
+  name: String
+  authenticatorType: String
+  transports: GenericScalar
+  isActive: Boolean
+  lastUsedAt: DateTime
+  useCount: Int
+  deviceType: String
+  createdAt: DateTime
+  userEmail: String
+  userName: String
+}
+type PasskeyConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [PasskeyEdge]!
+}
+"A Relay edge containing a `Passkey` and its cursor."
+type PasskeyEdge {
+  "The item at the end of the edge"
+  node: PasskeyType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for passkeys."
+type PasskeyType implements Node {
+  createdAt: DateTime!
+  id: ID!
+  "User-provided name for this passkey"
+  name: String!
+  authenticatorType: String!
+  transports: JSONString!
+  isActive: Boolean!
+  lastUsedAt: DateTime
+  useCount: Int!
+  deviceType: String!
+}
+type SSOSessionConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [SSOSessionEdge]!
+}
+"A Relay edge containing a `SSOSession` and its cursor."
+type SSOSessionEdge {
+  "The item at the end of the edge"
+  node: SSOSessionType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for SSO sessions."
+type SSOSessionType implements Node {
+  createdAt: DateTime!
+  id: ID!
+  sessionId: String!
+  deviceName: String!
+  deviceType: String!
+  browser: String!
+  operatingSystem: String!
+  ipAddress: String
+  location: String!
+  isActive: Boolean!
+  lastActivityAt: DateTime!
+  expiresAt: DateTime!
+  isValid: Boolean
+  isExpired: Boolean
+  isCurrent: Boolean
+}
+type UserDeviceConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [UserDeviceEdge]!
+}
+"A Relay edge containing a `UserDevice` and its cursor."
+type UserDeviceEdge {
+  "The item at the end of the edge"
+  node: UserDeviceType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for user devices."
+type UserDeviceType implements Node {
+  createdAt: DateTime!
+  id: ID!
+  deviceName: String!
+  deviceType: String!
+  browser: String!
+  operatingSystem: String!
+  isTrusted: Boolean!
+  trustedAt: DateTime
+  lastSeenAt: DateTime!
+  lastIpAddress: String
+  lastLocation: String!
+  isBlocked: Boolean!
+}
+type SSODiscoveryResultType {
+  ssoAvailable: Boolean
+  requireSso: Boolean
+  connections: [SSODiscoveryConnectionType]
+}
+type SSODiscoveryConnectionType {
+  id: String
+  name: String
+  type: String
+  tenantId: String
+  tenantName: String
+  loginUrl: String
+}
+type TenantConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [TenantEdge]!
+}
+"A Relay edge containing a `Tenant` and its cursor."
+type TenantEdge {
+  "The item at the end of the edge"
+  node: TenantType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"Connection class for paginated ActionLog lists."
+type ActionLogConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [ActionLogEdge]!
+  totalCount: Int
+}
+"A Relay edge containing a `ActionLog` and its cursor."
+type ActionLogEdge {
+  "The item at the end of the edge"
+  node: ActionLogType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+"GraphQL type for ActionLog model - audit trail of actions."
+type ActionLogType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "The ID of the object"
+  id: ID!
+  tenant: TenantType!
+  "Type of action performed"
+  actionType: MultitenancyActionLogActionTypeChoices!
+  "Type of entity affected (e.g., client, project, user)"
+  entityType: String!
+  "ID of the affected entity"
+  entityId: String!
+  "Human-readable name of the entity for display"
+  entityName: String!
+  "Type of actor that performed the action"
+  actorType: MultitenancyActionLogActorTypeChoices!
+  "User who performed the action (null for system actions)"
+  actorUser: CurrentUserType
+  "Email of the actor (stored for historical reference)"
+  actorEmail: String!
+  changes: GenericScalar
+  metadata: GenericScalar
+}
+type CurrentUserType {
+  id: ID!
+  email: String!
+  otpEnabled: Boolean!
+  otpVerified: Boolean!
+  tenants: [TenantType]
+  firstName: String
+  lastName: String
+  language: String
+  appearance: String
+  chartPreferences: JSONString
+  roles: [String]
+  avatar: String
+}
+type PermissionConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [PermissionEdge]!
+}
+"A Relay edge containing a `Permission` and its cursor."
+type PermissionEdge {
+  "The item at the end of the edge"
+  node: PermissionType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type OrganizationRoleConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [OrganizationRoleEdge]!
+}
+"A Relay edge containing a `OrganizationRole` and its cursor."
+type OrganizationRoleEdge {
+  "The item at the end of the edge"
+  node: OrganizationRoleType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type StripePriceConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [StripePriceEdge]!
+}
+"A Relay edge containing a `StripePrice` and its cursor."
+type StripePriceEdge {
+  "The item at the end of the edge"
+  node: StripePriceType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type StripePriceType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "Whether the price can be used for new purchases."
+  active: Boolean!
+  "Three-letter ISO currency code"
+  currency: String!
+  "A brief description of the plan, hidden from customers."
+  nickname: String!
+  "The product this price is associated with."
+  product: StripeProductType!
+  "The recurring components of a price such as `interval` and `usage_type`."
+  recurring: JSONString
+  "Whether the price is for a one-time purchase or a recurring (subscription) purchase."
+  type: DjstripePriceTypeChoices!
+  "The unit amount in cents to be charged, represented as a whole integer if possible. Null if a sub-cent precision is required."
+  unitAmount: BigInt
+  "The unit amount in cents to be charged, represented as a decimal string with at most 12 decimal places."
+  unitAmountDecimal: Decimal
+  "Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in `unit_amount` or `unit_amount_decimal`) will be charged per unit in `quantity` (for prices with `usage_type=licensed`), or per unit of total usage (for prices with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the `tiers` and `tiers_mode` attributes."
+  billingScheme: DjstripePriceBillingSchemeChoices
+  "A lookup key used to retrieve prices dynamically from a static string."
+  lookupKey: String
+  "Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`."
+  tiers: JSONString
+  "Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows."
+  tiersMode: DjstripePriceTiersModeChoices
+  "Apply a transformation to the reported usage or set quantity before computing the amount billed. Cannot be combined with `tiers`."
+  transformQuantity: JSONString
+  "The default price this product is associated with."
+  products(offset: Int, before: String, after: String, first: Int, last: Int): StripeProductTypeConnection!
+  pk: String
+}
+type StripeProductType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "The product's name, meant to be displayable to the customer. Applicable to both `service` and `good` types."
+  name: String!
+  "The default price this product is associated with."
+  defaultPrice: StripePriceType
+  "The type of the product. The product is either of type `good`, which is eligible for use with Orders and SKUs, or `service`, which is eligible for use with Subscriptions and Plans."
+  type: DjstripeProductTypeChoices!
+  "Whether the product is currently available for purchase. Only applicable to products of `type=good`."
+  active: Boolean
+  """
+  A list of up to 5 attributes that each SKU can provide values for (e.g., `["color", "size"]`). Only applicable to products of `type=good`.
+  """
+  attributes: JSONString
+  "A short one-line description of the product, meant to be displayableto the customer. Only applicable to products of `type=good`."
+  caption: String!
+  "An array of connect application identifiers that cannot purchase this product. Only applicable to products of `type=good`."
+  deactivateOn: JSONString
+  "A list of up to 8 URLs of images for this product, meant to be displayable to the customer. Only applicable to products of `type=good`."
+  images: JSONString
+  "The dimensions of this product for shipping purposes. A SKU associated with this product can override this value by having its own `package_dimensions`. Only applicable to products of `type=good`."
+  packageDimensions: JSONString
+  "Whether this product is a shipped good. Only applicable to products of `type=good`."
+  shippable: Boolean
+  "A URL of a publicly-accessible webpage for this product. Only applicable to products of `type=good`."
+  url: String
+  "Extra information about a product which will appear on your customer's credit card statement. In the case that multiple products are billed at once, the first statement descriptor will be used. Only available on products of type=`service`."
+  statementDescriptor: String!
+  unitLabel: String!
+  "The product this price is associated with."
+  prices(offset: Int, before: String, after: String, first: Int, last: Int): StripePriceTypeConnection!
+  "The product whose pricing this plan determines."
+  planSet(offset: Int, before: String, after: String, first: Int, last: Int): SubscriptionPlanTypeConnection!
+  pk: String
+}
+type StripePriceTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [StripePriceTypeEdge]!
+}
+"A Relay edge containing a `StripePriceType` and its cursor."
+type StripePriceTypeEdge {
+  "The item at the end of the edge"
+  node: StripePriceType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type SubscriptionPlanTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [SubscriptionPlanTypeEdge]!
+}
+"A Relay edge containing a `SubscriptionPlanType` and its cursor."
+type SubscriptionPlanTypeEdge {
+  "The item at the end of the edge"
+  node: SubscriptionPlanType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type SubscriptionPlanType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "Whether the plan can be used for new purchases."
+  active: Boolean!
+  "Specifies a usage aggregation strategy for plans of usage_type=metered. Allowed values are `sum` for summing up all usage during a period, `last_during_period` for picking the last usage record reported within a period, `last_ever` for picking the last usage record ever (across period bounds) or max which picks the usage record with the maximum reported usage during a period. Defaults to `sum`."
+  aggregateUsage: DjstripePlanAggregateUsageChoices
+  "Amount (as decimal) to be charged on the interval specified."
+  amount: Decimal
+  "The unit amount in cents to be charged, represented as a decimal string with at most 12 decimal places."
+  amountDecimal: Decimal
+  "Describes how to compute the price per period. Either `per_unit` or `tiered`. `per_unit` indicates that the fixed amount (specified in amount) will be charged per unit in quantity (for plans with `usage_type=licensed`), or per unit of total usage (for plans with `usage_type=metered`). `tiered` indicates that the unit pricing will be computed using a tiering strategy as defined using the tiers and tiers_mode attributes."
+  billingScheme: DjstripePlanBillingSchemeChoices
+  "Three-letter ISO currency code"
+  currency: String!
+  "The frequency with which a subscription should be billed."
+  interval: DjstripePlanIntervalChoices!
+  "The number of intervals (specified in the interval property) between each subscription billing."
+  intervalCount: Int
+  "A brief description of the plan, hidden from customers."
+  nickname: String!
+  "The product whose pricing this plan determines."
+  product: StripeProductType
+  "Each element represents a pricing tier. This parameter requires `billing_scheme` to be set to `tiered`."
+  tiers: JSONString
+  "Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows."
+  tiersMode: DjstripePlanTiersModeChoices
+  "Apply a transformation to the reported usage or set quantity before computing the billed price. Cannot be combined with `tiers`."
+  transformUsage: JSONString
+  "Number of trial period days granted when subscribing a customer to this plan. Null if the plan has no trial period."
+  trialPeriodDays: Int
+  "Configures how the quantity per period should be determined, can be either `metered` or `licensed`. `licensed` will automatically bill the `quantity` set for a plan when adding it to a subscription, `metered` will aggregate the total usage based on usage records. Defaults to `licensed`."
+  usageType: DjstripePlanUsageTypeChoices!
+  "The plan associated with this subscription. This value will be `null` for multi-plan subscriptions"
+  subscriptions(offset: Int, before: String, after: String, first: Int, last: Int): StripeSubscriptionTypeConnection!
+  pk: String
+}
+type StripeSubscriptionTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [StripeSubscriptionTypeEdge]!
+}
+"A Relay edge containing a `StripeSubscriptionType` and its cursor."
+type StripeSubscriptionTypeEdge {
+  "The item at the end of the edge"
+  node: StripeSubscriptionType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type StripeSubscriptionType implements Node {
+  "The ID of the object"
+  id: ID!
+  "End of the current period for which the subscription has been invoiced. At the end of this period, a new invoice will be created."
+  currentPeriodEnd: DateTime!
+  "Start of the current period for which the subscription has been invoiced."
+  currentPeriodStart: DateTime!
+  "Date when the subscription was first created. The date might differ from the created date due to backdating."
+  startDate: DateTime
+  "The status of this subscription."
+  status: DjstripeSubscriptionStatusChoices!
+  "If the subscription has a trial, the end of that trial."
+  trialEnd: DateTime
+  "If the subscription has a trial, the beginning of that trial."
+  trialStart: DateTime
+  pk: String
+  plan: SubscriptionPlanType
+}
+type StripeProductTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [StripeProductTypeEdge]!
+}
+"A Relay edge containing a `StripeProductType` and its cursor."
+type StripeProductTypeEdge {
+  "The item at the end of the edge"
+  node: StripeProductType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type SubscriptionScheduleType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "Time at which the subscription schedule was canceled."
+  canceledAt: DateTime
+  "Time at which the subscription schedule was completed."
+  completedAt: DateTime
+  "Object representing the start and end dates for the current phase of the subscription schedule, if it is `active`."
+  currentPhase: JSONString
+  "Object representing the subscription schedule's default settings."
+  defaultSettings: JSONString
+  "Behavior of the subscription schedule and underlying subscription when it ends."
+  endBehavior: DjstripeSubscriptionScheduleEndBehaviorChoices!
+  phases: [SubscriptionSchedulePhaseType]
+  "Time at which the subscription schedule was released."
+  releasedAt: DateTime
+  "The subscription once managed by this subscription schedule (if it is released)."
+  releasedSubscription: StripeSubscriptionType
+  "The present status of the subscription schedule. Possible values are `not_started`, `active`, `completed`, `released`, and `canceled`."
+  status: DjstripeSubscriptionScheduleStatusChoices!
+  subscription: StripeSubscriptionType
+  "The schedule associated with this subscription."
+  subscriptions(offset: Int, before: String, after: String, first: Int, last: Int): StripeSubscriptionTypeConnection!
+  defaultPaymentMethod: StripePaymentMethodType
+  canActivateTrial: Boolean
+}
+type SubscriptionSchedulePhaseType {
+  startDate: DateTime
+  endDate: String
+  trialEnd: String
+  item: SubscriptionSchedulePhaseItemType
+}
+type SubscriptionSchedulePhaseItemType {
+  price: StripePriceType
+  quantity: Int
+}
+type StripePaymentMethodType implements Node {
+  "The ID of the object"
+  id: ID!
+  billingDetails: GenericScalar
+  "The type of the PaymentMethod."
+  type: DjstripePaymentMethodTypeChoices!
+  card: GenericScalar
+  pk: String
+}
+type PaymentMethodConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [PaymentMethodEdge]!
+}
+"A Relay edge containing a `PaymentMethod` and its cursor."
+type PaymentMethodEdge {
+  "The item at the end of the edge"
+  node: StripePaymentMethodType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type ChargeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [ChargeEdge]!
+}
+"A Relay edge containing a `Charge` and its cursor."
+type ChargeEdge {
+  "The item at the end of the edge"
+  node: StripeChargeType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type StripeChargeType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "Amount charged (as decimal)."
+  amount: Decimal!
+  "Amount (as decimal) captured (can be less than the amount attribute on the charge if a partial capture was issued)."
+  amountCaptured: Decimal
+  "Amount (as decimal) refunded (can be less than the amount attribute on the charge if a partial refund was issued)."
+  amountRefunded: Decimal!
+  "ID of the Connect application that created the charge."
+  application: String!
+  "The amount (as decimal) of the application fee (if any) requested for the charge."
+  applicationFeeAmount: Decimal
+  billingDetails: GenericScalar
+  "The full statement descriptor that is passed to card networks, and that is displayed on your customers' credit card and bank statements. Allows you to see what the statement descriptor looks like after the static and dynamic portions are combined."
+  calculatedStatementDescriptor: String!
+  "If the charge was created without capturing, this boolean represents whether or not it is still uncaptured or has since been captured."
+  captured: Boolean!
+  "The currency in which the charge was made."
+  currency: String!
+  "Whether the charge has been disputed."
+  disputed: Boolean!
+  "Error code explaining reason for charge failure if available."
+  failureCode: DjstripeChargeFailureCodeChoices
+  "Message to user further explaining reason for charge failure if available."
+  failureMessage: String!
+  "Hash with information on fraud assessments for the charge."
+  fraudDetails: JSONString
+  "The invoice this charge is for if one exists."
+  invoice: StripeInvoiceType
+  "Details about whether or not the payment was accepted, and why."
+  outcome: JSONString
+  "True if the charge succeeded, or was successfully authorized for later capture, False otherwise."
+  paid: Boolean!
+  "PaymentIntent associated with this charge, if one exists."
+  paymentIntent: StripePaymentIntentType
+  "PaymentMethod used in this charge."
+  paymentMethod: StripePaymentMethodType
+  "Details about the payment method at the time of the transaction."
+  paymentMethodDetails: JSONString
+  "The email address that the receipt for this charge was sent to."
+  receiptEmail: String!
+  "The transaction number that appears on email receipts sent for this charge."
+  receiptNumber: String!
+  "This is the URL to view the receipt for this charge. The receipt is kept up-to-date to the latest state of the charge, including any refunds. If the charge is for an Invoice, the receipt will be stylized as an Invoice receipt."
+  receiptUrl: String!
+  "Whether or not the charge has been fully refunded. If the charge is only partially refunded, this attribute will still be false."
+  refunded: Boolean!
+  "Shipping information for the charge"
+  shipping: JSONString
+  "For card charges, use statement_descriptor_suffix instead. Otherwise, you can use this value as the complete description of a charge on your customers' statements. Must contain at least one letter, maximum 22 characters."
+  statementDescriptor: String
+  "Provides information about the charge that customers see on their statements. Concatenated with the prefix (shortened descriptor) or statement descriptor that's set on the account to form the complete statement descriptor. Maximum 22 characters for the concatenated descriptor."
+  statementDescriptorSuffix: String
+  "The status of the payment."
+  status: DjstripeChargeStatusChoices!
+  "An optional dictionary including the account to automatically transfer to as part of a destination charge."
+  transferData: JSONString
+  "A string that identifies this transaction as part of a group."
+  transferGroup: String
+  latestInvoice: StripeInvoiceType
+  pk: String
+}
+type StripeInvoiceType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "The country of the business associated with this invoice, most often the business creating the invoice."
+  accountCountry: String!
+  "The public name of the business associated with this invoice, most often the business creating the invoice."
+  accountName: String!
+  "Final amount due (as decimal) at this time for this invoice. If the invoice's total is smaller than the minimum charge amount, for example, or if there is account credit that can be applied to the invoice, the amount_due may be 0. If there is a positive starting_balance for the invoice (the customer owes money), the amount_due will also take that into account. The charge that gets generated for the invoice will be for the amount specified in amount_due."
+  amountDue: Decimal!
+  "The amount, (as decimal), that was paid."
+  amountPaid: Decimal
+  "The amount remaining, (as decimal), that is due."
+  amountRemaining: Decimal
+  "The fee (as decimal) that will be applied to the invoice and transferred to the application owner's Stripe account when the invoice is paid."
+  applicationFeeAmount: Decimal
+  "Number of payment attempts made for this invoice, from the perspective of the payment retry schedule. Any payment attempt counts as the first attempt, and subsequently only automatic retries increment the attempt count. In other words, manual payment attempts after the first attempt do not affect the retry schedule."
+  attemptCount: Int!
+  "Whether or not an attempt has been made to pay the invoice. An invoice is not attempted until 1 hour after the ``invoice.created`` webhook, for example, so you might not want to display that invoice as unpaid to your users."
+  attempted: Boolean!
+  "Controls whether Stripe will perform automatic collection of the invoice. When false, the invoice's state will not automatically advance without an explicit action."
+  autoAdvance: Boolean
+  "Indicates the reason why the invoice was created. subscription_cycle indicates an invoice created by a subscription advancing into a new period. subscription_create indicates an invoice created due to creating a subscription. subscription_update indicates an invoice created due to updating a subscription. subscription is set for all old invoices to indicate either a change to a subscription or a period advancement. manual is set for all invoices unrelated to a subscription (for example: created via the invoice editor). The upcoming value is reserved for simulated invoices per the upcoming invoice endpoint. subscription_threshold indicates an invoice created due to a billing threshold being reached."
+  billingReason: DjstripeInvoiceBillingReasonChoices
+  "The latest charge generated for this invoice, if any."
+  charge: StripeChargeType
+  "When charging automatically, Stripe will attempt to pay this invoice using the default source attached to the customer. When sending an invoice, Stripe will email this invoice to the customer with payment instructions."
+  collectionMethod: DjstripeInvoiceCollectionMethodChoices
+  "Three-letter ISO currency code"
+  currency: String!
+  "The customer's address. Until the invoice is finalized, this field will equal customer.address. Once the invoice is finalized, this field will no longer be updated."
+  customerAddress: JSONString
+  "The customer's email. Until the invoice is finalized, this field will equal customer.email. Once the invoice is finalized, this field will no longer be updated."
+  customerEmail: String!
+  "The customer's name. Until the invoice is finalized, this field will equal customer.name. Once the invoice is finalized, this field will no longer be updated."
+  customerName: String!
+  "The customer's phone number. Until the invoice is finalized, this field will equal customer.phone. Once the invoice is finalized, this field will no longer be updated."
+  customerPhone: String!
+  "The customer's shipping information. Until the invoice is finalized, this field will equal customer.shipping. Once the invoice is finalized, this field will no longer be updated."
+  customerShipping: JSONString
+  "The customer's tax exempt status. Until the invoice is finalized, this field will equal customer.tax_exempt. Once the invoice is finalized, this field will no longer be updated."
+  customerTaxExempt: DjstripeInvoiceCustomerTaxExemptChoices!
+  "Default payment method for the invoice. It must belong to the customer associated with the invoice. If not set, defaults to the subscription's default payment method, if any, or to the default payment method in the customer's invoice settings."
+  defaultPaymentMethod: StripePaymentMethodType
+  "Deprecated! Please use discounts instead. Describes the current discount applied to this subscription, if there is one. When billing, a discount applied to a subscription overrides a discount applied on a customer-wide basis."
+  discount: JSONString
+  "The discounts applied to the invoice. Line item discounts are applied before invoice discounts."
+  discounts: JSONString
+  "The date on which payment for this invoice is due. This value will be null for invoices where billing=charge_automatically."
+  dueDate: DateTime
+  "Ending customer balance (in cents) after attempting to pay invoice. If the invoice has not been attempted yet, this will be null."
+  endingBalance: BigInt
+  "Footer displayed on the invoice."
+  footer: String!
+  "The URL for the hosted invoice page, which allows customers to view and pay an invoice. If the invoice has not been frozen yet, this will be null."
+  hostedInvoiceUrl: String!
+  "The link to download the PDF for the invoice. If the invoice has not been frozen yet, this will be null."
+  invoicePdf: String!
+  "The time at which payment will next be attempted."
+  nextPaymentAttempt: DateTime
+  "A unique, identifying string that appears on emails sent to the customer for this invoice. This starts with the customer's unique invoice_prefix if it is specified."
+  number: String!
+  "Whether payment was successfully collected for this invoice. An invoice can be paid (most commonly) with a charge or with credit from the customer's account balance."
+  paid: Boolean!
+  "The PaymentIntent associated with this invoice. The PaymentIntent is generated when the invoice is finalized, and can then be used to pay the invoice.Note that voiding an invoice will cancel the PaymentIntent"
+  paymentIntent: StripePaymentIntentType
+  "End of the usage period during which invoice items were added to this invoice."
+  periodEnd: DateTime!
+  "Start of the usage period during which invoice items were added to this invoice."
+  periodStart: DateTime!
+  "Total amount (in cents) of all post-payment credit notes issued for this invoice."
+  postPaymentCreditNotesAmount: BigInt
+  "Total amount (in cents) of all pre-payment credit notes issued for this invoice."
+  prePaymentCreditNotesAmount: BigInt
+  "This is the transaction number that appears on email receipts sent for this invoice."
+  receiptNumber: String
+  "Starting customer balance (in cents) before attempting to pay invoice. If the invoice has not been attempted yet, this will be the current customer balance."
+  startingBalance: BigInt!
+  """
+  An arbitrary string to be displayed on your customer's credit card statement. The statement description may not include <>"' characters, and will appear on your customer's statement in capital letters. Non-ASCII characters are automatically stripped. While most banks display this information consistently, some may display it incorrectly or not at all.
+  """
+  statementDescriptor: String!
+  "The status of the invoice, one of draft, open, paid, uncollectible, or void."
+  status: DjstripeInvoiceStatusChoices
+  statusTransitions: JSONString
+  "The subscription that this invoice was prepared for, if any."
+  subscription: StripeSubscriptionType
+  "Only set for upcoming invoices that preview prorations. The time used to calculate prorations."
+  subscriptionProrationDate: DateTime
+  "Total (as decimal) of all subscriptions, invoice items, and prorations on the invoice before any discount or tax is applied."
+  subtotal: Decimal!
+  "The amount (as decimal) of tax included in the total, calculated from ``tax_percent`` and the subtotal. If no ``tax_percent`` is defined, this value will be null."
+  tax: Decimal
+  "This percentage of the subtotal has been added to the total amount of the invoice, including invoice line items and discounts. This field is inherited from the subscription's ``tax_percent`` field, but can be changed before the invoice is paid. This field defaults to null."
+  taxPercent: Decimal
+  "If billing_reason is set to subscription_threshold this returns more information on which threshold rules triggered the invoice."
+  thresholdReason: JSONString
+  total: Decimal!
+  "The time at which webhooks for this invoice were successfully delivered (if the invoice had no webhooks to deliver, this will match `date`). Invoice payment is delayed until webhooks are delivered, or until all webhook delivery attempts have been exhausted."
+  webhooksDeliveredAt: DateTime
+  "The invoice this charge is for if one exists."
+  charges(offset: Int, before: String, after: String, first: Int, last: Int): StripeChargeTypeConnection!
+  pk: String
+}
+type StripePaymentIntentType implements Node {
+  "The ID of the object"
+  id: ID!
+  "Amount (in cents) intended to be collected by this PaymentIntent."
+  amount: BigInt!
+  "The client secret of this PaymentIntent. Used for client-side retrieval using a publishable key."
+  clientSecret: String!
+  "Three-letter ISO currency code"
+  currency: String!
+  pk: String
+}
+type StripeChargeTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [StripeChargeTypeEdge]!
+}
+"A Relay edge containing a `StripeChargeType` and its cursor."
+type StripeChargeTypeEdge {
+  "The item at the end of the edge"
+  node: StripeChargeType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type NotificationConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [NotificationEdge]!
+}
+"A Relay edge containing a `Notification` and its cursor."
+type NotificationEdge {
+  "The item at the end of the edge"
+  node: NotificationType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type NotificationType implements Node {
+  "The ID of the object"
+  id: ID!
+  user: UserType
+  type: String!
+  createdAt: DateTime!
+  readAt: DateTime
+  data: GenericScalar
+  issuer: UserType
+}
+type UserType {
+  id: ID!
+  email: String!
+  firstName: String
+  lastName: String
+  avatar: String
+}
+type CrudDemoItemType implements Node {
+  tenant: TenantType
+  "The ID of the object"
+  id: ID!
+  name: String!
+  createdBy: CurrentUserType
+}
+type CrudDemoItemConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [CrudDemoItemEdge]!
+  pageCursors: PageCursors
+}
+"A Relay edge containing a `CrudDemoItem` and its cursor."
+type CrudDemoItemEdge {
+  "The item at the end of the edge"
+  node: CrudDemoItemType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type PageCursors {
+  around: [PageCursor]
+  first: PageCursor
+  last: PageCursor
+  next: PageCursor
+  previous: PageCursor
+}
+type PageCursor {
+  cursor: String
+  isCurrent: Boolean
+  page: Int
+}
+type ContentfulDemoItemFavoriteConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [ContentfulDemoItemFavoriteEdge]!
+}
+"A Relay edge containing a `ContentfulDemoItemFavorite` and its cursor."
+type ContentfulDemoItemFavoriteEdge {
+  "The item at the end of the edge"
+  node: ContentfulDemoItemFavoriteType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type ContentfulDemoItemFavoriteType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "The ID of the object"
+  id: ID!
+  item: ContentfulDemoItemType!
+  user: CurrentUserType!
+}
+type ContentfulDemoItemType implements Node {
+  "The ID of the object"
+  id: ID!
+  fields: JSONString!
+  isPublished: Boolean!
+  contentfuldemoitemfavoriteSet(offset: Int, before: String, after: String, first: Int, last: Int): ContentfulDemoItemFavoriteTypeConnection!
+  pk: String
+}
+type ContentfulDemoItemFavoriteTypeConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [ContentfulDemoItemFavoriteTypeEdge]!
+}
+"A Relay edge containing a `ContentfulDemoItemFavoriteType` and its cursor."
+type ContentfulDemoItemFavoriteTypeEdge {
+  "The item at the end of the edge"
+  node: ContentfulDemoItemFavoriteType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type DocumentDemoItemConnection {
+  "Pagination data for this connection."
+  pageInfo: PageInfo!
+  "Contains the nodes in this connection."
+  edges: [DocumentDemoItemEdge]!
+}
+"A Relay edge containing a `DocumentDemoItem` and its cursor."
+type DocumentDemoItemEdge {
+  "The item at the end of the edge"
+  node: DocumentDemoItemType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type DocumentDemoItemType implements Node {
+  "The ID of the object"
+  id: ID!
+  file: FileFieldType
+  createdBy: CurrentUserType
+  createdAt: DateTime!
+}
+type FileFieldType {
+  url: String
+  name: String
+}
+type ApiMutation {
+  "Create or update backup configuration for a tenant."
+  updateBackupConfig(input: BackupConfigInput!): UpdateBackupConfigMutation
+  "Delete a backup record and its file."
+  deleteBackup(backupId: ID!): DeleteBackupMutation
+  "Manually trigger a backup for a tenant."
+  triggerBackup(tenantId: ID!): TriggerBackupMutation
+  "Download a backup file with decryption applied in-memory."
+  downloadBackupDecrypted(backupId: ID!): DownloadBackupDecryptedMutation
+  "Trigger a backup restoration for a tenant."
+  restoreBackup(
+    "ID of the backup record to restore from"
+    backupId: ID!,
+    "Strategy for handling conflicting records: SKIP, UPDATE, or FAIL"
+    conflictStrategy: ConflictStrategyEnum!
+  ): RestoreBackupMutation
+  "Publish translations for a locale to S3/CDN."
+  publishTranslations(input: PublishTranslationsMutationInput!): PublishTranslationsMutationPayload
+  "Sync translation keys from master JSON."
+  syncTranslationKeys(input: SyncTranslationKeysMutationInput!): SyncTranslationKeysMutationPayload
+  "Rollback to a previous translation version."
+  rollbackTranslations(input: RollbackTranslationsMutationInput!): RollbackTranslationsMutationPayload
+  "Create a new SSO connection."
+  createSsoConnection(input: CreateSSOConnectionMutationInput!): CreateSSOConnectionMutationPayload
+  "Update an existing SSO connection."
+  updateSsoConnection(input: UpdateSSOConnectionMutationInput!): UpdateSSOConnectionMutationPayload
+  "Delete an SSO connection. Requires tenantId in input for tenant context."
+  deleteSsoConnection(input: DeleteSSOConnectionMutationInput!): DeleteSSOConnectionMutationPayload
+  "Activate an SSO connection."
+  activateSsoConnection(input: ActivateSSOConnectionMutationInput!): ActivateSSOConnectionMutationPayload
+  "Deactivate an SSO connection. Requires tenantId for tenant context."
+  deactivateSsoConnection(id: ID!, tenantId: ID!): DeactivateSSOConnectionMutation
+  "Test an SSO connection configuration. Requires tenantId for tenant context."
+  testSsoConnection(id: ID!, tenantId: ID!): TestSSOConnectionMutation
+  "Create a new SCIM token."
+  createScimToken(input: CreateSCIMTokenMutationInput!): CreateSCIMTokenMutationPayload
+  "Revoke a SCIM token. Requires tenantId for tenant context."
+  revokeScimToken(id: ID!, tenantId: ID!): RevokeSCIMTokenMutation
+  "Delete a passkey as tenant admin (for any tenant member). Requires tenantId for tenant context."
+  deleteTenantPasskey(id: ID!, tenantId: ID!): DeleteTenantPasskeyMutation
+  "Revoke an SSO session."
+  revokeSession(reason: String, sessionId: String!): RevokeSessionMutation
+  "Revoke all SSO sessions for the current user except the current session."
+  revokeAllSessions: RevokeAllSessionsMutation
+  "Mark a device as trusted."
+  trustDevice(id: ID!): TrustDeviceMutation
+  "Remove trust from a device."
+  untrustDevice(id: ID!): UntrustDeviceMutation
+  "Block a device."
+  blockDevice(id: ID!, reason: String): BlockDeviceMutation
+  "Rename a passkey."
+  renamePasskey(id: ID!, name: String!): RenamePasskeyMutation
+  "Delete a passkey."
+  deletePasskey(input: DeletePasskeyMutationInput!): DeletePasskeyMutationPayload
+  updateTenant(input: UpdateTenantMutationInput!): UpdateTenantMutationPayload
+  "Mutation to delete a tenant from the system."
+  deleteTenant(input: DeleteTenantMutationInput!): DeleteTenantMutationPayload
+  createTenantInvitation(input: CreateTenantInvitationMutationInput!): CreateTenantInvitationMutationPayload
+  resendTenantInvitation(input: ResendTenantInvitationMutationInput!): ResendTenantInvitationMutationPayload
+  updateTenantMembership(input: UpdateTenantMembershipMutationInput!): UpdateTenantMembershipMutationPayload
+  "Mutation to enable or disable action logging for a tenant."
+  updateTenantActionLogging(enabled: Boolean!, tenantId: ID!): UpdateTenantActionLoggingMutation
+  """
+  Mutation to trigger an async export of action logs.
+  
+  Creates an export job that processes in the background.
+  User receives a notification when the export is ready.
+  """
+  exportActionLogs(actionType: String, actorEmail: String, entityType: String, fromDatetime: DateTime, search: String, tenantId: ID!, toDatetime: DateTime): ExportActionLogsMutation
+  """
+  Create a new custom organization role.
+  
+  SECURITY:
+  - Requires 'org.roles.manage' permission
+  - Users can only create roles with permissions they themselves have (except owners)
+  """
+  createOrganizationRole(color: RoleColor, description: String, name: String!, permissionIds: [ID]!, tenantId: ID!): CreateOrganizationRoleMutation
+  """
+  Update an existing organization role.
+  
+  SECURITY:
+  - Requires 'org.roles.manage' permission
+  - Cannot modify the Owner role
+  - Users can only add permissions they themselves have (except owners)
+  """
+  updateOrganizationRole(color: RoleColor, description: String, id: ID!, name: String, permissionIds: [ID], tenantId: ID!): UpdateOrganizationRoleMutation
+  """
+  Delete an organization role.
+  
+  If there are members with this role, a replacement_role_id must be provided.
+  
+  SECURITY:
+  - Requires 'org.roles.manage' permission
+  - Cannot delete system roles (Owner, Admin, Member)
+  """
+  deleteOrganizationRole(id: ID!, 
+    "Role to assign to affected members"
+    replacementRoleId: ID,tenantId: ID!  ): DeleteOrganizationRoleMutation
+  """
+  Assign one or more organization roles to a member.
+  
+  SECURITY:
+  - Requires 'members.roles.edit' permission
+  - Only owners can assign the Owner role
+  - Users can only assign roles with permissions they themselves have
+  - Users cannot remove their own owner role if they're the last owner
+  """
+  assignRolesToMember(membershipId: ID!, roleIds: [ID]!, tenantId: ID!): AssignRolesToMemberMutation
+  """
+  Remove a specific role from a member.
+  
+  SECURITY:
+  - Requires 'members.roles.edit' permission
+  - Only owners can remove the Owner role
+  - Cannot remove the last owner's owner role
+  - Non-owners cannot modify owner memberships
+  """
+  removeRoleFromMember(membershipId: ID!, roleId: ID!, tenantId: ID!): RemoveRoleFromMemberMutation
+  createTenant(input: CreateTenantMutationInput!): CreateTenantMutationPayload
+  acceptTenantInvitation(input: AcceptTenantInvitationMutationInput!): AcceptTenantInvitationMutationPayload
+  declineTenantInvitation(input: DeclineTenantInvitationMutationInput!): DeclineTenantInvitationMutationPayload
+  """
+  Delete/remove a member from the organization.
+  
+  SECURITY:
+  - Requires 'members.remove' permission to remove other members
+  - Users can always remove themselves (leave organization)
+  - Only owners can remove other owners
+  - Cannot remove the last owner
+  """
+  deleteTenantMembership(input: DeleteTenantMembershipMutationInput!): DeleteTenantMembershipMutationPayload
+  """
+  Mutation to send a message to the AI assistant.
+  The response is streamed via the AiChatSubscription.
+  """
+  sendAiMessage(conversationId: String!, history: [JSONString], message: String!, tenantId: String!): SendAiMessageMutation
+  generateSaasIdeas(input: GenerateSaasIdeasMutationInput!): GenerateSaasIdeasMutationPayload
+  changeActiveSubscription(input: ChangeActiveSubscriptionMutationInput!): ChangeActiveSubscriptionMutationPayload
+  cancelActiveSubscription(input: CancelActiveSubscriptionMutationInput!): CancelActiveSubscriptionMutationPayload
+  updateDefaultPaymentMethod(input: UpdateDefaultPaymentMethodMutationInput!): UpdateDefaultPaymentMethodMutationPayload
+  deletePaymentMethod(input: DeletePaymentMethodMutationInput!): DeletePaymentMethodMutationPayload
+  createPaymentIntent(input: CreatePaymentIntentMutationInput!): CreatePaymentIntentMutationPayload
+  updatePaymentIntent(input: UpdatePaymentIntentMutationInput!): UpdatePaymentIntentMutationPayload
+  createSetupIntent(input: CreateSetupIntentMutationInput!): CreateSetupIntentMutationPayload
+  changePassword(input: ChangePasswordMutationInput!): ChangePasswordMutationPayload
+  updateCurrentUser(input: UpdateCurrentUserMutationInput!): UpdateCurrentUserMutationPayload
+  generateOtp(input: GenerateOTPMutationInput!): GenerateOTPMutationPayload
+  verifyOtp(input: VerifyOTPMutationInput!): VerifyOTPMutationPayload
+  disableOtp(input: DisableOTPMutationInput!): DisableOTPMutationPayload
+  tokenAuth(input: ObtainTokenMutationInput!): ObtainTokenMutationPayload
+  signUp(input: SingUpMutationInput!): SingUpMutationPayload
+  confirm(input: ConfirmEmailMutationInput!): ConfirmEmailMutationPayload
+  passwordReset(input: PasswordResetMutationInput!): PasswordResetMutationPayload
+  passwordResetConfirm(input: PasswordResetConfirmationMutationInput!): PasswordResetConfirmationMutationPayload
+  validateOtp(input: ValidateOTPMutationInput!): ValidateOTPMutationPayload
+  updateNotification(input: UpdateNotificationMutationInput!): UpdateNotificationMutationPayload
+  markReadAllNotifications(input: MarkReadAllNotificationsMutationInput!): MarkReadAllNotificationsMutationPayload
+  createCrudDemoItem(input: CreateCrudDemoItemMutationInput!): CreateCrudDemoItemMutationPayload
+  updateCrudDemoItem(input: UpdateCrudDemoItemMutationInput!): UpdateCrudDemoItemMutationPayload
+  deleteCrudDemoItem(input: DeleteCrudDemoItemMutationInput!): DeleteCrudDemoItemMutationPayload
+  createDocumentDemoItem(input: CreateDocumentDemoItemMutationInput!): CreateDocumentDemoItemMutationPayload
+  deleteDocumentDemoItem(input: DeleteDocumentDemoItemMutationInput!): DeleteDocumentDemoItemMutationPayload
+  createFavoriteContentfulDemoItem(input: CreateFavoriteContentfulDemoItemMutationInput!): CreateFavoriteContentfulDemoItemMutationPayload
+  deleteFavoriteContentfulDemoItem(input: DeleteFavoriteContentfulDemoItemMutationInput!): DeleteFavoriteContentfulDemoItemMutationPayload
+}
+"Create or update backup configuration for a tenant."
+type UpdateBackupConfigMutation {
+  backupConfig: BackupConfigType
+  ok: Boolean
+  error: String
+}
+"Delete a backup record and its file."
+type DeleteBackupMutation {
+  ok: Boolean
+  error: String
+}
+"Manually trigger a backup for a tenant."
+type TriggerBackupMutation {
+  ok: Boolean
+  error: String
+  backupId: ID
+}
+"Download a backup file with decryption applied in-memory."
+type DownloadBackupDecryptedMutation {
+  "Decrypted backup XML content"
+  content: String
+  ok: Boolean
+  error: String
+}
+"Trigger a backup restoration for a tenant."
+type RestoreBackupMutation {
+  ok: Boolean
+  error: String
+  "ID of the created restore record"
+  restoreId: ID
+}
+"Publish translations for a locale to S3/CDN."
+type PublishTranslationsMutationPayload {
+  success: Boolean
+  version: String
+  message: String
+  clientMutationId: String
+}
+"Sync translation keys from master JSON."
+type SyncTranslationKeysMutationPayload {
+  success: Boolean
+  created: Int
+  updated: Int
+  deprecated: Int
+  message: String
+  clientMutationId: String
+}
+"Rollback to a previous translation version."
+type RollbackTranslationsMutationPayload {
+  success: Boolean
+  message: String
+  clientMutationId: String
+}
+"Create a new SSO connection."
+type CreateSSOConnectionMutationPayload {
+  id: String
+  "Display name for this SSO connection"
+  name: String
+  connectionType: connection_type
+  status: status
+  "List of email domains allowed to use this SSO connection"
+  allowedDomains: JSONString
+  "When enabled, users from allowed domains must use SSO to access this tenant. Password login will not grant access."
+  enforceSso: Boolean
+  "Automatically create users on first SSO login"
+  jitProvisioningEnabled: Boolean
+  "Mapping of IdP groups to tenant roles"
+  groupRoleMapping: JSONString
+  samlEntityId: String
+  samlSsoUrl: String
+  "IdP X.509 certificate (PEM format) - for local development"
+  samlCertificate: String
+  "Single Logout URL"
+  samlSloUrl: String
+  samlNameIdFormat: saml_name_id_format
+  samlWantAssertionsSigned: Boolean
+  samlWantResponseSigned: Boolean
+  "Mapping of SAML attributes to user fields"
+  samlAttributeMapping: JSONString
+  oidcIssuer: String
+  oidcClientId: String
+  oidcAuthorizationEndpoint: String
+  oidcTokenEndpoint: String
+  oidcUserinfoEndpoint: String
+  oidcJwksUri: String
+  "Space-separated list of OAuth scopes"
+  oidcScopes: String
+  "Mapping of OIDC claims to user fields"
+  oidcClaimMapping: JSONString
+  spMetadataXml: String
+  metadataLastUpdated: DateTime
+  lastLoginAt: DateTime
+  loginCount: Int
+  createdAt: DateTime
+  updatedAt: DateTime
+  ssoConnection: SSOConnectionType
+  clientMutationId: String
+}
+"Update an existing SSO connection."
+type UpdateSSOConnectionMutationPayload {
+  id: String
+  "Display name for this SSO connection"
+  name: String
+  connectionType: connection_type
+  status: status
+  "List of email domains allowed to use this SSO connection"
+  allowedDomains: JSONString
+  "When enabled, users from allowed domains must use SSO to access this tenant. Password login will not grant access."
+  enforceSso: Boolean
+  "Automatically create users on first SSO login"
+  jitProvisioningEnabled: Boolean
+  "Mapping of IdP groups to tenant roles"
+  groupRoleMapping: JSONString
+  samlEntityId: String
+  samlSsoUrl: String
+  "IdP X.509 certificate (PEM format) - for local development"
+  samlCertificate: String
+  "Single Logout URL"
+  samlSloUrl: String
+  samlNameIdFormat: saml_name_id_format
+  samlWantAssertionsSigned: Boolean
+  samlWantResponseSigned: Boolean
+  "Mapping of SAML attributes to user fields"
+  samlAttributeMapping: JSONString
+  oidcIssuer: String
+  oidcClientId: String
+  oidcAuthorizationEndpoint: String
+  oidcTokenEndpoint: String
+  oidcUserinfoEndpoint: String
+  oidcJwksUri: String
+  "Space-separated list of OAuth scopes"
+  oidcScopes: String
+  "Mapping of OIDC claims to user fields"
+  oidcClaimMapping: JSONString
+  spMetadataXml: String
+  metadataLastUpdated: DateTime
+  lastLoginAt: DateTime
+  loginCount: Int
+  createdAt: DateTime
+  updatedAt: DateTime
+  ssoConnection: SSOConnectionType
+  clientMutationId: String
+}
+"Delete an SSO connection. Requires tenantId in input for tenant context."
+type DeleteSSOConnectionMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+"Activate an SSO connection."
+type ActivateSSOConnectionMutationPayload {
+  id: String
+  tenantId: String
+  ssoConnection: SSOConnectionType
+  clientMutationId: String
+}
+"Deactivate an SSO connection. Requires tenantId for tenant context."
+type DeactivateSSOConnectionMutation {
+  ssoConnection: SSOConnectionType
+}
+"Test an SSO connection configuration. Requires tenantId for tenant context."
+type TestSSOConnectionMutation {
+  result: TestSSOConnectionPayload
+}
+type TestSSOConnectionPayload {
+  connectionId: String
+  connectionName: String
+  connectionType: String
+  overallStatus: String
+  checks: [TestSSOConnectionCheckType]
+  testedAt: String
+}
+type TestSSOConnectionCheckType {
+  name: String
+  status: String
+  message: String
+  details: GenericScalar
+}
+"Create a new SCIM token."
+type CreateSCIMTokenMutationPayload {
+  tenantId: String
+  name: String
+  ssoConnectionId: String
+  expiresInDays: Int
+  scimToken: SCIMTokenType
+  rawToken: String
+  clientMutationId: String
+}
+"Revoke a SCIM token. Requires tenantId for tenant context."
+type RevokeSCIMTokenMutation {
+  ok: Boolean
+}
+"Delete a passkey as tenant admin (for any tenant member). Requires tenantId for tenant context."
+type DeleteTenantPasskeyMutation {
+  ok: Boolean
+}
+"Revoke an SSO session."
+type RevokeSessionMutation {
+  ok: Boolean
+}
+"Revoke all SSO sessions for the current user except the current session."
+type RevokeAllSessionsMutation {
+  ok: Boolean
+  revokedCount: Int
+}
+"Mark a device as trusted."
+type TrustDeviceMutation {
+  device: UserDeviceType
+}
+"Remove trust from a device."
+type UntrustDeviceMutation {
+  device: UserDeviceType
+}
+"Block a device."
+type BlockDeviceMutation {
+  device: UserDeviceType
+}
+"Rename a passkey."
+type RenamePasskeyMutation {
+  passkey: PasskeyType
+}
+"Delete a passkey."
+type DeletePasskeyMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+type UpdateTenantMutationPayload {
+  tenant: TenantType
+  tenantEdge: TenantEdge
+  clientMutationId: String
+}
+"Mutation to delete a tenant from the system."
+type DeleteTenantMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+type CreateTenantInvitationMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type ResendTenantInvitationMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type UpdateTenantMembershipMutationPayload {
+  tenantMembership: TenantMembershipType
+  tenantMembershipEdge: TenantEdge
+  clientMutationId: String
+}
+"Mutation to enable or disable action logging for a tenant."
+type UpdateTenantActionLoggingMutation {
+  tenant: TenantType
+  ok: Boolean
+}
+"""
+Mutation to trigger an async export of action logs.
+
+Creates an export job that processes in the background.
+User receives a notification when the export is ready.
+"""
+type ExportActionLogsMutation {
+  export: ActionLogExportType
+  ok: Boolean
+}
+"GraphQL type for ActionLogExport model."
+type ActionLogExportType implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "The ID of the object"
+  id: ID!
+  tenant: TenantType!
+  requestedBy: CurrentUserType!
+  status: MultitenancyActionLogExportStatusChoices!
+  errorMessage: String!
+  startedAt: DateTime
+  completedAt: DateTime
+  filters: GenericScalar
+  "Path to the generated file in storage"
+  filePath: String!
+  "Size of the generated file in bytes"
+  fileSize: BigInt
+  "Number of logs in the export"
+  logCount: Int
+  celeryTaskId: String!
+  downloadUrl: String
+}
+"""
+Create a new custom organization role.
+
+SECURITY:
+- Requires 'org.roles.manage' permission
+- Users can only create roles with permissions they themselves have (except owners)
+"""
+type CreateOrganizationRoleMutation {
+  role: OrganizationRoleType
+  ok: Boolean
+}
+"""
+Update an existing organization role.
+
+SECURITY:
+- Requires 'org.roles.manage' permission
+- Cannot modify the Owner role
+- Users can only add permissions they themselves have (except owners)
+"""
+type UpdateOrganizationRoleMutation {
+  role: OrganizationRoleType
+  ok: Boolean
+}
+"""
+Delete an organization role.
+
+If there are members with this role, a replacement_role_id must be provided.
+
+SECURITY:
+- Requires 'org.roles.manage' permission
+- Cannot delete system roles (Owner, Admin, Member)
+"""
+type DeleteOrganizationRoleMutation {
+  ok: Boolean
+  affectedMemberCount: Int
+}
+"""
+Assign one or more organization roles to a member.
+
+SECURITY:
+- Requires 'members.roles.edit' permission
+- Only owners can assign the Owner role
+- Users can only assign roles with permissions they themselves have
+- Users cannot remove their own owner role if they're the last owner
+"""
+type AssignRolesToMemberMutation {
+  membership: TenantMembershipType
+  ok: Boolean
+}
+"""
+Remove a specific role from a member.
+
+SECURITY:
+- Requires 'members.roles.edit' permission
+- Only owners can remove the Owner role
+- Cannot remove the last owner's owner role
+- Non-owners cannot modify owner memberships
+"""
+type RemoveRoleFromMemberMutation {
+  membership: TenantMembershipType
+  ok: Boolean
+}
+type CreateTenantMutationPayload {
+  tenant: TenantType
+  tenantEdge: TenantEdge
+  clientMutationId: String
+}
+type AcceptTenantInvitationMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type DeclineTenantInvitationMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+"""
+Delete/remove a member from the organization.
+
+SECURITY:
+- Requires 'members.remove' permission to remove other members
+- Users can always remove themselves (leave organization)
+- Only owners can remove other owners
+- Cannot remove the last owner
+"""
+type DeleteTenantMembershipMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+"""
+Mutation to send a message to the AI assistant.
+The response is streamed via the AiChatSubscription.
+"""
+type SendAiMessageMutation {
+  ok: Boolean
+  error: String
+}
+type GenerateSaasIdeasMutationPayload {
+  response: String
+  clientMutationId: String
+}
+type ChangeActiveSubscriptionMutationPayload {
+  subscriptionSchedule: SubscriptionScheduleType
+  subscriptionScheduleEdge: SubscriptionScheduleEdge
+  clientMutationId: String
+}
+"A Relay edge containing a `SubscriptionSchedule` and its cursor."
+type SubscriptionScheduleEdge {
+  "The item at the end of the edge"
+  node: SubscriptionScheduleType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type CancelActiveSubscriptionMutationPayload {
+  subscriptionSchedule: SubscriptionScheduleType
+  subscriptionScheduleEdge: SubscriptionScheduleEdge
+  clientMutationId: String
+}
+type UpdateDefaultPaymentMethodMutationPayload {
+  activeSubscription: SubscriptionScheduleType
+  paymentMethodEdge: PaymentMethodEdge
+  clientMutationId: String
+}
+type DeletePaymentMethodMutationPayload {
+  deletedIds: [ID]
+  activeSubscription: SubscriptionScheduleType
+  clientMutationId: String
+}
+type CreatePaymentIntentMutationPayload {
+  paymentIntent: StripePaymentIntentType
+  clientMutationId: String
+}
+type UpdatePaymentIntentMutationPayload {
+  paymentIntent: StripePaymentIntentType
+  clientMutationId: String
+}
+type CreateSetupIntentMutationPayload {
+  setupIntent: StripeSetupIntentType
+  clientMutationId: String
+}
+type StripeSetupIntentType implements Node {
+  djstripeCreated: DateTime!
+  djstripeUpdated: DateTime!
+  djstripeId: ID!
+  "The ID of the object"
+  id: ID!
+  "Null here indicates that the livemode status is unknown or was previously unrecorded. Otherwise, this field indicates whether this record comes from Stripe test mode or live mode operation."
+  livemode: Boolean
+  "The datetime this object was created in stripe."
+  created: DateTime
+  "A set of key/value pairs that you can attach to an object. It can be useful for storing additional information about an object in a structured format."
+  metadata: JSONString
+  "A description of this object."
+  description: String
+  "ID of the Connect application that created the SetupIntent."
+  application: String!
+  "Reason for cancellation of this SetupIntent, one of abandoned, requested_by_customer, or duplicate"
+  cancellationReason: DjstripeSetupIntentCancellationReasonChoices
+  "The client secret of this SetupIntent. Used for client-side retrieval using a publishable key."
+  clientSecret: String!
+  "The error encountered in the previous SetupIntent confirmation."
+  lastSetupError: JSONString
+  "If present, this property tells you what actions you need to take inorder for your customer to continue payment setup."
+  nextAction: JSONString
+  "Payment method used in this PaymentIntent."
+  paymentMethod: StripePaymentMethodType
+  "The list of payment method types (e.g. card) that this PaymentIntent is allowed to use."
+  paymentMethodTypes: JSONString!
+  "Status of this SetupIntent, one of requires_payment_method, requires_confirmation, requires_action, processing, canceled, or succeeded."
+  status: DjstripeSetupIntentStatusChoices!
+  "Indicates how the payment method is intended to be used in the future."
+  usage: DjstripeSetupIntentUsageChoices!
+  pk: String
+}
+type ChangePasswordMutationPayload {
+  refresh: String
+  access: String
+  clientMutationId: String
+}
+type UpdateCurrentUserMutationPayload {
+  userProfile: UserProfileType
+  userProfileEdge: CurrentUserEdge
+  clientMutationId: String
+}
+type UserProfileType implements Node {
+  "The ID of the object"
+  id: ID!
+  user: CurrentUserType!
+  firstName: String!
+  lastName: String!
+  "User's preferred language for emails and notifications"
+  language: UsersUserProfileLanguageChoices!
+  appearance: String!
+  avatar: String
+  email: String
+  "The hashid of the associated user"
+  userId: String
+}
+"A Relay edge containing a `CurrentUser` and its cursor."
+type CurrentUserEdge {
+  "The item at the end of the edge"
+  node: UserProfileType
+  "A cursor for use in pagination"
+  cursor: String!
+}
+type GenerateOTPMutationPayload {
+  base32: String
+  otpauthUrl: String
+  clientMutationId: String
+}
+type VerifyOTPMutationPayload {
+  otpVerified: Boolean
+  clientMutationId: String
+}
+type DisableOTPMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type ObtainTokenMutationPayload {
+  access: String
+  refresh: String
+  otpAuthToken: String
+  clientMutationId: String
+}
+type SingUpMutationPayload {
+  id: String
+  email: String
+  access: String
+  refresh: String
+  clientMutationId: String
+}
+type ConfirmEmailMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type PasswordResetMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type PasswordResetConfirmationMutationPayload {
+  ok: Boolean
+  clientMutationId: String
+}
+type ValidateOTPMutationPayload {
+  access: String
+  refresh: String
+  clientMutationId: String
+}
+type UpdateNotificationMutationPayload {
+  notification: NotificationType
+  notificationEdge: NotificationEdge
+  hasUnreadNotifications: Boolean
+  unreadNotificationsCount: Int
+  clientMutationId: String
+}
+type MarkReadAllNotificationsMutationPayload {
+  hasUnreadNotifications: Boolean
+  unreadNotificationsCount: Int
+  ok: Boolean
+  clientMutationId: String
+}
+type CreateCrudDemoItemMutationPayload {
+  crudDemoItem: CrudDemoItemType
+  crudDemoItemEdge: CrudDemoItemEdge
+  clientMutationId: String
+}
+type UpdateCrudDemoItemMutationPayload {
+  crudDemoItem: CrudDemoItemType
+  crudDemoItemEdge: CrudDemoItemEdge
+  clientMutationId: String
+}
+type DeleteCrudDemoItemMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+type CreateDocumentDemoItemMutationPayload {
+  documentDemoItem: DocumentDemoItemType
+  documentDemoItemEdge: DocumentDemoItemEdge
+  clientMutationId: String
+}
+type DeleteDocumentDemoItemMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+type CreateFavoriteContentfulDemoItemMutationPayload {
+  contentfulDemoItemFavorite: ContentfulDemoItemFavoriteType
+  contentfulDemoItemFavoriteEdge: ContentfulDemoItemFavoriteEdge
+  clientMutationId: String
+}
+type DeleteFavoriteContentfulDemoItemMutationPayload {
+  deletedIds: [ID]
+  clientMutationId: String
+}
+type ApiSubscription {
+  aiChat(conversationId: String!): AiChatSubscription
+  notificationCreated: NotificationCreatedSubscription
+}
+"""
+GraphQL subscription for AI chat streaming.
+Receives events as the AI processes messages.
+"""
+type AiChatSubscription {
+  event: AiChatEventType
+}
+"Event sent during AI chat streaming."
+type AiChatEventType {
+  eventType: String!
+  message: String
+  toolName: String
+  toolDisplayName: String
+  success: Boolean
+  hasData: Boolean
+  text: String
+  toolsUsed: [String]
+  conversationId: String
+}
+"""
+GraphQL subscription for real-time notification updates.
+
+SECURITY: Ensures only authenticated users can subscribe to their own
+notifications. The subscribe method verifies authentication and prevents
+users from subscribing to other users' notification streams.
+"""
+type NotificationCreatedSubscription {
+  notification: NotificationType
+}
+"An object with an ID"
+interface Node {
+  "The ID of the object"
+  id: ID!
+}
+"""
+
+    Predefined tenant user roles:
+    - OWNER
+    - ADMIN
+    - MEMBER
+    
+"""
+enum TenantUserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+"System role types that serve as templates."
+enum SystemRoleType {
+  OWNER
+  ADMIN
+  MEMBER
+}
+"Predefined colors for organization roles."
+enum RoleColor {
+  BLUE
+  GREEN
+  RED
+  YELLOW
+  PURPLE
+  ORANGE
+  PINK
+  TEAL
+  GRAY
+}
+"An enumeration."
+enum BackupBackupRecordStatusChoices {
+  "Pending"
+  PENDING
+  "Processing"
+  PROCESSING
+  "Completed"
+  COMPLETED
+  "Failed"
+  FAILED
+}
+"An enumeration."
+enum BackupRestoreRecordStatusChoices {
+  "Pending"
+  PENDING
+  "Processing"
+  PROCESSING
+  "Completed"
+  COMPLETED
+  "Partially Completed"
+  PARTIALLY_COMPLETED
+  "Failed"
+  FAILED
+}
+"An enumeration."
+enum BackupRestoreRecordConflictStrategyChoices {
+  "Skip existing records"
+  SKIP
+  "Update existing records"
+  UPDATE
+  "Fail on conflicts"
+  FAIL
+}
+"An enumeration."
+enum SsoTenantSSOConnectionConnectionTypeChoices {
+  "SAML 2.0"
+  SAML
+  "OpenID Connect"
+  OIDC
+}
+"An enumeration."
+enum SsoTenantSSOConnectionStatusChoices {
+  "Draft"
+  DRAFT
+  "Active"
+  ACTIVE
+  "Inactive"
+  INACTIVE
+  "Configuration Error"
+  ERROR
+}
+"An enumeration."
+enum SsoTenantSSOConnectionSamlNameIdFormatChoices {
+  "Email Address"
+  URN_OASIS_NAMES_TC_SAML_1_1_NAMEID_FORMAT_EMAILADDRESS
+  "Persistent"
+  URN_OASIS_NAMES_TC_SAML_2_0_NAMEID_FORMAT_PERSISTENT
+  "Transient"
+  URN_OASIS_NAMES_TC_SAML_2_0_NAMEID_FORMAT_TRANSIENT
+  "Unspecified"
+  URN_OASIS_NAMES_TC_SAML_1_1_NAMEID_FORMAT_UNSPECIFIED
+}
+"An enumeration."
+enum SsoSSOAuditLogEventTypeChoices {
+  "IdP Configuration Created"
+  IDP_CONFIG_CREATED
+  "IdP Configuration Updated"
+  IDP_CONFIG_UPDATED
+  "IdP Configuration Deleted"
+  IDP_CONFIG_DELETED
+  "IdP Configuration Activated"
+  IDP_CONFIG_ACTIVATED
+  "IdP Configuration Deactivated"
+  IDP_CONFIG_DEACTIVATED
+  "SSO Login Initiated"
+  SSO_LOGIN_INITIATED
+  "SSO Login Success"
+  SSO_LOGIN_SUCCESS
+  "SSO Login Failed"
+  SSO_LOGIN_FAILED
+  "SSO Logout"
+  SSO_LOGOUT
+  "User Provisioned via JIT"
+  USER_PROVISIONED
+  "User Updated via SSO"
+  USER_UPDATED
+  "Group Mapping Applied"
+  GROUP_MAPPING_APPLIED
+  "SCIM User Created"
+  SCIM_USER_CREATED
+  "SCIM User Updated"
+  SCIM_USER_UPDATED
+  "SCIM User Deleted"
+  SCIM_USER_DELETED
+  "SCIM Group Created"
+  SCIM_GROUP_CREATED
+  "SCIM Group Updated"
+  SCIM_GROUP_UPDATED
+  "SCIM Group Deleted"
+  SCIM_GROUP_DELETED
+  "SSO Enforce Bypass Login"
+  SSO_ENFORCE_BYPASS
+  "Session Created"
+  SESSION_CREATED
+  "Session Revoked"
+  SESSION_REVOKED
+  "Device Registered"
+  DEVICE_REGISTERED
+  "Device Removed"
+  DEVICE_REMOVED
+  "Passkey Registered"
+  PASSKEY_REGISTERED
+  "Passkey Removed"
+  PASSKEY_REMOVED
+  "Passkey Auth Success"
+  PASSKEY_AUTH_SUCCESS
+  "Passkey Auth Failed"
+  PASSKEY_AUTH_FAILED
+  "Passkey Clone Detected"
+  PASSKEY_CLONE_DETECTED
+  "Security Anomaly Detected"
+  SECURITY_ANOMALY
+}
+"An enumeration."
+enum MultitenancyActionLogActionTypeChoices {
+  "Create"
+  CREATE
+  "Update"
+  UPDATE
+  "Delete"
+  DELETE
+  "Settings Change"
+  SETTINGS_CHANGE
+  "Import"
+  IMPORT
+  "Sync"
+  SYNC
+  "Bulk Delete"
+  BULK_DELETE
+  "Bulk Update"
+  BULK_UPDATE
+  "Activate"
+  ACTIVATE
+  "Deactivate"
+  DEACTIVATE
+  "Revoke"
+  REVOKE
+}
+"An enumeration."
+enum MultitenancyActionLogActorTypeChoices {
+  "User"
+  USER
+  "AI Agent"
+  AI_AGENT
+  "System (Sync)"
+  SYSTEM_SYNC
+  "System (Import)"
+  SYSTEM_IMPORT
+  "System (Scheduled Task)"
+  SYSTEM_SCHEDULED_TASK
+  "System (Migration)"
+  SYSTEM_MIGRATION
+}
+"Categories for grouping permissions in the UI."
+enum PermissionCategory {
+  ORGANIZATION
+  MEMBERS
+  SECURITY
+  BILLING
+  FEATURES
+  DASHBOARD
+}
+"An enumeration."
+enum DjstripeProductTypeChoices {
+  "Good"
+  GOOD
+  "Service"
+  SERVICE
+}
+"An enumeration."
+enum DjstripePlanAggregateUsageChoices {
+  "Last during period"
+  LAST_DURING_PERIOD
+  "Last ever"
+  LAST_EVER
+  "Max"
+  MAX
+  "Sum"
+  SUM
+}
+"An enumeration."
+enum DjstripePlanBillingSchemeChoices {
+  "Per-unit"
+  PER_UNIT
+  "Tiered"
+  TIERED
+}
+"An enumeration."
+enum DjstripePlanIntervalChoices {
+  "Day"
+  DAY
+  "Month"
+  MONTH
+  "Week"
+  WEEK
+  "Year"
+  YEAR
+}
+"An enumeration."
+enum DjstripePlanTiersModeChoices {
+  "Graduated"
+  GRADUATED
+  "Volume-based"
+  VOLUME
+}
+"An enumeration."
+enum DjstripePlanUsageTypeChoices {
+  "Licensed"
+  LICENSED
+  "Metered"
+  METERED
+}
+"An enumeration."
+enum DjstripeSubscriptionStatusChoices {
+  "Active"
+  ACTIVE
+  "Canceled"
+  CANCELED
+  "Incomplete"
+  INCOMPLETE
+  "Incomplete Expired"
+  INCOMPLETE_EXPIRED
+  "Past due"
+  PAST_DUE
+  "Trialing"
+  TRIALING
+  "Unpaid"
+  UNPAID
+}
+"An enumeration."
+enum DjstripePriceTypeChoices {
+  "One-time"
+  ONE_TIME
+  "Recurring"
+  RECURRING
+}
+"An enumeration."
+enum DjstripePriceBillingSchemeChoices {
+  "Per-unit"
+  PER_UNIT
+  "Tiered"
+  TIERED
+}
+"An enumeration."
+enum DjstripePriceTiersModeChoices {
+  "Graduated"
+  GRADUATED
+  "Volume-based"
+  VOLUME
+}
+"An enumeration."
+enum DjstripeSubscriptionScheduleEndBehaviorChoices {
+  "Cancel"
+  CANCEL
+  "Release"
+  RELEASE
+}
+"An enumeration."
+enum DjstripeSubscriptionScheduleStatusChoices {
+  "Active"
+  ACTIVE
+  "Canceled"
+  CANCELED
+  "Completed"
+  COMPLETED
+  "Not started"
+  NOT_STARTED
+  "Released"
+  RELEASED
+}
+"An enumeration."
+enum DjstripePaymentMethodTypeChoices {
+  "Acss Dbit"
+  ACSS_DEBIT
+  "Affirm"
+  AFFIRM
+  "Afterpay Clearpay"
+  AFTERPAY_CLEARPAY
+  "Alipay"
+  ALIPAY
+  "BECS Debit (Australia)"
+  AU_BECS_DEBIT
+  "Bacs Direct Debit"
+  BACS_DEBIT
+  "Bancontact"
+  BANCONTACT
+  "BLIK"
+  BLIK
+  "Boleto"
+  BOLETO
+  "Card"
+  CARD
+  "Card present"
+  CARD_PRESENT
+  "Customer Balance"
+  CUSTOMER_BALANCE
+  "EPS"
+  EPS
+  "FPX"
+  FPX
+  "Giropay"
+  GIROPAY
+  "Grabpay"
+  GRABPAY
+  "iDEAL"
+  IDEAL
+  "Interac (card present)"
+  INTERAC_PRESENT
+  "Klarna"
+  KLARNA
+  "Konbini"
+  KONBINI
+  "Link"
+  LINK
+  "OXXO"
+  OXXO
+  "Przelewy24"
+  P24
+  "PayNow"
+  PAYNOW
+  "Pix"
+  PIX
+  "PromptPay"
+  PROMPTPAY
+  "SEPA Direct Debit"
+  SEPA_DEBIT
+  "SOFORT"
+  SOFORT
+  "ACH Direct Debit"
+  US_BANK_ACCOUNT
+  "Wechat Pay"
+  WECHAT_PAY
+}
+"An enumeration."
+enum DjstripeChargeFailureCodeChoices {
+  "Account already exists"
+  ACCOUNT_ALREADY_EXISTS
+  "Account country invalid address"
+  ACCOUNT_COUNTRY_INVALID_ADDRESS
+  "Account invalid"
+  ACCOUNT_INVALID
+  "Account number invalid"
+  ACCOUNT_NUMBER_INVALID
+  "Alipay upgrade required"
+  ALIPAY_UPGRADE_REQUIRED
+  "Amount too large"
+  AMOUNT_TOO_LARGE
+  "Amount too small"
+  AMOUNT_TOO_SMALL
+  "Api key expired"
+  API_KEY_EXPIRED
+  "Balance insufficient"
+  BALANCE_INSUFFICIENT
+  "Bank account exists"
+  BANK_ACCOUNT_EXISTS
+  "Bank account unusable"
+  BANK_ACCOUNT_UNUSABLE
+  "Bank account unverified"
+  BANK_ACCOUNT_UNVERIFIED
+  "Bitcoin upgrade required"
+  BITCOIN_UPGRADE_REQUIRED
+  "Card was declined"
+  CARD_DECLINED
+  "Charge already captured"
+  CHARGE_ALREADY_CAPTURED
+  "Charge already refunded"
+  CHARGE_ALREADY_REFUNDED
+  "Charge disputed"
+  CHARGE_DISPUTED
+  "Charge exceeds source limit"
+  CHARGE_EXCEEDS_SOURCE_LIMIT
+  "Charge expired for capture"
+  CHARGE_EXPIRED_FOR_CAPTURE
+  "Country unsupported"
+  COUNTRY_UNSUPPORTED
+  "Coupon expired"
+  COUPON_EXPIRED
+  "Customer max subscriptions"
+  CUSTOMER_MAX_SUBSCRIPTIONS
+  "Email invalid"
+  EMAIL_INVALID
+  "Expired card"
+  EXPIRED_CARD
+  "Idempotency key in use"
+  IDEMPOTENCY_KEY_IN_USE
+  "Incorrect address"
+  INCORRECT_ADDRESS
+  "Incorrect security code"
+  INCORRECT_CVC
+  "Incorrect number"
+  INCORRECT_NUMBER
+  "ZIP code failed validation"
+  INCORRECT_ZIP
+  "Instant payouts unsupported"
+  INSTANT_PAYOUTS_UNSUPPORTED
+  "Invalid card type"
+  INVALID_CARD_TYPE
+  "Invalid charge amount"
+  INVALID_CHARGE_AMOUNT
+  "Invalid security code"
+  INVALID_CVC
+  "Invalid expiration month"
+  INVALID_EXPIRY_MONTH
+  "Invalid expiration year"
+  INVALID_EXPIRY_YEAR
+  "Invalid number"
+  INVALID_NUMBER
+  "Invalid source usage"
+  INVALID_SOURCE_USAGE
+  "Invalid swipe data"
+  INVALID_SWIPE_DATA
+  "Invoice no customer line items"
+  INVOICE_NO_CUSTOMER_LINE_ITEMS
+  "Invoice no subscription line items"
+  INVOICE_NO_SUBSCRIPTION_LINE_ITEMS
+  "Invoice not editable"
+  INVOICE_NOT_EDITABLE
+  "Invoice upcoming none"
+  INVOICE_UPCOMING_NONE
+  "Livemode mismatch"
+  LIVEMODE_MISMATCH
+  "No card being charged"
+  MISSING
+  "Not allowed on standard account"
+  NOT_ALLOWED_ON_STANDARD_ACCOUNT
+  "Order creation failed"
+  ORDER_CREATION_FAILED
+  "Order required settings"
+  ORDER_REQUIRED_SETTINGS
+  "Order status invalid"
+  ORDER_STATUS_INVALID
+  "Order upstream timeout"
+  ORDER_UPSTREAM_TIMEOUT
+  "Out of inventory"
+  OUT_OF_INVENTORY
+  "Parameter invalid empty"
+  PARAMETER_INVALID_EMPTY
+  "Parameter invalid integer"
+  PARAMETER_INVALID_INTEGER
+  "Parameter invalid string blank"
+  PARAMETER_INVALID_STRING_BLANK
+  "Parameter invalid string empty"
+  PARAMETER_INVALID_STRING_EMPTY
+  "Parameter missing"
+  PARAMETER_MISSING
+  "Parameter unknown"
+  PARAMETER_UNKNOWN
+  "Parameters exclusive"
+  PARAMETERS_EXCLUSIVE
+  "Payment intent authentication failure"
+  PAYMENT_INTENT_AUTHENTICATION_FAILURE
+  "Payment intent incompatible payment method"
+  PAYMENT_INTENT_INCOMPATIBLE_PAYMENT_METHOD
+  "Payment intent invalid parameter"
+  PAYMENT_INTENT_INVALID_PARAMETER
+  "Payment intent payment attempt failed"
+  PAYMENT_INTENT_PAYMENT_ATTEMPT_FAILED
+  "Payment intent unexpected state"
+  PAYMENT_INTENT_UNEXPECTED_STATE
+  "Payment method unactivated"
+  PAYMENT_METHOD_UNACTIVATED
+  "Payment method unexpected state"
+  PAYMENT_METHOD_UNEXPECTED_STATE
+  "Payouts not allowed"
+  PAYOUTS_NOT_ALLOWED
+  "Platform api key expired"
+  PLATFORM_API_KEY_EXPIRED
+  "Postal code invalid"
+  POSTAL_CODE_INVALID
+  "Processing error"
+  PROCESSING_ERROR
+  "Product inactive"
+  PRODUCT_INACTIVE
+  "Rate limit"
+  RATE_LIMIT
+  "Resource already exists"
+  RESOURCE_ALREADY_EXISTS
+  "Resource missing"
+  RESOURCE_MISSING
+  "Routing number invalid"
+  ROUTING_NUMBER_INVALID
+  "Secret key required"
+  SECRET_KEY_REQUIRED
+  "SEPA unsupported account"
+  SEPA_UNSUPPORTED_ACCOUNT
+  "Shipping calculation failed"
+  SHIPPING_CALCULATION_FAILED
+  "SKU inactive"
+  SKU_INACTIVE
+  "State unsupported"
+  STATE_UNSUPPORTED
+  "Tax id invalid"
+  TAX_ID_INVALID
+  "Taxes calculation failed"
+  TAXES_CALCULATION_FAILED
+  "Testmode charges only"
+  TESTMODE_CHARGES_ONLY
+  "TLS version unsupported"
+  TLS_VERSION_UNSUPPORTED
+  "Token already used"
+  TOKEN_ALREADY_USED
+  "Token in use"
+  TOKEN_IN_USE
+  "Transfers not allowed"
+  TRANSFERS_NOT_ALLOWED
+  "Upstream order creation failed"
+  UPSTREAM_ORDER_CREATION_FAILED
+  "URL invalid"
+  URL_INVALID
+}
+"An enumeration."
+enum DjstripeInvoiceBillingReasonChoices {
+  "Automatic pending invoice item invoice"
+  AUTOMATIC_PENDING_INVOICE_ITEM_INVOICE
+  "Manual"
+  MANUAL
+  "Subscription"
+  SUBSCRIPTION
+  "Subscription create"
+  SUBSCRIPTION_CREATE
+  "Subscription cycle"
+  SUBSCRIPTION_CYCLE
+  "Subscription threshold"
+  SUBSCRIPTION_THRESHOLD
+  "Subscription update"
+  SUBSCRIPTION_UPDATE
+  "Upcoming"
+  UPCOMING
+}
+"An enumeration."
+enum DjstripeInvoiceCollectionMethodChoices {
+  "Charge automatically"
+  CHARGE_AUTOMATICALLY
+  "Send invoice"
+  SEND_INVOICE
+}
+"An enumeration."
+enum DjstripeInvoiceCustomerTaxExemptChoices {
+  "Exempt"
+  EXEMPT
+  "None"
+  NONE
+  "Reverse"
+  REVERSE
+}
+"An enumeration."
+enum DjstripeInvoiceStatusChoices {
+  "Draft"
+  DRAFT
+  "Open"
+  OPEN
+  "Paid"
+  PAID
+  "Uncollectible"
+  UNCOLLECTIBLE
+  "Void"
+  VOID
+}
+"An enumeration."
+enum DjstripeChargeStatusChoices {
+  "Failed"
+  FAILED
+  "Pending"
+  PENDING
+  "Succeeded"
+  SUCCEEDED
+}
+"Enum for backup restore conflict strategies."
+enum ConflictStrategyEnum {
+  SKIP
+  UPDATE
+  FAIL
+}
+"An enumeration."
+enum connection_type {
+  "SAML 2.0"
+  SAML
+  "OpenID Connect"
+  OIDC
+}
+"An enumeration."
+enum status {
+  "Draft"
+  DRAFT
+  "Active"
+  ACTIVE
+  "Inactive"
+  INACTIVE
+  "Configuration Error"
+  ERROR
+}
+"An enumeration."
+enum saml_name_id_format {
+  "Email Address"
+  URN_OASIS_NAMES_TC_SAML_1_1_NAMEID_FORMAT_EMAILADDRESS
+  "Persistent"
+  URN_OASIS_NAMES_TC_SAML_2_0_NAMEID_FORMAT_PERSISTENT
+  "Transient"
+  URN_OASIS_NAMES_TC_SAML_2_0_NAMEID_FORMAT_TRANSIENT
+  "Unspecified"
+  URN_OASIS_NAMES_TC_SAML_1_1_NAMEID_FORMAT_UNSPECIFIED
+}
+"An enumeration."
+enum MultitenancyActionLogExportStatusChoices {
+  "Pending"
+  PENDING
+  "Processing"
+  PROCESSING
+  "Completed"
+  COMPLETED
+  "Failed"
+  FAILED
+}
+"An enumeration."
+enum DjstripeSetupIntentCancellationReasonChoices {
+  "Abandoned"
+  ABANDONED
+  "Duplicate"
+  DUPLICATE
+  "Requested by Customer"
+  REQUESTED_BY_CUSTOMER
+}
+"An enumeration."
+enum DjstripeSetupIntentStatusChoices {
+  "Cancellation invalidates the intent for future confirmation and cannot be undone."
+  CANCELED
+  "Required actions have been handled."
+  PROCESSING
+  "Payment Method require additional action, such as 3D secure."
+  REQUIRES_ACTION
+  "Intent is ready to be confirmed."
+  REQUIRES_CONFIRMATION
+  "Intent created and requires a Payment Method to be attached."
+  REQUIRES_PAYMENT_METHOD
+  "Setup was successful and the payment method is optimized for future payments."
+  SUCCEEDED
+}
+"An enumeration."
+enum DjstripeSetupIntentUsageChoices {
+  "Off session"
+  OFF_SESSION
+  "On session"
+  ON_SESSION
+}
+"An enumeration."
+enum UsersUserProfileLanguageChoices {
+  "English"
+  EN
+  "Polish"
+  PL
+  "German"
+  DE
+  "French"
+  FR
+  "Spanish"
+  ES
+}
+"Input type for backup configuration."
+input BackupConfigInput {
+  tenantId: ID!
+  enabled: Boolean!
+  backupIntervalHours: Int!
+  retentionDays: Int!
+  "List of user IDs to receive email notifications"
+  emailRecipients: [ID]
+  "List of module IDs to include in backups"
+  selectedModules: [String]
+  "Optional: Specific models to include (format: 'app_label.ModelName')"
+  selectedModels: [String]
+  "Optional: Specific models to exclude (format: 'app_label.ModelName')"
+  excludedModels: [String]
+}
+input PublishTranslationsMutationInput {
+  localeCode: String!
+  clientMutationId: String
+}
+input SyncTranslationKeysMutationInput {
+  translations: JSONString!
+  clientMutationId: String
+}
+input RollbackTranslationsMutationInput {
+  versionId: ID!
+  clientMutationId: String
+}
+input CreateSSOConnectionMutationInput {
+  id: String
+  tenantId: String!
+  "Display name for this SSO connection"
+  name: String!
+  connectionType: connection_type
+  status: status
+  "List of email domains allowed to use this SSO connection"
+  allowedDomains: JSONString
+  "When enabled, users from allowed domains must use SSO to access this tenant. Password login will not grant access."
+  enforceSso: Boolean
+  "Automatically create users on first SSO login"
+  jitProvisioningEnabled: Boolean
+  "Mapping of IdP groups to tenant roles"
+  groupRoleMapping: JSONString
+  samlEntityId: String
+  samlSsoUrl: String
+  "IdP X.509 certificate (PEM format) - for local development"
+  samlCertificate: String
+  "Single Logout URL"
+  samlSloUrl: String
+  samlNameIdFormat: saml_name_id_format
+  samlWantAssertionsSigned: Boolean
+  samlWantResponseSigned: Boolean
+  "Mapping of SAML attributes to user fields"
+  samlAttributeMapping: JSONString
+  oidcIssuer: String
+  oidcClientId: String
+  oidcClientSecret: String
+  oidcAuthorizationEndpoint: String
+  oidcTokenEndpoint: String
+  oidcUserinfoEndpoint: String
+  oidcJwksUri: String
+  "Space-separated list of OAuth scopes"
+  oidcScopes: String
+  "Mapping of OIDC claims to user fields"
+  oidcClaimMapping: JSONString
+  clientMutationId: String
+}
+input UpdateSSOConnectionMutationInput {
+  id: String
+  tenantId: String
+  "Display name for this SSO connection"
+  name: String
+  connectionType: connection_type
+  status: status
+  "List of email domains allowed to use this SSO connection"
+  allowedDomains: JSONString
+  "When enabled, users from allowed domains must use SSO to access this tenant. Password login will not grant access."
+  enforceSso: Boolean
+  "Automatically create users on first SSO login"
+  jitProvisioningEnabled: Boolean
+  "Mapping of IdP groups to tenant roles"
+  groupRoleMapping: JSONString
+  samlEntityId: String
+  samlSsoUrl: String
+  "IdP X.509 certificate (PEM format) - for local development"
+  samlCertificate: String
+  "Single Logout URL"
+  samlSloUrl: String
+  samlNameIdFormat: saml_name_id_format
+  samlWantAssertionsSigned: Boolean
+  samlWantResponseSigned: Boolean
+  "Mapping of SAML attributes to user fields"
+  samlAttributeMapping: JSONString
+  oidcIssuer: String
+  oidcClientId: String
+  "OIDC client secret. Leave blank to keep existing. Only set when updating."
+  oidcClientSecret: String
+  oidcAuthorizationEndpoint: String
+  oidcTokenEndpoint: String
+  oidcUserinfoEndpoint: String
+  oidcJwksUri: String
+  "Space-separated list of OAuth scopes"
+  oidcScopes: String
+  "Mapping of OIDC claims to user fields"
+  oidcClaimMapping: JSONString
+  clientMutationId: String
+}
+input DeleteSSOConnectionMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input ActivateSSOConnectionMutationInput {
+  id: String!
+  tenantId: String!
+  clientMutationId: String
+}
+input CreateSCIMTokenMutationInput {
+  tenantId: String!
+  name: String!
+  ssoConnectionId: String
+  expiresInDays: Int
+  clientMutationId: String
+}
+input DeletePasskeyMutationInput {
+  id: String
+  clientMutationId: String
+}
+input UpdateTenantMutationInput {
+  name: String!
+  billingEmail: String
+  id: ID!
+  clientMutationId: String
+}
+input DeleteTenantMutationInput {
+  id: String
+  clientMutationId: String
+}
+input CreateTenantInvitationMutationInput {
+  email: String!
+  role: TenantUserRole
+  "List of organization role IDs to assign to the invited member"
+  organizationRoleIds: [String]
+  tenantId: String!
+  clientMutationId: String
+}
+input ResendTenantInvitationMutationInput {
+  id: String!
+  tenantId: String!
+  clientMutationId: String
+}
+input UpdateTenantMembershipMutationInput {
+  id: ID!
+  tenantId: String!
+  role: TenantUserRole!
+  clientMutationId: String
+}
+input CreateTenantMutationInput {
+  name: String!
+  billingEmail: String
+  clientMutationId: String
+}
+input AcceptTenantInvitationMutationInput {
+  id: String!
+  "Token"
+  token: String!
+  clientMutationId: String
+}
+input DeclineTenantInvitationMutationInput {
+  id: String!
+  "Token"
+  token: String!
+  clientMutationId: String
+}
+input DeleteTenantMembershipMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input GenerateSaasIdeasMutationInput {
+  keywords: [String]
+  clientMutationId: String
+}
+input ChangeActiveSubscriptionMutationInput {
+  id: String
+  tenantId: String!
+  price: String!
+  clientMutationId: String
+}
+input CancelActiveSubscriptionMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input UpdateDefaultPaymentMethodMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input DeletePaymentMethodMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input CreatePaymentIntentMutationInput {
+  tenantId: String!
+  product: String!
+  clientMutationId: String
+}
+input UpdatePaymentIntentMutationInput {
+  id: ID!
+  tenantId: String!
+  product: String!
+  clientMutationId: String
+}
+input CreateSetupIntentMutationInput {
+  tenantId: String!
+  clientMutationId: String
+}
+input ChangePasswordMutationInput {
+  "Old password"
+  oldPassword: String!
+  "New password"
+  newPassword: String!
+  clientMutationId: String
+}
+input UpdateCurrentUserMutationInput {
+  firstName: String
+  lastName: String
+  avatar: Upload
+  language: String
+  appearance: String
+  chartPreferences: JSONString
+  clientMutationId: String
+}
+input GenerateOTPMutationInput {
+  clientMutationId: String
+}
+input VerifyOTPMutationInput {
+  otpToken: String!
+  clientMutationId: String
+}
+input DisableOTPMutationInput {
+  clientMutationId: String
+}
+input ObtainTokenMutationInput {
+  email: String!
+  password: String!
+  clientMutationId: String
+}
+input SingUpMutationInput {
+  id: String
+  email: String!
+  password: String!
+  clientMutationId: String
+}
+input ConfirmEmailMutationInput {
+  user: String!
+  token: String!
+  clientMutationId: String
+}
+input PasswordResetMutationInput {
+  "User e-mail"
+  email: String!
+  clientMutationId: String
+}
+input PasswordResetConfirmationMutationInput {
+  user: String!
+  "New password"
+  newPassword: String!
+  "Token"
+  token: String!
+  clientMutationId: String
+}
+input ValidateOTPMutationInput {
+  otpToken: String!
+  otpAuthToken: String
+  clientMutationId: String
+}
+input UpdateNotificationMutationInput {
+  isRead: Boolean
+  id: ID!
+  clientMutationId: String
+}
+input MarkReadAllNotificationsMutationInput {
+  clientMutationId: String
+}
+input CreateCrudDemoItemMutationInput {
+  tenantId: String!
+  name: String!
+  clientMutationId: String
+}
+input UpdateCrudDemoItemMutationInput {
+  id: ID!
+  tenantId: String!
+  name: String!
+  clientMutationId: String
+}
+input DeleteCrudDemoItemMutationInput {
+  id: String
+  tenantId: String!
+  clientMutationId: String
+}
+input CreateDocumentDemoItemMutationInput {
+  file: Upload
+  clientMutationId: String
+}
+input DeleteDocumentDemoItemMutationInput {
+  id: String
+  clientMutationId: String
+}
+input CreateFavoriteContentfulDemoItemMutationInput {
+  item: String!
+  clientMutationId: String
+}
+input DeleteFavoriteContentfulDemoItemMutationInput {
+  item: String
+  clientMutationId: String
+}
+"Exposes a URL that specifies the behaviour of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behaviour of this scalar."
+    url: String!
+  ) on SCALAR

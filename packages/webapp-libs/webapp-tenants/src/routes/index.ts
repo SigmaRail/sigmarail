@@ -1,0 +1,11 @@
+import { asyncComponent } from '@sb/webapp-core/utils/asyncComponent';
+
+export const AddTenantForm = asyncComponent(() => import('./addTenantForm'));
+export const TenantSettings = asyncComponent(() => import('./tenantSettings'));
+export const TenantMembers = asyncComponent(() => import('./tenantSettings/tenantMembers'));
+export const TenantGeneralSettings = asyncComponent(() => import('./tenantSettings/tenantGeneralSettings'));
+export const TenantSecuritySettings = asyncComponent(() => import('./tenantSettings/tenantSecuritySettings'));
+export const TenantActivityLogs = asyncComponent(() => import('./tenantSettings/tenantActivityLogs'));
+export const TenantRoles = asyncComponent(() => import('./tenantSettings/tenantRoles'));
+export const TenantInvitation = asyncComponent(() => import('./tenantInvitation'));
+export const AccessDenied = asyncComponent(() => import('./accessDenied'));

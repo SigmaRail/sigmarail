@@ -1,0 +1,33 @@
+import { makeFragmentData } from '@sb/webapp-api-client/graphql';
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { {{ pascalCase name }}ListItem } from './{{ camelCase name }}ListItem.component';
+import { {{ camelCase name }}ListItemFragment } from './{{ camelCase name }}ListItem.graphql';
+
+const meta: Meta<typeof {{ pascalCase name }}ListItem> = {
+  title: 'Routes/{{ pascalCase name }}/{{ pascalCase name }}ListItem',
+  component: {{ pascalCase name }}ListItem,
+  decorators: [
+    (Story) => (
+      <ul className="divide-y border rounded-md">
+        <Story />
+      </ul>
+    ),
+  ],
+};
+
+export default meta;
+
+type Story = StoryObj<typeof {{ pascalCase name }}ListItem>;
+
+export const Default: Story = {
+  args: {
+    item: makeFragmentData(
+      {
+        id: '1',
+        name: 'Example {{ pascalCase name }} Item',
+      },
+      {{ camelCase name }}ListItemFragment
+    ),
+  },
+};

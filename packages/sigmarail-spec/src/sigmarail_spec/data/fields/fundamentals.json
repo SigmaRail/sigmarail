@@ -1,0 +1,3411 @@
+{
+  "domain": "fundamentals",
+  "fields": [
+    {
+      "column": "arq_currentratio",
+      "description": "Current Ratio (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_currentratio.arq_currentratio",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Current Ratio (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_currentratio",
+        "kind": "concept",
+        "title": "arq currentratio"
+      },
+      "name": "arq_currentratio",
+      "sql": "screener_fundamentals_daily.arq_currentratio",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_de",
+      "description": "Debt to Equity (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_de.arq_de",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Debt to Equity (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_de",
+        "kind": "concept",
+        "title": "arq de"
+      },
+      "name": "arq_de",
+      "sql": "screener_fundamentals_daily.arq_de",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_ebit",
+      "description": "EBIT (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_ebit.arq_ebit",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBIT (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_ebit",
+        "kind": "concept",
+        "title": "arq ebit"
+      },
+      "name": "arq_ebit",
+      "sql": "screener_fundamentals_daily.arq_ebit",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_ebitda",
+      "description": "EBITDA (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_ebitda.arq_ebitda",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_ebitda",
+        "kind": "concept",
+        "title": "arq ebitda"
+      },
+      "name": "arq_ebitda",
+      "sql": "screener_fundamentals_daily.arq_ebitda",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_ebitdamargin",
+      "description": "EBITDA Margin (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_ebitdamargin.arq_ebitdamargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA Margin (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_ebitdamargin",
+        "kind": "concept",
+        "title": "arq ebitdamargin"
+      },
+      "name": "arq_ebitdamargin",
+      "sql": "screener_fundamentals_daily.arq_ebitdamargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_eps_acceleration_q2",
+      "description": "ChartMill s_epsaQ2: YoY EPS acceleration (2 consecutive increases); NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_eps_acceleration_q2.arq_eps_acceleration_q2",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_epsaQ2: YoY EPS acceleration (2 consecutive increases); NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_q2",
+        "kind": "concept",
+        "title": "arq eps acceleration q2"
+      },
+      "name": "arq_eps_acceleration_q2",
+      "sql": "screener_fundamentals_daily.arq_eps_acceleration_q2",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_eps_acceleration_q3",
+      "description": "ChartMill s_epsaQ3: YoY EPS acceleration (3 consecutive increases); NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_eps_acceleration_q3.arq_eps_acceleration_q3",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_epsaQ3: YoY EPS acceleration (3 consecutive increases); NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_q3",
+        "kind": "concept",
+        "title": "arq eps acceleration q3"
+      },
+      "name": "arq_eps_acceleration_q3",
+      "sql": "screener_fundamentals_daily.arq_eps_acceleration_q3",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_eps_acceleration_qoq",
+      "description": "EPS acceleration QoQ (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_eps_acceleration_qoq.arq_eps_acceleration_qoq",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EPS acceleration QoQ (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_eps_acceleration_qoq",
+        "kind": "concept",
+        "title": "arq eps acceleration qoq"
+      },
+      "name": "arq_eps_acceleration_qoq",
+      "sql": "screener_fundamentals_daily.arq_eps_acceleration_qoq",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_eps_growth_qoq",
+      "description": "QoQ EPS growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_eps_growth_qoq.arq_eps_growth_qoq",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "QoQ EPS growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_eps_growth_qoq",
+        "kind": "concept",
+        "title": "arq eps growth qoq"
+      },
+      "name": "arq_eps_growth_qoq",
+      "sql": "screener_fundamentals_daily.arq_eps_growth_qoq",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "arq_eps_growth_yoy",
+      "description": "YoY EPS growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_eps_growth_yoy.arq_eps_growth_yoy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY EPS growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_eps_growth_yoy",
+        "kind": "concept",
+        "title": "arq eps growth yoy"
+      },
+      "name": "arq_eps_growth_yoy",
+      "sql": "screener_fundamentals_daily.arq_eps_growth_yoy",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_epsdil",
+      "description": "Diluted EPS (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_epsdil.arq_epsdil",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Diluted EPS (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_epsdil",
+        "kind": "concept",
+        "title": "arq epsdil"
+      },
+      "name": "arq_epsdil",
+      "sql": "screener_fundamentals_daily.arq_epsdil",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_fcf",
+      "description": "Free Cash Flow (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_fcf.arq_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_fcf",
+        "kind": "concept",
+        "title": "arq fcf"
+      },
+      "name": "arq_fcf",
+      "sql": "screener_fundamentals_daily.arq_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_fcf_growth_yoy",
+      "description": "YoY FCF growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_fcf_growth_yoy.arq_fcf_growth_yoy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY FCF growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_fcf_growth_yoy",
+        "kind": "concept",
+        "title": "arq fcf growth yoy"
+      },
+      "name": "arq_fcf_growth_yoy",
+      "sql": "screener_fundamentals_daily.arq_fcf_growth_yoy",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_gp",
+      "description": "Gross Profit (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_gp.arq_gp",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Profit (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_gp",
+        "kind": "concept",
+        "title": "arq gp"
+      },
+      "name": "arq_gp",
+      "sql": "screener_fundamentals_daily.arq_gp",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_grossmargin",
+      "description": "Gross Margin (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_grossmargin.arq_grossmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Margin (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_grossmargin",
+        "kind": "concept",
+        "title": "arq grossmargin"
+      },
+      "name": "arq_grossmargin",
+      "sql": "screener_fundamentals_daily.arq_grossmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_netinccmn",
+      "description": "Net Income Common (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_netinccmn.arq_netinccmn",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Income Common (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_netinccmn",
+        "kind": "concept",
+        "title": "arq netinccmn"
+      },
+      "name": "arq_netinccmn",
+      "sql": "screener_fundamentals_daily.arq_netinccmn",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_netincome_growth_yoy",
+      "description": "YoY net income growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_netincome_growth_yoy.arq_netincome_growth_yoy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY net income growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_netincome_growth_yoy",
+        "kind": "concept",
+        "title": "arq netincome growth yoy"
+      },
+      "name": "arq_netincome_growth_yoy",
+      "sql": "screener_fundamentals_daily.arq_netincome_growth_yoy",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_netmargin",
+      "description": "Net Margin (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_netmargin.arq_netmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Margin (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_netmargin",
+        "kind": "concept",
+        "title": "arq netmargin"
+      },
+      "name": "arq_netmargin",
+      "sql": "screener_fundamentals_daily.arq_netmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_pmi_up_q2",
+      "description": "ChartMill s_pmiQ2: ARQ net-margin up 2 consecutive quarters; NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_pmi_up_q2.arq_pmi_up_q2",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_pmiQ2: ARQ net-margin up 2 consecutive quarters; NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_pmi_up_q2",
+        "kind": "concept",
+        "title": "arq pmi up q2"
+      },
+      "name": "arq_pmi_up_q2",
+      "sql": "screener_fundamentals_daily.arq_pmi_up_q2",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_pmi_up_q3",
+      "description": "ChartMill s_pmiQ3: ARQ net-margin up 3 consecutive quarters; NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_pmi_up_q3.arq_pmi_up_q3",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_pmiQ3: ARQ net-margin up 3 consecutive quarters; NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_pmi_up_q3",
+        "kind": "concept",
+        "title": "arq pmi up q3"
+      },
+      "name": "arq_pmi_up_q3",
+      "sql": "screener_fundamentals_daily.arq_pmi_up_q3",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_revenue",
+      "description": "Revenue (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue.arq_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue",
+        "kind": "concept",
+        "title": "arq revenue"
+      },
+      "name": "arq_revenue",
+      "sql": "screener_fundamentals_daily.arq_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "arq_revenue_acceleration_q2",
+      "description": "ChartMill s_revaQ2: YoY revenue acceleration (2 consecutive increases); NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue_acceleration_q2.arq_revenue_acceleration_q2",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_revaQ2: YoY revenue acceleration (2 consecutive increases); NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_q2",
+        "kind": "concept",
+        "title": "arq revenue acceleration q2"
+      },
+      "name": "arq_revenue_acceleration_q2",
+      "sql": "screener_fundamentals_daily.arq_revenue_acceleration_q2",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_revenue_acceleration_q3",
+      "description": "ChartMill s_revaQ3: YoY revenue acceleration (3 consecutive increases); NULL if incomplete",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue_acceleration_q3.arq_revenue_acceleration_q3",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ChartMill s_revaQ3: YoY revenue acceleration (3 consecutive increases); NULL if incomplete",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_q3",
+        "kind": "concept",
+        "title": "arq revenue acceleration q3"
+      },
+      "name": "arq_revenue_acceleration_q3",
+      "sql": "screener_fundamentals_daily.arq_revenue_acceleration_q3",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_revenue_acceleration_qoq",
+      "description": "Revenue acceleration QoQ (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue_acceleration_qoq.arq_revenue_acceleration_qoq",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue acceleration QoQ (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue_acceleration_qoq",
+        "kind": "concept",
+        "title": "arq revenue acceleration qoq"
+      },
+      "name": "arq_revenue_acceleration_qoq",
+      "sql": "screener_fundamentals_daily.arq_revenue_acceleration_qoq",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "arq_revenue_growth_qoq",
+      "description": "QoQ revenue growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue_growth_qoq.arq_revenue_growth_qoq",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "QoQ revenue growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue_growth_qoq",
+        "kind": "concept",
+        "title": "arq revenue growth qoq"
+      },
+      "name": "arq_revenue_growth_qoq",
+      "sql": "screener_fundamentals_daily.arq_revenue_growth_qoq",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "arq_revenue_growth_yoy",
+      "description": "YoY revenue growth (ARQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.arq_revenue_growth_yoy.arq_revenue_growth_yoy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY revenue growth (ARQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.arq_revenue_growth_yoy",
+        "kind": "concept",
+        "title": "arq revenue growth yoy"
+      },
+      "name": "arq_revenue_growth_yoy",
+      "sql": "screener_fundamentals_daily.arq_revenue_growth_yoy",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "art_capex",
+      "description": "CapEx (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex.art_capex",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex",
+        "kind": "concept",
+        "title": "art capex"
+      },
+      "name": "art_capex",
+      "sql": "screener_fundamentals_daily.art_capex",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_abs",
+      "description": "abs(capex) ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_abs.art_capex_abs",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "abs(capex) ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_abs",
+        "kind": "concept",
+        "title": "art capex abs"
+      },
+      "name": "art_capex_abs",
+      "sql": "screener_fundamentals_daily.art_capex_abs",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_to_da",
+      "description": "CapEx/DA ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_to_da.art_capex_to_da",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx/DA ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_to_da",
+        "kind": "concept",
+        "title": "art capex to da"
+      },
+      "name": "art_capex_to_da",
+      "sql": "screener_fundamentals_daily.art_capex_to_da",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_to_ocf",
+      "description": "CapEx/OCF ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_to_ocf.art_capex_to_ocf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx/OCF ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf",
+        "kind": "concept",
+        "title": "art capex to ocf"
+      },
+      "name": "art_capex_to_ocf",
+      "sql": "screener_fundamentals_daily.art_capex_to_ocf",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_to_ocf_industry_rank",
+      "description": "Industry rank ART CapEx/OCF",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_to_ocf_industry_rank.art_capex_to_ocf_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank ART CapEx/OCF",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf_industry_rank",
+        "kind": "concept",
+        "title": "art capex to ocf industry rank"
+      },
+      "name": "art_capex_to_ocf_industry_rank",
+      "sql": "screener_fundamentals_daily.art_capex_to_ocf_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_to_ocf_sector_rank",
+      "description": "Sector rank ART CapEx/OCF",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_to_ocf_sector_rank.art_capex_to_ocf_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank ART CapEx/OCF",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_to_ocf_sector_rank",
+        "kind": "concept",
+        "title": "art capex to ocf sector rank"
+      },
+      "name": "art_capex_to_ocf_sector_rank",
+      "sql": "screener_fundamentals_daily.art_capex_to_ocf_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_vs_5y",
+      "description": "CapEx vs 5y ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_vs_5y.art_capex_vs_5y",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx vs 5y ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_vs_5y",
+        "kind": "concept",
+        "title": "art capex vs 5y"
+      },
+      "name": "art_capex_vs_5y",
+      "sql": "screener_fundamentals_daily.art_capex_vs_5y",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_capex_yoy_growth",
+      "description": "CapEx YoY ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_capex_yoy_growth.art_capex_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx YoY ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_capex_yoy_growth",
+        "kind": "concept",
+        "title": "art capex yoy growth"
+      },
+      "name": "art_capex_yoy_growth",
+      "sql": "screener_fundamentals_daily.art_capex_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_cash_posture",
+      "description": "Cash posture ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_cash_posture.art_cash_posture",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Cash posture ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_cash_posture",
+        "kind": "concept",
+        "title": "art cash posture"
+      },
+      "name": "art_cash_posture",
+      "sql": "screener_fundamentals_daily.art_cash_posture",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "art_cash_posture_disagree",
+      "description": "ART vs MRT cash_posture disagree",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_cash_posture_disagree.art_cash_posture_disagree",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ART vs MRT cash_posture disagree",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_cash_posture_disagree",
+        "kind": "concept",
+        "title": "art cash posture disagree"
+      },
+      "name": "art_cash_posture_disagree",
+      "sql": "screener_fundamentals_daily.art_cash_posture_disagree",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "art_depamor",
+      "description": "Depreciation/Amortization (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_depamor.art_depamor",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Depreciation/Amortization (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_depamor",
+        "kind": "concept",
+        "title": "art depamor"
+      },
+      "name": "art_depamor",
+      "sql": "screener_fundamentals_daily.art_depamor",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_fcf",
+      "description": "Free Cash Flow (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_fcf.art_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_fcf",
+        "kind": "concept",
+        "title": "art fcf"
+      },
+      "name": "art_fcf",
+      "sql": "screener_fundamentals_daily.art_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_fcf_margin",
+      "description": "FCF margin ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_fcf_margin.art_fcf_margin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF margin ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_fcf_margin",
+        "kind": "concept",
+        "title": "art fcf margin"
+      },
+      "name": "art_fcf_margin",
+      "sql": "screener_fundamentals_daily.art_fcf_margin",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_fcf_recon_gap",
+      "description": "FCF recon gap ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_fcf_recon_gap.art_fcf_recon_gap",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF recon gap ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_fcf_recon_gap",
+        "kind": "concept",
+        "title": "art fcf recon gap"
+      },
+      "name": "art_fcf_recon_gap",
+      "sql": "screener_fundamentals_daily.art_fcf_recon_gap",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_fcf_to_ocf",
+      "description": "FCF/OCF ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_fcf_to_ocf.art_fcf_to_ocf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF/OCF ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_fcf_to_ocf",
+        "kind": "concept",
+        "title": "art fcf to ocf"
+      },
+      "name": "art_fcf_to_ocf",
+      "sql": "screener_fundamentals_daily.art_fcf_to_ocf",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_fxusd",
+      "description": "FXUSD (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_fxusd.art_fxusd",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FXUSD (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_fxusd",
+        "kind": "concept",
+        "title": "art fxusd"
+      },
+      "name": "art_fxusd",
+      "sql": "screener_fundamentals_daily.art_fxusd",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_ncfo",
+      "description": "Net Cash Flow from Operations (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_ncfo.art_ncfo",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Cash Flow from Operations (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_ncfo",
+        "kind": "concept",
+        "title": "art ncfo"
+      },
+      "name": "art_ncfo",
+      "sql": "screener_fundamentals_daily.art_ncfo",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_ocf_margin",
+      "description": "OCF margin ART",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_ocf_margin.art_ocf_margin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "OCF margin ART",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_ocf_margin",
+        "kind": "concept",
+        "title": "art ocf margin"
+      },
+      "name": "art_ocf_margin",
+      "sql": "screener_fundamentals_daily.art_ocf_margin",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_revenue",
+      "description": "Revenue (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_revenue.art_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_revenue",
+        "kind": "concept",
+        "title": "art revenue"
+      },
+      "name": "art_revenue",
+      "sql": "screener_fundamentals_daily.art_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "art_roic",
+      "description": "ROIC (ART)",
+      "id": "sigmarail.field.screener_fundamentals_daily.art_roic.art_roic",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ROIC (ART)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.art_roic",
+        "kind": "concept",
+        "title": "art roic"
+      },
+      "name": "art_roic",
+      "sql": "screener_fundamentals_daily.art_roic",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_currentratio",
+      "description": "Current Ratio (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_currentratio.ary_currentratio",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Current Ratio (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_currentratio",
+        "kind": "concept",
+        "title": "ary currentratio"
+      },
+      "name": "ary_currentratio",
+      "sql": "screener_fundamentals_daily.ary_currentratio",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_de",
+      "description": "Debt to Equity (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_de.ary_de",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Debt to Equity (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_de",
+        "kind": "concept",
+        "title": "ary de"
+      },
+      "name": "ary_de",
+      "sql": "screener_fundamentals_daily.ary_de",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_dps",
+      "description": "Dividends Per Share (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_dps.ary_dps",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividends Per Share (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_dps",
+        "kind": "concept",
+        "title": "ary dps"
+      },
+      "name": "ary_dps",
+      "sql": "screener_fundamentals_daily.ary_dps",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_ebit",
+      "description": "EBIT (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_ebit.ary_ebit",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBIT (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_ebit",
+        "kind": "concept",
+        "title": "ary ebit"
+      },
+      "name": "ary_ebit",
+      "sql": "screener_fundamentals_daily.ary_ebit",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_ebitda",
+      "description": "EBITDA (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_ebitda.ary_ebitda",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_ebitda",
+        "kind": "concept",
+        "title": "ary ebitda"
+      },
+      "name": "ary_ebitda",
+      "sql": "screener_fundamentals_daily.ary_ebitda",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_ebitdamargin",
+      "description": "EBITDA Margin (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_ebitdamargin.ary_ebitdamargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA Margin (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin",
+        "kind": "concept",
+        "title": "ary ebitdamargin"
+      },
+      "name": "ary_ebitdamargin",
+      "sql": "screener_fundamentals_daily.ary_ebitdamargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_ebitdamargin_industry_rank",
+      "description": "Industry rank ARY EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_ebitdamargin_industry_rank.ary_ebitdamargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank ARY EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin_industry_rank",
+        "kind": "concept",
+        "title": "ary ebitdamargin industry rank"
+      },
+      "name": "ary_ebitdamargin_industry_rank",
+      "sql": "screener_fundamentals_daily.ary_ebitdamargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_ebitdamargin_sector_rank",
+      "description": "Sector rank ARY EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_ebitdamargin_sector_rank.ary_ebitdamargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank ARY EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_ebitdamargin_sector_rank",
+        "kind": "concept",
+        "title": "ary ebitdamargin sector rank"
+      },
+      "name": "ary_ebitdamargin_sector_rank",
+      "sql": "screener_fundamentals_daily.ary_ebitdamargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_eps_acceleration_fy",
+      "description": "EPS acceleration FY (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_eps_acceleration_fy.ary_eps_acceleration_fy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EPS acceleration FY (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_eps_acceleration_fy",
+        "kind": "concept",
+        "title": "ary eps acceleration fy"
+      },
+      "name": "ary_eps_acceleration_fy",
+      "sql": "screener_fundamentals_daily.ary_eps_acceleration_fy",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "ary_eps_growth_3y_cagr",
+      "description": "3y EPS CAGR (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_eps_growth_3y_cagr.ary_eps_growth_3y_cagr",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "3y EPS CAGR (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_eps_growth_3y_cagr",
+        "kind": "concept",
+        "title": "ary eps growth 3y cagr"
+      },
+      "name": "ary_eps_growth_3y_cagr",
+      "sql": "screener_fundamentals_daily.ary_eps_growth_3y_cagr",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_eps_growth_yoy",
+      "description": "YoY EPS growth (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_eps_growth_yoy.ary_eps_growth_yoy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY EPS growth (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_eps_growth_yoy",
+        "kind": "concept",
+        "title": "ary eps growth yoy"
+      },
+      "name": "ary_eps_growth_yoy",
+      "sql": "screener_fundamentals_daily.ary_eps_growth_yoy",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_epsdil",
+      "description": "Diluted EPS (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_epsdil.ary_epsdil",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Diluted EPS (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_epsdil",
+        "kind": "concept",
+        "title": "ary epsdil"
+      },
+      "name": "ary_epsdil",
+      "sql": "screener_fundamentals_daily.ary_epsdil",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_fcf",
+      "description": "Free Cash Flow (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_fcf.ary_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_fcf",
+        "kind": "concept",
+        "title": "ary fcf"
+      },
+      "name": "ary_fcf",
+      "sql": "screener_fundamentals_daily.ary_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_gp",
+      "description": "Gross Profit (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_gp.ary_gp",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Profit (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_gp",
+        "kind": "concept",
+        "title": "ary gp"
+      },
+      "name": "ary_gp",
+      "sql": "screener_fundamentals_daily.ary_gp",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_grossmargin",
+      "description": "Gross Margin (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_grossmargin.ary_grossmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Margin (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_grossmargin",
+        "kind": "concept",
+        "title": "ary grossmargin"
+      },
+      "name": "ary_grossmargin",
+      "sql": "screener_fundamentals_daily.ary_grossmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_netinccmn",
+      "description": "Net Income Common (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_netinccmn.ary_netinccmn",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Income Common (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_netinccmn",
+        "kind": "concept",
+        "title": "ary netinccmn"
+      },
+      "name": "ary_netinccmn",
+      "sql": "screener_fundamentals_daily.ary_netinccmn",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_netmargin",
+      "description": "Net Margin (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_netmargin.ary_netmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Margin (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_netmargin",
+        "kind": "concept",
+        "title": "ary netmargin"
+      },
+      "name": "ary_netmargin",
+      "sql": "screener_fundamentals_daily.ary_netmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_netmargin_industry_rank",
+      "description": "Industry rank ARY net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_netmargin_industry_rank.ary_netmargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank ARY net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_netmargin_industry_rank",
+        "kind": "concept",
+        "title": "ary netmargin industry rank"
+      },
+      "name": "ary_netmargin_industry_rank",
+      "sql": "screener_fundamentals_daily.ary_netmargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_netmargin_sector_rank",
+      "description": "Sector rank ARY net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_netmargin_sector_rank.ary_netmargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank ARY net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_netmargin_sector_rank",
+        "kind": "concept",
+        "title": "ary netmargin sector rank"
+      },
+      "name": "ary_netmargin_sector_rank",
+      "sql": "screener_fundamentals_daily.ary_netmargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_revenue",
+      "description": "Revenue (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue.ary_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue",
+        "kind": "concept",
+        "title": "ary revenue"
+      },
+      "name": "ary_revenue",
+      "sql": "screener_fundamentals_daily.ary_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_revenue_acceleration_fy",
+      "description": "Revenue acceleration FY (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue_acceleration_fy.ary_revenue_acceleration_fy",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue acceleration FY (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue_acceleration_fy",
+        "kind": "concept",
+        "title": "ary revenue acceleration fy"
+      },
+      "name": "ary_revenue_acceleration_fy",
+      "sql": "screener_fundamentals_daily.ary_revenue_acceleration_fy",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "ary_revenue_growth_3y_cagr",
+      "description": "3y revenue CAGR (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue_growth_3y_cagr.ary_revenue_growth_3y_cagr",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "3y revenue CAGR (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue_growth_3y_cagr",
+        "kind": "concept",
+        "title": "ary revenue growth 3y cagr"
+      },
+      "name": "ary_revenue_growth_3y_cagr",
+      "sql": "screener_fundamentals_daily.ary_revenue_growth_3y_cagr",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_revenue_yoy_growth",
+      "description": "YoY revenue growth (ARY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue_yoy_growth.ary_revenue_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY revenue growth (ARY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth",
+        "kind": "concept",
+        "title": "ary revenue yoy growth"
+      },
+      "name": "ary_revenue_yoy_growth",
+      "sql": "screener_fundamentals_daily.ary_revenue_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "ary_revenue_yoy_growth_industry_rank",
+      "description": "Industry rank ARY revenue YoY",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue_yoy_growth_industry_rank.ary_revenue_yoy_growth_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank ARY revenue YoY",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth_industry_rank",
+        "kind": "concept",
+        "title": "ary revenue yoy growth industry rank"
+      },
+      "name": "ary_revenue_yoy_growth_industry_rank",
+      "sql": "screener_fundamentals_daily.ary_revenue_yoy_growth_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "ary_revenue_yoy_growth_sector_rank",
+      "description": "Sector rank ARY revenue YoY",
+      "id": "sigmarail.field.screener_fundamentals_daily.ary_revenue_yoy_growth_sector_rank.ary_revenue_yoy_growth_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank ARY revenue YoY",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ary_revenue_yoy_growth_sector_rank",
+        "kind": "concept",
+        "title": "ary revenue yoy growth sector rank"
+      },
+      "name": "ary_revenue_yoy_growth_sector_rank",
+      "sql": "screener_fundamentals_daily.ary_revenue_yoy_growth_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "company_name",
+      "description": "Company name",
+      "id": "sigmarail.field.screener_fundamentals_daily.company_name.company_name",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Company name",
+        "id": "sigmarail.mart.screener_fundamentals_daily.company_name",
+        "kind": "concept",
+        "title": "company name"
+      },
+      "name": "company_name",
+      "sql": "screener_fundamentals_daily.company_name",
+      "table": "screener_fundamentals_daily",
+      "type": "String"
+    },
+    {
+      "column": "date",
+      "description": "Trading date",
+      "id": "sigmarail.field.screener_fundamentals_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trading date",
+        "id": "sigmarail.mart.screener_fundamentals_daily.date",
+        "kind": "concept",
+        "title": "date"
+      },
+      "name": "date",
+      "sql": "screener_fundamentals_daily.date",
+      "table": "screener_fundamentals_daily",
+      "type": "Date"
+    },
+    {
+      "column": "industry",
+      "description": "Industry",
+      "id": "sigmarail.field.screener_fundamentals_daily.industry.industry",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry",
+        "id": "sigmarail.mart.screener_fundamentals_daily.industry",
+        "kind": "concept",
+        "title": "industry"
+      },
+      "name": "industry",
+      "sql": "screener_fundamentals_daily.industry",
+      "table": "screener_fundamentals_daily",
+      "type": "String"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.screener_fundamentals_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ReplacingMergeTree version column",
+        "id": "sigmarail.mart.screener_fundamentals_daily.lastupdated",
+        "kind": "concept",
+        "title": "lastupdated"
+      },
+      "name": "lastupdated",
+      "sql": "screener_fundamentals_daily.lastupdated",
+      "table": "screener_fundamentals_daily",
+      "type": "DateTime('America/New_York')"
+    },
+    {
+      "column": "mrq_currentratio",
+      "description": "Current Ratio (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_currentratio.mrq_currentratio",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Current Ratio (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_currentratio",
+        "kind": "concept",
+        "title": "mrq currentratio"
+      },
+      "name": "mrq_currentratio",
+      "sql": "screener_fundamentals_daily.mrq_currentratio",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_de",
+      "description": "Debt to Equity (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_de.mrq_de",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Debt to Equity (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_de",
+        "kind": "concept",
+        "title": "mrq de"
+      },
+      "name": "mrq_de",
+      "sql": "screener_fundamentals_daily.mrq_de",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_ebit",
+      "description": "EBIT (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_ebit.mrq_ebit",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBIT (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_ebit",
+        "kind": "concept",
+        "title": "mrq ebit"
+      },
+      "name": "mrq_ebit",
+      "sql": "screener_fundamentals_daily.mrq_ebit",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_ebitda",
+      "description": "EBITDA (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_ebitda.mrq_ebitda",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_ebitda",
+        "kind": "concept",
+        "title": "mrq ebitda"
+      },
+      "name": "mrq_ebitda",
+      "sql": "screener_fundamentals_daily.mrq_ebitda",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_ebitdamargin",
+      "description": "EBITDA Margin (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_ebitdamargin.mrq_ebitdamargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA Margin (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin",
+        "kind": "concept",
+        "title": "mrq ebitdamargin"
+      },
+      "name": "mrq_ebitdamargin",
+      "sql": "screener_fundamentals_daily.mrq_ebitdamargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_ebitdamargin_industry_rank",
+      "description": "Industry rank MRQ EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_ebitdamargin_industry_rank.mrq_ebitdamargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRQ EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin_industry_rank",
+        "kind": "concept",
+        "title": "mrq ebitdamargin industry rank"
+      },
+      "name": "mrq_ebitdamargin_industry_rank",
+      "sql": "screener_fundamentals_daily.mrq_ebitdamargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_ebitdamargin_sector_rank",
+      "description": "Sector rank MRQ EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_ebitdamargin_sector_rank.mrq_ebitdamargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRQ EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_ebitdamargin_sector_rank",
+        "kind": "concept",
+        "title": "mrq ebitdamargin sector rank"
+      },
+      "name": "mrq_ebitdamargin_sector_rank",
+      "sql": "screener_fundamentals_daily.mrq_ebitdamargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_epsdil",
+      "description": "Diluted EPS (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_epsdil.mrq_epsdil",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Diluted EPS (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_epsdil",
+        "kind": "concept",
+        "title": "mrq epsdil"
+      },
+      "name": "mrq_epsdil",
+      "sql": "screener_fundamentals_daily.mrq_epsdil",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_fcf",
+      "description": "Free Cash Flow (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_fcf.mrq_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_fcf",
+        "kind": "concept",
+        "title": "mrq fcf"
+      },
+      "name": "mrq_fcf",
+      "sql": "screener_fundamentals_daily.mrq_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_gp",
+      "description": "Gross Profit (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_gp.mrq_gp",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Profit (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_gp",
+        "kind": "concept",
+        "title": "mrq gp"
+      },
+      "name": "mrq_gp",
+      "sql": "screener_fundamentals_daily.mrq_gp",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_grossmargin",
+      "description": "Gross Margin (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_grossmargin.mrq_grossmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Margin (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin",
+        "kind": "concept",
+        "title": "mrq grossmargin"
+      },
+      "name": "mrq_grossmargin",
+      "sql": "screener_fundamentals_daily.mrq_grossmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_grossmargin_industry_rank",
+      "description": "Industry rank MRQ gross margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_grossmargin_industry_rank.mrq_grossmargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRQ gross margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin_industry_rank",
+        "kind": "concept",
+        "title": "mrq grossmargin industry rank"
+      },
+      "name": "mrq_grossmargin_industry_rank",
+      "sql": "screener_fundamentals_daily.mrq_grossmargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_grossmargin_sector_rank",
+      "description": "Sector rank MRQ gross margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_grossmargin_sector_rank.mrq_grossmargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRQ gross margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_grossmargin_sector_rank",
+        "kind": "concept",
+        "title": "mrq grossmargin sector rank"
+      },
+      "name": "mrq_grossmargin_sector_rank",
+      "sql": "screener_fundamentals_daily.mrq_grossmargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_netinccmn",
+      "description": "Net Income Common (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_netinccmn.mrq_netinccmn",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Income Common (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_netinccmn",
+        "kind": "concept",
+        "title": "mrq netinccmn"
+      },
+      "name": "mrq_netinccmn",
+      "sql": "screener_fundamentals_daily.mrq_netinccmn",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_netmargin",
+      "description": "Net Margin (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_netmargin.mrq_netmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Margin (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_netmargin",
+        "kind": "concept",
+        "title": "mrq netmargin"
+      },
+      "name": "mrq_netmargin",
+      "sql": "screener_fundamentals_daily.mrq_netmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrq_netmargin_industry_rank",
+      "description": "Industry rank MRQ net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_netmargin_industry_rank.mrq_netmargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRQ net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_netmargin_industry_rank",
+        "kind": "concept",
+        "title": "mrq netmargin industry rank"
+      },
+      "name": "mrq_netmargin_industry_rank",
+      "sql": "screener_fundamentals_daily.mrq_netmargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_netmargin_sector_rank",
+      "description": "Sector rank MRQ net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_netmargin_sector_rank.mrq_netmargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRQ net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_netmargin_sector_rank",
+        "kind": "concept",
+        "title": "mrq netmargin sector rank"
+      },
+      "name": "mrq_netmargin_sector_rank",
+      "sql": "screener_fundamentals_daily.mrq_netmargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrq_revenue",
+      "description": "Revenue (MRQ)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrq_revenue.mrq_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (MRQ)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrq_revenue",
+        "kind": "concept",
+        "title": "mrq revenue"
+      },
+      "name": "mrq_revenue",
+      "sql": "screener_fundamentals_daily.mrq_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_assetsavg",
+      "description": "Average Assets (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_assetsavg.mrt_assetsavg",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average Assets (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_assetsavg",
+        "kind": "concept",
+        "title": "mrt assetsavg"
+      },
+      "name": "mrt_assetsavg",
+      "sql": "screener_fundamentals_daily.mrt_assetsavg",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_capex",
+      "description": "CapEx (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex.mrt_capex",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex",
+        "kind": "concept",
+        "title": "mrt capex"
+      },
+      "name": "mrt_capex",
+      "sql": "screener_fundamentals_daily.mrt_capex",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_abs",
+      "description": "abs(capex) TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_abs.mrt_capex_abs",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "abs(capex) TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_abs",
+        "kind": "concept",
+        "title": "mrt capex abs"
+      },
+      "name": "mrt_capex_abs",
+      "sql": "screener_fundamentals_daily.mrt_capex_abs",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_to_da",
+      "description": "CapEx/DA TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_to_da.mrt_capex_to_da",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx/DA TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_da",
+        "kind": "concept",
+        "title": "mrt capex to da"
+      },
+      "name": "mrt_capex_to_da",
+      "sql": "screener_fundamentals_daily.mrt_capex_to_da",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_to_ocf",
+      "description": "CapEx/OCF TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_to_ocf.mrt_capex_to_ocf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx/OCF TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf",
+        "kind": "concept",
+        "title": "mrt capex to ocf"
+      },
+      "name": "mrt_capex_to_ocf",
+      "sql": "screener_fundamentals_daily.mrt_capex_to_ocf",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_to_ocf_industry_rank",
+      "description": "Industry rank CapEx/OCF",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_to_ocf_industry_rank.mrt_capex_to_ocf_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank CapEx/OCF",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf_industry_rank",
+        "kind": "concept",
+        "title": "mrt capex to ocf industry rank"
+      },
+      "name": "mrt_capex_to_ocf_industry_rank",
+      "sql": "screener_fundamentals_daily.mrt_capex_to_ocf_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_to_ocf_sector_rank",
+      "description": "Sector rank CapEx/OCF",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_to_ocf_sector_rank.mrt_capex_to_ocf_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank CapEx/OCF",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_to_ocf_sector_rank",
+        "kind": "concept",
+        "title": "mrt capex to ocf sector rank"
+      },
+      "name": "mrt_capex_to_ocf_sector_rank",
+      "sql": "screener_fundamentals_daily.mrt_capex_to_ocf_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_vs_5y",
+      "description": "CapEx vs 5y avg TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_vs_5y.mrt_capex_vs_5y",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx vs 5y avg TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_vs_5y",
+        "kind": "concept",
+        "title": "mrt capex vs 5y"
+      },
+      "name": "mrt_capex_vs_5y",
+      "sql": "screener_fundamentals_daily.mrt_capex_vs_5y",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_capex_yoy_growth",
+      "description": "CapEx YoY TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_capex_yoy_growth.mrt_capex_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "CapEx YoY TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_capex_yoy_growth",
+        "kind": "concept",
+        "title": "mrt capex yoy growth"
+      },
+      "name": "mrt_capex_yoy_growth",
+      "sql": "screener_fundamentals_daily.mrt_capex_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_cash_posture",
+      "description": "Cash posture TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_cash_posture.mrt_cash_posture",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Cash posture TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_cash_posture",
+        "kind": "concept",
+        "title": "mrt cash posture"
+      },
+      "name": "mrt_cash_posture",
+      "sql": "screener_fundamentals_daily.mrt_cash_posture",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Int8)"
+    },
+    {
+      "column": "mrt_currentratio",
+      "description": "Current Ratio (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_currentratio.mrt_currentratio",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Current Ratio (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_currentratio",
+        "kind": "concept",
+        "title": "mrt currentratio"
+      },
+      "name": "mrt_currentratio",
+      "sql": "screener_fundamentals_daily.mrt_currentratio",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_de",
+      "description": "Debt to Equity (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_de.mrt_de",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Debt to Equity (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_de",
+        "kind": "concept",
+        "title": "mrt de"
+      },
+      "name": "mrt_de",
+      "sql": "screener_fundamentals_daily.mrt_de",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_depamor",
+      "description": "Depreciation/Amortization (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_depamor.mrt_depamor",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Depreciation/Amortization (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_depamor",
+        "kind": "concept",
+        "title": "mrt depamor"
+      },
+      "name": "mrt_depamor",
+      "sql": "screener_fundamentals_daily.mrt_depamor",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_ebit",
+      "description": "EBIT (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_ebit.mrt_ebit",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBIT (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_ebit",
+        "kind": "concept",
+        "title": "mrt ebit"
+      },
+      "name": "mrt_ebit",
+      "sql": "screener_fundamentals_daily.mrt_ebit",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_ebitda",
+      "description": "EBITDA (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_ebitda.mrt_ebitda",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_ebitda",
+        "kind": "concept",
+        "title": "mrt ebitda"
+      },
+      "name": "mrt_ebitda",
+      "sql": "screener_fundamentals_daily.mrt_ebitda",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_epsdil",
+      "description": "Diluted EPS (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_epsdil.mrt_epsdil",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Diluted EPS (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_epsdil",
+        "kind": "concept",
+        "title": "mrt epsdil"
+      },
+      "name": "mrt_epsdil",
+      "sql": "screener_fundamentals_daily.mrt_epsdil",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_equityavg",
+      "description": "Average Equity (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_equityavg.mrt_equityavg",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average Equity (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_equityavg",
+        "kind": "concept",
+        "title": "mrt equityavg"
+      },
+      "name": "mrt_equityavg",
+      "sql": "screener_fundamentals_daily.mrt_equityavg",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_fcf",
+      "description": "Free Cash Flow (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_fcf.mrt_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_fcf",
+        "kind": "concept",
+        "title": "mrt fcf"
+      },
+      "name": "mrt_fcf",
+      "sql": "screener_fundamentals_daily.mrt_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_fcf_margin",
+      "description": "FCF margin TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_fcf_margin.mrt_fcf_margin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF margin TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_fcf_margin",
+        "kind": "concept",
+        "title": "mrt fcf margin"
+      },
+      "name": "mrt_fcf_margin",
+      "sql": "screener_fundamentals_daily.mrt_fcf_margin",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_fcf_recon_gap",
+      "description": "FCF recon gap TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_fcf_recon_gap.mrt_fcf_recon_gap",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF recon gap TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_fcf_recon_gap",
+        "kind": "concept",
+        "title": "mrt fcf recon gap"
+      },
+      "name": "mrt_fcf_recon_gap",
+      "sql": "screener_fundamentals_daily.mrt_fcf_recon_gap",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_fcf_to_ocf",
+      "description": "FCF/OCF TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_fcf_to_ocf.mrt_fcf_to_ocf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FCF/OCF TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_fcf_to_ocf",
+        "kind": "concept",
+        "title": "mrt fcf to ocf"
+      },
+      "name": "mrt_fcf_to_ocf",
+      "sql": "screener_fundamentals_daily.mrt_fcf_to_ocf",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_fxusd",
+      "description": "FXUSD (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_fxusd.mrt_fxusd",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "FXUSD (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_fxusd",
+        "kind": "concept",
+        "title": "mrt fxusd"
+      },
+      "name": "mrt_fxusd",
+      "sql": "screener_fundamentals_daily.mrt_fxusd",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_gp",
+      "description": "Gross Profit (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_gp.mrt_gp",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Profit (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_gp",
+        "kind": "concept",
+        "title": "mrt gp"
+      },
+      "name": "mrt_gp",
+      "sql": "screener_fundamentals_daily.mrt_gp",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_grossmargin",
+      "description": "Gross Margin (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_grossmargin.mrt_grossmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Margin (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_grossmargin",
+        "kind": "concept",
+        "title": "mrt grossmargin"
+      },
+      "name": "mrt_grossmargin",
+      "sql": "screener_fundamentals_daily.mrt_grossmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_invcapavg",
+      "description": "Average Invested Capital (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_invcapavg.mrt_invcapavg",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Average Invested Capital (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_invcapavg",
+        "kind": "concept",
+        "title": "mrt invcapavg"
+      },
+      "name": "mrt_invcapavg",
+      "sql": "screener_fundamentals_daily.mrt_invcapavg",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_ncfo",
+      "description": "Net Cash Flow from Operations (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_ncfo.mrt_ncfo",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Cash Flow from Operations (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_ncfo",
+        "kind": "concept",
+        "title": "mrt ncfo"
+      },
+      "name": "mrt_ncfo",
+      "sql": "screener_fundamentals_daily.mrt_ncfo",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_netinccmn",
+      "description": "Net Income Common (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_netinccmn.mrt_netinccmn",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Income Common (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_netinccmn",
+        "kind": "concept",
+        "title": "mrt netinccmn"
+      },
+      "name": "mrt_netinccmn",
+      "sql": "screener_fundamentals_daily.mrt_netinccmn",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_netmargin",
+      "description": "Net Margin (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_netmargin.mrt_netmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Margin (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_netmargin",
+        "kind": "concept",
+        "title": "mrt netmargin"
+      },
+      "name": "mrt_netmargin",
+      "sql": "screener_fundamentals_daily.mrt_netmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_ocf_margin",
+      "description": "OCF margin TTM",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_ocf_margin.mrt_ocf_margin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "OCF margin TTM",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_ocf_margin",
+        "kind": "concept",
+        "title": "mrt ocf margin"
+      },
+      "name": "mrt_ocf_margin",
+      "sql": "screener_fundamentals_daily.mrt_ocf_margin",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_revenue",
+      "description": "Revenue (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_revenue.mrt_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_revenue",
+        "kind": "concept",
+        "title": "mrt revenue"
+      },
+      "name": "mrt_revenue",
+      "sql": "screener_fundamentals_daily.mrt_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roa",
+      "description": "Return on Assets (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roa.mrt_roa",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Return on Assets (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roa",
+        "kind": "concept",
+        "title": "mrt roa"
+      },
+      "name": "mrt_roa",
+      "sql": "screener_fundamentals_daily.mrt_roa",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roa_industry_rank",
+      "description": "Industry rank TTM ROA",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roa_industry_rank.mrt_roa_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank TTM ROA",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roa_industry_rank",
+        "kind": "concept",
+        "title": "mrt roa industry rank"
+      },
+      "name": "mrt_roa_industry_rank",
+      "sql": "screener_fundamentals_daily.mrt_roa_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roa_sector_rank",
+      "description": "Sector rank TTM ROA",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roa_sector_rank.mrt_roa_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank TTM ROA",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roa_sector_rank",
+        "kind": "concept",
+        "title": "mrt roa sector rank"
+      },
+      "name": "mrt_roa_sector_rank",
+      "sql": "screener_fundamentals_daily.mrt_roa_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roa_yoy_growth",
+      "description": "YoY ROA growth (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roa_yoy_growth.mrt_roa_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY ROA growth (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roa_yoy_growth",
+        "kind": "concept",
+        "title": "mrt roa yoy growth"
+      },
+      "name": "mrt_roa_yoy_growth",
+      "sql": "screener_fundamentals_daily.mrt_roa_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roe",
+      "description": "Return on Equity (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roe.mrt_roe",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Return on Equity (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roe",
+        "kind": "concept",
+        "title": "mrt roe"
+      },
+      "name": "mrt_roe",
+      "sql": "screener_fundamentals_daily.mrt_roe",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roe_industry_rank",
+      "description": "Industry rank TTM ROE",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roe_industry_rank.mrt_roe_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank TTM ROE",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roe_industry_rank",
+        "kind": "concept",
+        "title": "mrt roe industry rank"
+      },
+      "name": "mrt_roe_industry_rank",
+      "sql": "screener_fundamentals_daily.mrt_roe_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roe_sector_rank",
+      "description": "Sector rank TTM ROE",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roe_sector_rank.mrt_roe_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank TTM ROE",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roe_sector_rank",
+        "kind": "concept",
+        "title": "mrt roe sector rank"
+      },
+      "name": "mrt_roe_sector_rank",
+      "sql": "screener_fundamentals_daily.mrt_roe_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roe_yoy_growth",
+      "description": "YoY ROE growth (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roe_yoy_growth.mrt_roe_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY ROE growth (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roe_yoy_growth",
+        "kind": "concept",
+        "title": "mrt roe yoy growth"
+      },
+      "name": "mrt_roe_yoy_growth",
+      "sql": "screener_fundamentals_daily.mrt_roe_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roic",
+      "description": "Return on Invested Capital (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roic.mrt_roic",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Return on Invested Capital (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roic",
+        "kind": "concept",
+        "title": "mrt roic"
+      },
+      "name": "mrt_roic",
+      "sql": "screener_fundamentals_daily.mrt_roic",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mrt_roic_industry_rank",
+      "description": "Industry rank TTM ROIC",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roic_industry_rank.mrt_roic_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank TTM ROIC",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roic_industry_rank",
+        "kind": "concept",
+        "title": "mrt roic industry rank"
+      },
+      "name": "mrt_roic_industry_rank",
+      "sql": "screener_fundamentals_daily.mrt_roic_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roic_sector_rank",
+      "description": "Sector rank TTM ROIC",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roic_sector_rank.mrt_roic_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank TTM ROIC",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roic_sector_rank",
+        "kind": "concept",
+        "title": "mrt roic sector rank"
+      },
+      "name": "mrt_roic_sector_rank",
+      "sql": "screener_fundamentals_daily.mrt_roic_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mrt_roic_yoy_growth",
+      "description": "YoY ROIC growth (TTM)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mrt_roic_yoy_growth.mrt_roic_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY ROIC growth (TTM)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mrt_roic_yoy_growth",
+        "kind": "concept",
+        "title": "mrt roic yoy growth"
+      },
+      "name": "mrt_roic_yoy_growth",
+      "sql": "screener_fundamentals_daily.mrt_roic_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_dps",
+      "description": "Dividends Per Share (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_dps.mry_dps",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Dividends Per Share (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_dps",
+        "kind": "concept",
+        "title": "mry dps"
+      },
+      "name": "mry_dps",
+      "sql": "screener_fundamentals_daily.mry_dps",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_ebit",
+      "description": "EBIT (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_ebit.mry_ebit",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBIT (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_ebit",
+        "kind": "concept",
+        "title": "mry ebit"
+      },
+      "name": "mry_ebit",
+      "sql": "screener_fundamentals_daily.mry_ebit",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_ebitda",
+      "description": "EBITDA (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_ebitda.mry_ebitda",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_ebitda",
+        "kind": "concept",
+        "title": "mry ebitda"
+      },
+      "name": "mry_ebitda",
+      "sql": "screener_fundamentals_daily.mry_ebitda",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_ebitdamargin",
+      "description": "EBITDA Margin (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_ebitdamargin.mry_ebitdamargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "EBITDA Margin (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin",
+        "kind": "concept",
+        "title": "mry ebitdamargin"
+      },
+      "name": "mry_ebitdamargin",
+      "sql": "screener_fundamentals_daily.mry_ebitdamargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_ebitdamargin_industry_rank",
+      "description": "Industry rank MRY EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_ebitdamargin_industry_rank.mry_ebitdamargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRY EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin_industry_rank",
+        "kind": "concept",
+        "title": "mry ebitdamargin industry rank"
+      },
+      "name": "mry_ebitdamargin_industry_rank",
+      "sql": "screener_fundamentals_daily.mry_ebitdamargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mry_ebitdamargin_sector_rank",
+      "description": "Sector rank MRY EBITDA margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_ebitdamargin_sector_rank.mry_ebitdamargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRY EBITDA margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_ebitdamargin_sector_rank",
+        "kind": "concept",
+        "title": "mry ebitdamargin sector rank"
+      },
+      "name": "mry_ebitdamargin_sector_rank",
+      "sql": "screener_fundamentals_daily.mry_ebitdamargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mry_epsdil",
+      "description": "Diluted EPS (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_epsdil.mry_epsdil",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Diluted EPS (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_epsdil",
+        "kind": "concept",
+        "title": "mry epsdil"
+      },
+      "name": "mry_epsdil",
+      "sql": "screener_fundamentals_daily.mry_epsdil",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_fcf",
+      "description": "Free Cash Flow (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_fcf.mry_fcf",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Free Cash Flow (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_fcf",
+        "kind": "concept",
+        "title": "mry fcf"
+      },
+      "name": "mry_fcf",
+      "sql": "screener_fundamentals_daily.mry_fcf",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_gp",
+      "description": "Gross Profit (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_gp.mry_gp",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Profit (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_gp",
+        "kind": "concept",
+        "title": "mry gp"
+      },
+      "name": "mry_gp",
+      "sql": "screener_fundamentals_daily.mry_gp",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_grossmargin",
+      "description": "Gross Margin (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_grossmargin.mry_grossmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Gross Margin (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_grossmargin",
+        "kind": "concept",
+        "title": "mry grossmargin"
+      },
+      "name": "mry_grossmargin",
+      "sql": "screener_fundamentals_daily.mry_grossmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_netinccmn",
+      "description": "Net Income Common (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_netinccmn.mry_netinccmn",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Income Common (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_netinccmn",
+        "kind": "concept",
+        "title": "mry netinccmn"
+      },
+      "name": "mry_netinccmn",
+      "sql": "screener_fundamentals_daily.mry_netinccmn",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_netmargin",
+      "description": "Net Margin (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_netmargin.mry_netmargin",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net Margin (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_netmargin",
+        "kind": "concept",
+        "title": "mry netmargin"
+      },
+      "name": "mry_netmargin",
+      "sql": "screener_fundamentals_daily.mry_netmargin",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_netmargin_industry_rank",
+      "description": "Industry rank MRY net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_netmargin_industry_rank.mry_netmargin_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRY net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_netmargin_industry_rank",
+        "kind": "concept",
+        "title": "mry netmargin industry rank"
+      },
+      "name": "mry_netmargin_industry_rank",
+      "sql": "screener_fundamentals_daily.mry_netmargin_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mry_netmargin_sector_rank",
+      "description": "Sector rank MRY net margin",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_netmargin_sector_rank.mry_netmargin_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRY net margin",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_netmargin_sector_rank",
+        "kind": "concept",
+        "title": "mry netmargin sector rank"
+      },
+      "name": "mry_netmargin_sector_rank",
+      "sql": "screener_fundamentals_daily.mry_netmargin_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mry_revenue",
+      "description": "Revenue (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_revenue.mry_revenue",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Revenue (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_revenue",
+        "kind": "concept",
+        "title": "mry revenue"
+      },
+      "name": "mry_revenue",
+      "sql": "screener_fundamentals_daily.mry_revenue",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_revenue_yoy_growth",
+      "description": "YoY revenue growth (MRY)",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_revenue_yoy_growth.mry_revenue_yoy_growth",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "YoY revenue growth (MRY)",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth",
+        "kind": "concept",
+        "title": "mry revenue yoy growth"
+      },
+      "name": "mry_revenue_yoy_growth",
+      "sql": "screener_fundamentals_daily.mry_revenue_yoy_growth",
+      "table": "screener_fundamentals_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "mry_revenue_yoy_growth_industry_rank",
+      "description": "Industry rank MRY revenue YoY",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_revenue_yoy_growth_industry_rank.mry_revenue_yoy_growth_industry_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Industry rank MRY revenue YoY",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth_industry_rank",
+        "kind": "concept",
+        "title": "mry revenue yoy growth industry rank"
+      },
+      "name": "mry_revenue_yoy_growth_industry_rank",
+      "sql": "screener_fundamentals_daily.mry_revenue_yoy_growth_industry_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "mry_revenue_yoy_growth_sector_rank",
+      "description": "Sector rank MRY revenue YoY",
+      "id": "sigmarail.field.screener_fundamentals_daily.mry_revenue_yoy_growth_sector_rank.mry_revenue_yoy_growth_sector_rank",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector rank MRY revenue YoY",
+        "id": "sigmarail.mart.screener_fundamentals_daily.mry_revenue_yoy_growth_sector_rank",
+        "kind": "concept",
+        "title": "mry revenue yoy growth sector rank"
+      },
+      "name": "mry_revenue_yoy_growth_sector_rank",
+      "sql": "screener_fundamentals_daily.mry_revenue_yoy_growth_sector_rank",
+      "table": "screener_fundamentals_daily",
+      "type": "Nullable(Float64)"
+    },
+    {
+      "column": "sector",
+      "description": "Sector",
+      "id": "sigmarail.field.screener_fundamentals_daily.sector.sector",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sector",
+        "id": "sigmarail.mart.screener_fundamentals_daily.sector",
+        "kind": "concept",
+        "title": "sector"
+      },
+      "name": "sector",
+      "sql": "screener_fundamentals_daily.sector",
+      "table": "screener_fundamentals_daily",
+      "type": "String"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock ticker symbol",
+      "id": "sigmarail.field.screener_fundamentals_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sf1",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stock ticker symbol",
+        "id": "sigmarail.mart.screener_fundamentals_daily.ticker",
+        "kind": "concept",
+        "title": "ticker"
+      },
+      "name": "ticker",
+      "sql": "screener_fundamentals_daily.ticker",
+      "table": "screener_fundamentals_daily",
+      "type": "String"
+    }
+  ],
+  "version": 1
+}

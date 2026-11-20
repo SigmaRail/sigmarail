@@ -1,0 +1,84 @@
+version: 1
+# Co-located entity sidecar for the ADM (Application Data Model) entities.
+# Slice 1 is AUTHOR-ONLY: these mirror the hardcoded _ADM_ENTITIES so the
+# registry can describe them. The runtime _ADM_ENTITIES swap (F12) lands later.
+source: platform_tools.py
+entities:
+  - id: vera.entity.security
+    kind: adm_entity
+    title: "Security"
+    definition: >
+      A tradable equity, point-in-time by trading date. The screening + metrics
+      grain (one row per ticker per date).
+    computability: vera_native
+    adm:
+      tables: [screener_price_tech_daily, screener_ratings_daily, screener_fundamentals_daily, daily_metrics]
+      anchor: date
+      key: ticker
+    tools:
+      - name: evaluate_position_management
+        role: gate
+        note: "Gate 2.5b — R:R, BAR, earnings window, regime slots"
+
+  - id: vera.entity.market_regime
+    kind: adm_entity
+    title: "Market regime (daily)"
+    definition: >
+      Market-wide daily regime signal (allocation fraction, breadth, thrust).
+      One row per trading date.
+    computability: vera_native
+    adm:
+      tables: [market_regime_signals_daily]
+      anchor: date
+      key: date
+    tools:
+      - name: evaluate_entry_gate
+        role: gate
+        note: "Mandatory — do not assess entry eligibility from raw regime fields"
+
+  - id: vera.entity.regime_composed
+    kind: adm_entity
+    title: "Composed regime policy row"
+    definition: >
+      Per-policy composed regime output keyed by policy_name + ticker + date.
+    computability: vera_native
+    adm:
+      tables: [regime_composed_daily]
+      anchor: date
+      key: [policy_name, ticker, date]
+
+  - id: vera.entity.research_episode
+    kind: adm_entity
+    title: "Research episode"
+    definition: >
+      A KB document (episode) with its mentions, anchored by publish_date.
+      The narrative as-of layer joined to securities.
+    computability: narrative_only
+    adm:
+      tables: [kb_documents, kb_chunks, kb_mentions, kb_sentiment_items]
+      anchor: publish_date
+      key: doc_id
+    narrative: >
+      Producers: batch kb-index (LM Studio) and interactive vera MCP
+      submit_episode_extraction (same parsers as kb-apply-extraction). After
+      kb_get_episode, check derivatives_status; when incomplete and market-timely,
+      agent submits extraction in-session before citing CH-only marts.
+
+  - id: vera.entity.broker_account
+    kind: adm_entity
+    title: "Broker account"
+    definition: >
+      A SnapTrade-linked brokerage account in the household books taxonomy
+      (swing, sector_rotation, …). Live equity, cash, positions, and BAR
+      exposure live here — not in KB narrative.
+    computability: vera_native
+    adm:
+      tables: [broker_accounts_current, broker_household_summary, household_account_books]
+      anchor: date
+      key: account_id
+    tools:
+      - name: get_portfolio_status
+        role: read
+        note: "one-call household snapshot"
+      - name: get_broker_allocation_drift
+        role: read

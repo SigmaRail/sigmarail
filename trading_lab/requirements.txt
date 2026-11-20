@@ -1,0 +1,2 @@
+# LEAN loads the generated SigmaRail Spec vendor package inside the strategy project.
+pydantic>=2.7,<3

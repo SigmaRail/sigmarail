@@ -1,0 +1,18 @@
+{
+  "name": "@sb/webapp-notifications",
+  "version": "5.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit --project tsconfig.lib.json"
+  },
+  "dependencies": {
+    "@sb/webapp-api-client": "workspace:*",
+    "@sb/webapp-core": "workspace:*",
+    "lucide-react": "^0.378.0",
+    "react-click-away-listener": "^2.2.3",
+    "react-infinite-scroll-hook": "^4.1.1"
+  }
+}

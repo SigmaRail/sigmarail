@@ -1,5 +1,5 @@
 -- kind=vendor_copy layer=L1
--- Unified equity+fund OHLCV spine (sep routed by tickers.table=SEP, sfp by SFP).
+-- Unified equity+fund OHLCV spine (SEP/SFP price tables routed by tickers.table=SEP/SFP).
 -- Episode B: L3 (01/03) may later read this instead of re-joining L0.
 CREATE TABLE IF NOT EXISTS daily_prices
 (
@@ -22,7 +22,7 @@ SETTINGS index_granularity = 8192;
 
 -- Managed transform view for target: daily_prices
 -- kind=vendor_copy layer=L1
--- Episode B: unified OHLCV from sep/sfp routed by tickers.table (same policy as 01).
+-- Episode B: unified OHLCV from sep/sfp routed by Sharadar TICKERS labels (SEP/SFP).
 --
 DROP VIEW IF EXISTS xform_daily_prices;
 
@@ -48,7 +48,7 @@ SELECT
     'SEP' AS source_table,
     p.open, p.high, p.low, p.close, p.volume, p.closeadj, p.closeunadj
 FROM sep AS p FINAL
-INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
 WHERE p.date BETWEEN toDate({chunk_start_date:String}) AND toDate({chunk_end_date:String})
 UNION ALL
 SELECT
@@ -58,5 +58,5 @@ SELECT
     'SFP' AS source_table,
     p.open, p.high, p.low, p.close, p.volume, p.closeadj, p.closeunadj
 FROM sfp AS p FINAL
-INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
 WHERE p.date BETWEEN toDate({chunk_start_date:String}) AND toDate({chunk_end_date:String});

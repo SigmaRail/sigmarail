@@ -1,0 +1,122 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ratings_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "close",
+    "high",
+    "high_52w",
+    "setup_quality_rating",
+    "rs_rating",
+    "technical_rating",
+    "stage_code"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "high",
+          "offset": 0
+        },
+        "right": {
+          "type": "formula",
+          "op": "*",
+          "args": [
+            {
+              "type": "col",
+              "name": "high_52w",
+              "offset": 0
+            },
+            {
+              "type": "lit",
+              "value": 0.88
+            }
+          ]
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "setup_quality_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 65
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 70
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "avg_vol_50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 200000
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "setup_quality_rating",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 50
+}

@@ -1,0 +1,44 @@
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { {{ pascalCase name }}{{#if hasProps}}, {{ pascalCase name }}Props{{/if}} } from './{{ camelCase name }}.component';
+
+const meta: Meta<typeof {{ pascalCase name }}> = {
+  title: '{{ storyTitleNamespace }}{{ pascalCase name }}',
+  component: {{ pascalCase name }},
+{{#if hasProps}}
+  args: {
+    children: 'Example content',
+  },
+  argTypes: {
+    children: {
+      control: 'text',
+      description: 'Content to render inside the component',
+    },
+    className: {
+      control: 'text',
+      description: 'Additional CSS classes',
+    },
+  },
+{{/if}}
+};
+
+export default meta;
+
+type Story = StoryObj<typeof {{ pascalCase name }}>;
+
+export const Default: Story = {
+{{#if hasProps}}
+  args: {
+    children: 'Default content',
+  },
+{{/if}}
+};
+{{#if hasProps}}
+
+export const WithCustomClass: Story = {
+  args: {
+    children: 'Content with custom styling',
+    className: 'bg-muted p-4 rounded-lg',
+  },
+};
+{{/if}}

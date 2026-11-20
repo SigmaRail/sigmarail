@@ -1,0 +1,34 @@
+import { makeFragmentData } from '@sb/webapp-api-client/graphql';
+import { screen } from '@testing-library/react';
+
+import { render } from '../../../../../tests/utils/rendering';
+import { {{ pascalCase name }}ListItem } from '../{{ camelCase name }}ListItem.component';
+import { {{ camelCase name }}ListItemFragment } from '../{{ camelCase name }}ListItem.graphql';
+
+describe('{{ pascalCase name }}ListItem: Component', () => {
+  const defaultItem = makeFragmentData(
+    {
+      id: '1',
+      name: 'Test Item',
+    },
+    {{ camelCase name }}ListItemFragment
+  );
+
+  it('should render item name', async () => {
+    render(<{{ pascalCase name }}ListItem item={defaultItem} />);
+
+    expect(await screen.findByText('Test Item')).toBeInTheDocument();
+  });
+
+  it('should render edit link', async () => {
+    render(<{{ pascalCase name }}ListItem item={defaultItem} />);
+
+    expect(await screen.findByRole('link', { name: /edit/i })).toBeInTheDocument();
+  });
+
+  it('should render delete button', async () => {
+    render(<{{ pascalCase name }}ListItem item={defaultItem} />);
+
+    expect(await screen.findByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+});

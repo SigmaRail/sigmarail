@@ -1,0 +1,23 @@
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { Template } from './{{ camelCase name }}.component';
+
+const meta: Meta<typeof Template> = {
+  title: 'Emails/{{ pascalCase name }}',
+  component: Template,
+  args: {
+    userName: 'John Doe',
+  },
+};
+
+export default meta;
+
+type Story = StoryObj<typeof Template>;
+
+export const Default: Story = {};
+
+export const WithCustomName: Story = {
+  args: {
+    userName: 'Jane Smith',
+  },
+};

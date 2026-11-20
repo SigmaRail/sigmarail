@@ -1,0 +1,85 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ratings_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "close",
+    "rs_rating",
+    "screen_eps_quarterly",
+    "screen_eps_yearly",
+    "screen_revenue_quarterly",
+    "overall_score",
+    "classification"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 80
+        }
+      },
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "screen_eps_quarterly",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      },
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "screen_eps_yearly",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      },
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "screen_revenue_quarterly",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "rs_rating",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 50
+}

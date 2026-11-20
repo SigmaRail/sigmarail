@@ -1,0 +1,527 @@
+{
+  "domain": "strategy_authoring",
+  "tools": [
+    {
+      "description": "List Lean framework `Type` ids, slots, init parameters, and vera_lab flags.",
+      "id": "studio.mcp.tool.lean_discover_types",
+      "input_schema": {
+        "properties": {
+          "include_unwired": {
+            "title": "Include Unwired",
+            "type": "boolean"
+          },
+          "include_vera_screener_ids": {
+            "title": "Include Vera Screener Ids",
+            "type": "boolean"
+          },
+          "lean_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lean Root"
+          },
+          "slot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot"
+          }
+        },
+        "title": "lean_discover_typesArguments",
+        "type": "object"
+      },
+      "module": "deployment",
+      "name": "lean_discover_types",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "lean_discover_typesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict.",
+      "id": "studio.mcp.tool.strategy_compile_pipeline",
+      "input_schema": {
+        "properties": {
+          "pipeline_json": {
+            "title": "Pipeline Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_compile_pipelineArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_compile_pipeline",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_compile_pipelineDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compile a PortfolioDocument JSON (legs + allocation) into a VeraLabV1 spec.",
+      "id": "studio.mcp.tool.strategy_compile_portfolio",
+      "input_schema": {
+        "properties": {
+          "portfolio_json": {
+            "title": "Portfolio Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_compile_portfolioArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_compile_portfolio",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_compile_portfolioDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compile a named strategy preset into a VeraLabV1 spec dict.",
+      "id": "studio.mcp.tool.strategy_compile_preset",
+      "input_schema": {
+        "properties": {
+          "preset_id": {
+            "title": "Preset Id",
+            "type": "string"
+          }
+        },
+        "title": "strategy_compile_presetArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_compile_preset",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_compile_presetDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Compose an authored PipelineDocument from a preset + setup recipe packs (semantic authoring).\n\n``setup_recipe_ids`` defaults to ``[\"champion_setup_or\"]``.",
+      "id": "studio.mcp.tool.strategy_compose_document",
+      "input_schema": {
+        "properties": {
+          "preset_id": {
+            "title": "Preset Id",
+            "type": "string"
+          },
+          "setup_recipe_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Recipe Ids"
+          }
+        },
+        "title": "strategy_compose_documentArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_compose_document",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_compose_documentDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Semantic slot-level diff between two VeraLabV1 specs.",
+      "id": "studio.mcp.tool.strategy_diff",
+      "input_schema": {
+        "properties": {
+          "spec_a_json": {
+            "title": "Spec A Json",
+            "type": "string"
+          },
+          "spec_b_json": {
+            "title": "Spec B Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_diffArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_diff",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_diffDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Decompile a VeraLabV1 spec JSON back into a PipelineDocument.",
+      "id": "studio.mcp.tool.strategy_fork",
+      "input_schema": {
+        "properties": {
+          "spec_json": {
+            "title": "Spec Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_forkArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_fork",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_forkDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Decompile a VeraLabV1 spec JSON back into a PortfolioDocument.",
+      "id": "studio.mcp.tool.strategy_fork_portfolio",
+      "input_schema": {
+        "properties": {
+          "spec_json": {
+            "title": "Spec Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_fork_portfolioArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_fork_portfolio",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_fork_portfolioDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Load one catalog template (screener IR or strategy PipelineDocument).",
+      "id": "studio.mcp.tool.strategy_get_template",
+      "input_schema": {
+        "properties": {
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "title": "strategy_get_templateArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_get_template",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_get_templateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Validate a PipelineDocument AST + flag runtime-contract conflicts.",
+      "id": "studio.mcp.tool.strategy_lint",
+      "input_schema": {
+        "properties": {
+          "pipeline_json": {
+            "title": "Pipeline Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_lintArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_lint",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_lintDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Screener column surface for authoring (screener_*, never the legacy view).",
+      "id": "studio.mcp.tool.strategy_list_columns",
+      "input_schema": {
+        "properties": {},
+        "title": "strategy_list_columnsArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_list_columns",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_list_columnsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Semantic factor registry (name -> L7 column/table/direction).",
+      "id": "studio.mcp.tool.strategy_list_factors",
+      "input_schema": {
+        "properties": {},
+        "title": "strategy_list_factorsArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_list_factors",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_list_factorsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Named strategy presets.",
+      "id": "studio.mcp.tool.strategy_list_presets",
+      "input_schema": {
+        "properties": {},
+        "title": "strategy_list_presetsArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_list_presets",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_list_presetsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Named setup expression packs (SSOT for composed setup trees).\n\nUse these recipe ids with strategy_compose_document instead of hand-typing expression trees.\n``champion_setup_or`` = volume_thrust_breakout OR vcp_compression OR pocket_pivot.",
+      "id": "studio.mcp.tool.strategy_list_setup_recipes",
+      "input_schema": {
+        "properties": {},
+        "title": "strategy_list_setup_recipesArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_list_setup_recipes",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_list_setup_recipesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "List screener and strategy templates (C-TEMPLATE-CATALOG-V1). Default status=active.",
+      "id": "studio.mcp.tool.strategy_list_templates",
+      "input_schema": {
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "strategy_list_templatesArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_list_templates",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_list_templatesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Patch authored PipelineDocument via Studio REST (HTTP; requires rationale per op).",
+      "id": "studio.mcp.tool.strategy_patch_pipeline",
+      "input_schema": {
+        "properties": {
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "expected_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Hash"
+          },
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "ops": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Ops",
+            "type": "array"
+          },
+          "probe_mode": {
+            "title": "Probe Mode",
+            "type": "string"
+          },
+          "retest": {
+            "title": "Retest",
+            "type": "boolean"
+          },
+          "through_binding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Through Binding Id"
+          }
+        },
+        "title": "strategy_patch_pipelineArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_patch_pipeline",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_patch_pipelineDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "JSON schema for a staged PipelineDocument.",
+      "id": "studio.mcp.tool.strategy_pipeline_schema",
+      "input_schema": {
+        "properties": {},
+        "title": "strategy_pipeline_schemaArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_pipeline_schema",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_pipeline_schemaDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Validate + compile an authored PipelineDocument and save it (forks when runs exist).\n\nUse this to persist the output of ``strategy_compose_document`` / ``strategy_fork`` — no raw\nVeraLabV1 JSON needed. Check ``forked`` and use the returned ``ir_id`` for follow-up calls.",
+      "id": "studio.mcp.tool.strategy_save_pipeline",
+      "input_schema": {
+        "properties": {
+          "author_agent": {
+            "title": "Author Agent",
+            "type": "string"
+          },
+          "changelog_notes": {
+            "title": "Changelog Notes",
+            "type": "string"
+          },
+          "force_new_version": {
+            "title": "Force New Version",
+            "type": "boolean"
+          },
+          "ir_id": {
+            "title": "Ir Id",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "pipeline_json": {
+            "title": "Pipeline Json",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "title": "strategy_save_pipelineArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_save_pipeline",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_save_pipelineDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "description": "Validate a staged PipelineDocument JSON without compiling it.",
+      "id": "studio.mcp.tool.strategy_validate_pipeline",
+      "input_schema": {
+        "properties": {
+          "pipeline_json": {
+            "title": "Pipeline Json",
+            "type": "string"
+          }
+        },
+        "title": "strategy_validate_pipelineArguments",
+        "type": "object"
+      },
+      "module": "strategy",
+      "name": "strategy_validate_pipeline",
+      "output_schema": {
+        "additionalProperties": true,
+        "description": "Object result; return keys depend on the operation and runtime data.",
+        "title": "strategy_validate_pipelineDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "version": 1
+}

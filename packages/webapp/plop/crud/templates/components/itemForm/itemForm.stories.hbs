@@ -1,0 +1,32 @@
+import type { Meta, StoryObj } from '@storybook/react';
+
+import { {{ pascalCase name }}Form } from './{{ camelCase name }}Form.component';
+
+const meta: Meta<typeof {{ pascalCase name }}Form> = {
+  title: 'Routes/{{ pascalCase name }}/{{ pascalCase name }}Form',
+  component: {{ pascalCase name }}Form,
+  args: {
+    onSubmit: () => {},
+    loading: false,
+  },
+};
+
+export default meta;
+
+type Story = StoryObj<typeof {{ pascalCase name }}Form>;
+
+export const Default: Story = {};
+
+export const WithInitialData: Story = {
+  args: {
+    initialData: {
+      name: 'Example Item Name',
+    },
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    loading: true,
+  },
+};

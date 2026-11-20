@@ -1,0 +1,1033 @@
+{
+  "_generated_from": "sigmarail_lab.runtime constructor signatures + lean_framework_interpreter._default_vera_store_builders()",
+  "_regenerate": "python -m sigmarail_lab.ir.runtime_param_table --export",
+  "_terminal": {
+    "add": true,
+    "arm_cooldown": false,
+    "cap_weight": false,
+    "displace": false,
+    "enter": true,
+    "exit": true,
+    "ratchet_stop": false,
+    "resize": true,
+    "set_flag": false,
+    "skip": true,
+    "trim": true
+  },
+  "actions": {
+    "add": [
+      "size_scale",
+      "type",
+      "v"
+    ],
+    "arm_cooldown": [
+      "days",
+      "type",
+      "v"
+    ],
+    "cap_weight": [
+      "to",
+      "type",
+      "v"
+    ],
+    "displace": [
+      "cooldown_days",
+      "immune_rs",
+      "incumbent_score",
+      "max_incumbent_r",
+      "max_per_day",
+      "min_incumbent_days",
+      "type",
+      "v"
+    ],
+    "enter": [
+      "size_scale",
+      "type",
+      "v"
+    ],
+    "exit": [
+      "fraction",
+      "type",
+      "v"
+    ],
+    "ratchet_stop": [
+      "mode",
+      "to",
+      "type",
+      "v"
+    ],
+    "resize": [
+      "to",
+      "type",
+      "v"
+    ],
+    "set_flag": [
+      "flag",
+      "type",
+      "v"
+    ],
+    "skip": [
+      "type",
+      "v"
+    ],
+    "trim": [
+      "fraction",
+      "type",
+      "v"
+    ]
+  },
+  "default_exit_rules": [
+    {
+      "description": "Once the trade is ≥3R in profit, trail the protective stop 15% under the highest price since entry — the runner's giveback ceiling. Non-terminal: only raises the stop.",
+      "name": "chandelier_trail",
+      "priority": -5,
+      "tag": "trailing_stop",
+      "then": [
+        {
+          "mode": "max",
+          "to": {
+            "args": [
+              {
+                "field": "highest_price",
+                "type": "pos"
+              },
+              {
+                "type": "lit",
+                "value": 0.85
+              }
+            ],
+            "op": "*",
+            "type": "formula"
+          },
+          "type": "ratchet_stop"
+        }
+      ],
+      "when": {
+        "left": {
+          "field": "r",
+          "type": "pos"
+        },
+        "right": {
+          "type": "lit",
+          "value": 3.0
+        },
+        "type": "gte"
+      }
+    },
+    {
+      "description": "Exit the whole position when price breaches a ratcheted stop and the trail regime is armed (stop above initial AND r≥arm or runner). Tags the exit as 'trailing' and suppresses re-entry for the cooldown window.",
+      "name": "trailing_stop",
+      "priority": 0,
+      "tag": "trailing_stop",
+      "then": [
+        {
+          "fraction": 1.0,
+          "type": "exit"
+        },
+        {
+          "days": 10,
+          "type": "arm_cooldown"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "check_price",
+              "type": "pos"
+            },
+            "right": {
+              "field": "current_stop",
+              "type": "pos"
+            },
+            "type": "lte"
+          },
+          {
+            "items": [
+              {
+                "left": {
+                  "field": "current_stop",
+                  "type": "pos"
+                },
+                "right": {
+                  "args": [
+                    {
+                      "field": "initial_stop",
+                      "type": "pos"
+                    },
+                    {
+                      "type": "lit",
+                      "value": 1e-09
+                    }
+                  ],
+                  "op": "+",
+                  "type": "formula"
+                },
+                "type": "gt"
+              },
+              {
+                "items": [
+                  {
+                    "left": {
+                      "field": "r",
+                      "type": "pos"
+                    },
+                    "right": {
+                      "type": "lit",
+                      "value": 3.0
+                    },
+                    "type": "gte"
+                  },
+                  {
+                    "left": {
+                      "field": "runner_active",
+                      "type": "pos"
+                    },
+                    "right": {
+                      "type": "lit",
+                      "value": 0
+                    },
+                    "type": "neq"
+                  }
+                ],
+                "type": "any"
+              }
+            ],
+            "type": "all"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "Exit the whole position on any breach of the protective stop before the trail regime has armed — this is the initial-stop loss line. Arms the re-entry cooldown.",
+      "name": "hard_stop",
+      "priority": 1,
+      "tag": "hard_stop",
+      "then": [
+        {
+          "fraction": 1.0,
+          "type": "exit"
+        },
+        {
+          "days": 10,
+          "type": "arm_cooldown"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "check_price",
+              "type": "pos"
+            },
+            "right": {
+              "field": "current_stop",
+              "type": "pos"
+            },
+            "type": "lte"
+          },
+          {
+            "item": {
+              "items": [
+                {
+                  "left": {
+                    "field": "current_stop",
+                    "type": "pos"
+                  },
+                  "right": {
+                    "args": [
+                      {
+                        "field": "initial_stop",
+                        "type": "pos"
+                      },
+                      {
+                        "type": "lit",
+                        "value": 1e-09
+                      }
+                    ],
+                    "op": "+",
+                    "type": "formula"
+                  },
+                  "type": "gt"
+                },
+                {
+                  "items": [
+                    {
+                      "left": {
+                        "field": "r",
+                        "type": "pos"
+                      },
+                      "right": {
+                        "type": "lit",
+                        "value": 3.0
+                      },
+                      "type": "gte"
+                    },
+                    {
+                      "left": {
+                        "field": "runner_active",
+                        "type": "pos"
+                      },
+                      "right": {
+                        "type": "lit",
+                        "value": 0
+                      },
+                      "type": "neq"
+                    }
+                  ],
+                  "type": "any"
+                }
+              ],
+              "type": "all"
+            },
+            "type": "not"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "If the trade is still under 1R after 10 days and no tranche has fired, cut half — recycle capital out of dead trades while leaving a reduced position in case it recovers.",
+      "name": "time_stop_partial",
+      "priority": 10,
+      "tag": "time_stop",
+      "then": [
+        {
+          "fraction": 0.5,
+          "type": "trim"
+        },
+        {
+          "flag": "time_stop_partial_taken",
+          "type": "set_flag"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "days_held",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 10
+            },
+            "type": "gte"
+          },
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 1.0
+            },
+            "type": "lt"
+          },
+          {
+            "left": {
+              "field": "time_stop_partial_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "tranche1_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "Hard age-out: exit the entire position after 25 days if it never reached 1R — capital rotation rule. Arms the re-entry cooldown.",
+      "name": "time_stop_full",
+      "priority": 11,
+      "tag": "time_stop",
+      "then": [
+        {
+          "fraction": 1.0,
+          "type": "exit"
+        },
+        {
+          "days": 10,
+          "type": "arm_cooldown"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "days_held",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 25
+            },
+            "type": "gte"
+          },
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 1.0
+            },
+            "type": "lt"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "First profit milestone: at +2.5R sell 20% of the position, pull the stop to entry+0.5R, and flag runner mode (which arms the trailing regime for the remainder).",
+      "name": "tranche1",
+      "priority": 20,
+      "tag": "tranche1",
+      "then": [
+        {
+          "fraction": 0.2,
+          "type": "trim"
+        },
+        {
+          "mode": "max",
+          "to": {
+            "args": [
+              {
+                "field": "entry",
+                "type": "pos"
+              },
+              {
+                "args": [
+                  {
+                    "field": "r_unit",
+                    "type": "pos"
+                  },
+                  {
+                    "type": "lit",
+                    "value": 0.5
+                  }
+                ],
+                "op": "*",
+                "type": "formula"
+              }
+            ],
+            "op": "+",
+            "type": "formula"
+          },
+          "type": "ratchet_stop"
+        },
+        {
+          "flag": "tranche1_taken",
+          "type": "set_flag"
+        },
+        {
+          "flag": "runner_active",
+          "type": "set_flag"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 2.5
+            },
+            "type": "gte"
+          },
+          {
+            "left": {
+              "field": "tranche1_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "Second profit milestone: at +4.5R (requires tranche1 already taken) sell another 33% and pull the stop to entry+2R.",
+      "name": "tranche2",
+      "priority": 21,
+      "tag": "tranche2",
+      "then": [
+        {
+          "fraction": 0.33,
+          "type": "trim"
+        },
+        {
+          "mode": "max",
+          "to": {
+            "args": [
+              {
+                "field": "entry",
+                "type": "pos"
+              },
+              {
+                "args": [
+                  {
+                    "field": "r_unit",
+                    "type": "pos"
+                  },
+                  {
+                    "type": "lit",
+                    "value": 2.0
+                  }
+                ],
+                "op": "*",
+                "type": "formula"
+              }
+            ],
+            "op": "+",
+            "type": "formula"
+          },
+          "type": "ratchet_stop"
+        },
+        {
+          "flag": "tranche2_taken",
+          "type": "set_flag"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "tranche1_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": true
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "tranche2_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 4.5
+            },
+            "type": "gte"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "Final programmed de-risking: at +8R sell another 33% and pull the stop to entry+4R — what remains is the runner, managed by the chandelier trail.",
+      "name": "tranche3",
+      "priority": 22,
+      "tag": "tranche3",
+      "then": [
+        {
+          "fraction": 0.33,
+          "type": "trim"
+        },
+        {
+          "mode": "max",
+          "to": {
+            "args": [
+              {
+                "field": "entry",
+                "type": "pos"
+              },
+              {
+                "args": [
+                  {
+                    "field": "r_unit",
+                    "type": "pos"
+                  },
+                  {
+                    "type": "lit",
+                    "value": 4.0
+                  }
+                ],
+                "op": "*",
+                "type": "formula"
+              }
+            ],
+            "op": "+",
+            "type": "formula"
+          },
+          "type": "ratchet_stop"
+        },
+        {
+          "flag": "tranche3_taken",
+          "type": "set_flag"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "tranche2_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": true
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "tranche3_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 8.0
+            },
+            "type": "gte"
+          }
+        ],
+        "type": "all"
+      }
+    },
+    {
+      "description": "Before any tranche fires, once the trade reaches +1.5R pull the stop to entry+0.2R — worst case becomes roughly a scratch from that point on.",
+      "name": "breakeven_trigger",
+      "priority": 70,
+      "tag": "breakeven_trigger",
+      "then": [
+        {
+          "mode": "max",
+          "to": {
+            "args": [
+              {
+                "field": "entry",
+                "type": "pos"
+              },
+              {
+                "args": [
+                  {
+                    "field": "r_unit",
+                    "type": "pos"
+                  },
+                  {
+                    "type": "lit",
+                    "value": 0.2
+                  }
+                ],
+                "op": "*",
+                "type": "formula"
+              }
+            ],
+            "op": "+",
+            "type": "formula"
+          },
+          "type": "ratchet_stop"
+        }
+      ],
+      "when": {
+        "items": [
+          {
+            "left": {
+              "field": "tranche1_taken",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": false
+            },
+            "type": "eq"
+          },
+          {
+            "left": {
+              "field": "r",
+              "type": "pos"
+            },
+            "right": {
+              "type": "lit",
+              "value": 1.5
+            },
+            "type": "gte"
+          }
+        ],
+        "type": "all"
+      }
+    }
+  ],
+  "types": {
+    "AlphaModel": [],
+    "BarRequirements": [
+      "hold_days_param",
+      "max_hold_days",
+      "needs_live_bars",
+      "required_columns",
+      "warmup_bars"
+    ],
+    "ChHttpClient": [
+      "debug_log",
+      "settings"
+    ],
+    "ChHttpSettings": [
+      "database",
+      "host",
+      "password",
+      "port",
+      "user"
+    ],
+    "ClickHouseAlphaModel": null,
+    "ClickHouseExecutionModel": null,
+    "ClickHousePortfolioConstructionModel": null,
+    "ClickHouseUniverseSelectionModel": null,
+    "CoarseFundamentalUniverseSelectionModel": null,
+    "CompositeAlphaModel": null,
+    "CompositeRiskManagementModel": null,
+    "CompositeUniverseSelectionModel": null,
+    "ConfidenceWeightedPortfolioConstructionModel": null,
+    "ConstantAlphaModel": null,
+    "EconomicEnvironmentRegimeSource": [
+      "store"
+    ],
+    "EmaCrossAlphaModel": null,
+    "EqualWeightingPortfolioConstructionModel": null,
+    "ExecutionModel": [],
+    "FetchWindow": [
+      "end",
+      "start",
+      "ticker"
+    ],
+    "HighRoeQualityUniverseSelectionModel": null,
+    "HighRoeRollingCohort": [
+      "debug",
+      "min_ipo_days",
+      "min_market_cap_millions",
+      "n_new"
+    ],
+    "HighRoeUniverseSelectionModel": null,
+    "ImmediateExecutionModel": null,
+    "Insight": [],
+    "InsightDirection": [],
+    "InsightType": [],
+    "InsightWeightingPortfolioConstructionModel": null,
+    "MacdAlphaModel": null,
+    "ManualUniverseSelectionModel": null,
+    "Market": [],
+    "MaximumDrawdownPercentPerSecurity": null,
+    "MaximumSectorExposureRiskManagementModel": null,
+    "MaximumUnrealizedProfitPercentPerSecurity": null,
+    "NullRiskManagementModel": null,
+    "PerformanceWeightedPortfolioConstructionModel": [
+      "ceiling",
+      "floor",
+      "lookback_days",
+      "metric",
+      "rebalance_days",
+      "store"
+    ],
+    "PortfolioConstructionModel": [],
+    "PortfolioTarget": [],
+    "PositionRiskState": [
+      "atr",
+      "entry_date",
+      "entry_price",
+      "initial_stop",
+      "symbol"
+    ],
+    "PyramidPositionState": [
+      "phases",
+      "ticker"
+    ],
+    "RegimeGateEvaluator": [
+      "gate"
+    ],
+    "RegimeWeightedPortfolioConstructionModel": [
+      "rebalance_days",
+      "regime_map",
+      "signal",
+      "store"
+    ],
+    "Resolution": [],
+    "RiskBudgetedPortfolioConstructionModel": [
+      "add_trigger_pct",
+      "allow_adds_on_invested",
+      "cash_reserve_buffer",
+      "default_stop_loss_pct",
+      "displacement_cooldown_days",
+      "displacement_immune_rs",
+      "displacement_max_incumbent_r",
+      "displacement_min_challenger_rs",
+      "displacement_min_challenger_screens",
+      "displacement_min_hold_days",
+      "enable_displacement",
+      "enable_surrogates",
+      "honor_insight_confidence",
+      "max_entry_atr_pct",
+      "max_position_weight",
+      "max_positions",
+      "min_regime_fraction",
+      "min_surrogate_adv",
+      "order_expr",
+      "pcm_allow_entry_expr",
+      "pcm_scale_expr",
+      "phases",
+      "policy_overrides",
+      "prefer_capital_efficient_surrogates",
+      "rebalance_period_days",
+      "regime_bull_fraction",
+      "regime_neutral_fraction",
+      "risk_allow_pyramid_add_expr",
+      "risk_per_trade_pct",
+      "rules",
+      "scale_expr",
+      "scaled_max_positions_floor",
+      "size_expr",
+      "slots_expr",
+      "store",
+      "surrogate_router",
+      "surrogate_sizing_mode",
+      "use_regime_scaling",
+      "uses"
+    ],
+    "RiskManagementModel": [],
+    "RiskParityPortfolioConstructionModel": null,
+    "RsiAlphaModel": null,
+    "ScreenerStoreAlphaModel": null,
+    "ScreenerStoreExecutionModel": null,
+    "ScreenerStorePortfolioConstructionModel": null,
+    "ScreenerStoreUniverseSelectionModel": null,
+    "SectorWeightingPortfolioConstructionModel": null,
+    "SecurityType": [],
+    "SigmaRailApiClient": [
+      "api_key",
+      "base_url",
+      "debug_log"
+    ],
+    "SigmaRailApiError": [
+      "detail",
+      "operation",
+      "status"
+    ],
+    "SigmaRailDailyScreener": [
+      "universe_spec"
+    ],
+    "SigmaRailFrameworkStore": [
+      "universe_spec"
+    ],
+    "SigmaRailMarketRegimeSignalsDaily": [],
+    "StandardDeviationExecutionModel": null,
+    "SurrogateRouter": [
+      "client",
+      "enable_surrogates",
+      "min_surrogate_adv"
+    ],
+    "SwingBreakoutAlphaModel": [
+      "consolidation_days",
+      "default_stop_loss_pct",
+      "insight_duration_days",
+      "leader_rs_threshold",
+      "min_reward_risk_ratio",
+      "store",
+      "volume_surge_multiplier"
+    ],
+    "SwingProgressiveRiskManagementModel": [
+      "atr_stop_multiplier",
+      "breakeven_r_trigger",
+      "breakeven_time_stop_days",
+      "exit_rules",
+      "init_stop",
+      "max_holding_days",
+      "max_single_weight",
+      "max_stop_loss_pct",
+      "policy_overrides",
+      "risk_skip_time_stop_expr",
+      "rules",
+      "stop_cooldown_days",
+      "stop_trigger_on",
+      "store",
+      "surrogate_router",
+      "take_profit_r",
+      "time_stop_skip_if",
+      "trailing_arm_r",
+      "trailing_ema_period",
+      "trailing_stop_pct",
+      "tranche1_sell_pct",
+      "tranche2_r",
+      "tranche2_sell_pct",
+      "tranche3_r",
+      "tranche3_sell_pct",
+      "tranches",
+      "use_atr_stops"
+    ],
+    "SwingPullbackAlphaModel": [
+      "default_stop_loss_pct",
+      "ema_period",
+      "insight_duration_days",
+      "reclaim_threshold_pct",
+      "store"
+    ],
+    "Symbol": [
+      "val"
+    ],
+    "SymbolRollingData": [
+      "lookback",
+      "symbol"
+    ],
+    "TrailingStopRiskManagementModel": null,
+    "UniverseSelectionModel": [],
+    "VeraCompositeAlphaModel": [
+      "circuit_drawdown_threshold",
+      "circuit_pause_days",
+      "entry_triggers",
+      "field_weights",
+      "hold_buffer_rank",
+      "max_positions",
+      "min_hold_days",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store"
+    ],
+    "VeraGraphPolicyAlphaModel": null,
+    "VeraGraphPolicyPortfolioConstructionModel": null,
+    "VeraHedgeModel": [
+      "instruments",
+      "store"
+    ],
+    "VeraMacroEconomicDaily": [],
+    "VeraPyramidAlphaModel": [
+      "add_trigger_pct",
+      "confidence_expr",
+      "direction_expr",
+      "eligibility_expr",
+      "entry_triggers",
+      "field_weights",
+      "gate_combine",
+      "gates",
+      "insight_period_days",
+      "magnitude_expr",
+      "max_entry_atr_pct",
+      "max_positions",
+      "membership",
+      "min_hold_days",
+      "min_screens",
+      "named_groups",
+      "phases",
+      "risk_allow_pyramid_add_expr",
+      "row_rank",
+      "row_scale_denom",
+      "selection",
+      "setup_col",
+      "setup_expr",
+      "setup_where",
+      "stages",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store",
+      "uses",
+      "weight_expr"
+    ],
+    "VeraScreenerAlphaModel": [
+      "circuit_drawdown_threshold",
+      "circuit_pause_days",
+      "entry_triggers",
+      "hold_buffer_rank",
+      "max_positions",
+      "min_hold_days",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store"
+    ],
+    "VeraScreenerExecutionModel": [
+      "fill_session",
+      "store"
+    ],
+    "VeraScreenerPortfolioConstructionModel": [
+      "exit_when_no_bars",
+      "hold_policy",
+      "max_positions",
+      "max_total_exposure",
+      "max_weight",
+      "min_weight",
+      "store",
+      "target_atr_risk",
+      "uses"
+    ],
+    "VeraScreenerUniverseSelectionModel": [
+      "store"
+    ],
+    "VeraSectorAlphaModel": null,
+    "VeraSectorEtfAlphaModel": null,
+    "VeraSectorEtfPortfolioConstructionModel": null,
+    "VeraSectorPortfolioConstructionModel": null,
+    "VeraSymbolTechnicalFeaturesDaily": [
+      "tickers"
+    ],
+    "VeraTqqqTacticalAlphaModel": null,
+    "VeraTqqqTacticalPortfolioConstructionModel": null,
+    "VolatilityTargetingPortfolioConstructionModel": [
+      "band",
+      "store",
+      "target_vol"
+    ],
+    "VolumeWeightedAveragePriceExecutionModel": null,
+    "WiredFrameworkV1": [
+      "alpha",
+      "execution",
+      "portfolio_construction",
+      "risk_management",
+      "universe_selection"
+    ],
+    "_GateConfig": [
+      "confirm_off_days",
+      "confirm_on_days",
+      "missing_action",
+      "signal_weights",
+      "threshold"
+    ]
+  }
+}

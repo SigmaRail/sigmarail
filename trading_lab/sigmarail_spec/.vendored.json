@@ -1,0 +1,25 @@
+{
+  "files": {
+    "__init__.py": "eab0ba2f67d178ac0f85e151ec33d33a6deac60ad0e3a246621594c359b04107",
+    "data/fields.json": "4ae5ee7dff57156dab9663adcb8852a14d299b5a571a4865e8cb93fb7889ce75",
+    "entry_trigger_ast.py": "da882fb54acfefe3accf18f4a7b173bec8d41930dbc661d4d2006b56fbe76e6e",
+    "evaluate.py": "45205062d28661de83559f930cc54b935359387e62e327664124d65feaf2d653",
+    "expr.py": "9cf8b7ec22a8e09c30ca6be3f247e75e8661df1aa2d5837e7a259513be950b63",
+    "strategy/__init__.py": "1759f8b8496c5679e8dc9802d0087f65ea4dc16c948baa6498936e2bb5d562d9",
+    "strategy/compiler.py": "eae78c7e3da45a7dada25e0d8e79b41dbe03a0bdd05ac1bcc0d77499a9c2e560",
+    "strategy/decompiler.py": "90f1a936d19203d049ca217a752a0223c57ce6af74efc51dac28d90d96ba3b8f",
+    "strategy/field_registry.py": "5f10daf7f650c7bd01253d1918630872faa54684894aa36c718c03b90129a840",
+    "strategy/pcm_bindings.py": "6b99e921a934e2d8164d4d51b60a4255312e2bf279cde6e13d4c6db6381cf493",
+    "strategy/pcm_ladder.py": "c7f44265d4690170f2c9fd8963139479cef8ecd7740f5658171f3d6f7261b909",
+    "strategy/pipeline.py": "2f4547a5f69f9a6e7d9877f786459ceddba6c0e84ca122df45721505fb5f5024",
+    "strategy/position_bindings.py": "8b195293b917f7e20b3f6895b2cd0c64026c4f55f9d59e34787c30b41eff5bd3",
+    "strategy/presets.py": "f93ebd863a70ba4ac12c83bdbb1572f740df0bb39806b60bb01954f0a5673024",
+    "strategy/regime_gate.py": "8ec5ded044f20c04e66c235be21bba510f36a416ecf94c1b9e07d221f30c7919",
+    "strategy/risk_ladder.py": "94e69e6ef40b0883bcf7d0b565710575645b7e26bb9b19d9aa0376452263f68b",
+    "strategy/setup_recipes.py": "e31785d20cbdffa2313c6a4c5e9f39ff67131867f2f1f74c0ed708361394c13b",
+    "universe_query.py": "1d466d23a7010a99cb0518613ccf6e3fea599a5533d11240adf7b5c32aff5134"
+  },
+  "generated_by": "packages/sigmarail-spec/tools/sync_lean_vendor.py",
+  "note": "generated artifact; edit packages/sigmarail-spec runtime, then sync this copy",
+  "source": "packages/sigmarail-spec/src/sigmarail_spec"
+}

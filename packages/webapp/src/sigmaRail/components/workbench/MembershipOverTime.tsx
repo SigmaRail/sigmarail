@@ -1,0 +1,169 @@
+/**
+ * Membership over time — the screen's member count per day, with the from-to window.
+ *
+ * Extracted from the strategy card so the **screener** can show the same chart instead of only
+ * the strategy view. The range summary is one server-side aggregate (`GROUP BY date, count()`),
+ * so this only owns the window, the query and the chart.
+ *
+ * A click on the chart picks a date — the caller decides what follows it (the card pins its
+ * as-of list, the screener moves its evaluation date).
+ */
+
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { fetchAsOfRange, fetchUniverseRangeSummary, fetchUniverseSectorRangeSummary } from "../../api/screens";
+import { RANGE_PRESETS, clampWindow, membershipHistoryStart, presetWindow } from "../../lib/rangePresets";
+import type { UniverseQueryV1 } from "../../types";
+import { ProbeRangeChart } from "../ProbeRangeChart";
+import { SectorMembershipAreaChart } from "./SectorMembershipAreaChart";
+import { Button } from "@sb/webapp-core/components/ui/button";
+import { Input } from "@sb/webapp-core/components/ui/input";
+
+interface MembershipOverTimeProps {
+  /** The screen being charted — only its `where` matters (the summary leans the spec itself). */
+  spec: UniverseQueryV1;
+  /** Anchor: the latest date in the screen. */
+  asOf: string;
+  /** Window start to begin with (falls back to `asOf` − 1y). */
+  startDate?: string;
+  onHoverDate?: (date: string | null) => void;
+  /** A click on the chart picks a date for the caller's list. */
+  onPickDate?: (date: string) => void;
+  height?: number;
+  /** Include a server-aggregated 100% stacked sector composition history. */
+  showSectorComposition?: boolean;
+}
+
+export function MembershipOverTime({
+  spec,
+  asOf,
+  startDate,
+  onHoverDate,
+  onPickDate,
+  height = 140,
+  showSectorComposition = false,
+}: MembershipOverTimeProps) {
+  // A caller may not have a strategy's evaluation start; default to the last year so the window
+  // is always valid (and cheap — the full history is one click away via `Max`).
+  const defaultFrom = membershipHistoryStart(asOf, startDate);
+  /** Earliest session the service can serve — what `Max` should reach for. */
+  const rangeFloor = useQuery({
+    queryKey: ["backtest-as-of-range-floor"],
+    queryFn: () => fetchAsOfRange(10000),
+    staleTime: 60 * 60_000,
+  }).data?.slice(-1)[0];
+
+  const [rangeFrom, setRangeFrom] = useState(defaultFrom);
+  const [rangeTo, setRangeTo] = useState(asOf);
+
+  useEffect(() => {
+    setRangeFrom(defaultFrom);
+    setRangeTo(asOf);
+  }, [defaultFrom, asOf]);
+
+  /** Normalise every window change (the only thing to fix is an inverted pair — no width cap). */
+  const applyWindow = (from: string, to: string) => {
+    const window = clampWindow(from, to);
+    setRangeFrom(window.from);
+    setRangeTo(window.to);
+  };
+
+  const liveSpecKey = JSON.stringify(spec?.where ?? null);
+  const rangeQuery = useQuery({
+    queryKey: ["universe-membership-range", spec?.where, rangeFrom, rangeTo, showSectorComposition],
+    queryFn: () =>
+      showSectorComposition
+        ? fetchUniverseSectorRangeSummary({ spec, start_date: rangeFrom, end_date: rangeTo })
+        : fetchUniverseRangeSummary({ spec, start_date: rangeFrom, end_date: rangeTo }),
+    enabled: Boolean(spec && rangeFrom && rangeTo),
+    staleTime: 0,
+    placeholderData: (prev) => prev,
+  });
+
+  const dates = rangeQuery.data?.dates ?? [];
+  const memberCounts = rangeQuery.data?.member_counts ?? [];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-ink-muted">
+        <span className="inline-flex flex-wrap items-center gap-1">
+          {RANGE_PRESETS.map((preset) => (
+            <Button
+              key={preset.id}
+              type="button"
+              onClick={() => {
+                // Fixed spans must keep their requested duration. A late or incomplete
+                // availability-floor response can otherwise clamp 2Y back to the end date.
+                const floor = preset.id === "MAX" ? rangeFloor : undefined;
+                const window = presetWindow(preset.id, rangeTo || asOf, floor);
+                if (window) applyWindow(window.from, window.to);
+              }}
+              variant="outline"
+              size="sm"
+              className="h-7 px-1.5 text-[10px] text-ink-muted"
+              title={`${preset.label} back from ${rangeTo || asOf}`}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </span>
+        <label className="inline-flex items-center gap-1">
+          from
+          <Input
+            type="date"
+            value={rangeFrom}
+            max={rangeTo || undefined}
+            onChange={(e) => applyWindow(e.target.value, rangeTo)}
+            className="h-7 w-auto min-w-0 px-1 py-0.5 text-[10px]"
+          />
+        </label>
+        <label className="inline-flex items-center gap-1">
+          to
+          <Input
+            type="date"
+            value={rangeTo}
+            min={rangeFrom || undefined}
+            onChange={(e) => applyWindow(rangeFrom, e.target.value)}
+            className="h-7 w-auto min-w-0 px-1 py-0.5 text-[10px]"
+          />
+        </label>
+        {rangeQuery.isFetching ? <span className="text-ink-faint">loading…</span> : null}
+      </div>
+
+      {!asOf && <p className="font-mono text-[10px] text-ink-faint">Set an as-of date to load membership.</p>}
+      {rangeQuery.error && (
+        <p className="font-mono text-[10px] text-danger">{(rangeQuery.error as Error).message}</p>
+      )}
+      {rangeQuery.data && (
+        <>
+          <p className="font-mono text-[10px] text-ink-muted">
+            points={String(rangeQuery.data.summary?.trading_days ?? dates.length)} · avg members=
+            {String(rangeQuery.data.summary?.avg_members_per_day ?? "—")} ·{" "}
+            {rangeFrom} → {rangeTo}
+          </p>
+          {showSectorComposition && rangeQuery.data.sector_counts ? (
+            <SectorMembershipAreaChart
+              dates={dates}
+              memberCounts={memberCounts}
+              sectorCounts={rangeQuery.data.sector_counts}
+              height={height}
+              onHoverDate={onHoverDate}
+              onClickDate={(d) => onPickDate?.(d)}
+            />
+          ) : (
+            <ProbeRangeChart
+              dates={dates}
+              memberCounts={memberCounts}
+              membersOnly
+              height={height}
+              onHoverDate={onHoverDate}
+              onClickDate={(d) => onPickDate?.(d)}
+            />
+          )}
+        </>
+      )}
+      {/* silence the unused-key warning without changing the query identity */}
+      <span className="hidden" data-spec-key={liveSpecKey.slice(0, 0)} />
+    </div>
+  );
+}

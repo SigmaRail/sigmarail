@@ -1,0 +1,35 @@
+{
+  "name": "status-dashboard",
+  "version": "5.0.0",
+  "private": true,
+  "scripts": {},
+  "dependencies": {
+    "core-js": "^3.33.3",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0"
+  },
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
+    "@sb/core": "workspace:*",
+    "@sb/infra-core": "workspace:*",
+    "@sb/infra-shared": "workspace:*",
+    "@sb/tools": "workspace:*",
+    "babel-plugin-styled-components": "^2.1.4"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "nx": {}
+}

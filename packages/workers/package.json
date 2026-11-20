@@ -1,0 +1,31 @@
+{
+  "name": "workers",
+  "version": "5.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "stop-task-scheduling-executions": "/bin/bash ./scripts/stop-task-scheduling-executions.sh",
+    "lint:js": "eslint .",
+    "sls": "sls",
+    "serverless": "serverless",
+    "diff": "echo 'no-diff-available'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.13",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@sb/core": "workspace:*",
+    "@sb/tools": "workspace:*",
+    "@sb/webapp-emails": "workspace:*",
+    "serverless": "^3.38.0",
+    "serverless-esbuild": "^1.52.1",
+    "serverless-localstack": "^1.1.2",
+    "serverless-step-functions": "^3.18.0"
+  },
+  "nx": {}
+}

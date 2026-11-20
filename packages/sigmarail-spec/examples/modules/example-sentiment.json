@@ -1,0 +1,73 @@
+{
+  "contract_version": 1,
+  "module_id": "sigmarail.example_sentiment",
+  "version": "0.1.0",
+  "kind": "provider_data",
+  "package": {
+    "distribution": "sigmarail-example-sentiment",
+    "entry_point_group": "sigmarail.modules",
+    "entry_point": "example_sentiment:register"
+  },
+  "dependencies": [
+    {
+      "module_id": "sigmarail.core",
+      "version_range": ">=0.1,<1.0",
+      "optional": false
+    }
+  ],
+  "datasets": [
+    {
+      "dataset_id": "sigmarail.example_sentiment.daily",
+      "table": "ext_example_sentiment_daily",
+      "frequency": "daily",
+      "entity_grain": ["ticker"],
+      "time_key": "date",
+      "as_of_semantics": "public_available_at",
+      "completion": "completed",
+      "source_ids": ["example_source"],
+      "fields": [
+        {
+          "field_id": "sigmarail.field.example_sentiment.daily.sentiment_score",
+          "name": "sentiment_score",
+          "type": "Nullable(Float32)",
+          "nullable": true,
+          "units": "normalized_score",
+          "semantic_ref": "sigmarail-spec://v1/modules/example-sentiment/semantics",
+          "lineage_ref": "sigmarail-spec://v1/modules/example-sentiment/lineage"
+        }
+      ]
+    }
+  ],
+  "joins": [
+    {
+      "id": "sigmarail.example_sentiment.join.core_daily",
+      "from_dataset": "sigmarail.core.screener_price_tech_daily",
+      "to_dataset": "sigmarail.example_sentiment.daily",
+      "keys": [
+        {"from": "ticker", "to": "ticker"},
+        {"from": "date", "to": "date"}
+      ],
+      "cardinality": "one_to_one",
+      "join_type": "left_any",
+      "temporal_alignment": "exact",
+      "max_staleness": null
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "example_sentiment.query",
+      "kind": "query",
+      "contract_ref": "sigmarail-spec://v1/modules/example-sentiment/query",
+      "mcp_resource_uris": ["sigmarail-spec://v1/modules/example-sentiment/fields"],
+      "mcp_tool_names": ["example_sentiment_query"]
+    }
+  ],
+  "settings": [
+    {
+      "key": "EXAMPLE_PROVIDER_KEY",
+      "required": true,
+      "secret": true,
+      "description": "Synthetic example only; a real module stores provider credentials in a secret store."
+    }
+  ]
+}

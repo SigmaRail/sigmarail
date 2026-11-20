@@ -1,0 +1,160 @@
+{
+  "activation_environment_variable": "SIGMARAIL_STUDIO_MODULES",
+  "always_enabled": [
+    "core"
+  ],
+  "catalog_version": 1,
+  "default_enabled": [
+    "core",
+    "studio"
+  ],
+  "modules": [
+    {
+      "compatibility": false,
+      "default_enabled": true,
+      "domains": [
+        "core"
+      ],
+      "module_id": "sigmarail.core",
+      "name": "core",
+      "owner": "sigmarail",
+      "requires": [
+        "sigmarail",
+        "sigmarail-spec"
+      ]
+    },
+    {
+      "compatibility": false,
+      "default_enabled": true,
+      "domains": [
+        "studio"
+      ],
+      "module_id": "sigmarail.studio",
+      "name": "studio",
+      "owner": "sigmarail-studio",
+      "requires": [
+        "sigmarail-spec"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "catalog",
+        "screen",
+        "chart"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.screening",
+      "name": "screening",
+      "owner": "sigmarail-studio",
+      "requires": [
+        "sigmarail",
+        "sigmarail-spec"
+      ],
+      "target_requires": [
+        "sigmarail",
+        "sigmarail-spec"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "strategy"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.strategy_authoring",
+      "name": "strategy",
+      "owner": "sigmarail-studio",
+      "requires": [
+        "sigmarail-spec",
+        "sigmarail-lean"
+      ],
+      "target_requires": [
+        "sigmarail-spec",
+        "sigmarail-lean"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "backtest",
+        "regime",
+        "optimize"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.backtesting",
+      "name": "backtesting",
+      "owner": "sigmarail-lean",
+      "requires": [
+        "sigmarail",
+        "sigmarail-spec",
+        "sigmarail-lean"
+      ],
+      "target_requires": [
+        "sigmarail",
+        "sigmarail-spec",
+        "sigmarail-lean"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "portfolio"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.portfolio",
+      "name": "portfolio",
+      "owner": "sigmarail-portfolio",
+      "requires": [
+        "sigmarail",
+        "sigmarail-portfolio"
+      ],
+      "target_requires": [
+        "sigmarail-portfolio"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "deploy",
+        "lean"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.deployment",
+      "name": "deployment",
+      "owner": "sigmarail-lean",
+      "requires": [
+        "sigmarail",
+        "sigmarail-lean"
+      ],
+      "target_requires": [
+        "sigmarail",
+        "sigmarail-lean"
+      ]
+    },
+    {
+      "compatibility": true,
+      "default_enabled": false,
+      "domains": [
+        "research",
+        "kb"
+      ],
+      "migration_status": "ported_pending_schema_validation",
+      "module_id": "sigmarail.knowledge",
+      "name": "knowledge",
+      "owner": "knowledge-base",
+      "requires": [
+        "sigmarail",
+        "sigmarail-knowledge"
+      ],
+      "target_requires": [
+        "sigmarail-knowledge"
+      ]
+    }
+  ]
+}

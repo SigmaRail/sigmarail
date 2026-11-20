@@ -1,0 +1,483 @@
+{
+  "domain": "institutional",
+  "fields": [
+    {
+      "column": "date",
+      "description": "Trading date",
+      "id": "sigmarail.field.screener_ownership_daily.date.date",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Trading date",
+        "id": "sigmarail.mart.screener_ownership_daily.date",
+        "kind": "concept",
+        "title": "date"
+      },
+      "name": "date",
+      "sql": "screener_ownership_daily.date",
+      "table": "screener_ownership_daily",
+      "type": "Date"
+    },
+    {
+      "column": "insider_cluster_buy_flag",
+      "description": "Cluster buy flag",
+      "id": "sigmarail.field.screener_ownership_daily.insider_cluster_buy_flag.insider_cluster_buy_flag",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Cluster buy flag",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_cluster_buy_flag",
+        "kind": "concept",
+        "title": "insider cluster buy flag"
+      },
+      "name": "insider_cluster_buy_flag",
+      "sql": "screener_ownership_daily.insider_cluster_buy_flag",
+      "table": "screener_ownership_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "insider_days_since_open_buy",
+      "description": "Days since last buy; 65535 if none",
+      "id": "sigmarail.field.screener_ownership_daily.insider_days_since_open_buy.insider_days_since_open_buy",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Days since last buy; 65535 if none",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_days_since_open_buy",
+        "kind": "concept",
+        "title": "insider days since open buy"
+      },
+      "name": "insider_days_since_open_buy",
+      "sql": "screener_ownership_daily.insider_days_since_open_buy",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "insider_last_filingdate",
+      "description": "Latest Form 4 filingdate in window",
+      "id": "sigmarail.field.screener_ownership_daily.insider_last_filingdate.insider_last_filingdate",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Latest Form 4 filingdate in window",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_last_filingdate",
+        "kind": "concept",
+        "title": "insider last filingdate"
+      },
+      "name": "insider_last_filingdate",
+      "sql": "screener_ownership_daily.insider_last_filingdate",
+      "table": "screener_ownership_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "insider_net_buy_value_90d",
+      "description": "Net insider buy value 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_net_buy_value_90d.insider_net_buy_value_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Net insider buy value 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_net_buy_value_90d",
+        "kind": "concept",
+        "title": "insider net buy value 90d"
+      },
+      "name": "insider_net_buy_value_90d",
+      "sql": "screener_ownership_daily.insider_net_buy_value_90d",
+      "table": "screener_ownership_daily",
+      "type": "Float64"
+    },
+    {
+      "column": "insider_officer_buys_90d",
+      "description": "Officer buys 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_officer_buys_90d.insider_officer_buys_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Officer buys 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_officer_buys_90d",
+        "kind": "concept",
+        "title": "insider officer buys 90d"
+      },
+      "name": "insider_officer_buys_90d",
+      "sql": "screener_ownership_daily.insider_officer_buys_90d",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "insider_officer_sells_90d",
+      "description": "Officer sells 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_officer_sells_90d.insider_officer_sells_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Officer sells 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_officer_sells_90d",
+        "kind": "concept",
+        "title": "insider officer sells 90d"
+      },
+      "name": "insider_officer_sells_90d",
+      "sql": "screener_ownership_daily.insider_officer_sells_90d",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "insider_open_buys_90d",
+      "description": "Open-market insider buys 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_open_buys_90d.insider_open_buys_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Open-market insider buys 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_open_buys_90d",
+        "kind": "concept",
+        "title": "insider open buys 90d"
+      },
+      "name": "insider_open_buys_90d",
+      "sql": "screener_ownership_daily.insider_open_buys_90d",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "insider_open_sells_90d",
+      "description": "Open-market insider sells 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_open_sells_90d.insider_open_sells_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Open-market insider sells 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_open_sells_90d",
+        "kind": "concept",
+        "title": "insider open sells 90d"
+      },
+      "name": "insider_open_sells_90d",
+      "sql": "screener_ownership_daily.insider_open_sells_90d",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "insider_sentiment_90d",
+      "description": "Insider sentiment 90d",
+      "id": "sigmarail.field.screener_ownership_daily.insider_sentiment_90d.insider_sentiment_90d",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Insider sentiment 90d",
+        "id": "sigmarail.mart.screener_ownership_daily.insider_sentiment_90d",
+        "kind": "concept",
+        "title": "insider sentiment 90d"
+      },
+      "name": "insider_sentiment_90d",
+      "sql": "screener_ownership_daily.insider_sentiment_90d",
+      "table": "screener_ownership_daily",
+      "type": "Enum8('neutral' = 0, 'net_buy' = 1, 'net_sell' = 2)"
+    },
+    {
+      "column": "inst_calendardate",
+      "description": "13F holdings as-of quarter end",
+      "id": "sigmarail.field.screener_ownership_daily.inst_calendardate.inst_calendardate",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "13F holdings as-of quarter end",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_calendardate",
+        "kind": "concept",
+        "title": "inst calendardate"
+      },
+      "name": "inst_calendardate",
+      "sql": "screener_ownership_daily.inst_calendardate",
+      "table": "screener_ownership_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "inst_calendardate_complete",
+      "description": "1 when 13F quarter passes quality gate",
+      "id": "sigmarail.field.screener_ownership_daily.inst_calendardate_complete.inst_calendardate_complete",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "1 when 13F quarter passes quality gate",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_calendardate_complete",
+        "kind": "concept",
+        "title": "inst calendardate complete"
+      },
+      "name": "inst_calendardate_complete",
+      "sql": "screener_ownership_daily.inst_calendardate_complete",
+      "table": "screener_ownership_daily",
+      "type": "UInt8"
+    },
+    {
+      "column": "inst_data_lag_days",
+      "description": "Session date minus inst_public_asof_date",
+      "id": "sigmarail.field.screener_ownership_daily.inst_data_lag_days.inst_data_lag_days",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Session date minus inst_public_asof_date",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_data_lag_days",
+        "kind": "concept",
+        "title": "inst data lag days"
+      },
+      "name": "inst_data_lag_days",
+      "sql": "screener_ownership_daily.inst_data_lag_days",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "inst_holdings_lag_days",
+      "description": "Session date minus inst_calendardate",
+      "id": "sigmarail.field.screener_ownership_daily.inst_holdings_lag_days.inst_holdings_lag_days",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Session date minus inst_calendardate",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_holdings_lag_days",
+        "kind": "concept",
+        "title": "inst holdings lag days"
+      },
+      "name": "inst_holdings_lag_days",
+      "sql": "screener_ownership_daily.inst_holdings_lag_days",
+      "table": "screener_ownership_daily",
+      "type": "UInt16"
+    },
+    {
+      "column": "inst_public_asof_date",
+      "description": "First public session for 13F quarter",
+      "id": "sigmarail.field.screener_ownership_daily.inst_public_asof_date.inst_public_asof_date",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "First public session for 13F quarter",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_public_asof_date",
+        "kind": "concept",
+        "title": "inst public asof date"
+      },
+      "name": "inst_public_asof_date",
+      "sql": "screener_ownership_daily.inst_public_asof_date",
+      "table": "screener_ownership_daily",
+      "type": "Nullable(Date)"
+    },
+    {
+      "column": "inst_shrholders",
+      "description": "Institutional holder count",
+      "id": "sigmarail.field.screener_ownership_daily.inst_shrholders.inst_shrholders",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Institutional holder count",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_shrholders",
+        "kind": "concept",
+        "title": "inst shrholders"
+      },
+      "name": "inst_shrholders",
+      "sql": "screener_ownership_daily.inst_shrholders",
+      "table": "screener_ownership_daily",
+      "type": "UInt32"
+    },
+    {
+      "column": "inst_shrholders_qoq_delta",
+      "description": "QoQ change in holders",
+      "id": "sigmarail.field.screener_ownership_daily.inst_shrholders_qoq_delta.inst_shrholders_qoq_delta",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "QoQ change in holders",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_shrholders_qoq_delta",
+        "kind": "concept",
+        "title": "inst shrholders qoq delta"
+      },
+      "name": "inst_shrholders_qoq_delta",
+      "sql": "screener_ownership_daily.inst_shrholders_qoq_delta",
+      "table": "screener_ownership_daily",
+      "type": "Int32"
+    },
+    {
+      "column": "inst_shrholders_qoq_pct",
+      "description": "QoQ pct change in holders",
+      "id": "sigmarail.field.screener_ownership_daily.inst_shrholders_qoq_pct.inst_shrholders_qoq_pct",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "QoQ pct change in holders",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_shrholders_qoq_pct",
+        "kind": "concept",
+        "title": "inst shrholders qoq pct"
+      },
+      "name": "inst_shrholders_qoq_pct",
+      "sql": "screener_ownership_daily.inst_shrholders_qoq_pct",
+      "table": "screener_ownership_daily",
+      "type": "Float32"
+    },
+    {
+      "column": "inst_sponsor_trend",
+      "description": "Sponsorship trend",
+      "id": "sigmarail.field.screener_ownership_daily.inst_sponsor_trend.inst_sponsor_trend",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Sponsorship trend",
+        "id": "sigmarail.mart.screener_ownership_daily.inst_sponsor_trend",
+        "kind": "concept",
+        "title": "inst sponsor trend"
+      },
+      "name": "inst_sponsor_trend",
+      "sql": "screener_ownership_daily.inst_sponsor_trend",
+      "table": "screener_ownership_daily",
+      "type": "Enum8('stable' = 0, 'rising' = 1, 'falling' = 2)"
+    },
+    {
+      "column": "lastupdated",
+      "description": "ReplacingMergeTree version column",
+      "id": "sigmarail.field.screener_ownership_daily.lastupdated.lastupdated",
+      "lineage_roots": [],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "ReplacingMergeTree version column",
+        "id": "sigmarail.mart.screener_ownership_daily.lastupdated",
+        "kind": "concept",
+        "title": "lastupdated"
+      },
+      "name": "lastupdated",
+      "sql": "screener_ownership_daily.lastupdated",
+      "table": "screener_ownership_daily",
+      "type": "DateTime('America/New_York')"
+    },
+    {
+      "column": "ticker",
+      "description": "Stock ticker symbol",
+      "id": "sigmarail.field.screener_ownership_daily.ticker.ticker",
+      "lineage_roots": [
+        "sep",
+        "sf2",
+        "sf3a",
+        "sfp",
+        "tickers"
+      ],
+      "metadata": {
+        "computability": "sigmarail_native",
+        "definition": "Stock ticker symbol",
+        "id": "sigmarail.mart.screener_ownership_daily.ticker",
+        "kind": "concept",
+        "title": "ticker"
+      },
+      "name": "ticker",
+      "sql": "screener_ownership_daily.ticker",
+      "table": "screener_ownership_daily",
+      "type": "String"
+    }
+  ],
+  "version": 1
+}

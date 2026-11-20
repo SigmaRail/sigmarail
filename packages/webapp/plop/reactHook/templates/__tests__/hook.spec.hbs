@@ -1,0 +1,29 @@
+import { renderHook, act } from '@testing-library/react';
+
+import { {{ hookName }} } from '../{{ hookName }}.hook';
+
+describe('{{ hookName }}: Hook', () => {
+  it('should initialize with default values', () => {
+    const { result } = renderHook(() => {{ hookName }}());
+
+    expect(result.current).toBeDefined();
+  });
+
+  it('should accept options', () => {
+    const { result } = renderHook(() => {{ hookName }}({}));
+
+    expect(result.current).toBeDefined();
+  });
+
+  // TODO: Add more specific tests based on your hook functionality
+  // Example for state hook:
+  // it('should update value when setValue is called', () => {
+  //   const { result } = renderHook(() => {{ hookName }}());
+  //
+  //   act(() => {
+  //     result.current.setValue('new value');
+  //   });
+  //
+  //   expect(result.current.state.value).toBe('new value');
+  // });
+});

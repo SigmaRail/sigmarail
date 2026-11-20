@@ -1,0 +1,15 @@
+{
+  "name": "@sb/tools",
+  "version": "5.0.0",
+  "main": "src/index.js",
+  "generators": "./generators.json",
+  "executors": "./executors.json",
+  "scripts": {
+    "create-env": "nx exec -skip-nx-cache=true -- plop --plopfile src/plopfile.js createEnv",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "jsonc-eslint-parser": "^2.4.0"
+  },
+  "nx": {}
+}

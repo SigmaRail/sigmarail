@@ -1,0 +1,3420 @@
+{
+  "authoring_flow": [
+    "PipelineDocument",
+    "VeraLabV1",
+    "LEAN Framework"
+  ],
+  "pipeline_document_schema": {
+    "$defs": {
+      "EntryTrigger": {
+        "additionalProperties": false,
+        "description": "A specific entry signal condition.",
+        "properties": {
+          "consolidation_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consolidation Days"
+          },
+          "contraction_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Contraction Count"
+          },
+          "fast_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fast Period"
+          },
+          "leader_rs_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Leader Rs Threshold"
+          },
+          "lookback_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lookback Days"
+          },
+          "max_deviation_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Deviation Pct"
+          },
+          "overbought": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Overbought"
+          },
+          "oversold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Oversold"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Period"
+          },
+          "signal_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Signal Period"
+          },
+          "slow_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Slow Period"
+          },
+          "sma_period": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sma Period"
+          },
+          "type": {
+            "enum": [
+              "pivot_breakout",
+              "pullback_to_sma",
+              "vcp_complete",
+              "rsi_cross",
+              "macd",
+              "ema_cross",
+              "breakout"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "volume_multiplier": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume Multiplier"
+          },
+          "volume_surge_multiplier": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume Surge Multiplier"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "EntryTrigger",
+        "type": "object"
+      },
+      "ExecutionConfig": {
+        "additionalProperties": false,
+        "description": "Order execution method.",
+        "properties": {
+          "fill_session": {
+            "default": "moo",
+            "enum": [
+              "moo",
+              "moc"
+            ],
+            "title": "Fill Session",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "type": {
+            "default": "market_order",
+            "enum": [
+              "market_order",
+              "vwap",
+              "std_dev",
+              "immediate"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "ExecutionConfig",
+        "type": "object"
+      },
+      "ExitTranche": {
+        "additionalProperties": false,
+        "description": "One profit-taking tranche (sell into strength).",
+        "properties": {
+          "sell_pct": {
+            "maximum": 1.0,
+            "minimum": 0,
+            "title": "Sell Pct",
+            "type": "number"
+          },
+          "stop_ratchet": {
+            "default": "BE",
+            "title": "Stop Ratchet",
+            "type": "string"
+          },
+          "trigger_r": {
+            "exclusiveMinimum": 0,
+            "title": "Trigger R",
+            "type": "number"
+          }
+        },
+        "required": [
+          "trigger_r",
+          "sell_pct"
+        ],
+        "title": "ExitTranche",
+        "type": "object"
+      },
+      "FactorWeight": {
+        "additionalProperties": false,
+        "description": "One weighted factor in a score/watch stage.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "weight": {
+            "exclusiveMinimum": 0,
+            "maximum": 1.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "weight"
+        ],
+        "title": "FactorWeight",
+        "type": "object"
+      },
+      "FilterCondition": {
+        "additionalProperties": false,
+        "description": "A single boolean filter: ``{op: gt, left: close, right: 10}``.\n\n``left`` is a column name string or an Operand dict.\n``right`` is a literal, a column name (with ``right_kind: col``), or an Operand dict.\n``expr`` is an optional human-readable formula string.\n``id`` is a stable chip identity for agent patch ops.\n``annotation`` is UI/agent provenance (stripped before SQL WHERE).",
+        "properties": {
+          "annotation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Annotation"
+          },
+          "expr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expr"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            ],
+            "title": "Left"
+          },
+          "op": {
+            "default": "gte",
+            "enum": [
+              "gt",
+              "gte",
+              "lt",
+              "lte",
+              "eq",
+              "neq"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            ],
+            "title": "Right"
+          },
+          "right_kind": {
+            "default": "lit",
+            "enum": [
+              "lit",
+              "col",
+              "formula"
+            ],
+            "title": "Right Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "FilterCondition",
+        "type": "object"
+      },
+      "FilterGroup": {
+        "additionalProperties": false,
+        "description": "A boolean group (AND / OR) of filter conditions and/or sub-groups.",
+        "properties": {
+          "conditions": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FilterCondition"
+                },
+                {
+                  "$ref": "#/$defs/FilterGroup"
+                },
+                {
+                  "$ref": "#/$defs/FilterNot"
+                }
+              ]
+            },
+            "title": "Conditions",
+            "type": "array"
+          },
+          "logic": {
+            "default": "and",
+            "enum": [
+              "and",
+              "or"
+            ],
+            "title": "Logic",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          }
+        },
+        "title": "FilterGroup",
+        "type": "object"
+      },
+      "FilterNot": {
+        "additionalProperties": false,
+        "description": "A negated filter subtree, in the document's own terms.\n\nThe compiled where-AST has always been able to express `not`, but the document model\ncould only hold one negated shape — `neq`, i.e. `not(eq(...))`. Every other `not` was\nsilently rewritten as a *positive* AND of its child, so \"not above the 50-day\" loaded\nback as \"above the 50-day\": the negation inverted. This node keeps it explicit.",
+        "properties": {
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FilterCondition"
+              },
+              {
+                "$ref": "#/$defs/FilterGroup"
+              },
+              {
+                "$ref": "#/$defs/FilterNot"
+              }
+            ],
+            "title": "Item"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "title": "FilterNot",
+        "type": "object"
+      },
+      "HedgeConfig": {
+        "additionalProperties": false,
+        "description": "Portfolio hedge configuration during risk-off regimes.",
+        "properties": {
+          "instruments": {
+            "items": {
+              "$ref": "#/$defs/HedgeInstrument"
+            },
+            "title": "Instruments",
+            "type": "array"
+          },
+          "trigger": {
+            "const": "regime_risk_off",
+            "default": "regime_risk_off",
+            "title": "Trigger",
+            "type": "string"
+          },
+          "unwind": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unwind"
+          }
+        },
+        "title": "HedgeConfig",
+        "type": "object"
+      },
+      "HedgeInstrument": {
+        "additionalProperties": false,
+        "description": "One hedge instrument (inverse ETF).",
+        "properties": {
+          "max_allocation": {
+            "exclusiveMinimum": 0,
+            "maximum": 1.0,
+            "title": "Max Allocation",
+            "type": "number"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "max_allocation"
+        ],
+        "title": "HedgeInstrument",
+        "type": "object"
+      },
+      "ModelRef": {
+        "additionalProperties": false,
+        "description": "An explicit LEAN model reference — the flexible-slot primitive.\n\nAny slot (Universe / Alpha / PortfolioConstruction / RiskManagement /\nExecution) can be filled either by a *named concept* (compiled to a known\nLEAN class) or by a raw ``ModelRef`` naming *any* LEAN class — including new\nones we author — with its ``parameters`` passed through verbatim.",
+        "properties": {
+          "parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ModelRef",
+        "type": "object"
+      },
+      "PipelineBindings": {
+        "additionalProperties": false,
+        "description": "Named slot expressions compiled onto Alpha / PCM / Risk Parameters.\n\nAuthored here (with stages); never persisted as a whole-strategy\n``VeraBase.Pipeline`` blob (C-STRATEGY-PIPELINE-SSOT).",
+        "properties": {
+          "alpha_confidence": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "alpha_direction": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "alpha_eligibility": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "alpha_insight_period_days": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Insight.Period in days (default 1 when unset).",
+            "title": "Alpha Insight Period Days"
+          },
+          "alpha_magnitude": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "alpha_rank": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alpha Rank"
+          },
+          "alpha_rank_directions": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional ASC/DESC per alpha_rank field (default desc).",
+            "title": "Alpha Rank Directions"
+          },
+          "alpha_setup": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "alpha_weight": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "pcm_allow_entry": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "pcm_scale": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "risk_allow_pyramid_add": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "risk_skip_time_stop": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SlotExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "PipelineBindings",
+        "type": "object"
+      },
+      "PipelineDocumentation": {
+        "additionalProperties": false,
+        "description": "Structured documentation for the pipeline.",
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Purpose"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Risks",
+            "type": "array"
+          },
+          "variables": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Variables",
+            "type": "object"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Version"
+          }
+        },
+        "title": "PipelineDocumentation",
+        "type": "object"
+      },
+      "PolicyOverride": {
+        "additionalProperties": false,
+        "description": "Conditional knob override: when bool chips match, set allowlisted PCM/Risk params.\n\nApplied in chain order at runtime (last-wins per param). Knobs on sizing/exit\nstages remain defaults.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "set": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "title": "Set",
+            "type": "object"
+          },
+          "when": {
+            "$ref": "#/$defs/SlotExpr"
+          }
+        },
+        "required": [
+          "id",
+          "when"
+        ],
+        "title": "PolicyOverride",
+        "type": "object"
+      },
+      "PolicyRule": {
+        "additionalProperties": false,
+        "description": "One policy-rule chain link: role + SlotExpr payload (Studio SSOT).",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "role": {
+            "enum": [
+              "alpha_eligibility",
+              "alpha_setup",
+              "alpha_confidence",
+              "pcm_allow_entry",
+              "pcm_scale",
+              "risk_skip_time_stop",
+              "risk_allow_pyramid_add"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "slot": {
+            "$ref": "#/$defs/SlotExpr"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "slot"
+        ],
+        "title": "PolicyRule",
+        "type": "object"
+      },
+      "PyramidPhase": {
+        "additionalProperties": false,
+        "description": "One phase of progressive position scaling (test -> add -> full).",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "risk_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Risk Pct"
+          },
+          "size_pct": {
+            "exclusiveMinimum": 0,
+            "maximum": 1.0,
+            "title": "Size Pct",
+            "type": "number"
+          },
+          "trigger": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trigger"
+          }
+        },
+        "required": [
+          "name",
+          "size_pct"
+        ],
+        "title": "PyramidPhase",
+        "type": "object"
+      },
+      "RegimeGateV1": {
+        "additionalProperties": false,
+        "description": "Declarative regime score + optional slot uses (C-REGIME-POLICY-V1).\n\nScore/hysteresis remain the continuous market condition. ``uses`` lists which\nLean slots subscribe — presence of a regime source alone is not an Alpha valve.",
+        "properties": {
+          "confirm_off_days": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Confirm Off Days",
+            "type": "integer"
+          },
+          "confirm_on_days": {
+            "default": 3,
+            "minimum": 1,
+            "title": "Confirm On Days",
+            "type": "integer"
+          },
+          "expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expression"
+          },
+          "min_allocation_fraction": {
+            "default": 0.0,
+            "title": "Min Allocation Fraction",
+            "type": "number"
+          },
+          "missing_action": {
+            "default": "block",
+            "enum": [
+              "block",
+              "allow"
+            ],
+            "title": "Missing Action",
+            "type": "string"
+          },
+          "signal_weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Signal Weights",
+            "type": "object"
+          },
+          "source": {
+            "default": "regime_signals_canonical",
+            "title": "Source",
+            "type": "string"
+          },
+          "threshold": {
+            "default": 0.5,
+            "title": "Threshold",
+            "type": "number"
+          },
+          "uses": {
+            "description": "Slot subscriptions: scale_exposure, skip_pyramid_adds, block_new_longs, hedge",
+            "items": {
+              "enum": [
+                "scale_exposure",
+                "skip_pyramid_adds",
+                "block_new_longs",
+                "hedge"
+              ],
+              "type": "string"
+            },
+            "title": "Uses",
+            "type": "array"
+          }
+        },
+        "title": "RegimeGateV1",
+        "type": "object"
+      },
+      "RiskConfig": {
+        "additionalProperties": false,
+        "description": "Portfolio-level risk controls.",
+        "properties": {
+          "circuit_breaker": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Circuit Breaker"
+          },
+          "max_positions": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Positions"
+          },
+          "max_sector_exposure": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Sector Exposure"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "regime_gate": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/RegimeGateV1"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Regime Gate"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/$defs/RiskRule"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "time_stop_skip_if": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Risk binding: skip breakeven time-stop when e.g. above_entry and named bools.",
+            "title": "Time Stop Skip If"
+          }
+        },
+        "title": "RiskConfig",
+        "type": "object"
+      },
+      "RiskRule": {
+        "additionalProperties": false,
+        "description": "One risk rule; multiple rules compile to ``CompositeRiskManagementModel``.",
+        "properties": {
+          "max_holding_days": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Holding Days"
+          },
+          "maximum_drawdown_percent": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Maximum Drawdown Percent"
+          },
+          "maximum_sector_exposure": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Maximum Sector Exposure"
+          },
+          "take_profit_r": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Take Profit R"
+          },
+          "trailing_stop_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trailing Stop Pct"
+          },
+          "type": {
+            "$ref": "#/$defs/RiskRuleType"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "RiskRule",
+        "type": "object"
+      },
+      "RiskRuleType": {
+        "description": "Stackable risk rules (mapped to LEAN risk models).",
+        "enum": [
+          "progressive",
+          "trailing",
+          "max_drawdown",
+          "sector_exposure"
+        ],
+        "title": "RiskRuleType",
+        "type": "string"
+      },
+      "SelectionRule": {
+        "additionalProperties": false,
+        "description": "How scored candidates are selected.",
+        "properties": {
+          "method": {
+            "default": "top_n",
+            "enum": [
+              "top_n",
+              "top_n_per_sector",
+              "threshold"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Score"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "N"
+          },
+          "per_sector": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Per Sector"
+          },
+          "sectors": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sectors"
+          }
+        },
+        "title": "SelectionRule",
+        "type": "object"
+      },
+      "SizingConfig": {
+        "additionalProperties": false,
+        "description": "Position-sizing policy (maps to a LEAN portfolio-construction model).",
+        "properties": {
+          "allow_adds_on_invested": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Allow Adds On Invested"
+          },
+          "default_stop_loss_pct": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Default Stop Loss Pct"
+          },
+          "displacement_immune_rs": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Displacement Immune Rs"
+          },
+          "displacement_max_incumbent_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Displacement Max Incumbent R"
+          },
+          "displacement_min_challenger_rs": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Displacement Min Challenger Rs"
+          },
+          "displacement_min_challenger_screens": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Displacement Min Challenger Screens"
+          },
+          "displacement_min_hold_days": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Displacement Min Hold Days"
+          },
+          "enable_displacement": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Enable Displacement"
+          },
+          "enable_surrogates": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Enable Surrogates"
+          },
+          "honor_insight_confidence": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Honor Insight Confidence"
+          },
+          "max_positions": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Positions"
+          },
+          "max_weight": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Weight"
+          },
+          "min_regime_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Regime Fraction"
+          },
+          "min_surrogate_adv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Surrogate Adv"
+          },
+          "min_weight": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min Weight"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "order_expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Unit ordering-key AST → PCM Parameters.order_expr.",
+            "title": "Order Expr"
+          },
+          "policy": {
+            "$ref": "#/$defs/SizingPolicy",
+            "default": "atr_risk"
+          },
+          "prefer_capital_efficient_surrogates": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Prefer Capital Efficient Surrogates"
+          },
+          "rebalance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rebalance"
+          },
+          "regime_bull_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Regime Bull Fraction"
+          },
+          "regime_neutral_fraction": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Regime Neutral Fraction"
+          },
+          "risk_per_trade_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Risk Per Trade Pct"
+          },
+          "rules": {
+            "description": "Unified rules pass (C-FW-RULES): ordered rule table over insight candidates + insight-quiet holdings → PCM Parameters.rules.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "scale_expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Book-level scale AST → PCM Parameters.scale_expr.",
+            "title": "Scale Expr"
+          },
+          "scaled_max_positions_floor": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scaled Max Positions Floor"
+          },
+          "size_expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Base sizing Operand AST → PCM Parameters.size_expr.",
+            "title": "Size Expr"
+          },
+          "slots_expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Book-level slot-count AST → PCM Parameters.slots_expr.",
+            "title": "Slots Expr"
+          },
+          "surrogate_sizing_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Surrogate Sizing Mode"
+          },
+          "target_atr_risk": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target Atr Risk"
+          },
+          "use_regime_scaling": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Use Regime Scaling"
+          }
+        },
+        "title": "SizingConfig",
+        "type": "object"
+      },
+      "SizingPolicy": {
+        "enum": [
+          "atr_risk",
+          "risk_budgeted",
+          "risk_parity",
+          "confidence_weighted",
+          "equal_weight"
+        ],
+        "title": "SizingPolicy",
+        "type": "string"
+      },
+      "SlotExpr": {
+        "additionalProperties": false,
+        "description": "Bool or number expression over the Alpha computed + L7 column bag.\n\nBool slots use the same ``vera_bool_expr`` / where AST as stage filters.\nNumber slots use Operand / formula AST (``col`` / ``lit`` / ``formula``).\n``__position.*`` cols are runtime-only (Risk); not probeable.",
+        "properties": {
+          "expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expr"
+          },
+          "kind": {
+            "enum": [
+              "bool",
+              "number"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "where": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Where"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "SlotExpr",
+        "type": "object"
+      },
+      "Stage": {
+        "additionalProperties": false,
+        "description": "One pipeline stage.",
+        "properties": {
+          "add_trigger_pct": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Add Trigger Pct"
+          },
+          "as_gate": {
+            "default": false,
+            "title": "As Gate",
+            "type": "boolean"
+          },
+          "atr_stop_multiplier": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Atr Stop Multiplier"
+          },
+          "breakeven_r_trigger": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Breakeven R Trigger"
+          },
+          "breakeven_time_stop_days": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Breakeven Time Stop Days"
+          },
+          "computed_expr": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Number Operand AST for Universe.computed[] (kind=number, expr=…). Authors aggregate measure aliases / L7 cols; not a gate bool.",
+            "title": "Computed Expr"
+          },
+          "count_as_signal": {
+            "default": true,
+            "title": "Count As Signal",
+            "type": "boolean"
+          },
+          "depends_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depends On"
+          },
+          "documentation": {
+            "$ref": "#/$defs/StageDocumentation"
+          },
+          "entry_triggers": {
+            "items": {
+              "$ref": "#/$defs/EntryTrigger"
+            },
+            "title": "Entry Triggers",
+            "type": "array"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/$defs/FactorWeight"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "filters": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FilterCondition"
+                },
+                {
+                  "$ref": "#/$defs/FilterGroup"
+                },
+                {
+                  "$ref": "#/$defs/FilterNot"
+                }
+              ]
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Stable binding id (screen_1, setup_pass). Defaults to slug of name.",
+            "title": "Id"
+          },
+          "init_stop": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Initial-stop Operand AST (C-VERA-EXPR-V2): exit-stage value compiles to RiskManagement.Parameters.init_stop.",
+            "title": "Init Stop"
+          },
+          "instruments": {
+            "items": {
+              "$ref": "#/$defs/HedgeInstrument"
+            },
+            "title": "Instruments",
+            "type": "array"
+          },
+          "max_candidates": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Candidates"
+          },
+          "max_hold_days": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Hold Days"
+          },
+          "max_positions": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Positions"
+          },
+          "max_single_weight": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Single Weight"
+          },
+          "max_stop_loss_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Stop Loss Pct"
+          },
+          "measure_filter": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FilterCondition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional exclude-if filter on this measure alias → Universe.post_where. Independent of Insight ✓ / ORDER BY."
+          },
+          "mode": {
+            "$ref": "#/$defs/StageType"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "omit_tt": {
+            "default": false,
+            "title": "Omit Tt",
+            "type": "boolean"
+          },
+          "optional_min": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Optional Min",
+            "type": "object"
+          },
+          "optional_score_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Optional Score Fields",
+            "type": "array"
+          },
+          "phases": {
+            "items": {
+              "$ref": "#/$defs/PyramidPhase"
+            },
+            "title": "Phases",
+            "type": "array"
+          },
+          "require_flag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Require Flag"
+          },
+          "rules": {
+            "description": "Ordered rule-driven control flow (C-FW-RULES): alpha stages carry their entries in Alpha.Parameters.stages; exit-stage rules compile to RiskManagement.Parameters.rules.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "selection": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/SelectionRule"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "signal_weight": {
+            "default": 1.0,
+            "description": "Weight for count_as_signal gates in screens_hit_w (unweighted screens_hit stays Σ 1).",
+            "exclusiveMinimum": 0,
+            "title": "Signal Weight",
+            "type": "number"
+          },
+          "stop_cooldown_days": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stop Cooldown Days"
+          },
+          "stop_loss": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StopLossRule"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "trailing_stop_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trailing Stop Pct"
+          },
+          "tranches": {
+            "items": {
+              "$ref": "#/$defs/ExitTranche"
+            },
+            "title": "Tranches",
+            "type": "array"
+          },
+          "use_atr_stops": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Use Atr Stops"
+          }
+        },
+        "required": [
+          "name",
+          "mode"
+        ],
+        "title": "Stage",
+        "type": "object"
+      },
+      "StageDocumentation": {
+        "additionalProperties": false,
+        "description": "Structured documentation for a pipeline stage.",
+        "properties": {
+          "confirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confirmation"
+          },
+          "effect": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effect"
+          },
+          "expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expression"
+          },
+          "inputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Purpose"
+          },
+          "variables": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Variables",
+            "type": "object"
+          }
+        },
+        "title": "StageDocumentation",
+        "type": "object"
+      },
+      "StageType": {
+        "enum": [
+          "filter",
+          "score",
+          "signal",
+          "confirm",
+          "watch",
+          "pyramid",
+          "hedge",
+          "exit"
+        ],
+        "title": "StageType",
+        "type": "string"
+      },
+      "StopLossRule": {
+        "additionalProperties": false,
+        "description": "Initial stop-loss placement.",
+        "properties": {
+          "initial_risk_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Initial Risk Pct"
+          },
+          "max_stop_loss_pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Cap on ATR stop distance as fraction of entry (e.g. 0.05 = 5%)",
+            "title": "Max Stop Loss Pct"
+          },
+          "multiplier": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Multiplier"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pct"
+          },
+          "type": {
+            "default": "atr",
+            "enum": [
+              "atr",
+              "fixed_pct"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "StopLossRule",
+        "type": "object"
+      },
+      "UniverseConfig": {
+        "additionalProperties": false,
+        "description": "Which securities a strategy runs over.",
+        "properties": {
+          "limit_per_day": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit Per Day"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ModelRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "screen": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FilterCondition"
+                },
+                {
+                  "$ref": "#/$defs/FilterGroup"
+                },
+                {
+                  "$ref": "#/$defs/FilterNot"
+                }
+              ]
+            },
+            "title": "Screen",
+            "type": "array"
+          },
+          "select": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Select"
+          },
+          "source": {
+            "$ref": "#/$defs/UniverseSource",
+            "default": "screener"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "title": "UniverseConfig",
+        "type": "object"
+      },
+      "UniverseSource": {
+        "enum": [
+          "screener",
+          "manual",
+          "composite"
+        ],
+        "title": "UniverseSource",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Top-level staged strategy document (a single leg of a portfolio).",
+    "properties": {
+      "alpha": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ModelRef"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "bindings": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/PipelineBindings"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "documentation": {
+        "$ref": "#/$defs/PipelineDocumentation"
+      },
+      "execution": {
+        "$ref": "#/$defs/ExecutionConfig"
+      },
+      "gate_combine": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Gate Combine"
+      },
+      "hedge": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/HedgeConfig"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "max_entry_atr_pct": {
+        "anyOf": [
+          {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Max Entry Atr Pct"
+      },
+      "min_rs_rating": {
+        "anyOf": [
+          {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Min Rs Rating"
+      },
+      "min_screens": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Min Screens"
+      },
+      "policy_overrides": {
+        "items": {
+          "$ref": "#/$defs/PolicyOverride"
+        },
+        "title": "Policy Overrides",
+        "type": "array"
+      },
+      "policy_rules": {
+        "items": {
+          "$ref": "#/$defs/PolicyRule"
+        },
+        "title": "Policy Rules",
+        "type": "array"
+      },
+      "rank_by_rs": {
+        "default": true,
+        "title": "Rank By Rs",
+        "type": "boolean"
+      },
+      "regime_gate": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Cross-slot regime policy → VeraBase.DataSources.regime + uses[] routed to PCM/Alpha. Preferred home; risk.regime_gate is the deprecated pre-migration location.",
+        "title": "Regime Gate"
+      },
+      "risk": {
+        "$ref": "#/$defs/RiskConfig"
+      },
+      "sizing": {
+        "$ref": "#/$defs/SizingConfig"
+      },
+      "stages": {
+        "items": {
+          "$ref": "#/$defs/Stage"
+        },
+        "title": "Stages",
+        "type": "array"
+      },
+      "strategy_name": {
+        "title": "Strategy Name",
+        "type": "string"
+      },
+      "universe": {
+        "$ref": "#/$defs/UniverseConfig"
+      }
+    },
+    "required": [
+      "strategy_name"
+    ],
+    "title": "PipelineDocument",
+    "type": "object"
+  },
+  "universe_query_schema": {
+    "$defs": {
+      "AllWhere": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllWhere",
+                  "any": "#/$defs/AnyWhere",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "not": "#/$defs/NotWhere"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllWhere"
+                },
+                {
+                  "$ref": "#/$defs/AnyWhere"
+                },
+                {
+                  "$ref": "#/$defs/NotWhere"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "all",
+            "default": "all",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AllWhere",
+        "type": "object"
+      },
+      "AnyWhere": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all": "#/$defs/AllWhere",
+                  "any": "#/$defs/AnyWhere",
+                  "eq": "#/$defs/CmpEq",
+                  "gt": "#/$defs/CmpGt",
+                  "gte": "#/$defs/CmpGte",
+                  "lt": "#/$defs/CmpLt",
+                  "lte": "#/$defs/CmpLte",
+                  "not": "#/$defs/NotWhere"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AllWhere"
+                },
+                {
+                  "$ref": "#/$defs/AnyWhere"
+                },
+                {
+                  "$ref": "#/$defs/NotWhere"
+                },
+                {
+                  "$ref": "#/$defs/CmpGt"
+                },
+                {
+                  "$ref": "#/$defs/CmpGte"
+                },
+                {
+                  "$ref": "#/$defs/CmpLt"
+                },
+                {
+                  "$ref": "#/$defs/CmpLte"
+                },
+                {
+                  "$ref": "#/$defs/CmpEq"
+                }
+              ]
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "type": {
+            "const": "any",
+            "default": "any",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AnyWhere",
+        "type": "object"
+      },
+      "CmpEq": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "eq",
+            "default": "eq",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpEq",
+        "type": "object"
+      },
+      "CmpGt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gt",
+            "default": "gt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGt",
+        "type": "object"
+      },
+      "CmpGte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "gte",
+            "default": "gte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpGte",
+        "type": "object"
+      },
+      "CmpLt": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lt",
+            "default": "lt",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLt",
+        "type": "object"
+      },
+      "CmpLte": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              }
+            ],
+            "title": "Right"
+          },
+          "type": {
+            "const": "lte",
+            "default": "lte",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CmpLte",
+        "type": "object"
+      },
+      "ColRef": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "type": {
+            "const": "col",
+            "default": "col",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ColRef",
+        "type": "object"
+      },
+      "ComputedSelect": {
+        "additionalProperties": false,
+        "description": "Named measure compiled into the SELECT list (C-UNIVERSE-QUERY-V1).\n\nBool measures become ``toUInt8(<predicate>) AS alias``. Number measures use\n``expr``, ``mean_available``, or ``sum_aliases`` (count combinator over prior\nbool aliases). Later computed items may ``col``-ref earlier aliases (same\nSELECT left-to-right reuse in ClickHouse).",
+        "properties": {
+          "alias": {
+            "title": "Alias",
+            "type": "string"
+          },
+          "expr": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expr"
+          },
+          "kind": {
+            "enum": [
+              "bool",
+              "number"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mean_available": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mean Available"
+          },
+          "sum_aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sum Aliases"
+          },
+          "where": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "all": "#/$defs/AllWhere",
+                    "any": "#/$defs/AnyWhere",
+                    "eq": "#/$defs/CmpEq",
+                    "gt": "#/$defs/CmpGt",
+                    "gte": "#/$defs/CmpGte",
+                    "lt": "#/$defs/CmpLt",
+                    "lte": "#/$defs/CmpLte",
+                    "not": "#/$defs/NotWhere"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/AllWhere"
+                  },
+                  {
+                    "$ref": "#/$defs/AnyWhere"
+                  },
+                  {
+                    "$ref": "#/$defs/NotWhere"
+                  },
+                  {
+                    "$ref": "#/$defs/CmpGt"
+                  },
+                  {
+                    "$ref": "#/$defs/CmpGte"
+                  },
+                  {
+                    "$ref": "#/$defs/CmpLt"
+                  },
+                  {
+                    "$ref": "#/$defs/CmpLte"
+                  },
+                  {
+                    "$ref": "#/$defs/CmpEq"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Where"
+          }
+        },
+        "required": [
+          "alias",
+          "kind"
+        ],
+        "title": "ComputedSelect",
+        "type": "object"
+      },
+      "FormulaExpr": {
+        "additionalProperties": false,
+        "description": "Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR).",
+        "properties": {
+          "args": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ColRef"
+                },
+                {
+                  "$ref": "#/$defs/LitVal"
+                },
+                {
+                  "$ref": "#/$defs/FormulaExpr"
+                }
+              ]
+            },
+            "title": "Args",
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "+",
+              "-",
+              "*",
+              "/"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "type": {
+            "const": "formula",
+            "default": "formula",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "args"
+        ],
+        "title": "FormulaExpr",
+        "type": "object"
+      },
+      "LitVal": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "lit",
+            "default": "lit",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "LitVal",
+        "type": "object"
+      },
+      "NotWhere": {
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllWhere",
+                "any": "#/$defs/AnyWhere",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "not": "#/$defs/NotWhere"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllWhere"
+              },
+              {
+                "$ref": "#/$defs/AnyWhere"
+              },
+              {
+                "$ref": "#/$defs/NotWhere"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              }
+            ],
+            "title": "Item"
+          },
+          "type": {
+            "const": "not",
+            "default": "not",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "title": "NotWhere",
+        "type": "object"
+      },
+      "OrderByItem": {
+        "additionalProperties": false,
+        "description": "Single ORDER BY term: either an allowlisted ``field`` (must be in select)\nor a computed ``expr`` operand (ColRef / LitVal / FormulaExpr over allowlisted\ncolumns). Exactly one of ``field`` / ``expr`` must be present.",
+        "properties": {
+          "direction": {
+            "default": "desc",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "expr": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ColRef"
+              },
+              {
+                "$ref": "#/$defs/LitVal"
+              },
+              {
+                "$ref": "#/$defs/FormulaExpr"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expr"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Field"
+          }
+        },
+        "title": "OrderByItem",
+        "type": "object"
+      },
+      "UniverseJoin": {
+        "additionalProperties": false,
+        "description": "Specification of a joined satellite table in a universe query.",
+        "properties": {
+          "on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "On",
+            "type": "array"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "type": {
+            "default": "left_any",
+            "enum": [
+              "left_any",
+              "inner",
+              "left",
+              "right",
+              "full"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "on"
+        ],
+        "title": "UniverseJoin",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Canonical JSON universe clause (version 1 or 2).",
+    "properties": {
+      "computed": {
+        "items": {
+          "$ref": "#/$defs/ComputedSelect"
+        },
+        "title": "Computed",
+        "type": "array"
+      },
+      "from": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Legacy logical source alias (optional; 'screener' or 'daily_screener'). Ignored in favor of spine/joins.",
+        "title": "From"
+      },
+      "joins": {
+        "description": "Legacy caller join declarations. SigmaRail resolves joins from registered fields.",
+        "items": {
+          "$ref": "#/$defs/UniverseJoin"
+        },
+        "title": "Joins",
+        "type": "array"
+      },
+      "limit_per_day": {
+        "maximum": 5000,
+        "minimum": 1,
+        "title": "Limit Per Day",
+        "type": "integer"
+      },
+      "order_by": {
+        "items": {
+          "$ref": "#/$defs/OrderByItem"
+        },
+        "title": "Order By",
+        "type": "array"
+      },
+      "post_where": {
+        "anyOf": [
+          {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllWhere",
+                "any": "#/$defs/AnyWhere",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "not": "#/$defs/NotWhere"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllWhere"
+              },
+              {
+                "$ref": "#/$defs/AnyWhere"
+              },
+              {
+                "$ref": "#/$defs/NotWhere"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              }
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional filter on SELECT/computed output aliases (e.g. screens_hit >= 2). Compiled as an outer WHERE around the inner projection so aliases are visible.",
+        "title": "Post Where"
+      },
+      "select": {
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Select",
+        "type": "array"
+      },
+      "spine": {
+        "default": "screener_price_tech_daily",
+        "description": "Logical query spine (default: screener_price_tech_daily).",
+        "title": "Spine",
+        "type": "string"
+      },
+      "version": {
+        "default": 2,
+        "enum": [
+          1,
+          2
+        ],
+        "title": "Version",
+        "type": "integer"
+      },
+      "where": {
+        "anyOf": [
+          {
+            "discriminator": {
+              "mapping": {
+                "all": "#/$defs/AllWhere",
+                "any": "#/$defs/AnyWhere",
+                "eq": "#/$defs/CmpEq",
+                "gt": "#/$defs/CmpGt",
+                "gte": "#/$defs/CmpGte",
+                "lt": "#/$defs/CmpLt",
+                "lte": "#/$defs/CmpLte",
+                "not": "#/$defs/NotWhere"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/AllWhere"
+              },
+              {
+                "$ref": "#/$defs/AnyWhere"
+              },
+              {
+                "$ref": "#/$defs/NotWhere"
+              },
+              {
+                "$ref": "#/$defs/CmpGt"
+              },
+              {
+                "$ref": "#/$defs/CmpGte"
+              },
+              {
+                "$ref": "#/$defs/CmpLt"
+              },
+              {
+                "$ref": "#/$defs/CmpLte"
+              },
+              {
+                "$ref": "#/$defs/CmpEq"
+              }
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "JSON boolean expression tree (preferred). Mutually exclusive with where_sql.",
+        "title": "Where"
+      },
+      "where_sql": {
+        "anyOf": [
+          {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional ClickHouse-style predicate string (parsed with sqlglot, a core dependency). Mutually exclusive with where. Same allowlisted columns as JSON `col` refs.",
+        "title": "Where Sql"
+      }
+    },
+    "required": [
+      "select",
+      "limit_per_day"
+    ],
+    "title": "UniverseQueryV1",
+    "type": "object"
+  },
+  "version": 1
+}

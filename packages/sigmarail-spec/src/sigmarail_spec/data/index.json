@@ -1,0 +1,274 @@
+{
+  "description": "Compact index for SigmaRail data, expressions, Studio authoring, and LEAN strategy capabilities.",
+  "documents": [
+    {
+      "description": "Compact entry point with retrieval guidance for the versioned SigmaRail contract.",
+      "id": "index",
+      "path": "index.json",
+      "title": "Contract index",
+      "uri": "sigmarail-spec://v1/index"
+    },
+    {
+      "description": "Sharadar-only SigmaRail tables, columns, types, comments, and lineage.",
+      "id": "data.schema",
+      "path": "lineage.json",
+      "title": "SigmaRail SQL schema and lineage",
+      "uri": "sigmarail-spec://v1/data/schema"
+    },
+    {
+      "description": "Reviewed semantic annotations not derivable from source code.",
+      "id": "semantics.annotations",
+      "path": "annotations.json",
+      "title": "Reviewed semantic annotations",
+      "uri": "sigmarail-spec://v1/semantics/annotations"
+    },
+    {
+      "description": "Generated xform view targets, dependencies, outputs, and SQL provenance.",
+      "id": "data.transforms",
+      "path": "transforms.json",
+      "title": "SigmaRail SQL transform catalog",
+      "uri": "sigmarail-spec://v1/data/transforms"
+    },
+    {
+      "description": "Queryable SigmaRail fields matched to schema columns and current query mappings.",
+      "id": "data.fields",
+      "path": "fields.json",
+      "title": "SigmaRail queryable field catalog",
+      "uri": "sigmarail-spec://v1/data/fields"
+    },
+    {
+      "description": "Versioned bounded query AST over registered module datasets and declared joins.",
+      "id": "data.query",
+      "path": "data/query-v1.json",
+      "title": "Module-aware data query request schema",
+      "uri": "sigmarail-spec://v1/data/query/v1"
+    },
+    {
+      "description": "SQL-generated module manifest for SigmaRail core datasets, fields, joins, and capabilities.",
+      "id": "modules.core",
+      "path": "modules/core.json",
+      "title": "Built-in SigmaRail core module manifest",
+      "uri": "sigmarail-spec://v1/modules/core"
+    },
+    {
+      "description": "Studio module activation catalog",
+      "id": "modules.studio",
+      "path": "modules/studio.json",
+      "title": "Studio module activation catalog",
+      "uri": "sigmarail-spec://v1/modules/studio"
+    },
+    {
+      "description": "JSON Schema for installing and describing SigmaRail core and optional modules.",
+      "id": "modules.schema",
+      "path": "modules/module-manifest-v1.schema.json",
+      "title": "SigmaRail module manifest schema v1",
+      "uri": "sigmarail-spec://v1/modules/schema"
+    },
+    {
+      "description": "SigmaRail price technical field slice.",
+      "id": "data.fields.price_technical",
+      "path": "fields/price_technical.json",
+      "title": "SigmaRail price technical fields",
+      "uri": "sigmarail-spec://v1/data/fields/price_technical"
+    },
+    {
+      "description": "SigmaRail fundamentals field slice.",
+      "id": "data.fields.fundamentals",
+      "path": "fields/fundamentals.json",
+      "title": "SigmaRail fundamentals fields",
+      "uri": "sigmarail-spec://v1/data/fields/fundamentals"
+    },
+    {
+      "description": "SigmaRail institutional field slice.",
+      "id": "data.fields.institutional",
+      "path": "fields/institutional.json",
+      "title": "SigmaRail institutional fields",
+      "uri": "sigmarail-spec://v1/data/fields/institutional"
+    },
+    {
+      "description": "SigmaRail other field slice.",
+      "id": "data.fields.other",
+      "path": "fields/other.json",
+      "title": "SigmaRail other fields",
+      "uri": "sigmarail-spec://v1/data/fields/other"
+    },
+    {
+      "description": "Canonical expression AST, JSON schemas, evaluation semantics, and limits.",
+      "id": "expressions.core",
+      "path": "expressions.json",
+      "title": "Expression AST and semantics",
+      "uri": "sigmarail-spec://v1/expressions/core"
+    },
+    {
+      "description": "Expression core reference and field IDs for price technical.",
+      "id": "expressions.price_technical",
+      "path": "expressions/price_technical.json",
+      "title": "Expression contract for price technical",
+      "uri": "sigmarail-spec://v1/expressions/price_technical"
+    },
+    {
+      "description": "Expression core reference and field IDs for fundamentals.",
+      "id": "expressions.fundamentals",
+      "path": "expressions/fundamentals.json",
+      "title": "Expression contract for fundamentals",
+      "uri": "sigmarail-spec://v1/expressions/fundamentals"
+    },
+    {
+      "description": "Expression core reference and field IDs for institutional.",
+      "id": "expressions.institutional",
+      "path": "expressions/institutional.json",
+      "title": "Expression contract for institutional",
+      "uri": "sigmarail-spec://v1/expressions/institutional"
+    },
+    {
+      "description": "Studio PipelineDocument and universe-query authoring schemas.",
+      "id": "strategy.authoring",
+      "path": "strategy/authoring.json",
+      "title": "Studio authoring contract",
+      "uri": "sigmarail-spec://v1/strategy/authoring"
+    },
+    {
+      "description": "VeraLabV1 and LEAN framework execution schemas and slot index.",
+      "id": "strategy.execution",
+      "path": "strategy/execution.json",
+      "title": "LEAN execution contract",
+      "uri": "sigmarail-spec://v1/strategy/execution"
+    },
+    {
+      "description": "SigmaRail universe query JSON schema.",
+      "id": "strategy.universe-query",
+      "path": "strategy/universe-query.json",
+      "title": "VeraBase universe query schema",
+      "uri": "sigmarail-spec://v1/strategy/universe-query"
+    },
+    {
+      "description": "Generated runtime type parameters, actions, and behavior flags.",
+      "id": "strategy.runtime-capabilities",
+      "path": "runtime-capabilities.json",
+      "title": "LEAN model parameters and actions",
+      "uri": "sigmarail-spec://v1/strategy/runtime-capabilities"
+    },
+    {
+      "description": "Focused UniverseSelection slot types and parameters, with references to shared schemas.",
+      "id": "strategy.slot.universe-selection",
+      "path": "strategy/slots/universe-selection.json",
+      "title": "Strategy slot: UniverseSelection",
+      "uri": "sigmarail-spec://v1/strategy/slots/universe-selection"
+    },
+    {
+      "description": "Focused Alpha slot types and parameters, with references to shared schemas.",
+      "id": "strategy.slot.alpha",
+      "path": "strategy/slots/alpha.json",
+      "title": "Strategy slot: Alpha",
+      "uri": "sigmarail-spec://v1/strategy/slots/alpha"
+    },
+    {
+      "description": "Focused PortfolioConstruction slot types and parameters, with references to shared schemas.",
+      "id": "strategy.slot.portfolio-construction",
+      "path": "strategy/slots/portfolio-construction.json",
+      "title": "Strategy slot: PortfolioConstruction",
+      "uri": "sigmarail-spec://v1/strategy/slots/portfolio-construction"
+    },
+    {
+      "description": "Focused RiskManagement slot types and parameters, with references to shared schemas.",
+      "id": "strategy.slot.risk-management",
+      "path": "strategy/slots/risk-management.json",
+      "title": "Strategy slot: RiskManagement",
+      "uri": "sigmarail-spec://v1/strategy/slots/risk-management"
+    },
+    {
+      "description": "Focused Execution slot types and parameters, with references to shared schemas.",
+      "id": "strategy.slot.execution",
+      "path": "strategy/slots/execution.json",
+      "title": "Strategy slot: Execution",
+      "uri": "sigmarail-spec://v1/strategy/slots/execution"
+    },
+    {
+      "description": "Compact catalog of the SigmaRail-aligned MCP tool operations and their resource URIs.",
+      "id": "mcp.index",
+      "path": "mcp/index.json",
+      "title": "MCP tool catalog",
+      "uri": "sigmarail-spec://v1/mcp"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current data query tool surface.",
+      "id": "mcp.tools.data_query",
+      "path": "mcp/tools/data_query.json",
+      "title": "MCP data query tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/data_query"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current screening tool surface.",
+      "id": "mcp.tools.screening",
+      "path": "mcp/tools/screening.json",
+      "title": "MCP screening tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/screening"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current strategy authoring tool surface.",
+      "id": "mcp.tools.strategy_authoring",
+      "path": "mcp/tools/strategy_authoring.json",
+      "title": "MCP strategy authoring tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/strategy_authoring"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current backtesting tool surface.",
+      "id": "mcp.tools.backtesting",
+      "path": "mcp/tools/backtesting.json",
+      "title": "MCP backtesting tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/backtesting"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current live deployment tool surface.",
+      "id": "mcp.tools.live_deployment",
+      "path": "mcp/tools/live_deployment.json",
+      "title": "MCP live deployment tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/live_deployment"
+    },
+    {
+      "description": "Generated MCP input and output schemas for the current studio tool surface.",
+      "id": "mcp.tools.studio",
+      "path": "mcp/tools/studio.json",
+      "title": "MCP studio tools",
+      "uri": "sigmarail-spec://v1/mcp/tools/studio"
+    }
+  ],
+  "retrieval_order": [
+    "index",
+    "modules.core",
+    "data.schema",
+    "data.fields",
+    "data.query",
+    "expressions.core",
+    "strategy.authoring",
+    "strategy.execution"
+  ],
+  "retrieval_profiles": {
+    "sharadar_query": [
+      "index",
+      "modules.core",
+      "data.schema",
+      "data.fields/{domain}",
+      "data.query",
+      "data.transforms",
+      "mcp.tools.screening"
+    ],
+    "strategy_authoring": [
+      "index",
+      "expressions.core",
+      "data.fields/{domain}",
+      "strategy.authoring",
+      "strategy/slots/{slot}",
+      "mcp.tools.strategy_authoring"
+    ],
+    "strategy_execution": [
+      "index",
+      "strategy.execution",
+      "strategy/slots/{slot}",
+      "strategy.runtime-capabilities",
+      "mcp.index"
+    ]
+  },
+  "spec_id": "sigmarail-spec",
+  "spec_version": "0.2.0"
+}

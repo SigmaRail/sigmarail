@@ -1,0 +1,92 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ratings_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    },
+    {
+      "table": "screener_forecast_models_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "close",
+    "growth_rate_pct",
+    "fwd_cagr_2y_normal_pe",
+    "rs_rating",
+    "technical_rating",
+    "stage_code"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "eq",
+        "left": {
+          "type": "col",
+          "name": "minervini_tt_all_conditions_light",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "growth_rate_pct",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 20.0
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 75
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "avg_vol_50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 100000
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "growth_rate_pct",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 50
+}

@@ -1,0 +1,62 @@
+{
+  "capability_types": {
+    "CompositeRiskManagementModel": null,
+    "MaximumDrawdownPercentPerSecurity": null,
+    "MaximumSectorExposureRiskManagementModel": null,
+    "MaximumUnrealizedProfitPercentPerSecurity": null,
+    "NullRiskManagementModel": null,
+    "SwingProgressiveRiskManagementModel": [
+      "atr_stop_multiplier",
+      "breakeven_r_trigger",
+      "breakeven_time_stop_days",
+      "exit_rules",
+      "init_stop",
+      "max_holding_days",
+      "max_single_weight",
+      "max_stop_loss_pct",
+      "policy_overrides",
+      "risk_skip_time_stop_expr",
+      "rules",
+      "stop_cooldown_days",
+      "stop_trigger_on",
+      "store",
+      "surrogate_router",
+      "take_profit_r",
+      "time_stop_skip_if",
+      "trailing_arm_r",
+      "trailing_ema_period",
+      "trailing_stop_pct",
+      "tranche1_sell_pct",
+      "tranche2_r",
+      "tranche2_sell_pct",
+      "tranche3_r",
+      "tranche3_sell_pct",
+      "tranches",
+      "use_atr_stops"
+    ],
+    "TrailingStopRiskManagementModel": null,
+    "VeraHedgeModel": [
+      "instruments",
+      "store"
+    ]
+  },
+  "contract_refs": {
+    "authoring": "sigmarail-spec://v1/strategy/authoring",
+    "execution": "sigmarail-spec://v1/strategy/execution",
+    "expression_core": "sigmarail-spec://v1/expressions/core",
+    "runtime_capabilities": "sigmarail-spec://v1/strategy/runtime-capabilities"
+  },
+  "purpose": "Apply position exits, stops, and risk actions.",
+  "slot": "RiskManagement",
+  "type_ids": [
+    "CompositeRiskManagementModel",
+    "MaximumDrawdownPercentPerSecurity",
+    "MaximumSectorExposureRiskManagementModel",
+    "MaximumUnrealizedProfitPercentPerSecurity",
+    "NullRiskManagementModel",
+    "SwingProgressiveRiskManagementModel",
+    "TrailingStopRiskManagementModel",
+    "VeraHedgeModel"
+  ],
+  "version": 1
+}

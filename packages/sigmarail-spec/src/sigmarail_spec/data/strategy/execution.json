@@ -1,0 +1,643 @@
+{
+  "executable_strategy_schema": {
+    "$defs": {
+      "DataSourceJoin": {
+        "additionalProperties": false,
+        "description": "Join specification matching screener join syntax.",
+        "properties": {
+          "on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "On",
+            "type": "array"
+          },
+          "select": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Select"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          },
+          "type": {
+            "default": "left_any",
+            "enum": [
+              "left_any",
+              "inner",
+              "left",
+              "right",
+              "full"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "on"
+        ],
+        "title": "DataSourceJoin",
+        "type": "object"
+      },
+      "DataSourceSpec": {
+        "additionalProperties": false,
+        "description": "Specification for a data source — graph policy and store-backed VeraLabV1.\n\nStore-backed specs set ``Type`` (loader class), ``grain`` (session | ticker_date |\ndaily), optional ``uses`` / ``score`` for regime policy (C-REGIME-POLICY-V1).",
+        "properties": {
+          "Type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Type"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "cache_per_date": {
+            "default": true,
+            "title": "Cache Per Date",
+            "type": "boolean"
+          },
+          "date_column": {
+            "default": "date",
+            "title": "Date Column",
+            "type": "string"
+          },
+          "grain": {
+            "default": "daily",
+            "title": "Grain",
+            "type": "string"
+          },
+          "joins": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/DataSourceJoin"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Joins"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Score"
+          },
+          "select": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Select",
+            "type": "array"
+          },
+          "table": {
+            "default": "",
+            "title": "Table",
+            "type": "string"
+          },
+          "uses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Uses",
+            "type": "array"
+          },
+          "where": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DataSourceWhere"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DataSourceSpec",
+        "type": "object"
+      },
+      "DataSourceWhere": {
+        "additionalProperties": false,
+        "description": "Where clause - simplified for runtime evaluation (not full AST).",
+        "properties": {
+          "filters": {
+            "additionalProperties": true,
+            "title": "Filters",
+            "type": "object"
+          }
+        },
+        "title": "DataSourceWhere",
+        "type": "object"
+      },
+      "EvaluationSettings": {
+        "description": "Backtest / paper window and account identity. Live uses cash + benchmark; dates are research.",
+        "properties": {
+          "benchmark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Benchmark"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "End Date"
+          },
+          "initial_cash": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Initial Cash"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start Date"
+          }
+        },
+        "title": "EvaluationSettings",
+        "type": "object"
+      },
+      "FrameworkBundleV1": {
+        "additionalProperties": false,
+        "description": "All five framework slots required for LeanFrameworkV1 (plan §8.4).",
+        "properties": {
+          "Alpha": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "Execution": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "PortfolioConstruction": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "RiskManagement": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "UniverseSelection": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          }
+        },
+        "required": [
+          "UniverseSelection",
+          "Alpha",
+          "PortfolioConstruction",
+          "Execution",
+          "RiskManagement"
+        ],
+        "title": "FrameworkBundleV1",
+        "type": "object"
+      },
+      "FrameworkSlotSpec": {
+        "additionalProperties": false,
+        "description": "One framework slot: QC class name + constructor kwargs.",
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "description": "Allowlisted Lean / QC Python class name",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FrameworkSlotSpec",
+        "type": "object"
+      },
+      "VeraBaseFacet": {
+        "additionalProperties": false,
+        "description": "Data-plane facet (sibling to Framework); universe drives ClickHouse screener when wired.",
+        "properties": {
+          "DataSources": {
+            "items": {
+              "$ref": "#/$defs/DataSourceSpec"
+            },
+            "title": "Datasources",
+            "type": "array"
+          },
+          "Evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EvaluationSettings"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "Pipeline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pipeline"
+          },
+          "PolicyGraph": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policygraph"
+          },
+          "Regime": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Regime"
+          },
+          "Universe": {
+            "additionalProperties": true,
+            "title": "Universe",
+            "type": "object"
+          }
+        },
+        "required": [
+          "Universe"
+        ],
+        "title": "VeraBaseFacet",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Target Phase-2 document: explicit framework types + VeraBase.Universe (+ plugin parameters).",
+    "properties": {
+      "AlgorithmParameters": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Keys passed via SetParameter (regime-source, exit-mode, …) when composed with CH alpha",
+        "title": "Algorithmparameters",
+        "type": "object"
+      },
+      "Framework": {
+        "$ref": "#/$defs/FrameworkBundleV1"
+      },
+      "Kind": {
+        "const": "VeraLabV1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "SchemaVersion": {
+        "const": 2,
+        "title": "Schemaversion",
+        "type": "integer"
+      },
+      "VeraBase": {
+        "$ref": "#/$defs/VeraBaseFacet"
+      },
+      "title": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Human strategy name (compile/decompile round-trip; optional at runtime)",
+        "title": "Title"
+      }
+    },
+    "required": [
+      "SchemaVersion",
+      "Kind",
+      "Framework",
+      "VeraBase"
+    ],
+    "title": "VeraLabV1Document",
+    "type": "object"
+  },
+  "lean_framework_schema": {
+    "$defs": {
+      "FrameworkBundleV1": {
+        "additionalProperties": false,
+        "description": "All five framework slots required for LeanFrameworkV1 (plan §8.4).",
+        "properties": {
+          "Alpha": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "Execution": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "PortfolioConstruction": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "RiskManagement": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          },
+          "UniverseSelection": {
+            "$ref": "#/$defs/FrameworkSlotSpec"
+          }
+        },
+        "required": [
+          "UniverseSelection",
+          "Alpha",
+          "PortfolioConstruction",
+          "Execution",
+          "RiskManagement"
+        ],
+        "title": "FrameworkBundleV1",
+        "type": "object"
+      },
+      "FrameworkSlotSpec": {
+        "additionalProperties": false,
+        "description": "One framework slot: QC class name + constructor kwargs.",
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "description": "Allowlisted Lean / QC Python class name",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FrameworkSlotSpec",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Phase-1 document: wire standard QC framework models only (no VeraBase / ClickHouse).\n\nJSON uses SchemaVersion + Kind; distinct from legacy pipeline JSON (schema_version: 1).\nSupply **Framework** inline or **FrameworkPreset** (named bundle), not both.",
+    "properties": {
+      "Algorithm": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional hints (e.g. StartCash); dates/cash v1 from config.json / parameters",
+        "title": "Algorithm"
+      },
+      "Framework": {
+        "$ref": "#/$defs/FrameworkBundleV1"
+      },
+      "FrameworkPreset": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Named allowlisted bundle; alternative to inline Framework.",
+        "title": "Frameworkpreset"
+      },
+      "Kind": {
+        "const": "LeanFrameworkV1",
+        "title": "Kind",
+        "type": "string"
+      },
+      "SchemaVersion": {
+        "const": 2,
+        "title": "Schemaversion",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "SchemaVersion",
+      "Kind",
+      "Framework"
+    ],
+    "title": "LeanFrameworkV1Document",
+    "type": "object"
+  },
+  "runtime_type_ids_by_slot": {
+    "Alpha": [
+      "ClickHouseAlphaModel",
+      "ConstantAlphaModel",
+      "EmaCrossAlphaModel",
+      "MacdAlphaModel",
+      "RsiAlphaModel",
+      "ScreenerStoreAlphaModel",
+      "SwingBreakoutAlphaModel",
+      "SwingPullbackAlphaModel",
+      "VeraCompositeAlphaModel",
+      "VeraGraphPolicyAlphaModel",
+      "VeraPyramidAlphaModel",
+      "VeraScreenerAlphaModel",
+      "VeraSectorAlphaModel",
+      "VeraSectorEtfAlphaModel",
+      "VeraTqqqTacticalAlphaModel"
+    ],
+    "Execution": [
+      "ClickHouseExecutionModel",
+      "ImmediateExecutionModel",
+      "ScreenerStoreExecutionModel",
+      "StandardDeviationExecutionModel",
+      "VeraScreenerExecutionModel",
+      "VolumeWeightedAveragePriceExecutionModel"
+    ],
+    "PortfolioConstruction": [
+      "ClickHousePortfolioConstructionModel",
+      "ConfidenceWeightedPortfolioConstructionModel",
+      "EqualWeightingPortfolioConstructionModel",
+      "InsightWeightingPortfolioConstructionModel",
+      "PerformanceWeightedPortfolioConstructionModel",
+      "RegimeWeightedPortfolioConstructionModel",
+      "RiskBudgetedPortfolioConstructionModel",
+      "RiskParityPortfolioConstructionModel",
+      "ScreenerStorePortfolioConstructionModel",
+      "SectorWeightingPortfolioConstructionModel",
+      "VeraGraphPolicyPortfolioConstructionModel",
+      "VeraScreenerPortfolioConstructionModel",
+      "VeraSectorEtfPortfolioConstructionModel",
+      "VeraSectorPortfolioConstructionModel",
+      "VeraTqqqTacticalPortfolioConstructionModel",
+      "VolatilityTargetingPortfolioConstructionModel"
+    ],
+    "RiskManagement": [
+      "CompositeRiskManagementModel",
+      "MaximumDrawdownPercentPerSecurity",
+      "MaximumSectorExposureRiskManagementModel",
+      "MaximumUnrealizedProfitPercentPerSecurity",
+      "NullRiskManagementModel",
+      "SwingProgressiveRiskManagementModel",
+      "TrailingStopRiskManagementModel",
+      "VeraHedgeModel"
+    ],
+    "UniverseSelection": [
+      "ClickHouseUniverseSelectionModel",
+      "CoarseFundamentalUniverseSelectionModel",
+      "CompositeUniverseSelectionModel",
+      "HighRoeQualityUniverseSelectionModel",
+      "ManualUniverseSelectionModel",
+      "ScreenerStoreUniverseSelectionModel",
+      "VeraScreenerUniverseSelectionModel"
+    ]
+  },
+  "slots": {
+    "alpha": {
+      "purpose": "Emit insights from selected securities and measures.",
+      "slot": "Alpha"
+    },
+    "execution": {
+      "purpose": "Submit target orders using the selected fill session.",
+      "slot": "Execution"
+    },
+    "portfolio_construction": {
+      "purpose": "Convert insights and holdings into portfolio targets.",
+      "slot": "PortfolioConstruction"
+    },
+    "risk_management": {
+      "purpose": "Apply position exits, stops, and risk actions.",
+      "slot": "RiskManagement"
+    },
+    "universe_selection": {
+      "purpose": "Select dated candidates through universe queries.",
+      "slot": "UniverseSelection"
+    }
+  },
+  "unclassified_runtime_type_ids": [
+    "AlphaModel",
+    "BarRequirements",
+    "ChHttpClient",
+    "ChHttpSettings",
+    "CompositeAlphaModel",
+    "EconomicEnvironmentRegimeSource",
+    "ExecutionModel",
+    "FetchWindow",
+    "HighRoeRollingCohort",
+    "HighRoeUniverseSelectionModel",
+    "Insight",
+    "InsightDirection",
+    "InsightType",
+    "Market",
+    "PortfolioConstructionModel",
+    "PortfolioTarget",
+    "PositionRiskState",
+    "PyramidPositionState",
+    "RegimeGateEvaluator",
+    "Resolution",
+    "RiskManagementModel",
+    "SecurityType",
+    "SigmaRailApiClient",
+    "SigmaRailApiError",
+    "SigmaRailDailyScreener",
+    "SigmaRailFrameworkStore",
+    "SigmaRailMarketRegimeSignalsDaily",
+    "SurrogateRouter",
+    "Symbol",
+    "SymbolRollingData",
+    "UniverseSelectionModel",
+    "VeraMacroEconomicDaily",
+    "VeraSymbolTechnicalFeaturesDaily",
+    "WiredFrameworkV1",
+    "_GateConfig"
+  ],
+  "version": 1,
+  "wire_format": {
+    "kind": "VeraLabV1",
+    "schema_version": 2
+  }
+}

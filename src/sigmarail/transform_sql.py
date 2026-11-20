@@ -668,7 +668,7 @@ def transform_catalog(client) -> List[TransformSpec]:
         FROM system.tables
         WHERE database = currentDatabase()
           AND engine = 'View'
-          AND name LIKE 'xform!_%' ESCAPE '!'
+          AND startsWith(name, 'xform_')
         ORDER BY name
         """
     )
@@ -701,7 +701,7 @@ def stale_transform_views(client, project_root: Optional[Path] = None) -> List[s
         SELECT name FROM system.tables
         WHERE database = currentDatabase()
           AND engine = 'View'
-          AND name LIKE 'xform!_%' ESCAPE '!'
+          AND startsWith(name, 'xform_')
         """
     )
     return [name for (name,) in result.result_rows if name not in expected]

@@ -1,0 +1,6 @@
+{
+  "capabilities": {},
+  "fields": {},
+  "notes": "Add reviewed semantics only when they cannot be derived from SQL, source comments, Pydantic models, or runtime registries. Keys must be stable IDs from generated documents.",
+  "version": 1
+}

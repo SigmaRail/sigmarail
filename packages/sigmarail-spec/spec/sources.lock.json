@@ -1,0 +1,61 @@
+{
+  "lock_version": 1,
+  "sources": {
+    "lean": {
+      "content_sha256": "a8af273dc07dc5373bae35c4d671930cee9490b05e76d25d9bd02d1a72365968",
+      "hashed_paths": [
+        "Algorithm.Framework/Alphas",
+        "Algorithm.Framework/Portfolio",
+        "Algorithm.Framework/Execution",
+        "Algorithm.Framework/Risk",
+        "Algorithm.Framework/Selection",
+        "Algorithm/Selection",
+        "Algorithm/Execution",
+        "Algorithm/Risk",
+        "Algorithm/Alphas",
+        "Algorithm/Portfolio"
+      ],
+      "path": "Lean",
+      "revision": "bdcd04a2b6ddf5a36427c4b486f48eab57edbc9e"
+    },
+    "sigmarail": {
+      "content_sha256": "5a1a8578bd784ea13aa4e4da738f2714415b6c59f0ea2b3e0c5cb77e847ce88b",
+      "hashed_paths": [
+        "tools/generate_lineage_manifest.py",
+        "src/sigmarail/query.py",
+        "src/sigmarail/universe.py",
+        "src/sigmarail/sql/schema-manifest.json",
+        "src/sigmarail/sql/schema",
+        "spec/lineage-manifest.json",
+        "src/sigmarail/spec/module-manifest.json"
+      ],
+      "path": ".",
+      "revision": null
+    },
+    "studio": {
+      "content_sha256": "429e77d0c4c9462cdb50bd80e42e8e0fd39018774751bf364b31e92f39eb085f",
+      "hashed_paths": [
+        "studio/api/lean_universe.py",
+        "studio/config/urls.py",
+        "studio/sigmarail_studio_mcp/domains/strategy.py",
+        "studio/sigmarail_studio_mcp/domains/core.py",
+        "studio/sigmarail_studio_mcp/server.py",
+        "studio/sigmarail_studio_mcp/data/module-catalog.json",
+        "studio/AGENTS.md"
+      ],
+      "path": ".",
+      "revision": null
+    },
+    "trading_lab": {
+      "content_sha256": "9a427cfb9ef059030bbf9bd74d68df06d8324b3c67c1b4fb51b54daea30fc77c",
+      "hashed_paths": [
+        "src/sigmarail_lab/ir",
+        "src/sigmarail_lab/runtime",
+        "src/sigmarail_lab/lean",
+        "trading_lab/main.py"
+      ],
+      "path": ".",
+      "revision": null
+    }
+  }
+}

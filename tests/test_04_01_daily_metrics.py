@@ -42,7 +42,7 @@ def sep_data(global_client: clickhouse_connect.driver.Client) -> pd.DataFrame:
     """
     logger.info("--- Fixture: sep_data (from SEP and SFP with date window) ---")
     client = get_client()
-    # Must match session populate bounds (see tests/vera/conftest.py / VERA_TEST_POPULATE_*).
+    # Must match session populate bounds (see tests/vera/conftest.py / SIGMARAIL_TEST_POPULATE_*).
     start_date = date.fromisoformat(os.environ.get("SIGMARAIL_TEST_POPULATE_START", "2021-01-01"))
     end_date = date.fromisoformat(os.environ.get("SIGMARAIL_TEST_POPULATE_END", "2024-12-31"))
     

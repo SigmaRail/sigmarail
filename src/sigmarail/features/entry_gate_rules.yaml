@@ -1,0 +1,141 @@
+# Entry Gate Rules manifest — the single source for gate thresholds.
+#
+# SCOPE (adopted 2026-08-04): Model 2 swing STOCK entries only.
+#   gate==closed does NOT freeze Model 1 SP sleeve (SPYM / UPRO ladder).
+#   Model 1 rules live in docs/ai/rules/financial-domain.md
+#   (#leveraged-etf-amplification / #model-1-sp-sleeve).
+#
+# FTD / breadth_thrust recovery (adopted 2026-08-05):
+#   Same-day ftd==1 or breadth_thrust==1 suspends demote hard-closes
+#   (rules 1, 2, 7) and yields caution / pilot_only instead — aligns HARD
+#   gate with Recovery criteria in financial-domain.md.
+#
+# Consumed by BOTH:
+#   - sigmarail.features.gate_tools (evaluate_entry_gate execution)
+#   - sigmarail.features.registry.graph_export (graph rule-node projection)
+# Thresholds must appear here and only here. Evaluation FLOW (ordering
+# behavior, closed>caution>open precedence, trailing-window fetch) lives in
+# gate_tools.py.
+#
+# Conditions are structured {metric, op, value} objects — no string DSL.
+# Ops: eq, ne, gte, gt, lte, lt.
+#   all:          every condition must hold on the as-of row
+#   lookback:     window_sessions rows; default is STRICTLY BEFORE as-of
+#                 (include_asof: true includes the as-of row in the window).
+#                 any_row:  hit if any window row satisfies ALL listed conds
+#                 none_row: hit if NO window row satisfies ANY listed cond
+#                           (OR across conditions — used for event flags)
+#   applies_when: rule is skipped unless this holds on the as-of row
+#                 (single cond object, or list of conds = AND)
+#   terminal:     a hit stops evaluation (only meaningful for outcome: closed)
+#   constraints:  machine-readable downstream constraints (caution rules)
+version: 1
+scope: model2_swing_stocks
+source_table: market_regime_signals_daily
+rules:
+  - id: vera.rule.entry_gate.1
+    order: 1
+    all:
+      - {metric: effective_source, op: eq, value: daily_demote}
+      - {metric: ftd, op: ne, value: 1}
+      - {metric: breadth_thrust, op: ne, value: 1}
+    outcome: closed
+    terminal: true
+    summary: "daily_demote (no FTD/thrust) — Model 2: no new swing stock entries (Model 1 SP sleeve not gated)"
+    provenance: docs/ai/rules/financial-domain.md#entry-gate-rules
+    note: "2026-08-05: FTD/thrust on as-of suspends this close (see rules 8–9 caution)."
+  - id: vera.rule.entry_gate.2
+    order: 2
+    all:
+      - {metric: daily_demote_streak, op: gte, value: 3}
+      - {metric: ftd, op: ne, value: 1}
+      - {metric: breadth_thrust, op: ne, value: 1}
+    outcome: closed
+    terminal: true
+    summary: "demote streak >= 3 (no FTD/thrust) — Model 2 closed; persistence confirmed"
+    provenance: docs/ai/rules/financial-domain.md#entry-gate-rules
+    note: "Not redundant with rule 1: fires under clamp (2026-02-23 clamp/streak 24; Nov 2025). Recovery flags suspend hard close."
+  - id: vera.rule.entry_gate.3
+    order: 3
+    all:
+      - {metric: distribution_count_25d, op: gte, value: 8}
+    outcome: closed
+    terminal: true
+    summary: "distribution_count_25d >= 8 — Model 2 exits/stop-tighten only; Model 1: no new UPRO"
+    provenance: docs/ai/rules/financial-domain.md#entry-gate-rules
+    note: "First real firing 2026-07-08/09 at dist 8"
+  - id: vera.rule.entry_gate.8
+    order: 3.5
+    all:
+      - {metric: effective_source, op: eq, value: daily_demote}
+      - {metric: ftd, op: eq, value: 1}
+    outcome: caution
+    terminal: false
+    constraints:
+      new_entries: pilot_only
+      size_multiplier: 0.5
+      note: "FTD recovery under demote — Model 2 pilot only; Model 1 UPRO half-size on strength"
+    summary: "daily_demote + ftd — Model 2 caution/pilot (recovery), not hard closed"
+    provenance: "adopted 2026-08-05 (align HARD gate with Recovery: ftd==1)"
+  - id: vera.rule.entry_gate.9
+    order: 3.6
+    all:
+      - {metric: effective_source, op: eq, value: daily_demote}
+      - {metric: breadth_thrust, op: eq, value: 1}
+    outcome: caution
+    terminal: false
+    constraints:
+      new_entries: pilot_only
+      size_multiplier: 0.5
+      note: "Breadth-thrust recovery under demote — Model 2 pilot only; Model 1 UPRO half-size on strength"
+    summary: "daily_demote + breadth_thrust — Model 2 caution/pilot (recovery), not hard closed"
+    provenance: "adopted 2026-08-05 (align HARD gate with Recovery: breadth_thrust==1)"
+  - id: vera.rule.entry_gate.4
+    order: 4
+    all:
+      - {metric: distribution_count_25d, op: gte, value: 4}
+    outcome: caution
+    terminal: false
+    constraints:
+      new_entries: pilot_only
+      size_multiplier: 0.5
+      note: "Model 2: stronger setup quality; Model 1 UPRO starter at half size when strength confirms"
+    summary: "distribution_count_25d >= 4 — Model 2 pilot-only; Model 1 UPRO half-size on strength"
+    provenance: docs/ai/rules/financial-domain.md#entry-gate-rules
+  - id: vera.rule.entry_gate.5
+    order: 5
+    lookback:
+      window_sessions: 25
+      include_asof: true
+      none_row:
+        - {metric: ftd, op: eq, value: 1}
+        - {metric: breadth_thrust, op: eq, value: 1}
+    outcome: closed
+    terminal: true
+    applies_when: {metric: effective_allocation_tier, op: lte, value: 33}
+    summary: "no FTD/thrust in 25d while tier<=33 — Model 2 closed; Model 1 defensive (SPYM/SGOV only)"
+    provenance: docs/ai/rules/financial-domain.md#entry-gate-rules
+    note: "Rescoped 2026-07-13: ftd/thrust are one-day events (not levels); tier<100 wrongly closed normal tier-67 operating state"
+  - id: vera.rule.entry_gate.6
+    order: 6
+    all:
+      - {metric: effective_source, op: eq, value: weekly}
+      - {metric: daily_demote_streak, op: gte, value: 1}
+      - {metric: distribution_count_25d, op: gte, value: 7}
+    outcome: closed
+    terminal: true
+    summary: "deterioration combo — Model 2 closed (weekly + demote streak + dist>=7)"
+    provenance: "adopted 2026-07-13 (data replay: 2026-06-24 incident row weekly/2/7 uncovered by rules 1-5)"
+  - id: vera.rule.entry_gate.7
+    order: 7
+    lookback:
+      window_sessions: 5
+      any_row:
+        - {metric: effective_source, op: eq, value: daily_demote}
+    outcome: closed
+    terminal: true
+    applies_when:
+      - {metric: ftd, op: ne, value: 1}
+      - {metric: breadth_thrust, op: ne, value: 1}
+    summary: "demote cooloff — Model 2 closed until recovery confirmed (5-session lookback; skipped on FTD/thrust day)"
+    provenance: "adopted 2026-07-13 (post-demote cooloff; verified 2026-06-30..07-07 hold closed); FTD suspend 2026-08-05"

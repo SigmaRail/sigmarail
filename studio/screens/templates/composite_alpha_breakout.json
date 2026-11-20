@@ -1,0 +1,131 @@
+{
+  "version": 2,
+  "spine": "screener_price_tech_daily",
+  "joins": [
+    {
+      "table": "screener_ownership_daily",
+      "type": "left_any",
+      "on": [
+        "ticker",
+        "date"
+      ]
+    }
+  ],
+  "select": [
+    "ticker",
+    "date",
+    "close",
+    "rs_rating",
+    "sma20d",
+    "sma50d",
+    "sma200d",
+    "atr_14",
+    "volume",
+    "avg_vol_20d",
+    "high_52w",
+    "low_52w",
+    "insider_cluster_buy_flag",
+    "insider_net_buy_value_90d",
+    "inst_shrholders_qoq_pct"
+  ],
+  "computed": [],
+  "where": {
+    "type": "all",
+    "items": [
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": -1
+        },
+        "right": {
+          "type": "col",
+          "name": "high",
+          "offset": -1
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "high",
+          "offset": -1
+        }
+      },
+      {
+        "type": "gte",
+        "left": {
+          "type": "col",
+          "name": "rs_rating",
+          "offset": 0
+        },
+        "right": {
+          "type": "lit",
+          "value": 80
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "volume",
+          "offset": 0
+        },
+        "right": {
+          "type": "formula",
+          "op": "*",
+          "args": [
+            {
+              "type": "col",
+              "name": "avg_vol_20d",
+              "offset": 0
+            },
+            {
+              "type": "lit",
+              "value": 1.5
+            }
+          ]
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "close",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma20d",
+          "offset": 0
+        }
+      },
+      {
+        "type": "gt",
+        "left": {
+          "type": "col",
+          "name": "sma50d",
+          "offset": 0
+        },
+        "right": {
+          "type": "col",
+          "name": "sma200d",
+          "offset": 0
+        }
+      }
+    ]
+  },
+  "order_by": [
+    {
+      "field": "rs_rating",
+      "direction": "desc"
+    }
+  ],
+  "limit_per_day": 25
+}

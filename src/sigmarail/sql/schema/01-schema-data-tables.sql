@@ -11,7 +11,7 @@
 -- It also links tickers to their respective data across other Sharadar tables (like SF1 for fundamentals, SEP for prices) and external resources (SEC filings, company websites).
 CREATE TABLE IF NOT EXISTS tickers
 (
-    `table` String COMMENT 'Table: Retail Sharadar table id (stocks, funds, fundamentals, …). Route prices via stocks vs funds, not ticker string alone.',
+    `table` String COMMENT 'Sharadar dataset label returned in TICKERS (for example SEP and SFP). API request filters stocks/funds are not the values stored here.',
     `permaticker` String COMMENT 'Permanent Ticker Symbol: The permaticker is a unique and unchanging identifier for an issuer in the dataset which we as the data provider issue. This field is not included in other tables in order to maximise data scalability in those tables.',
     `ticker` LowCardinality(String) COMMENT 'Ticker Symbol: The ticker is a unique identifier for a security in the database. Where a company is delisted and the ticker subsequently recycled for use by a different company, we utilise that ticker for the currently active company and append a number to the ticker of the delisted company. The ACTIONS table provides a record of historical ticker changes.',
     `name` String COMMENT 'Issuer Name: The name of the security issuer.',

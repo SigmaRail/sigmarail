@@ -1,0 +1,46 @@
+import { screen, waitFor } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
+
+import { RoutesConfig } from '{{ routesConfigImport }}';
+import { createMockRouterProps, render } from '../../../../tests/utils/rendering';
+import { Add{{ pascalCase name }} } from '../add{{ pascalCase name }}.component';
+
+describe('Add{{ pascalCase name }}: Component', () => {
+  const routePath = ['{{ camelCase name }}', 'add'];
+
+  const Component = () => (
+    <Routes>
+      <Route path={RoutesConfig.getLocalePath(routePath)} element={<Add{{ pascalCase name }} />} />
+    </Routes>
+  );
+
+  it('should render page title', async () => {
+    const routerProps = createMockRouterProps(routePath);
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    });
+  });
+
+  it('should render back link', async () => {
+    const routerProps = createMockRouterProps(routePath);
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /back/i })).toBeInTheDocument();
+    });
+  });
+
+  it('should render form', async () => {
+    const routerProps = createMockRouterProps(routePath);
+
+    render(<Component />, { routerProps });
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: /name/i })).toBeInTheDocument();
+    });
+  });
+});

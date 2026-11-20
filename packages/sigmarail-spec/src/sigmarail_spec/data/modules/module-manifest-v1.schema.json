@@ -1,0 +1,384 @@
+{
+  "$defs": {
+    "dataset": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "fields"
+          ]
+        },
+        {
+          "required": [
+            "schema_ref"
+          ]
+        }
+      ],
+      "properties": {
+        "as_of_semantics": {
+          "enum": [
+            "observation_time",
+            "public_available_at",
+            "period_end",
+            "event_available_at",
+            "not_temporal",
+            "unspecified"
+          ]
+        },
+        "completion": {
+          "enum": [
+            "completed",
+            "provisional",
+            "point_in_time",
+            "event",
+            "not_applicable",
+            "unspecified"
+          ]
+        },
+        "database": {
+          "description": "Optional explicit database override; otherwise use the configured module database.",
+          "pattern": "^[a-z][a-z0-9_]{0,62}$",
+          "type": "string"
+        },
+        "dataset_id": {
+          "pattern": "^[a-z][a-z0-9_.-]{1,127}$",
+          "type": "string"
+        },
+        "entity_grain": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "fields": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field_id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "lineage_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name": {
+                "pattern": "^[a-z][a-z0-9_]{0,126}$",
+                "type": "string"
+              },
+              "nullable": {
+                "type": "boolean"
+              },
+              "semantic_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "units": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "field_id",
+              "name",
+              "type"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "frequency": {
+          "enum": [
+            "intraday",
+            "daily",
+            "weekly",
+            "monthly",
+            "event",
+            "unspecified"
+          ]
+        },
+        "schema_ref": {
+          "format": "uri",
+          "type": "string"
+        },
+        "source_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "table": {
+          "pattern": "^[a-z][a-z0-9_]{0,126}$",
+          "type": "string"
+        },
+        "time_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "dataset_id",
+        "table",
+        "frequency",
+        "entity_grain",
+        "time_key",
+        "as_of_semantics",
+        "source_ids"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://sigmarail.org/spec/modules/module-manifest-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Declares ownership, datasets, temporal grain, joins, configuration, and capabilities for a SigmaRail core or optional module.",
+  "properties": {
+    "capabilities": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9_.-]{1,95}$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "query",
+              "screen",
+              "resource",
+              "tool",
+              "authoring",
+              "execution"
+            ]
+          },
+          "mcp_resource_uris": {
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "mcp_tool_names": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9_]{1,95}$",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "contract_ref"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "contract_version": {
+      "const": 1
+    },
+    "datasets": {
+      "items": {
+        "$ref": "#/$defs/dataset"
+      },
+      "type": "array"
+    },
+    "dependencies": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "module_id": {
+            "pattern": "^sigmarail\\.[a-z][a-z0-9_]{0,61}$",
+            "type": "string"
+          },
+          "optional": {
+            "default": false,
+            "type": "boolean"
+          },
+          "version_range": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "module_id",
+          "version_range"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "joins": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "cardinality": {
+            "enum": [
+              "one_to_one",
+              "one_to_many",
+              "many_to_one"
+            ]
+          },
+          "from_dataset": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^sigmarail\\.[a-z][a-z0-9_.-]{1,127}$",
+            "type": "string"
+          },
+          "join_type": {
+            "default": "left_any",
+            "enum": [
+              "left_any",
+              "inner"
+            ]
+          },
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "to"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "max_staleness": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "temporal_alignment": {
+            "enum": [
+              "exact",
+              "asof_prior",
+              "completed_period",
+              "event_available_at"
+            ]
+          },
+          "to_dataset": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "from_dataset",
+          "to_dataset",
+          "keys",
+          "cardinality",
+          "temporal_alignment"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "kind": {
+      "enum": [
+        "core_data",
+        "provider_data",
+        "knowledge",
+        "strategy_runtime",
+        "studio_feature"
+      ]
+    },
+    "module_id": {
+      "pattern": "^sigmarail\\.[a-z][a-z0-9_]{0,61}$",
+      "type": "string"
+    },
+    "package": {
+      "additionalProperties": false,
+      "properties": {
+        "distribution": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "entry_point": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "entry_point_group": {
+          "const": "sigmarail.modules"
+        }
+      },
+      "type": "object"
+    },
+    "settings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[A-Z][A-Z0-9_]{1,127}$",
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "secret": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "required",
+          "secret"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "version": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "module_id",
+    "version",
+    "kind",
+    "datasets",
+    "joins",
+    "capabilities"
+  ],
+  "title": "SigmaRail Module Manifest v1 (proposal)",
+  "type": "object"
+}
