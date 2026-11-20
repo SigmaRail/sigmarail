@@ -529,6 +529,111 @@ export function UniverseSlotCard({
     });
   }
 
+  const sectorSummaryContent = sectorMix.length > 0 ? (
+    <section
+      aria-labelledby="universe-sector-mix-title"
+      className="rounded-md border border-border/70 bg-surface/40 p-3"
+      data-testid="universe-sector-mix"
+    >
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 id="universe-sector-mix-title" className="text-xs font-semibold">
+          Sector summary
+        </h3>
+        <p className="font-mono text-[10px] text-muted-foreground">
+          {asofQuery.data?.as_of ? `As of ${asofQuery.data.as_of} · ` : ""}
+          {asofQuery.data?.count != null && asofQuery.data.count > allRows.length
+            ? `Share of ${allRows.length.toLocaleString()} returned / ${asofQuery.data.count.toLocaleString()} matches`
+            : `Share of ${allRows.length.toLocaleString()} members`}
+          {universeRs
+            ? ` · ${asofQuery.data?.count != null && asofQuery.data.count > allRows.length ? "Returned" : "Universe"} RS median ${formatRating(universeRs.median)}`
+            : ""}
+          {sectorSort.key === "alpha" ? " · Alpha order" : ` · Sorted by ${SECTOR_METRIC_COLUMNS.find((column) => column.key === sectorSort.key)?.label ?? sectorSort.key} ${sectorSort.direction}`}
+        </p>
+      </div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <input
+          type="search"
+          value={sectorFilter}
+          onChange={(event) => setSectorFilter(event.target.value)}
+          aria-label="Filter sectors"
+          placeholder="Filter sectors…"
+          className="h-8 w-full max-w-xs rounded border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground"
+        />
+        {sectorSort.key !== "alpha" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-[10px]"
+            onClick={() => setSectorSort({ key: "alpha", direction: "asc" })}
+          >
+            Reset to Alpha order
+          </Button>
+        ) : null}
+      </div>
+      <div className="overflow-x-auto rounded border border-line">
+        <table className="w-full min-w-[1050px] border-collapse text-left text-[11px]">
+          <thead className="bg-surface-sunk text-ink-muted">
+            <tr>
+              {SECTOR_METRIC_COLUMNS.map(({ key, label, align }) => (
+                <th
+                  key={key}
+                  scope="col"
+                  aria-sort={sectorSort.key === key
+                    ? sectorSort.direction === "asc" ? "ascending" : "descending"
+                    : "none"}
+                  className={`whitespace-nowrap border-b border-line px-2.5 py-2 font-semibold ${align === "right" ? "text-right" : "text-left"}`}
+                >
+                  <button
+                    type="button"
+                    className="hover:text-ink focus-visible:outline-none focus-visible:underline"
+                    onClick={() => handleSectorSort(key)}
+                  >
+                    {label}{sectorSort.key === key ? (sectorSort.direction === "asc" ? " ↑" : " ↓") : ""}
+                  </button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleSectors.map(({ sector, count, share, rs, score, atr }) => (
+              <tr key={sector} className="border-b border-line/70 last:border-0 hover:bg-surface-sunk/40">
+                <th scope="row" className="whitespace-nowrap px-2.5 py-2 font-medium text-ink">{sector}</th>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{count.toLocaleString()}</td>
+                <td className="min-w-28 px-2.5 py-2 text-right font-mono tabular-nums">
+                  <div className="flex items-center justify-end gap-2">
+                    <span>{share.toFixed(1)}%</span>
+                    <span className="h-1.5 w-14 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                      <span
+                        className={`block h-full rounded-full ${sectorColor(sector).className}`}
+                        style={{ width: `${share}%` }}
+                      />
+                    </span>
+                  </div>
+                </td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? rs.mean.toFixed(1) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q1) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.median) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q3) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q1.toFixed(1) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.median.toFixed(1) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q3.toFixed(1) : "—"}</td>
+                <td className="px-2.5 py-2 text-right font-mono tabular-nums">{atr ? `${atr.median.toFixed(1)}%` : "—"}</td>
+              </tr>
+            ))}
+            {!visibleSectors.length ? (
+              <tr>
+                <td colSpan={SECTOR_METRIC_COLUMNS.length} className="px-3 py-5 text-center text-muted-foreground">
+                  No sectors match this filter.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ) : null;
+
   return (
     <div className="min-w-0 space-y-3">
       <ScreenerFilterSummary
@@ -552,6 +657,7 @@ export function UniverseSlotCard({
           }}
         />
       </ScreenerMembershipHistory>
+      {sectorSummaryContent}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
           <div className="text-[11px] text-muted-foreground">
@@ -687,110 +793,6 @@ export function UniverseSlotCard({
                 >
                   Show more · {allRows.length - shownRows.length} remaining
                 </Button>
-              ) : null}
-              {sectorMix.length > 0 ? (
-                <section
-                  aria-labelledby="universe-sector-mix-title"
-                  className="rounded-md border border-border/70 bg-surface/40 p-3"
-                  data-testid="universe-sector-mix"
-                >
-                  <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <h3 id="universe-sector-mix-title" className="text-xs font-semibold">
-                      Sector summary
-                    </h3>
-                    <p className="font-mono text-[10px] text-muted-foreground">
-                      {asofQuery.data?.as_of ? `As of ${asofQuery.data.as_of} · ` : ""}
-                      {asofQuery.data?.count != null && asofQuery.data.count > allRows.length
-                        ? `Share of ${allRows.length.toLocaleString()} returned / ${asofQuery.data.count.toLocaleString()} matches`
-                        : `Share of ${allRows.length.toLocaleString()} members`}
-                      {universeRs
-                        ? ` · ${asofQuery.data?.count != null && asofQuery.data.count > allRows.length ? "Returned" : "Universe"} RS median ${formatRating(universeRs.median)}`
-                        : ""}
-                      {sectorSort.key === "alpha" ? " · Alpha order" : ` · Sorted by ${SECTOR_METRIC_COLUMNS.find((column) => column.key === sectorSort.key)?.label ?? sectorSort.key} ${sectorSort.direction}`}
-                    </p>
-                  </div>
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <input
-                      type="search"
-                      value={sectorFilter}
-                      onChange={(event) => setSectorFilter(event.target.value)}
-                      aria-label="Filter sectors"
-                      placeholder="Filter sectors…"
-                      className="h-8 w-full max-w-xs rounded border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground"
-                    />
-                    {sectorSort.key !== "alpha" ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-[10px]"
-                        onClick={() => setSectorSort({ key: "alpha", direction: "asc" })}
-                      >
-                        Reset to Alpha order
-                      </Button>
-                    ) : null}
-                  </div>
-                  <div className="overflow-x-auto rounded border border-line">
-                    <table className="w-full min-w-[1050px] border-collapse text-left text-[11px]">
-                      <thead className="bg-surface-sunk text-ink-muted">
-                        <tr>
-                          {SECTOR_METRIC_COLUMNS.map(({ key, label, align }) => (
-                            <th
-                              key={key}
-                              scope="col"
-                              aria-sort={sectorSort.key === key
-                                ? sectorSort.direction === "asc" ? "ascending" : "descending"
-                                : "none"}
-                              className={`whitespace-nowrap border-b border-line px-2.5 py-2 font-semibold ${align === "right" ? "text-right" : "text-left"}`}
-                            >
-                              <button
-                                type="button"
-                                className="hover:text-ink focus-visible:outline-none focus-visible:underline"
-                                onClick={() => handleSectorSort(key)}
-                              >
-                                {label}{sectorSort.key === key ? (sectorSort.direction === "asc" ? " ↑" : " ↓") : ""}
-                              </button>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visibleSectors.map(({ sector, count, share, rs, score, atr }) => (
-                          <tr key={sector} className="border-b border-line/70 last:border-0 hover:bg-surface-sunk/40">
-                            <th scope="row" className="whitespace-nowrap px-2.5 py-2 font-medium text-ink">{sector}</th>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{count.toLocaleString()}</td>
-                            <td className="min-w-28 px-2.5 py-2 text-right font-mono tabular-nums">
-                              <div className="flex items-center justify-end gap-2">
-                                <span>{share.toFixed(1)}%</span>
-                                <span className="h-1.5 w-14 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                                  <span
-                                    className={`block h-full rounded-full ${sectorColor(sector).className}`}
-                                    style={{ width: `${share}%` }}
-                                  />
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? rs.mean.toFixed(1) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q1) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.median) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q3) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q1.toFixed(1) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.median.toFixed(1) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{score ? score.q3.toFixed(1) : "—"}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{atr ? `${atr.median.toFixed(1)}%` : "—"}</td>
-                          </tr>
-                        ))}
-                        {!visibleSectors.length ? (
-                          <tr>
-                            <td colSpan={SECTOR_METRIC_COLUMNS.length} className="px-3 py-5 text-center text-muted-foreground">
-                              No sectors match this filter.
-                            </td>
-                          </tr>
-                        ) : null}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
               ) : null}
               {chartTicker ? (
                 <MembershipTickerInspect

@@ -67,20 +67,18 @@ export function SectorMembershipAreaChart({
     const relative = maxMembers === minMembers ? 0.5 : (count - minMembers) / (maxMembers - minMembers);
     return PLOT.top + (1 - relative) * plotHeight;
   };
-  const paths = data.sectors.map((sector, sectorIndex) => {
+  const stackedBounds = dates.map((_, dateIndex) => {
     let cumulative = 0;
-    const lower = dates.map((_, dateIndex) => {
-      const value = data.percentages[dateIndex]?.[sectorIndex] ?? 0;
-      const point = cumulative;
-      cumulative += value;
-      return point;
+    return data.sectors.map((_, sectorIndex) => {
+      const lower = cumulative;
+      cumulative += data.percentages[dateIndex]?.[sectorIndex] ?? 0;
+      return { lower, upper: cumulative };
     });
-    const upper = dates.map((_, dateIndex) =>
-      lower[dateIndex]! + (data.percentages[dateIndex]?.[sectorIndex] ?? 0),
-    );
-    const topPoints = upper.map((value, index) => `${xAt(index)},${yAt(value)}`);
-    const bottomPoints = lower
-      .map((value, index) => `${xAt(index)},${yAt(value)}`)
+  });
+  const paths = data.sectors.map((sector, sectorIndex) => {
+    const topPoints = stackedBounds.map((bounds, index) => `${xAt(index)},${yAt(bounds[sectorIndex]?.upper ?? 0)}`);
+    const bottomPoints = stackedBounds
+      .map((bounds, index) => `${xAt(index)},${yAt(bounds[sectorIndex]?.lower ?? 0)}`)
       .reverse();
     return { sector, points: [...topPoints, ...bottomPoints].join(" "), color: sectorColor(sector).hex };
   });
@@ -129,6 +127,9 @@ export function SectorMembershipAreaChart({
         aria-label="100 percent stacked sector membership over time"
       >
         <svg viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          {paths.map((path) => (
+            <polygon key={path.sector} points={path.points} fill={path.color} fillOpacity="0.72" />
+          ))}
           {[0, 25, 50, 75, 100].map((value) => {
             const y = yAt(value);
             return (
@@ -138,9 +139,6 @@ export function SectorMembershipAreaChart({
               </g>
             );
           })}
-          {paths.map((path) => (
-            <polygon key={path.sector} points={path.points} fill={path.color} fillOpacity="0.78" stroke={path.color} strokeOpacity="0.9" strokeWidth="0.6" />
-          ))}
           <polyline points={memberLine} fill="none" stroke="#e2e8f0" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
           <text x={VIEW_WIDTH - 4} y={PLOT.top + 3} textAnchor="end" fill="#e2e8f0" fontSize="9">{maxMembers.toLocaleString()}</text>
           <text x={VIEW_WIDTH - 4} y={VIEW_HEIGHT - PLOT.bottom + 3} textAnchor="end" fill="#e2e8f0" fontSize="9">{minMembers.toLocaleString()}</text>
