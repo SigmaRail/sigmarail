@@ -418,6 +418,7 @@ export type UniverseRangeSummary = {
     max_members_per_day: number;
   };
   weekly_samples?: Array<{ date: string; sample_tickers: string[] }>;
+  sector_counts?: Array<{ date: string; sector: string; count: number }>;
 };
 
 export type ComposeValidation = {

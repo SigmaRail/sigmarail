@@ -39,9 +39,10 @@ RUN uv sync --frozen \
 WORKDIR /app
 
 COPY ${SIGMARAIL_SOURCE_DIR}/packages/backend/ /app/
-COPY ${SIGMARAIL_SOURCE_DIR}/api/ /workspace/api/
-COPY ${SIGMARAIL_SOURCE_DIR}/screens/ /workspace/screens/
-COPY ${SIGMARAIL_SOURCE_DIR}/sigmarail_studio_mcp/ /workspace/sigmarail_studio_mcp/
+COPY ${SIGMARAIL_SOURCE_DIR}/src/sigmarail/ /workspace/sigmarail/
+COPY ${SIGMARAIL_SOURCE_DIR}/studio/api/ /workspace/api/
+COPY ${SIGMARAIL_SOURCE_DIR}/studio/screens/ /workspace/screens/
+COPY ${SIGMARAIL_SOURCE_DIR}/studio/sigmarail_studio_mcp/ /workspace/sigmarail_studio_mcp/
 COPY VeraBase/src/vera_query_core/ /opt/vera-base/src/vera_query_core/
 COPY VeraBase/src/vera/config.py VeraBase/src/vera/__init__.py /opt/vera-base/src/vera/
 COPY VeraBase/sql/schema/ /opt/vera-base/sql/schema/

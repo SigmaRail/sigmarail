@@ -372,6 +372,18 @@ export async function fetchUniverseRangeSummary(body: {
   });
 }
 
+/** Complete per-day sector counts for a screen, aggregated by the AppTension SigmaRail API. */
+export async function fetchUniverseSectorRangeSummary(body: {
+  spec: UniverseQueryV1;
+  start_date: string;
+  end_date: string;
+}): Promise<UniverseRangeSummary> {
+  return request<UniverseRangeSummary>("/api/screens/universe-sector-range", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 /** C-SCREEN-PROBE-V1 — stage-prefix probe (layers / asof / range / diff). */
 export async function fetchScreenProbe(body: {
   view: "layers" | "asof" | "range" | "diff";

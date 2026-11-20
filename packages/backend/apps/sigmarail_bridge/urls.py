@@ -10,6 +10,7 @@ from .core_data import (
     ScreenSparklinesView,
     UniverseCompileSqlView,
     UniversePreviewView,
+    UniverseSectorRangeView,
     UniverseSchemaView,
 )
 from .strategy_catalog import (
@@ -51,6 +52,7 @@ urlpatterns.extend(
         path("screens/sparklines", ScreenSparklinesView.as_view(), name="screen-sparklines"),
         path("screens/compile-sql", UniverseCompileSqlView.as_view(), name="screen-compile-sql"),
         path("screens/preview-ir", UniversePreviewView.as_view(), name="screen-preview-ir"),
+        path("screens/universe-sector-range", UniverseSectorRangeView.as_view(), name="screen-universe-sector-range"),
         path("screens/ir-schema", UniverseSchemaView.as_view(), name="screen-ir-schema"),
         re_path(r"^screens/templates/?$", UniverseScreenTemplatesView.as_view(), name="screen-templates"),
         re_path(

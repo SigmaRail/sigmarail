@@ -11,10 +11,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { fetchAsOfRange, fetchUniverseRangeSummary } from "../../api/screens";
+import { fetchAsOfRange, fetchUniverseRangeSummary, fetchUniverseSectorRangeSummary } from "../../api/screens";
 import { RANGE_PRESETS, clampWindow, membershipHistoryStart, presetWindow } from "../../lib/rangePresets";
 import type { UniverseQueryV1 } from "../../types";
 import { ProbeRangeChart } from "../ProbeRangeChart";
+import { SectorMembershipAreaChart } from "./SectorMembershipAreaChart";
 import { Button } from "@sb/webapp-core/components/ui/button";
 import { Input } from "@sb/webapp-core/components/ui/input";
 
@@ -29,6 +30,8 @@ interface MembershipOverTimeProps {
   /** A click on the chart picks a date for the caller's list. */
   onPickDate?: (date: string) => void;
   height?: number;
+  /** Include a server-aggregated 100% stacked sector composition history. */
+  showSectorComposition?: boolean;
 }
 
 export function MembershipOverTime({
@@ -38,6 +41,7 @@ export function MembershipOverTime({
   onHoverDate,
   onPickDate,
   height = 140,
+  showSectorComposition = false,
 }: MembershipOverTimeProps) {
   // A caller may not have a strategy's evaluation start; default to the last year so the window
   // is always valid (and cheap — the full history is one click away via `Max`).
@@ -66,9 +70,11 @@ export function MembershipOverTime({
 
   const liveSpecKey = JSON.stringify(spec?.where ?? null);
   const rangeQuery = useQuery({
-    queryKey: ["universe-membership-range", spec?.where, rangeFrom, rangeTo],
+    queryKey: ["universe-membership-range", spec?.where, rangeFrom, rangeTo, showSectorComposition],
     queryFn: () =>
-      fetchUniverseRangeSummary({ spec, start_date: rangeFrom, end_date: rangeTo }),
+      showSectorComposition
+        ? fetchUniverseSectorRangeSummary({ spec, start_date: rangeFrom, end_date: rangeTo })
+        : fetchUniverseRangeSummary({ spec, start_date: rangeFrom, end_date: rangeTo }),
     enabled: Boolean(spec && rangeFrom && rangeTo),
     staleTime: 0,
     placeholderData: (prev) => prev,
@@ -135,14 +141,25 @@ export function MembershipOverTime({
             {String(rangeQuery.data.summary?.avg_members_per_day ?? "—")} ·{" "}
             {rangeFrom} → {rangeTo}
           </p>
-          <ProbeRangeChart
-            dates={dates}
-            memberCounts={memberCounts}
-            membersOnly
-            height={height}
-            onHoverDate={onHoverDate}
-            onClickDate={(d) => onPickDate?.(d)}
-          />
+          {showSectorComposition && rangeQuery.data.sector_counts ? (
+            <SectorMembershipAreaChart
+              dates={dates}
+              memberCounts={memberCounts}
+              sectorCounts={rangeQuery.data.sector_counts}
+              height={height}
+              onHoverDate={onHoverDate}
+              onClickDate={(d) => onPickDate?.(d)}
+            />
+          ) : (
+            <ProbeRangeChart
+              dates={dates}
+              memberCounts={memberCounts}
+              membersOnly
+              height={height}
+              onHoverDate={onHoverDate}
+              onClickDate={(d) => onPickDate?.(d)}
+            />
+          )}
         </>
       )}
       {/* silence the unused-key warning without changing the query identity */}

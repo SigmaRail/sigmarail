@@ -406,6 +406,42 @@ def universe_membership_counts(
     return [{"date": str(row[0]), "count": int(row[1])} for row in result.result_rows]
 
 
+def universe_membership_sector_counts(
+    spec: dict[str, Any],
+    *,
+    start_date: str,
+    end_date: str,
+    client: Any | None = None,
+) -> list[dict[str, Any]]:
+    """Aggregate every matching member by date and sector without row truncation."""
+    body = {"start_date": start_date, "end_date": end_date, "limit": 500_000, "spec": spec}
+    query_spec = dict(spec)
+    query_spec["select"] = list(dict.fromkeys([*spec.get("select", []), "sector"]))
+    body["spec"] = query_spec
+    query, _ = _adapt_universe_request(body)
+    source_sql, params = compile_query(query, include_ordering=False, include_limits=False)
+    if client is None:
+        from sigmarail.database import get_client
+
+        client = get_client()
+    result = client.query(
+        f"""
+        SELECT
+            toString(q.`date`) AS day,
+            coalesce(nullIf(trimBoth(ifNull(toString(q.`sector`), '')), ''), 'Unknown / unclassified') AS sector,
+            count() AS member_count
+        FROM ({source_sql}) AS q
+        GROUP BY q.`date`, sector
+        ORDER BY q.`date`, sector
+        """,
+        parameters=params,
+    )
+    return [
+        {"date": str(row[0]), "sector": str(row[1]), "count": int(row[2])}
+        for row in result.result_rows
+    ]
+
+
 def universe_measure_series(
     spec: dict[str, Any],
     *,

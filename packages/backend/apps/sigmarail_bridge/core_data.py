@@ -19,7 +19,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from sigmarail.query import compile_query, describe_dataset, list_datasets, query_dataset
-from sigmarail.universe import compile_universe_spec, universe_membership_by_ticker
+from sigmarail.universe import (
+    compile_universe_spec,
+    universe_membership_by_ticker,
+    universe_membership_sector_counts,
+)
 from sigmarail_spec.data_query import DataQueryV1
 
 from .views import DomainAPIRouteView, _workspace_for_request
@@ -638,6 +642,74 @@ class UniversePreviewView(APIView):
                 "sql": sql.strip(),
                 "params": {key: params[key] for key in sorted(params)},
                 "limit": int(spec.get("limit_per_day", 500)),
+            }
+        )
+
+
+class UniverseSectorRangeView(APIView):
+    """Aggregate complete strategy-universe membership by date and sector."""
+
+    def post(self, request: Request) -> Response:
+        _, error = _workspace_for_request(request)
+        if error:
+            return error
+
+        body = request.data if isinstance(request.data, dict) else {}
+        spec = body.get("spec")
+        if not isinstance(spec, dict):
+            return Response({"detail": "spec must be an object"}, status=status.HTTP_400_BAD_REQUEST)
+        start_date = str(body.get("start_date") or "").strip()
+        end_date = str(body.get("end_date") or "").strip()
+        try:
+            start = date.fromisoformat(start_date)
+            end = date.fromisoformat(end_date)
+        except ValueError:
+            return Response(
+                {"detail": "start_date and end_date must be valid YYYY-MM-DD dates"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if start > end:
+            return Response(
+                {"detail": "start_date must be on or before end_date"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            client = _clickhouse_client()
+            sector_counts = universe_membership_sector_counts(
+                spec,
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+                client=client,
+            )
+        except (ValidationError, ValueError, TypeError) as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            logger.exception("SigmaRail universe sector-range query failed")
+            return Response(
+                {"detail": "SigmaRail universe sector-range query is unavailable."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        totals: dict[str, int] = {}
+        for row in sector_counts:
+            day = str(row["date"])
+            totals[day] = totals.get(day, 0) + int(row["count"])
+        dates = sorted(totals)
+        counts = [totals[day] for day in dates]
+        return Response(
+            {
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "dates": dates,
+                "member_counts": counts,
+                "sector_counts": sector_counts,
+                "summary": {
+                    "trading_days": len(dates),
+                    "avg_members_per_day": round(sum(counts) / len(counts), 2) if counts else 0.0,
+                    "min_members_per_day": min(counts) if counts else 0,
+                    "max_members_per_day": max(counts) if counts else 0,
+                },
             }
         )
 

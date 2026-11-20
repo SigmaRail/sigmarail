@@ -18,6 +18,7 @@ import { ScreenerFilterSummary } from "./ScreenerFilterSummary";
 import { ScreenerMembershipHistory } from "./ScreenerMembershipHistory";
 import { useFieldPicker } from "./FieldPickerProvider";
 import { Button } from "@sb/webapp-core/components/ui/button";
+import { sectorColor } from "./sectorColors";
 
 export type UniverseChoice =
   | { kind: "inline" }
@@ -543,6 +544,7 @@ export function UniverseSlotCard({
           asOf={effectiveAsOf}
           startDate={tenureStart}
           height={120}
+          showSectorComposition
           onHoverDate={setHoverDate}
           onPickDate={(date) => {
             setPinnedDate(date);
@@ -757,7 +759,17 @@ export function UniverseSlotCard({
                           <tr key={sector} className="border-b border-line/70 last:border-0 hover:bg-surface-sunk/40">
                             <th scope="row" className="whitespace-nowrap px-2.5 py-2 font-medium text-ink">{sector}</th>
                             <td className="px-2.5 py-2 text-right font-mono tabular-nums">{count.toLocaleString()}</td>
-                            <td className="px-2.5 py-2 text-right font-mono tabular-nums">{share.toFixed(1)}%</td>
+                            <td className="min-w-28 px-2.5 py-2 text-right font-mono tabular-nums">
+                              <div className="flex items-center justify-end gap-2">
+                                <span>{share.toFixed(1)}%</span>
+                                <span className="h-1.5 w-14 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                                  <span
+                                    className={`block h-full rounded-full ${sectorColor(sector).className}`}
+                                    style={{ width: `${share}%` }}
+                                  />
+                                </span>
+                              </div>
+                            </td>
                             <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? rs.mean.toFixed(1) : "—"}</td>
                             <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.q1) : "—"}</td>
                             <td className="px-2.5 py-2 text-right font-mono tabular-nums">{rs ? formatRating(rs.median) : "—"}</td>
