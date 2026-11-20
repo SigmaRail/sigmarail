@@ -1251,9 +1251,10 @@ class DataPopulator:
         """Return the earliest recent date where the price spine misses source tickers.
 
         ``lastupdated`` freshness cannot reveal a partially inserted date. Compare
-        distinct ticker coverage after applying the canonical SEP/SFP ticker labels.
-        This bounded check also drives downstream price marts to refresh from the
-        same date when a gap is found.
+        exact ticker/date keys after applying the canonical SEP/SFP ticker labels.
+        Counts by date are insufficient: stale target rows can offset missing source
+        keys and make a partial date look complete. This bounded check also drives
+        downstream price marts to refresh from the same date when a gap is found.
         """
         from datetime import date, timedelta
 
@@ -1275,20 +1276,18 @@ class DataPopulator:
                     WHERE p.date >= toDate('{start}')
                 ),
                 expected AS (
-                    SELECT date, uniqExact(ticker) AS expected_tickers
+                    SELECT DISTINCT date, ticker
                     FROM source_rows
-                    GROUP BY date
                 ),
                 actual AS (
-                    SELECT date, uniqExact(ticker) AS actual_tickers
+                    SELECT DISTINCT date, ticker
                     FROM daily_prices FINAL
                     WHERE date >= toDate('{start}')
-                    GROUP BY date
                 )
                 SELECT toString(min(e.date))
                 FROM expected AS e
-                LEFT JOIN actual AS a USING (date)
-                WHERE ifNull(a.actual_tickers, 0) < e.expected_tickers
+                LEFT ANTI JOIN actual AS a
+                    ON e.date = a.date AND e.ticker = a.ticker
             """)
             if result.result_rows and result.result_rows[0][0]:
                 value = str(result.result_rows[0][0])
