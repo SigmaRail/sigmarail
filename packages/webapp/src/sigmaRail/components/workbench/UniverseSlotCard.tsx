@@ -31,6 +31,7 @@ export const REQUIRED_MEMBERSHIP_SELECT = [
   "overall_score",
   "rs_rating",
   "atr_14_pct",
+  "sector",
 ] as const;
 
 /** Enrich-only display cols — not IR-selectable / not sortable via order_by. */
@@ -45,7 +46,22 @@ const CANDIDATE_COLUMN_LABELS: Readonly<Record<string, string>> = {
   rs_rating: "RS",
   atr_14_pct: "ATR %",
   days_in_universe: "Days in universe",
+  sector: "Sector",
 };
+
+const SECTOR_BAR_COLORS = [
+  "bg-sky-500",
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-violet-500",
+  "bg-rose-500",
+  "bg-cyan-500",
+  "bg-orange-500",
+  "bg-indigo-500",
+  "bg-lime-500",
+  "bg-pink-500",
+  "bg-teal-500",
+];
 
 function formatCandidateValue(column: string, value: unknown): string {
   if (value == null || value === "") return "—";
@@ -283,11 +299,25 @@ export function UniverseSlotCard({
   const allRows = asofQuery.data?.rows ?? [];
   const shownRows = allRows.slice(0, visibleRows);
   const hasMoreRows = visibleRows < allRows.length;
+  const sectorMix = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of allRows) {
+      const rawSector = row.sector;
+      const sector = typeof rawSector === "string" && rawSector.trim()
+        ? rawSector.trim()
+        : "Unknown / unclassified";
+      counts.set(sector, (counts.get(sector) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([sector, count]) => ({ sector, count, share: allRows.length ? count / allRows.length * 100 : 0 }))
+      .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+  }, [allRows]);
 
   const previewCols = useMemo(() => {
     const preferred = [
-      ...mergeMembershipSelect(extraSelect, sortField),
+      ...mergeMembershipSelect(extraSelect, sortField).filter((column) => column !== "sector"),
       ...(includeTenure ? ["days_in_universe"] : []),
+      "sector",
     ];
     if (!allRows.length) return preferred;
     const keys = new Set(Object.keys(allRows[0]!).filter((k) => k !== "date"));
@@ -538,6 +568,53 @@ export function UniverseSlotCard({
                 >
                   Show more · {allRows.length - shownRows.length} remaining
                 </Button>
+              ) : null}
+              {sectorMix.length > 0 ? (
+                <section
+                  aria-labelledby="universe-sector-mix-title"
+                  className="rounded-md border border-border/70 bg-surface/40 p-3"
+                  data-testid="universe-sector-mix"
+                >
+                  <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <h3 id="universe-sector-mix-title" className="text-xs font-semibold">
+                      Sector composition
+                    </h3>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      {asofQuery.data?.as_of ? `As of ${asofQuery.data.as_of} · ` : ""}
+                      {asofQuery.data?.count != null && asofQuery.data.count > allRows.length
+                        ? `Share of ${allRows.length.toLocaleString()} returned / ${asofQuery.data.count.toLocaleString()} matches`
+                        : `Share of ${allRows.length.toLocaleString()} members`}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-x-5 gap-y-2 sm:grid-cols-2">
+                    {sectorMix.map(({ sector, count, share }, index) => (
+                      <div key={sector} className="min-w-0">
+                        <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
+                          <span className="flex min-w-0 items-center gap-2 truncate" title={sector}>
+                            <span className={`h-2 w-2 shrink-0 rounded-sm ${SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]}`} />
+                            <span className="truncate">{sector}</span>
+                          </span>
+                          <span className="shrink-0 font-mono text-muted-foreground">
+                            {count.toLocaleString()} · {share.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div
+                          className="h-1.5 overflow-hidden rounded-full bg-muted/70"
+                          role="progressbar"
+                          aria-label={`${sector} share of returned members`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={Number(share.toFixed(1))}
+                        >
+                          <div
+                            className={`h-full rounded-full ${SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]}`}
+                            style={{ width: `${share}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               ) : null}
               {chartTicker ? (
                 <MembershipTickerInspect
