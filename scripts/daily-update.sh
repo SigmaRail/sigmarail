@@ -45,14 +45,22 @@ fi
 
 export VIRTUAL_ENV="$VENV_PATH"
 export PATH="$VENV_PATH/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
-for cli in sigmarail-load sigmarail-populate; do
-  if [[ ! -x "$VENV_PATH/bin/$cli" ]]; then
-    log_error "Missing $VENV_PATH/bin/$cli; from the SigmaRail repo run: $VENV_PATH/bin/python -m pip install -e ."
-    notify "SigmaRail update failed" "SigmaRail CLI missing"
-    exit 1
-  fi
-done
+LOAD_COMMAND=("$VENV_PATH/bin/sigmarail-load")
+if [[ ! -x "${LOAD_COMMAND[0]}" ]]; then
+  LOAD_COMMAND=("$VENV_PATH/bin/python" -m sigmarail.load)
+fi
+POPULATE_COMMAND=("$VENV_PATH/bin/sigmarail-populate")
+if [[ ! -x "${POPULATE_COMMAND[0]}" ]]; then
+  POPULATE_COMMAND=("$VENV_PATH/bin/python" -m sigmarail.populate)
+fi
+
+if ! "$VENV_PATH/bin/python" -c 'import sigmarail.load, sigmarail.populate' >/dev/null 2>&1; then
+  log_error "SigmaRail modules unavailable in $VENV_PATH; install dependencies and set SIGMARAIL_VENV."
+  notify "SigmaRail update failed" "SigmaRail modules unavailable"
+  exit 1
+fi
 
 cd "$PROJECT_ROOT" || {
   log_error "Cannot enter SigmaRail project directory: $PROJECT_ROOT"
@@ -81,12 +89,12 @@ log "Configured environment: $VENV_PATH"
 log "Production database target is resolved from SigmaRail configuration."
 
 # Stop on partial load failure so populate never republishes stale inputs as success.
-if ! run_step "Sharadar download and load" "$VENV_PATH/bin/sigmarail-load" --download --backup --mode prod; then
+if ! run_step "Sharadar download and load" "${LOAD_COMMAND[@]}" --download --backup --mode prod; then
   notify "SigmaRail update failed" "Sharadar load failed; populate was not started"
   exit 1
 fi
 
-if ! run_step "Derived metrics population" "$VENV_PATH/bin/sigmarail-populate" --metrics all --mode prod; then
+if ! run_step "Derived metrics population" "${POPULATE_COMMAND[@]}" --metrics all --mode prod; then
   notify "SigmaRail update failed" "Derived metrics population failed"
   exit 1
 fi

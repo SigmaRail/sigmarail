@@ -5,6 +5,7 @@ Command-line interface for loading data into ClickHouse.
 import logging
 import argparse
 import os
+import re
 import glob
 import shutil
 import zipfile
@@ -31,6 +32,15 @@ from sigmarail.sharadar_client import (
 from sigmarail.splice_price_history import splice_downloaded_price_csvs
 
 logger = logging.getLogger(__name__)
+
+
+def _redact_sensitive_text(value: object) -> str:
+    """Remove credentials embedded in provider request URLs before logging."""
+    return re.sub(
+        r"(?i)([?&]api_key=)[^&\s]+",
+        r"\1[REDACTED]",
+        str(value),
+    )
 
 
 def parse_ticker_list(values: Optional[Sequence[str]]) -> List[str]:
@@ -323,7 +333,11 @@ class DataLoader:
             earliest = earliest_date_from_csv(output_path, date_field)
             return output_path, record_count, earliest
         except Exception as e:
-            logger.error(f"Failed to download and process {table_name}: {e}")
+            logger.error(
+                "Failed to download and process %s: %s",
+                table_name,
+                _redact_sensitive_text(e),
+            )
             raise
 
     def _scoped_ticker_output_path(
@@ -809,7 +823,11 @@ def main() -> int:
                         "has_date_field": bool(date_field),
                     }
                 except Exception as e:
-                    logger.error(f"Failed to download {table}: {e}")
+                    logger.error(
+                        "Failed to download %s: %s",
+                        table,
+                        _redact_sensitive_text(e),
+                    )
                     download_summary[table_upper] = {
                         "count": 0,
                         "earliest": None,
@@ -888,7 +906,10 @@ def main() -> int:
         return 0
 
     except Exception as e:
-        logger.exception(f"An unexpected error occurred during the load process: {e}")
+        logger.error(
+            "An unexpected error occurred during the load process: %s",
+            _redact_sensitive_text(e),
+        )
         return 1
 
 if __name__ == '__main__':
