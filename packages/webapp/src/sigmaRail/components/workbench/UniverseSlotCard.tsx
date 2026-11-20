@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchAsOfRange, fetchFields, previewIr } from "../../api/screens";
-import type { OrderDirection, ScreenField, UniverseQueryV1 } from "../../types";
+import type { OrderDirection, ScreenField, ScreenRow, UniverseQueryV1 } from "../../types";
 import type { FilterTree } from "../strategy/StrategyDocument";
 import { FilterTreeSlotEditor } from "./FilterTreeSlotEditor";
 import {
@@ -62,6 +62,43 @@ const SECTOR_BAR_COLORS = [
   "bg-pink-500",
   "bg-teal-500",
 ];
+
+type NumericSummary = {
+  count: number;
+  mean: number;
+  q1: number;
+  median: number;
+  q3: number;
+};
+
+function summarizeNumericField(rows: ScreenRow[], field: string): NumericSummary | null {
+  const values = rows
+    .map((row) => row[field])
+    .filter((value) => value != null && value !== "")
+    .map(Number)
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  if (!values.length) return null;
+
+  const quantile = (p: number) => {
+    const position = (values.length - 1) * p;
+    const lower = Math.floor(position);
+    const upper = Math.ceil(position);
+    return values[lower]! + (values[upper]! - values[lower]!) * (position - lower);
+  };
+
+  return {
+    count: values.length,
+    mean: values.reduce((sum, value) => sum + value, 0) / values.length,
+    q1: quantile(0.25),
+    median: quantile(0.5),
+    q3: quantile(0.75),
+  };
+}
+
+function formatRating(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
 
 function formatCandidateValue(column: string, value: unknown): string {
   if (value == null || value === "") return "—";
@@ -300,18 +337,28 @@ export function UniverseSlotCard({
   const shownRows = allRows.slice(0, visibleRows);
   const hasMoreRows = visibleRows < allRows.length;
   const sectorMix = useMemo(() => {
-    const counts = new Map<string, number>();
+    const groups = new Map<string, ScreenRow[]>();
     for (const row of allRows) {
       const rawSector = row.sector;
       const sector = typeof rawSector === "string" && rawSector.trim()
         ? rawSector.trim()
         : "Unknown / unclassified";
-      counts.set(sector, (counts.get(sector) ?? 0) + 1);
+      const members = groups.get(sector) ?? [];
+      members.push(row);
+      groups.set(sector, members);
     }
-    return [...counts.entries()]
-      .map(([sector, count]) => ({ sector, count, share: allRows.length ? count / allRows.length * 100 : 0 }))
-      .sort((a, b) => b.count - a.count || a.sector.localeCompare(b.sector));
+    // allRows is already ordered by the active Alpha/result sort; Map preserves
+    // first occurrence so sector rows follow the same ranking instead of size.
+    return [...groups.entries()].map(([sector, members]) => ({
+      sector,
+      count: members.length,
+      share: allRows.length ? members.length / allRows.length * 100 : 0,
+      rs: summarizeNumericField(members, "rs_rating"),
+      score: summarizeNumericField(members, "overall_score"),
+      atr: summarizeNumericField(members, "atr_14_pct"),
+    }));
   }, [allRows]);
+  const universeRs = useMemo(() => summarizeNumericField(allRows, "rs_rating"), [allRows]);
 
   const previewCols = useMemo(() => {
     const preferred = [
@@ -584,10 +631,14 @@ export function UniverseSlotCard({
                       {asofQuery.data?.count != null && asofQuery.data.count > allRows.length
                         ? `Share of ${allRows.length.toLocaleString()} returned / ${asofQuery.data.count.toLocaleString()} matches`
                         : `Share of ${allRows.length.toLocaleString()} members`}
+                      {universeRs
+                        ? ` · ${asofQuery.data?.count != null && asofQuery.data.count > allRows.length ? "Returned" : "Universe"} RS median ${formatRating(universeRs.median)}`
+                        : ""}
+                      {sectorMix.length ? " · Alpha order by first-ranked member" : ""}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-x-5 gap-y-2 sm:grid-cols-2">
-                    {sectorMix.map(({ sector, count, share }, index) => (
+                    {sectorMix.map(({ sector, count, share, rs, score, atr }, index) => (
                       <div key={sector} className="min-w-0">
                         <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
                           <span className="flex min-w-0 items-center gap-2 truncate" title={sector}>
@@ -610,6 +661,23 @@ export function UniverseSlotCard({
                             className={`h-full rounded-full ${SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]}`}
                             style={{ width: `${share}%` }}
                           />
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[9px] leading-relaxed text-muted-foreground">
+                          {rs ? (
+                            <span title="Relative-strength rating: mean and 25th, 50th, and 75th percentiles">
+                              RS mean {rs.mean.toFixed(1)} · P25/P50/P75 {formatRating(rs.q1)}/{formatRating(rs.median)}/{formatRating(rs.q3)}
+                            </span>
+                          ) : null}
+                          {score ? (
+                            <span title="Alpha score: 25th, 50th, and 75th percentiles">
+                              Score P25/P50/P75 {score.q1.toFixed(1)}/{score.median.toFixed(1)}/{score.q3.toFixed(1)}
+                            </span>
+                          ) : null}
+                          {atr ? (
+                            <span title="14-day average true range percentage: median">
+                              ATR P50 {atr.median.toFixed(1)}%
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     ))}
