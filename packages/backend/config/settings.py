@@ -86,6 +86,7 @@ LOCAL_APPS = [
     "apps.notifications",
     "apps.websockets",
     "apps.integrations",
+    "apps.integrations.ai_assistant",
     "apps.multitenancy",
     "apps.sso",
     "apps.translations",
@@ -647,6 +648,11 @@ OPENAI_MODEL = env("OPENAI_MODEL", default="gpt-5.1")
 # MCP Server Configuration for AI Assistant
 # The MCP server exposes GraphQL operations as tools for AI models
 MCP_SERVER_URL = env("MCP_SERVER_URL", default="http://mcp-server:4000")
+CHATGPT_MCP_GATEWAY_HMAC_SECRET = env("CHATGPT_MCP_GATEWAY_HMAC_SECRET", default="")
+CHATGPT_MCP_IDP_ISSUER = env("CHATGPT_MCP_IDP_ISSUER", default="https://vera-idp.tail850cb1.ts.net")
+CHATGPT_MCP_RESOURCE_AUDIENCE = env(
+    "CHATGPT_MCP_RESOURCE_AUDIENCE", default="https://turnip.tail850cb1.ts.net"
+)
 
 # SSO Configuration
 SSO_SP_ENTITY_ID_BASE = env("SSO_SP_ENTITY_ID_BASE", default="")  # e.g., https://api.yourdomain.com

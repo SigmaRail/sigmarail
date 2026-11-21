@@ -19,7 +19,7 @@ import time
 from typing import Optional, Generator
 from django.conf import settings
 from django.core.cache import cache
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -29,6 +29,7 @@ from rest_framework.throttling import UserRateThrottle
 from openai import OpenAI
 
 from apps.multitenancy.models import Tenant, TenantMembership, user_has_permission, get_user_permissions_for_tenant
+from .authentication import TailscaleMCPGatewayAuthentication
 
 logger = logging.getLogger(__name__)
 
@@ -800,11 +801,23 @@ class MCPProxyView(APIView):
             return False
 
     def inject_tenant_id(self, data: dict, tenant_id: str) -> dict:
-        """Inject tenantId into variables if present."""
+        """Inject server-authorized tenant context into GraphQL and MCP calls."""
         if "variables" in data and isinstance(data["variables"], dict):
             data["variables"]["tenantId"] = tenant_id
-        elif "variables" not in data:
-            data["variables"] = {"tenantId": tenant_id}
+
+        # Apollo's MCP tools use standard MCP `tools/call` arguments, not a
+        # top-level GraphQL variables field. Set the tenant from the URL, never
+        # from caller-supplied arguments.
+        params = data.get("params")
+        if isinstance(params, dict) and isinstance(params.get("arguments"), dict):
+            arguments = params["arguments"]
+            for key in ("tenantId", "tenant_id"):
+                if key in arguments:
+                    arguments[key] = tenant_id
+            if isinstance(arguments.get("input"), dict):
+                for key in ("tenantId", "tenant_id"):
+                    if key in arguments["input"]:
+                        arguments["input"][key] = tenant_id
         return data
 
     def post(self, request, tenant_id: str):
@@ -848,10 +861,23 @@ class MCPProxyView(APIView):
                 "X-AI-Agent-Request": "true",
             }
 
+            # The gateway assertion is not forwarded to other services. Mint
+            # a short-lived AppTension JWT for the already-authenticated user.
+            # Apollo and GraphQL continue to validate normal AppTension tokens.
+            if isinstance(request.auth, dict) and request.auth.get("gateway") is True:
+                from rest_framework_simplejwt.tokens import AccessToken
+
+                headers["Authorization"] = f"Bearer {AccessToken.for_user(request.user)}"
+
             # Forward Authorization header if present
             auth_header = request.headers.get("Authorization")
-            if auth_header:
+            if auth_header and "Authorization" not in headers:
                 headers["Authorization"] = auth_header
+
+            for protocol_header in ("Mcp-Session-Id", "Mcp-Protocol-Version", "Last-Event-ID"):
+                value = request.headers.get(protocol_header)
+                if value:
+                    headers[protocol_header] = value
 
             # Make the request to MCP server
             with httpx.Client(timeout=60.0) as client:
@@ -864,8 +890,16 @@ class MCPProxyView(APIView):
             # Log response status
             logger.info(f"MCP response for user {request.user.id}: status={response.status_code}")
 
-            # Return the response
-            return Response(response.json(), status=response.status_code, content_type="application/json")
+            # Preserve MCP's JSON/SSE wire format and session headers.
+            proxied = HttpResponse(
+                response.content,
+                status=response.status_code,
+                content_type=response.headers.get("content-type", "application/json"),
+            )
+            for protocol_header in ("Mcp-Session-Id", "Mcp-Protocol-Version"):
+                if protocol_header in response.headers:
+                    proxied[protocol_header] = response.headers[protocol_header]
+            return proxied
 
         except httpx.TimeoutException:
             logger.error(f"MCP server request timed out for tenant {tenant_id}")
@@ -884,6 +918,12 @@ class MCPProxyView(APIView):
                 {"error": "An unexpected error occurred. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ChatGPTMCPProxyView(MCPProxyView):
+    """MCP entrypoint authenticated only by the trusted OAuth gateway assertion."""
+
+    authentication_classes = [TailscaleMCPGatewayAuthentication]
 
 
 class MCPChatView(APIView):
