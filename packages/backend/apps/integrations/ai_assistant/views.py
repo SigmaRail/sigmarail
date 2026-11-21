@@ -1001,7 +1001,8 @@ class ChatGPTMCPProxyView(MCPProxyView):
             if membership is None:
                 return None, self._tenant_error(
                     request.data.get("id"),
-                    "That tenant is not available to this user. Call get_user_tenants and choose one of the returned tenants.",
+                    "That tenant is not available to this user. Call get_user_tenants and "
+                    "choose one of the returned tenants.",
                 )
             return membership, None
         if len(memberships) == 1:
@@ -1009,7 +1010,10 @@ class ChatGPTMCPProxyView(MCPProxyView):
         if not memberships:
             message = "This user has no accepted tenant memberships, so tenant-scoped tools are unavailable."
         else:
-            message = "This user can access multiple tenants. Call get_user_tenants, then pass the chosen tenant ID as tenantContext."
+            message = (
+                "This user can access multiple tenants. Call get_user_tenants, then pass "
+                "the chosen tenant ID as tenantContext."
+            )
         return None, self._tenant_error(request.data.get("id"), message)
 
     def _strip_tenant_context(self, mcp_request):
@@ -1050,7 +1054,10 @@ class ChatGPTMCPProxyView(MCPProxyView):
                     props.pop("tenant_id", None)
                     props["tenantContext"] = {
                         "type": "string",
-                        "description": "Optional tenant ID from get_user_tenants. Omit when the user has one tenant. This selector is validated and removed by SigmaRail before forwarding.",
+                        "description": (
+                            "Optional tenant ID from get_user_tenants. Omit for one tenant. "
+                            "SigmaRail validates and removes this selector before forwarding."
+                        ),
                     }
                 if isinstance(schema.get("required"), list):
                     schema["required"] = [key for key in schema["required"] if key not in {"tenantId", "tenant_id"}]
@@ -1059,7 +1066,9 @@ class ChatGPTMCPProxyView(MCPProxyView):
                     input_schema["properties"].pop("tenantId", None)
                     input_schema["properties"].pop("tenant_id", None)
                     if isinstance(input_schema.get("required"), list):
-                        input_schema["required"] = [key for key in input_schema["required"] if key not in {"tenantId", "tenant_id"}]
+                        input_schema["required"] = [
+                            key for key in input_schema["required"] if key not in {"tenantId", "tenant_id"}
+                        ]
         response._content = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         response.headers["content-type"] = "application/json"
         return response
@@ -1120,9 +1129,15 @@ class ChatGPTMCPProxyView(MCPProxyView):
                     proxied[protocol_header] = upstream.headers[protocol_header]
             return proxied
         except httpx.TimeoutException:
-            return Response({"error": "AI assistant request timed out. Please try again."}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+            return Response(
+                {"error": "AI assistant request timed out. Please try again."},
+                status=status.HTTP_504_GATEWAY_TIMEOUT,
+            )
         except httpx.ConnectError:
-            return Response({"error": "AI assistant service is unavailable. Please try again later."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": "AI assistant service is unavailable. Please try again later."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
 
 class MCPChatView(APIView):
