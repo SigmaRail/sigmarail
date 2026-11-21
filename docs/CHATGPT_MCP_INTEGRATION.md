@@ -6,9 +6,11 @@
 
 The gateway introspects ChatGPT's bearer token with the configured Tailscale IdP, fetches the authenticated user's profile from the IdP `userinfo` endpoint, then signs a short-lived identity assertion. The SigmaRail service verifies the HMAC and maps the verified `(issuer, subject)` to an existing confirmed account by the IdP-provided email on first use. It stores that link in PostgreSQL and checks the user's accepted tenant membership on every request. Tenant IDs select a scope; they do not grant access.
 
-Use one ChatGPT MCP server URL per tenant:
+Use one ChatGPT MCP server URL for the authenticated user, regardless of how many tenants they belong to:
 
-`https://<tailnet-host>/sigmarail/mcp/<tenant-id>`
+`https://<tailnet-host>/sigmarail/mcp`
+
+The MCP exposes `get_user_tenants` for tenant discovery. Tenant-scoped tools accept the optional proxy-only `tenantContext` selector. When the user has exactly one accepted membership, the backend selects it automatically. When multiple tenants are available, the assistant should ask which tenant by name and pass the selected ID returned by `get_user_tenants`; users never need to look up or type an ID. Every selection is checked against that authenticated user’s accepted memberships, and the server injects the authorized tenant into the downstream MCP call. Tenant identity is never taken from OAuth claims or trusted merely because a caller supplied an ID.
 
 The gateway must remove caller-supplied `X-MCP-Gateway-Identity` headers before attaching its own. The HMAC key is separate from the Tailscale introspection client secret and must be installed in the gateway Keychain and in the backend's `CHATGPT_MCP_GATEWAY_HMAC_SECRET` environment variable. Never commit either value.
 
@@ -31,8 +33,8 @@ The identity assertion is accepted only on the dedicated ChatGPT endpoint. The e
 
 1. Configure one random HMAC key in the gateway Keychain and the SigmaRail backend environment; restart both services.
 2. Confirm Tailscale introspection returns `iss`, `aud`, and `exp`, and its `userinfo` endpoint returns a stable `sub` and email for the ChatGPT access token. The gateway rejects missing profile identity and expired tokens.
-3. Apply the SigmaRail backend migration and confirm the intended user has an accepted membership in the target tenant.
-4. Add the SigmaRail gateway resource metadata and exact `/sigmarail/mcp/<tenant-id>` route. Do not point the existing `/mcp` route at AppTension; it remains Vera's compatibility route.
+3. Apply the SigmaRail backend migration and confirm the intended user has the expected accepted tenant memberships.
+4. Add the SigmaRail gateway resource metadata and exact `/sigmarail/mcp` route. Do not point the existing `/mcp` route at AppTension; it remains Vera's compatibility route.
 5. Verify user A can call only tenants where A has accepted membership, user B cannot reuse A's access, and invalid/expired signatures are rejected. Then configure the custom MCP server in ChatGPT and refresh its tool list.
 
 The checked-in gateway source is not the same file as the currently launched `~/.vera/mcp_oauth_gateway.py`; these changes do not alter the live Tailscale route. A separate reviewed cutover is required to install the new route in the active gateway.

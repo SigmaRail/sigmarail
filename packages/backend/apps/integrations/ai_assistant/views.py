@@ -811,13 +811,10 @@ class MCPProxyView(APIView):
         params = data.get("params")
         if isinstance(params, dict) and isinstance(params.get("arguments"), dict):
             arguments = params["arguments"]
-            for key in ("tenantId", "tenant_id"):
-                if key in arguments:
-                    arguments[key] = tenant_id
             if isinstance(arguments.get("input"), dict):
-                for key in ("tenantId", "tenant_id"):
-                    if key in arguments["input"]:
-                        arguments["input"][key] = tenant_id
+                arguments["input"]["tenantId"] = tenant_id
+            else:
+                arguments["tenantId"] = tenant_id
         return data
 
     def post(self, request, tenant_id: str):
@@ -921,9 +918,211 @@ class MCPProxyView(APIView):
 
 
 class ChatGPTMCPProxyView(MCPProxyView):
-    """MCP entrypoint authenticated only by the trusted OAuth gateway assertion."""
+    """Single-user-authenticated MCP endpoint with server-validated tenant selection."""
 
     authentication_classes = [TailscaleMCPGatewayAuthentication]
+
+    GLOBAL_MCP_TOOLS = {
+        "get_current_user", "get_user_tenants", "get_notifications", "get_documents",
+        "introspect", "search",
+    }
+    TENANT_ARGUMENT_KEYS = ("tenantContext", "tenant_context", "tenantId", "tenant_id")
+    MCP_INSTRUCTIONS = (
+        "SigmaRail is connected as the authenticated user. Use get_user_tenants to discover "
+        "the tenants this user may access. For tenant-scoped tools, pass tenantContext as the "
+        "tenant ID returned by that tool when multiple tenants are available. If only one "
+        "tenant is available, it is selected automatically. Never ask the user to find or "
+        "supply a tenant ID; ask which tenant by name when the choice is ambiguous. "
+        "Tenant access is checked by the server on every call."
+    )
+
+    @staticmethod
+    def _tenant_error(request_id, message: str) -> Response:
+        return Response({
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "content": [{"type": "text", "text": message}],
+                "isError": True,
+            },
+        }, status=status.HTTP_200_OK)
+
+    def _memberships(self, user):
+        return list(
+            TenantMembership.objects.filter(user=user, is_accepted=True)
+            .select_related("tenant").order_by("tenant__name")
+        )
+
+    def _resolve_membership(self, memberships, selector):
+        """Match a discovered ID, slug, or exact name only within accepted memberships."""
+        if selector is None or isinstance(selector, (dict, list, bool)):
+            return None
+        value = str(selector).strip()
+        if not value:
+            return None
+        actual_id = decode_relay_id(value)
+        matches = [m for m in memberships if str(m.tenant_id) == actual_id]
+        if not matches:
+            matches = [m for m in memberships if m.tenant.slug.casefold() == value.casefold()]
+        if not matches:
+            matches = [m for m in memberships if m.tenant.name.casefold() == value.casefold()]
+        return matches[0] if len(matches) == 1 else None
+
+    @staticmethod
+    def _tool_name(mcp_request):
+        if not isinstance(mcp_request, dict) or mcp_request.get("method") != "tools/call":
+            return ""
+        params = mcp_request.get("params")
+        return normalize_tool_name(params.get("name", "")) if isinstance(params, dict) else ""
+
+    def _tenant_selector(self, mcp_request):
+        params = mcp_request.get("params") if isinstance(mcp_request, dict) else None
+        arguments = params.get("arguments") if isinstance(params, dict) else None
+        if not isinstance(arguments, dict):
+            return None
+        for key in self.TENANT_ARGUMENT_KEYS:
+            if key in arguments:
+                return arguments[key]
+        nested_input = arguments.get("input")
+        if isinstance(nested_input, dict):
+            for key in self.TENANT_ARGUMENT_KEYS:
+                if key in nested_input:
+                    return nested_input[key]
+        return None
+
+    def _prepare_tenant_call(self, mcp_request, memberships, request):
+        """Return (membership, error); global tools do not need a tenant context."""
+        tool_name = self._tool_name(mcp_request)
+        if not tool_name or tool_name in self.GLOBAL_MCP_TOOLS:
+            return None, None
+        selector = self._tenant_selector(mcp_request)
+        if selector is not None:
+            membership = self._resolve_membership(memberships, selector)
+            if membership is None:
+                return None, self._tenant_error(
+                    request.data.get("id"),
+                    "That tenant is not available to this user. Call get_user_tenants and choose one of the returned tenants.",
+                )
+            return membership, None
+        if len(memberships) == 1:
+            return memberships[0], None
+        if not memberships:
+            message = "This user has no accepted tenant memberships, so tenant-scoped tools are unavailable."
+        else:
+            message = "This user can access multiple tenants. Call get_user_tenants, then pass the chosen tenant ID as tenantContext."
+        return None, self._tenant_error(request.data.get("id"), message)
+
+    def _strip_tenant_context(self, mcp_request):
+        if not isinstance(mcp_request, dict):
+            return mcp_request
+        params = mcp_request.get("params")
+        arguments = params.get("arguments") if isinstance(params, dict) else None
+        if isinstance(arguments, dict):
+            arguments.pop("tenantContext", None)
+            arguments.pop("tenant_context", None)
+            nested_input = arguments.get("input")
+            if isinstance(nested_input, dict):
+                nested_input.pop("tenantContext", None)
+                nested_input.pop("tenant_context", None)
+        return mcp_request
+
+    def _adapt_tool_list(self, response, request_method: str):
+        """Advertise tenantContext as a proxy-only selector and explain discovery."""
+        try:
+            payload = response.json()
+        except ValueError:
+            return response
+        if not isinstance(payload, dict):
+            return response
+        result = payload.get("result")
+        if isinstance(result, dict) and request_method == "initialize":
+            result["instructions"] = self.MCP_INSTRUCTIONS
+        if isinstance(result, dict) and isinstance(result.get("tools"), list):
+            for tool in result["tools"]:
+                if not isinstance(tool, dict) or normalize_tool_name(tool.get("name", "")) in self.GLOBAL_MCP_TOOLS:
+                    continue
+                schema = tool.get("inputSchema")
+                if not isinstance(schema, dict) or schema.get("type") != "object":
+                    continue
+                props = schema.setdefault("properties", {})
+                if isinstance(props, dict):
+                    props.pop("tenantId", None)
+                    props.pop("tenant_id", None)
+                    props["tenantContext"] = {
+                        "type": "string",
+                        "description": "Optional tenant ID from get_user_tenants. Omit when the user has one tenant. This selector is validated and removed by SigmaRail before forwarding.",
+                    }
+                if isinstance(schema.get("required"), list):
+                    schema["required"] = [key for key in schema["required"] if key not in {"tenantId", "tenant_id"}]
+                input_schema = props.get("input") if isinstance(props, dict) else None
+                if isinstance(input_schema, dict) and isinstance(input_schema.get("properties"), dict):
+                    input_schema["properties"].pop("tenantId", None)
+                    input_schema["properties"].pop("tenant_id", None)
+                    if isinstance(input_schema.get("required"), list):
+                        input_schema["required"] = [key for key in input_schema["required"] if key not in {"tenantId", "tenant_id"}]
+        response._content = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        response.headers["content-type"] = "application/json"
+        return response
+
+    def post(self, request):
+        try:
+            mcp_request = request.data
+        except Exception:
+            return Response({"error": "Invalid request body"}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(mcp_request, dict):
+            return Response({"error": "Expected one JSON-RPC request"}, status=status.HTTP_400_BAD_REQUEST)
+
+        memberships = self._memberships(request.user)
+        tenant_membership, error_response = self._prepare_tenant_call(mcp_request, memberships, request)
+        if error_response is not None:
+            return error_response
+
+        if tenant_membership:
+            from graphql_relay import to_global_id
+            authorized_tenant_id = to_global_id("TenantType", str(tenant_membership.tenant_id))
+        else:
+            authorized_tenant_id = None
+        mcp_request = self._strip_tenant_context(mcp_request)
+        if authorized_tenant_id:
+            mcp_request = self.inject_tenant_id(mcp_request, authorized_tenant_id)
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-User-ID": str(request.user.id),
+            "X-AI-Agent-Request": "true",
+        }
+        if authorized_tenant_id:
+            headers["X-Tenant-ID"] = authorized_tenant_id
+        if isinstance(request.auth, dict) and request.auth.get("gateway") is True:
+            from rest_framework_simplejwt.tokens import AccessToken
+            headers["Authorization"] = f"Bearer {AccessToken.for_user(request.user)}"
+        else:
+            auth_header = request.headers.get("Authorization")
+            if auth_header:
+                headers["Authorization"] = auth_header
+        for protocol_header in ("Mcp-Session-Id", "Mcp-Protocol-Version", "Last-Event-ID"):
+            value = request.headers.get(protocol_header)
+            if value:
+                headers[protocol_header] = value
+
+        try:
+            with httpx.Client(timeout=60.0) as client:
+                upstream = client.post(f"{self.get_mcp_server_url()}/mcp", json=mcp_request, headers=headers)
+            if upstream.status_code < 400 and mcp_request.get("method") in {"initialize", "tools/list"}:
+                upstream = self._adapt_tool_list(upstream, mcp_request.get("method", ""))
+            proxied = HttpResponse(
+                upstream.content,
+                status=upstream.status_code,
+                content_type=upstream.headers.get("content-type", "application/json"),
+            )
+            for protocol_header in ("Mcp-Session-Id", "Mcp-Protocol-Version"):
+                if protocol_header in upstream.headers:
+                    proxied[protocol_header] = upstream.headers[protocol_header]
+            return proxied
+        except httpx.TimeoutException:
+            return Response({"error": "AI assistant request timed out. Please try again."}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+        except httpx.ConnectError:
+            return Response({"error": "AI assistant service is unavailable. Please try again later."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 class MCPChatView(APIView):
