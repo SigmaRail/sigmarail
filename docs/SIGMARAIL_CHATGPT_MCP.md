@@ -73,3 +73,22 @@ ATR, stage and moving averages. It is a read-only ClickHouse query through the
 SigmaRail query adapter. `tenantContext` is a proxy-only selector; the backend resolves
 it only against the signed-in user's accepted tenant memberships. Apollo is configured
 with mutation mode `none`.
+
+For an as-of request, inspect `requestedAsOfDate`, `asOfDate`, `availabilityStatus`, and
+`latestAvailableDate`. `prior_available` means the requested session was missing and the
+result is the latest earlier row; `no_data_on_or_before_as_of` means no row exists at or
+before the requested date. Do not describe a prior row as an exact-date result.
+
+## Agent reference policy
+
+The MCP's initialize instructions and named tool descriptions teach the workflow; live
+schema-discovery tools define the exact AST accepted by the running service. For deeper
+explanation, agents may consult the public [SigmaRail repository](https://github.com/SigmaRail/sigmarail):
+[query API](https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md),
+[Spec and AST](https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md),
+[expression semantics](https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md),
+and [decision evidence](https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md).
+These `main` links may advance beyond the deployed container; they explain design but do not
+override runtime authorization, schemas, or returned data. After deployment, verify `initialize`
+and `tools/list` through the public gateway. OAuth success alone does not establish that the
+expected named SigmaRail tool catalog was discovered.

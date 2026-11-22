@@ -1,8 +1,11 @@
-# @tool(name: "get_sigmarail_stock_snapshot", description: "Read a stock's latest or point-in-time SigmaRail daily snapshot, including close, sector, RS rating, ATR, stage, and moving averages. Set the as-of date for historical review; this endpoint returns SigmaRail daily research context, not a live broker mark. Tenant membership is required; use tenantContext from get_user_tenants only when multiple tenants are available.")
+# @tool(name: "get_sigmarail_stock_snapshot", description: "Read a stock's latest or point-in-time SigmaRail daily snapshot, including close, sector, RS rating, ATR, stage, and moving averages. For historical review, compare requestedAsOfDate with asOfDate and check availabilityStatus: prior_available means the exact session was absent and the result is the latest earlier row; no_data_on_or_before_as_of means no qualifying row exists. latestAvailableDate reports the newest row for that ticker. This is daily research data, not a live broker mark. Tenant membership is required; use tenantContext from get_user_tenants only when multiple tenants are available.")
 query GetSigmaRailStockSnapshot($tenantId: ID!, $ticker: String!, $asOfDate: String) {
   sigmarailStockSnapshot(tenantId: $tenantId, ticker: $ticker, asOfDate: $asOfDate) {
     ticker
     asOfDate
+    requestedAsOfDate
+    availabilityStatus
+    latestAvailableDate
     companyName
     sector
     industry

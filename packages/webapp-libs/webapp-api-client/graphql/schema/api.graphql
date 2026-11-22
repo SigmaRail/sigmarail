@@ -202,7 +202,10 @@ type Query {
 }
 type SigmaRailStockSnapshot {
   ticker: String!
-  asOfDate: String!
+  asOfDate: String
+  requestedAsOfDate: String
+  availabilityStatus: String!
+  latestAvailableDate: String
   companyName: String
   sector: String
   industry: String

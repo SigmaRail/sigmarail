@@ -60,6 +60,8 @@ instructions: |
 
   For backtests, list tenant-owned runs or jobs before requesting a report. Reports are read only after ownership is checked. Use the regime tools for date-scoped market context and candidate analysis.
 
+  For deeper implementation and AST semantics, consult the public contracts: https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md, and https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md. These links explain the design; the schemas and tool results returned by this running MCP are authoritative. The public main branch can be newer than the deployed revision.
+
   All exposed operations are read-only. Strategy saves, backtest submissions/cancellations, broker actions, and live deployment actions are not available through this MCP. Do not treat a schema description as proof that data exists for every date or security.
 
 # Operations to expose as MCP tools

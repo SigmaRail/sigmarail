@@ -215,9 +215,14 @@ curl -X POST http://localhost:5001/api/ai-assistant/tenants/{tenant_id}/chat/ \
   -d '{"message": "How many active projects do we have?"}'
 ```
 
-## Role-Based Access Control (RBAC)
+## Identity, tenant access, and permissions
 
-The MCP server implements role-based access control through the GraphQL backend. **Always call `get_user_permissions` first** to discover what data the current user can access.
+Start with `get_user_tenants` when the user's tenant is not already known. The authenticated
+proxy discovers accepted memberships and enforces tenant access on every call; for a single
+tenant it selects that tenant automatically. For multiple tenants, ask which tenant by name
+and pass only an ID returned by `get_user_tenants` as `tenantContext`. Never ask the user to
+look up an ID. `get_user_permissions` is supplementary when the authorization requirements
+of a particular operation are unclear; it is not a prerequisite for every tool call.
 
 ### Permission System
 
@@ -227,11 +232,16 @@ Users are assigned organization roles that grant specific permissions. The syste
 - **ADMIN**: Administrative access to most data (excluding delete operations)
 - **MEMBER**: Limited access based on assigned permissions
 
-### Discovery Flow
+### Deeper reference
 
-1. **First call**: `get_user_permissions` to get current user's permissions
-2. **Check permissions**: Before calling any tool, verify the user has required permissions
-3. **Handle access denied**: If user lacks permission, explain what access they need instead of erroring
+The live MCP schemas and results are authoritative for the running deployment. For explanatory
+detail, use the public [SigmaRail repository](https://github.com/SigmaRail/sigmarail), especially
+the [query contract](https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md),
+[SigmaRail Spec and AST](https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md),
+[expression semantics](https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md),
+and [decision evidence](https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md).
+The public `main` branch may be newer than a running deployment; use schemas returned by the
+authenticated MCP for exact field names and supported constraints.
 
 Example response when user lacks access:
 
@@ -239,11 +249,12 @@ Example response when user lacks access:
 
 ## Available Tools
 
-### 🔐 Access Control (Always Call First)
+### Tenant and permission tools
 
-| Tool                   | Description                                                        | Required Permission  |
-| ---------------------- | ------------------------------------------------------------------ | -------------------- |
-| `get_user_permissions` | **CRITICAL**: Get user's permissions and roles. Always call first! | None (authenticated) |
+| Tool | Use |
+| --- | --- |
+| `get_user_tenants` | Discover accepted tenants when the user's tenant is not already known; choose by name if multiple are available. |
+| `get_user_permissions` | Inspect a tenant's permission codes when a specific tool's authorization needs clarification. It is supplementary, not a required first call. |
 
 ## Troubleshooting
 
@@ -264,3 +275,9 @@ Example response when user lacks access:
 1. Verify the `.graphql` files are in the `operations/` directory
 2. Check that each query has a `# @tool(...)` comment
 3. Restart the MCP server after adding new operations
+4. Send `initialize` and `tools/list` through the configured gateway. Confirm named tools such
+   as `sigmarail_core_datasets`, `sigmarail_core_query_schema`, `sigmarail_screen_schema`, and
+   `sigmarail_strategy_pipeline_schema` are present. If the client only shows a generic GraphQL
+   executor or an older AppTension tool set, check the configured server URL and refresh/recreate
+   the client's cached tool catalog; do not assume a successful OAuth login means tool discovery
+   succeeded.

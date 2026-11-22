@@ -45,7 +45,10 @@ def _json_object(value, name):
 
 class SigmaRailStockSnapshot(graphene.ObjectType):
     ticker = graphene.String(required=True)
-    as_of_date = graphene.String(required=True)
+    as_of_date = graphene.String()
+    requested_as_of_date = graphene.String()
+    availability_status = graphene.String(required=True)
+    latest_available_date = graphene.String()
     company_name = graphene.String()
     sector = graphene.String()
     industry = graphene.String()
@@ -307,7 +310,9 @@ class Query(graphene.ObjectType):
         as_of_date=graphene.String(),
         description=(
             "Read the latest or point-in-time price, trend, and relative-strength snapshot "
-            "for one stock from SigmaRail's read-only daily dataset."
+            "for one stock from SigmaRail's read-only daily dataset. The result reports its "
+            "actual asOfDate, requestedAsOfDate, availabilityStatus, and latestAvailableDate; "
+            "historical requests may resolve to the latest prior available session."
         ),
     )
 
@@ -1097,29 +1102,65 @@ class Query(graphene.ObjectType):
 
         where_date = "AND date <= {as_of:Date}" if as_of_date else ""
         params = {"ticker": normalized_ticker}
+        parsed_as_of = None
         if as_of_date:
             try:
                 parsed_as_of = date.fromisoformat(str(as_of_date))
             except ValueError as exc:
                 raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
             params["as_of"] = parsed_as_of.isoformat()
-        result = _clickhouse_client().query(
-            f"""
-            SELECT ticker, date, company_name, sector, industry, close, rs_rating,
-                   atr_14_pct, stage_code, sma50d, sma200d
-            FROM screener_price_tech_daily
-            WHERE ticker = {{ticker:String}} {where_date}
-            ORDER BY date DESC, lastupdated DESC
-            LIMIT 1
-            """,
-            parameters=params,
-        )
+        client = _clickhouse_client()
+        try:
+            result = client.query(
+                f"""
+                WITH latest AS (
+                    SELECT max(date) AS latest_available_date
+                    FROM screener_price_tech_daily
+                    WHERE ticker = {{ticker:String}}
+                ), candidate AS (
+                    SELECT ticker, date, company_name, sector, industry, close, rs_rating,
+                           atr_14_pct, stage_code, sma50d, sma200d
+                    FROM screener_price_tech_daily
+                    WHERE ticker = {{ticker:String}} {where_date}
+                    ORDER BY date DESC, lastupdated DESC
+                    LIMIT 1
+                )
+                SELECT candidate.ticker, candidate.date, candidate.company_name, candidate.sector,
+                       candidate.industry, candidate.close, candidate.rs_rating, candidate.atr_14_pct,
+                       candidate.stage_code, candidate.sma50d, candidate.sma200d,
+                       latest.latest_available_date
+                FROM latest LEFT JOIN candidate ON 1
+                SETTINGS join_use_nulls = 1
+                """,
+                parameters=params,
+            )
+        finally:
+            client.close()
         if not result.result_rows:
-            return None
+            return SigmaRailStockSnapshot(
+                ticker=normalized_ticker,
+                requested_as_of_date=parsed_as_of.isoformat() if parsed_as_of else None,
+                availability_status="no_data_on_or_before_as_of" if parsed_as_of else "no_data",
+            )
         row = dict(zip(result.column_names, result.result_rows[0]))
+        actual_date = row.get("date")
+        latest_date = row.get("latest_available_date")
+        if actual_date is None:
+            availability_status = "no_data_on_or_before_as_of" if parsed_as_of else "no_data"
+        elif parsed_as_of is None:
+            availability_status = "latest_available"
+        elif actual_date == parsed_as_of:
+            availability_status = "exact"
+        else:
+            availability_status = "prior_available"
         return SigmaRailStockSnapshot(
-            ticker=row["ticker"], as_of_date=row["date"].isoformat(), company_name=row["company_name"],
-            sector=row["sector"], industry=row["industry"], close=row["close"],
-            rs_rating=row["rs_rating"], atr_14_pct=row["atr_14_pct"], stage_code=row["stage_code"],
-            sma50d=row["sma50d"], sma200d=row["sma200d"],
+            ticker=normalized_ticker,
+            as_of_date=actual_date.isoformat() if actual_date else None,
+            requested_as_of_date=parsed_as_of.isoformat() if parsed_as_of else None,
+            availability_status=availability_status,
+            latest_available_date=latest_date.isoformat() if latest_date else None,
+            company_name=row.get("company_name"), sector=row.get("sector"),
+            industry=row.get("industry"), close=row.get("close"),
+            rs_rating=row.get("rs_rating"), atr_14_pct=row.get("atr_14_pct"),
+            stage_code=row.get("stage_code"), sma50d=row.get("sma50d"), sma200d=row.get("sma200d"),
         )

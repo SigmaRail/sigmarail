@@ -937,7 +937,21 @@ class ChatGPTMCPProxyView(MCPProxyView):
         "tenant ID returned by that tool when multiple tenants are available. If only one "
         "tenant is available, it is selected automatically. Never ask the user to find or "
         "supply a tenant ID; ask which tenant by name when the choice is ambiguous. "
-        "Tenant access is checked by the server on every call."
+        "Tenant access is checked by the server on every call. Use the named SigmaRail tools "
+        "and their schema-discovery operations to learn the supported workflow; do not invent "
+        "fields or treat schema availability as proof that dated data exists. For flexible "
+        "queries, discover datasets, inspect the chosen dataset, retrieve DataQueryV1 schema, "
+        "then submit an AST whose select list names the fields to return. For screens and "
+        "strategies, retrieve the canonical AST schema, validate or compile, and only then "
+        "preview or analyze. Compare requested and actual dates in point-in-time responses. "
+        "GitHub documentation is explanatory; live authorization, schemas, and results from "
+        "this authenticated MCP are authoritative. Public source contracts and details: "
+        "https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md ; "
+        "https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md ; "
+        "https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md ; "
+        "https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md . "
+        "The main-branch docs can be newer than this running deployment; use returned MCP "
+        "schemas for exact runtime contracts."
     )
 
     @staticmethod
