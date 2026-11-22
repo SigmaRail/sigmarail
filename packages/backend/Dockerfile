@@ -1,5 +1,33 @@
 ARG SB_MIRROR_REPOSITORY=''
 ARG SB_PULL_THROUGH_CACHE_REPOSITORY=''
+
+##
+# AppTension email renderer build stage
+##
+FROM node:20-slim AS email_builder
+
+WORKDIR /build
+RUN npm install -g pnpm@10
+
+# This image is built with the FinanceProjects workspace as its context.
+COPY sigmarail/package.json sigmarail/pnpm-lock.yaml sigmarail/pnpm-workspace.yaml sigmarail/nx.json sigmarail/tsconfig.base.json ./
+COPY sigmarail/patches/ ./patches/
+COPY sigmarail/packages/webapp-libs/ ./packages/webapp-libs/
+COPY sigmarail/packages/webapp/package.json ./packages/webapp/package.json
+COPY sigmarail/packages/internal/cli/package.json ./packages/internal/cli/package.json
+COPY sigmarail/packages/internal/core/package.json ./packages/internal/core/package.json
+COPY sigmarail/packages/internal/tools/package.json ./packages/internal/tools/package.json
+COPY sigmarail/packages/internal/docs/package.json ./packages/internal/docs/package.json
+COPY sigmarail/packages/internal/status-dashboard/package.json ./packages/internal/status-dashboard/package.json
+COPY sigmarail/packages/contentful/package.json ./packages/contentful/package.json
+COPY sigmarail/packages/infra/infra-shared/package.json ./packages/infra/infra-shared/package.json
+COPY sigmarail/packages/infra/infra-core/package.json ./packages/infra/infra-core/package.json
+COPY sigmarail/packages/backend/package.json ./packages/backend/package.json
+COPY sigmarail/packages/workers/package.json ./packages/workers/package.json
+
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter "@sb/webapp-emails..."
+RUN pnpm nx run webapp-emails:build
+
 ##
 # Chamber installation stage
 ##
@@ -41,6 +69,7 @@ RUN uv sync --frozen \
 WORKDIR /app
 
 COPY ${SIGMARAIL_SOURCE_DIR}/packages/backend/ /app/
+COPY --from=email_builder /build/packages/webapp-libs/webapp-emails/build/email-renderer/index.umd.js /app/scripts/runtime/email/renderer/index.umd.js
 COPY ${SIGMARAIL_SOURCE_DIR}/src/sigmarail/ /workspace/sigmarail/
 COPY ${SIGMARAIL_SOURCE_DIR}/studio/api/ /workspace/api/
 COPY ${SIGMARAIL_SOURCE_DIR}/studio/screens/ /workspace/screens/

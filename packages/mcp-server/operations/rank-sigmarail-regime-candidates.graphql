@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_regime_rank_candidates", description: "Rank a supplied list of already-passing tickers using SigmaRail regime and alpha context.")
+query RankSigmaRailRegimeCandidates($tenantId: ID!, $asOfDate: String!, $passingTickers: [String]!) {
+  sigmarailRegimeRankCandidates(tenantId: $tenantId, asOfDate: $asOfDate, passingTickers: $passingTickers)
+}

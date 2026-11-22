@@ -65,6 +65,11 @@ submission/cancellation, portfolio actions, and live deployment actions are not 
 this read-only MCP slice. The GraphQL AST arguments are intentionally flexible; the
 canonical SigmaRail validators reject unsupported fields and AST forms.
 
+Read-only market context also exposes the date-scoped regime, per-ticker allocation
+explanations, entry-gate evaluation, transition weighting, candidate ranking, and comparisons
+between two bounded periods. These resolve through the existing SigmaRail feature functions;
+they do not write strategy state or orders.
+
 Apollo's generic ad hoc GraphQL `execute` tool is disabled. Agents can shape query results
 through the AST's `select` list without receiving arbitrary execution over the full
 AppTension GraphQL schema.

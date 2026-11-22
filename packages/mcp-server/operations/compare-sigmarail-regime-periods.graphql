@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_regime_compare_periods", description: "Compare market breadth and regime allocation aggregates across two date windows.")
+query CompareSigmaRailRegimePeriods($tenantId: ID!, $focusStart: String!, $focusEnd: String!, $referenceStart: String!, $referenceEnd: String!) {
+  sigmarailRegimeComparePeriods(tenantId: $tenantId, focusStart: $focusStart, focusEnd: $focusEnd, referenceStart: $referenceStart, referenceEnd: $referenceEnd)
+}

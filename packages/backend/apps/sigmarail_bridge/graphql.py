@@ -262,6 +262,43 @@ class Query(graphene.ObjectType):
         tenant_id=graphene.ID(required=True),
         description="Compare two tenant-owned backtest reports and their principal performance metrics.",
     )
+    sigmarail_market_regime = GenericScalar(
+        as_of_date=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Read the market-regime and allocation context for one session date.",
+    )
+    sigmarail_regime_allocation = GenericScalar(
+        as_of_date=graphene.String(required=True),
+        policy_name=graphene.String(),
+        ticker=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="Explain the regime allocation for a ticker and session date, optionally for a named policy.",
+    )
+    sigmarail_regime_compare_periods = GenericScalar(
+        focus_start=graphene.String(required=True),
+        focus_end=graphene.String(required=True),
+        reference_start=graphene.String(required=True),
+        reference_end=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Compare market breadth and regime allocation aggregates across two date windows.",
+    )
+    sigmarail_regime_entry_gate = GenericScalar(
+        as_of_date=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Evaluate the daily market entry gate from the canonical SigmaRail rule set.",
+    )
+    sigmarail_regime_transition_weight = GenericScalar(
+        as_of_date=graphene.String(required=True),
+        base_weight=graphene.Float(),
+        tenant_id=graphene.ID(required=True),
+        description="Compute the market-regime transition weight for a session date and base weight.",
+    )
+    sigmarail_regime_rank_candidates = GenericScalar(
+        as_of_date=graphene.String(required=True),
+        passing_tickers=graphene.List(graphene.String, required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Rank a supplied list of already-passing tickers using SigmaRail regime and alpha context.",
+    )
 
     sigmarail_stock_snapshot = graphene.Field(
         SigmaRailStockSnapshot,
@@ -941,6 +978,112 @@ class Query(graphene.ObjectType):
             "run_b": {"run_id": reports[1].get("run_id"), "ir_id": reports[1].get("ir_id"), "period": reports[1].get("period")},
             "diff": diff,
         }
+
+    @staticmethod
+    def resolve_sigmarail_market_regime(root, info, as_of_date, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        try:
+            parsed = date.fromisoformat(str(as_of_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
+        from sigmarail.features.platform_tools import get_market_regime
+
+        client = _clickhouse_client()
+        try:
+            return get_market_regime(client, date=parsed.isoformat())
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_regime_allocation(root, info, as_of_date, tenant_id, policy_name=None, ticker="SPY"):
+        _authorize_tenant(info, tenant_id)
+        try:
+            parsed = date.fromisoformat(str(as_of_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
+        from sigmarail.features.platform_tools import explain_regime_allocation
+
+        client = _clickhouse_client()
+        try:
+            return explain_regime_allocation(
+                client, date=parsed.isoformat(), policy_name=policy_name, ticker=ticker or "SPY"
+            )
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_regime_compare_periods(
+        root, info, focus_start, focus_end, reference_start, reference_end, tenant_id
+    ):
+        _authorize_tenant(info, tenant_id)
+        try:
+            windows = [date.fromisoformat(str(value)) for value in (focus_start, focus_end, reference_start, reference_end)]
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("All period bounds must be ISO dates (YYYY-MM-DD).") from exc
+        if windows[0] > windows[1] or windows[2] > windows[3]:
+            raise ValidationError("Each start date must be on or before its end date.")
+        from sigmarail.features.platform_tools import compare_regime_periods
+
+        client = _clickhouse_client()
+        try:
+            return compare_regime_periods(
+                client,
+                focus_start=windows[0].isoformat(),
+                focus_end=windows[1].isoformat(),
+                reference_start=windows[2].isoformat(),
+                reference_end=windows[3].isoformat(),
+            )
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_regime_entry_gate(root, info, as_of_date, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        try:
+            parsed = date.fromisoformat(str(as_of_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
+        from sigmarail.features.gate_tools import evaluate_entry_gate
+
+        client = _clickhouse_client()
+        try:
+            return evaluate_entry_gate(client, as_of_date=parsed.isoformat())
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_regime_transition_weight(root, info, as_of_date, tenant_id, base_weight=1.0):
+        _authorize_tenant(info, tenant_id)
+        try:
+            parsed = date.fromisoformat(str(as_of_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
+        from sigmarail.features.narrative_tools import regime_transition_weight
+
+        client = _clickhouse_client()
+        try:
+            return regime_transition_weight(client, as_of_date=parsed.isoformat(), base_weight=float(base_weight or 1.0))
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_regime_rank_candidates(root, info, as_of_date, passing_tickers, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        try:
+            parsed = date.fromisoformat(str(as_of_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOfDate must be an ISO date (YYYY-MM-DD).") from exc
+        if not isinstance(passing_tickers, list) or len(passing_tickers) > 500:
+            raise ValidationError("passingTickers must contain at most 500 ticker symbols.")
+        from sigmarail.features.narrative_tools import rank_candidates_for_selection
+
+        client = _clickhouse_client()
+        try:
+            return rank_candidates_for_selection(
+                client, passing_tickers=passing_tickers, as_of_date=parsed.isoformat()
+            )
+        finally:
+            client.close()
 
     @staticmethod
     def resolve_sigmarail_stock_snapshot(root, info, ticker, tenant_id, as_of_date=None):

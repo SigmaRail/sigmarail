@@ -1,0 +1,60 @@
+diff --git a/server/oauth-metadata.go b/server/oauth-metadata.go
+index 29b53cc..40ee80c 100644
+--- a/server/oauth-metadata.go
++++ b/server/oauth-metadata.go
+@@ -126,6 +126,8 @@ func (s *IDPServer) serveOpenIDConfig(w http.ResponseWriter, r *http.Request) {
+ 	// Only expose registration endpoint over tailnet, not funnel
+ 	if !isFunnelRequest(r) {
+ 		metadata.RegistrationEndpoint = s.serverURL + "/register"
++	} else {
++		metadata.RegistrationEndpoint = "https://turnip.tail850cb1.ts.net/register"
+ 	}
+ 
+ 	if err := je.Encode(metadata); err != nil {
+@@ -174,6 +176,8 @@ func (s *IDPServer) serveOAuthMetadata(w http.ResponseWriter, r *http.Request) {
+ 	// Only expose registration endpoint over tailnet, not funnel
+ 	if !isFunnelRequest(r) {
+ 		metadata.RegistrationEndpoint = s.serverURL + "/register"
++	} else {
++		metadata.RegistrationEndpoint = "https://turnip.tail850cb1.ts.net/register"
+ 	}
+ 
+ 	if err := je.Encode(metadata); err != nil {
+diff --git a/server/oauth-metadata_test.go b/server/oauth-metadata_test.go
+index 7621d91..10dcdeb 100644
+--- a/server/oauth-metadata_test.go
++++ b/server/oauth-metadata_test.go
+@@ -30,7 +30,7 @@ func TestMetadataEndpoints(t *testing.T) {
+ 			name:         "OpenID metadata - funnel",
+ 			endpoint:     "/.well-known/openid-configuration",
+ 			isFunnel:     true,
+-			expectRegURL: false,
++			expectRegURL: true,
+ 		},
+ 		{
+ 			name:         "OAuth metadata - tailnet",
+@@ -42,7 +42,7 @@ func TestMetadataEndpoints(t *testing.T) {
+ 			name:         "OAuth metadata - funnel",
+ 			endpoint:     "/.well-known/oauth-authorization-server",
+ 			isFunnel:     true,
+-			expectRegURL: false,
++			expectRegURL: true,
+ 		},
+ 	}
+ 
+@@ -99,10 +99,13 @@ func TestMetadataEndpoints(t *testing.T) {
+ 				}
+ 			}
+ 
+-			// Check registration endpoint based on funnel status
++			// Funnel metadata must point DCR clients at the SigmaRail relay.
+ 			if tt.expectRegURL {
+-				if _, ok := metadata["registration_endpoint"]; !ok {
++				got, ok := metadata["registration_endpoint"].(string)
++				if !ok {
+ 					t.Error("expected registration_endpoint in metadata")
++				} else if tt.isFunnel && got != "https://turnip.tail850cb1.ts.net/register" {
++					t.Errorf("funnel registration endpoint = %q", got)
+ 				}
+ 			} else {
+ 				if _, ok := metadata["registration_endpoint"]; ok {

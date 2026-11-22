@@ -1,0 +1,8 @@
+# Exclude local workspace symlinks/artifacts so pnpm can create clean links in
+# the image and the build cannot accidentally consume a sibling worktree.
+**/node_modules
+**/build
+.git
+.worktrees
+.venv
+logs

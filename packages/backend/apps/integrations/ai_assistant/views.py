@@ -80,6 +80,8 @@ TOOL_PERMISSIONS = {
     "update_crud_demo_item": "features.crud.manage",
     "delete_crud_demo_item": "features.crud.manage",
     "get_action_logs": "security.logs.view",
+    "get_sigmarail_stock_snapshot": None,
+    "get_sigma_rail_stock_snapshot": None,
     "introspect": None,
     "search": None,
 }
@@ -153,6 +155,8 @@ TOOL_DISPLAY_NAMES = {
     "update_crud_demo_item": "Updating item",
     "delete_crud_demo_item": "Deleting item",
     "get_action_logs": "Searching activity logs",
+    "get_sigmarail_stock_snapshot": "Reading SigmaRail stock context",
+    "get_sigma_rail_stock_snapshot": "Reading SigmaRail stock context",
 }
 
 
@@ -1032,10 +1036,21 @@ class ChatGPTMCPProxyView(MCPProxyView):
 
     def _adapt_tool_list(self, response, request_method: str):
         """Advertise tenantContext as a proxy-only selector and explain discovery."""
+        is_sse = response.headers.get("content-type", "").lower().startswith("text/event-stream")
         try:
             payload = response.json()
         except ValueError:
-            return response
+            payload = None
+            if is_sse:
+                for line in response.content.decode("utf-8", errors="replace").splitlines():
+                    if line.startswith("data:") and line[5:].strip():
+                        try:
+                            payload = json.loads(line[5:].strip())
+                        except json.JSONDecodeError:
+                            continue
+                        break
+            if payload is None:
+                return response
         if not isinstance(payload, dict):
             return response
         result = payload.get("result")
@@ -1069,8 +1084,9 @@ class ChatGPTMCPProxyView(MCPProxyView):
                         input_schema["required"] = [
                             key for key in input_schema["required"] if key not in {"tenantId", "tenant_id"}
                         ]
-        response._content = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-        response.headers["content-type"] = "application/json"
+        encoded = json.dumps(payload, separators=(",", ":"))
+        response._content = (f"data: {encoded}\n\n" if is_sse else encoded).encode("utf-8")
+        response.headers["content-type"] = "text/event-stream" if is_sse else "application/json"
         return response
 
     def post(self, request):
@@ -1097,6 +1113,9 @@ class ChatGPTMCPProxyView(MCPProxyView):
 
         headers = {
             "Content-Type": "application/json",
+            # Apollo's Streamable HTTP endpoint requires clients to advertise
+            # both its JSON and SSE response formats, including on initialize.
+            "Accept": "application/json, text/event-stream",
             "X-User-ID": str(request.user.id),
             "X-AI-Agent-Request": "true",
         }

@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_regime_entry_gate", description: "Evaluate the daily market entry gate from the canonical SigmaRail rule set.")
+query GetSigmaRailRegimeEntryGate($tenantId: ID!, $asOfDate: String!) {
+  sigmarailRegimeEntryGate(tenantId: $tenantId, asOfDate: $asOfDate)
+}

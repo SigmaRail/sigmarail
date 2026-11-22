@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_regime_transition_weight", description: "Compute the market-regime transition weight for a session date and base weight.")
+query GetSigmaRailRegimeTransitionWeight($tenantId: ID!, $asOfDate: String!, $baseWeight: Float) {
+  sigmarailRegimeTransitionWeight(tenantId: $tenantId, asOfDate: $asOfDate, baseWeight: $baseWeight)
+}

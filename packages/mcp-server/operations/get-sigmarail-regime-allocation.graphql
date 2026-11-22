@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_regime_allocation", description: "Explain the regime allocation for a ticker and session date, optionally for a named policy.")
+query GetSigmaRailRegimeAllocation($tenantId: ID!, $asOfDate: String!, $policyName: String, $ticker: String) {
+  sigmarailRegimeAllocation(tenantId: $tenantId, asOfDate: $asOfDate, policyName: $policyName, ticker: $ticker)
+}

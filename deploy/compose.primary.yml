@@ -1,0 +1,170 @@
+# Canonical laptop runtime for the SigmaRail main checkout.
+# The UI, Django API, Apollo MCP, Postgres, and Redis run as separate services.
+# ClickHouse remains native on the Mac and is reached through host.docker.internal.
+name: sigmarail
+
+services:
+  db:
+    image: postgres:16.1-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      PGUSER: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: backend
+      POSTGRES_DB: backend
+    volumes:
+      - sigmarail_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backend -d backend"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2.4-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - sigmarail_redis_data:/data
+
+  backend:
+    image: sigmarail/backend:main
+    build:
+      context: ../..
+      dockerfile: sigmarail/packages/backend/Dockerfile
+      args:
+        SIGMARAIL_SOURCE_DIR: sigmarail
+        SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
+        SIGMARAIL_BUILD_BRANCH: main
+        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+    env_file:
+      - ../../.sigmarail/backend.env
+    environment:
+      DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"backend","host":"db","port":5432}'
+      REDIS_CONNECTION: redis://redis:6379
+      MCP_SERVER_URL: http://mcp-server:4000
+      # Keep dormant AWS-backed integrations from discovering host credentials.
+      AWS_EC2_METADATA_DISABLED: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,turnip.tail850cb1.ts.net
+      CSRF_TRUSTED_ORIGINS: http://localhost:4300,http://127.0.0.1:4300,https://turnip.tail850cb1.ts.net:8445
+      SIGMARAIL_CLICKHOUSE_HOST: host.docker.internal
+      SIGMARAIL_RUNTIME_API_CONTAINER_PORT: "80"
+      SIGMARAIL_RUNTIME_API_HOST_PORT: "5001"
+      SIGMARAIL_RUNTIME_TAILSCALE_HOST: turnip.tail850cb1.ts.net
+      SIGMARAIL_RUNTIME_TAILSCALE_PORT: "8445"
+      SIGMARAIL_RUNTIME_TAILSCALE_TARGET: http://localhost:4300
+      SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      SIGMARAIL_BUILD_BRANCH: main
+      SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+      SIGMARAIL_IMAGE_ID: ${SIGMARAIL_IMAGE_ID:-unknown}
+    ports:
+      - "127.0.0.1:5001:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    labels:
+      org.sigmarail.source.branch: main
+      org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+
+  mcp-server:
+    image: sigmarail/apollo-mcp:main
+    build:
+      context: ..
+      dockerfile: packages/mcp-server/Dockerfile
+    environment:
+      GRAPHQL_ENDPOINT: http://backend:80/api/graphql/
+      MUTATION_MODE: ${MCP_MUTATION_MODE:-none}
+      MCP_LOG_LEVEL: info
+    expose:
+      - "4000"
+    networks:
+      - default
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    labels:
+      org.sigmarail.source.branch: main
+      org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+
+  mcp-gateway:
+    image: sigmarail/mcp-gateway:main
+    build:
+      context: ..
+      dockerfile: packages/mcp-gateway/Dockerfile
+    env_file:
+      - ../../.sigmarail/gateway.env
+    environment:
+      SIGMARAIL_MCP_UPSTREAM: http://backend:80/api/ai-assistant/chatgpt/mcp/
+      LEGACY_MCP_GATEWAY: http://host.docker.internal:8002
+      SIGMARAIL_MCP_RESOURCE: https://turnip.tail850cb1.ts.net
+      SIGMARAIL_MCP_IDP_ISSUER: https://vera-idp.tail850cb1.ts.net
+    ports:
+      - "127.0.0.1:8003:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+    labels:
+      org.sigmarail.source.branch: main
+      org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+
+  frontend:
+    image: sigmarail/frontend:main
+    build:
+      context: ..
+      dockerfile: packages/webapp/Dockerfile.prod
+      args:
+        VITE_BASE_API_URL: /api
+        VITE_ENVIRONMENT_NAME: production
+        SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
+        SIGMARAIL_BUILD_BRANCH: main
+        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+        SIGMARAIL_FRONTEND_HOST_PORT: "4300"
+        SIGMARAIL_TAILSCALE_HOST: turnip.tail850cb1.ts.net
+        SIGMARAIL_TAILSCALE_PORT: "8445"
+    ports:
+      - "127.0.0.1:4300:80"
+    healthcheck:
+      # Alpine resolves localhost to IPv6 first, while this nginx listener is
+      # IPv4-only. Probe the explicit loopback address to avoid false unhealthy.
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    labels:
+      org.sigmarail.source.branch: main
+      org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+
+volumes:
+  sigmarail_postgres_data:
+    external: true
+    name: sigmarail-web-backend-db-data
+  sigmarail_redis_data:
+    external: true
+    name: sigmarail-studio-apptension_redis_cache
+
