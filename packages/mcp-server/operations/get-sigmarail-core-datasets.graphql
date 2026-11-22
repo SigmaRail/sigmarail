@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_core_datasets", description: "Discover SigmaRail's registered datasets, grains, time semantics, and lineage roots for the authenticated tenant.")
+query GetSigmaRailCoreDatasets($tenantId: ID!) {
+  sigmarailCoreDatasets(tenantId: $tenantId)
+}

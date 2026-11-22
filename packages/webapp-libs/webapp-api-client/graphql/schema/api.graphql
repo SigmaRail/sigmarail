@@ -9,6 +9,7 @@ value as specified by
 [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
 """
 scalar DateTime
+scalar Date
 """
 The `BigInt` scalar type represents non-fractional whole numeric values.
 `BigInt` is not constrained to 32-bit like the `Int` type and thus is a less
@@ -36,6 +37,22 @@ that will be handled by the multipart request spec
 """
 scalar Upload
 type Query {
+  "List schema-registered SigmaRail datasets, grains, time semantics, and lineage roots."
+  sigmarailCoreDatasets(tenantId: ID!): GenericScalar
+  "Describe one registered dataset and its stable selectable field IDs."
+  sigmarailCoreDataset(datasetId: String!, tenantId: ID!): GenericScalar
+  "Return the canonical DataQueryV1 JSON schema for authoring bounded queries."
+  sigmarailCoreQuerySchema(tenantId: ID!): GenericScalar
+  "Execute a bounded read-only DataQueryV1 AST. The query select list determines returned row fields."
+  sigmarailCoreQuery(query: GenericScalar!, tenantId: ID!): GenericScalar
+  "Return the canonical SigmaRail PipelineDocument JSON schema for strategy authoring."
+  sigmarailStrategyPipelineSchema(tenantId: ID!): GenericScalar
+  "Validate a versioned SigmaRail PipelineDocument AST using the canonical strategy package."
+  sigmarailStrategyValidatePipeline(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
+  "Compile a validated SigmaRail PipelineDocument into the LEAN-compatible runtime spec."
+  sigmarailStrategyCompilePipeline(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
+  "Read one stock's latest or point-in-time SigmaRail daily snapshot."
+  sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"
   backupConfig(tenantId: ID!): BackupConfigType
   "Get backup records for a tenant"
@@ -107,6 +124,20 @@ type Query {
     "The ID of the object"
     id: ID!
   ): Node
+}
+
+type SigmaRailStockSnapshot {
+  ticker: String!
+  asOfDate: String!
+  companyName: String
+  sector: String
+  industry: String
+  close: Float
+  rsRating: Float
+  atr14Pct: Float
+  stageCode: String
+  sma50d: Float
+  sma200d: Float
 }
 "GraphQL type for BackupConfig."
 type BackupConfigType implements Node {

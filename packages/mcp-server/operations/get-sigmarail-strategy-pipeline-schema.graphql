@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_pipeline_schema", description: "Get the canonical SigmaRail PipelineDocument AST schema for composing and validating strategies.")
+query GetSigmaRailStrategyPipelineSchema($tenantId: ID!) {
+  sigmarailStrategyPipelineSchema(tenantId: $tenantId)
+}

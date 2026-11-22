@@ -35,7 +35,27 @@ mcp-server/
 | `OPENAI_API_KEY`        | OpenAI API key                                              | Required                           |
 | `MCP_TELEMETRY_ENABLED` | Enable OpenTelemetry                                        | `false`                            |
 | `MCP_LOG_LEVEL`         | Log level                                                   | `info`                             |
-| `MUTATION_MODE`         | Mutation mode: `none`, `explicit` (pre-defined only), `all` | `explicit`                         |
+| `MUTATION_MODE`         | Mutation mode: `none`, `explicit` (pre-defined only), `all` | `none`                             |
+
+### SigmaRail AST tools
+
+The SigmaRail MCP tools submit the canonical versioned query and strategy documents as
+GraphQL scalar inputs. GraphQL authenticates and authorizes the tenant; SigmaRail Spec
+validates the AST; SigmaRail Core compiles and executes bounded, read-only data queries.
+For query calls, `DataQueryV1.select` determines the returned columns and row values are
+returned dynamically. Strategy validation and compilation are pure previews and do not
+save or execute a strategy.
+
+Use `sigmarail_core_datasets` and `sigmarail_core_dataset` to discover dataset and field
+IDs, `sigmarail_core_query_schema` to discover the `DataQueryV1` contract, and then
+`sigmarail_core_query` to submit an AST. Use `sigmarail_strategy_pipeline_schema`,
+`sigmarail_strategy_validate_pipeline`, and `sigmarail_strategy_compile_pipeline` for
+`PipelineDocument` authoring. The GraphQL argument is intentionally flexible; the canonical
+SigmaRail validator is authoritative and rejects unsupported fields and AST forms.
+
+Apollo's generic ad hoc GraphQL `execute` tool is disabled. Agents can shape query results
+through the AST's `select` list without receiving arbitrary execution over the full
+AppTension GraphQL schema.
 
 ### Adding New Operations
 
@@ -61,7 +81,7 @@ query MyQuery($tenantId: ID!, $otherParam: String) {
 - All requests go through the Django proxy which validates tenant access
 - The `tenantId` parameter is injected server-side and cannot be manipulated by clients
 - Rate limiting is configured at both proxy and MCP server levels
-- Mutation mode is set to `explicit` by default (only pre-defined mutations allowed)
+- Mutation mode defaults to `none` (read-only)
 - To change mutation behavior, set `MUTATION_MODE` environment variable or update `config.yaml`
 
 ### Mutation Modes
@@ -69,7 +89,7 @@ query MyQuery($tenantId: ID!, $otherParam: String) {
 | Mode       | Description                             | Recommended For            |
 | ---------- | --------------------------------------- | -------------------------- |
 | `none`     | Mutations disabled, read-only           | High security environments |
-| `explicit` | Only pre-defined mutation tools allowed | Production (default)       |
+| `explicit` | Only pre-defined mutation tools allowed | Enable only when reviewed operations need writes |
 | `all`      | AI can build arbitrary mutations        | Development only           |
 
 ## Deployment

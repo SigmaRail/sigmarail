@@ -1,0 +1,7 @@
+# @tool(name: "sigmarail_core_query", description: "Run a bounded, read-only SigmaRail DataQueryV1 AST. Select the exact stable field IDs to return in query.select; filters, joins, dates, computed expressions, and limits are validated by SigmaRail Spec and compiled by SigmaRail Core. Discover datasets/fields first with sigmarail_core_datasets and sigmarail_core_dataset.")
+query RunSigmaRailCoreQuery(
+  $tenantId: ID!
+  $query: GenericScalar!
+) {
+  sigmarailCoreQuery(tenantId: $tenantId, query: $query)
+}

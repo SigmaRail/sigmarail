@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_core_query_schema", description: "Get the canonical DataQueryV1 AST schema used by sigmarail_core_query.")
+query GetSigmaRailCoreQuerySchema($tenantId: ID!) {
+  sigmarailCoreQuerySchema(tenantId: $tenantId)
+}

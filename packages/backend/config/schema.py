@@ -13,6 +13,7 @@ from apps.multitenancy import schema as multitenancy_schema
 from apps.sso import schema as sso_schema
 from apps.translations import schema as translations_schema
 from apps.backup import schema as backup_schema
+from apps.sigmarail_bridge import graphql as sigmarail_graphql
 from common.graphql.utils import graphql_query, graphql_mutation, graphql_subscription
 
 schema = graphene.Schema(
@@ -27,6 +28,7 @@ schema = graphene.Schema(
             sso_schema.TenantSSOQuery,
             translations_schema.TranslationsQuery,
             backup_schema.BackupQuery,
+            sigmarail_graphql.Query,
         ]
     ),
     mutation=graphql_mutation(

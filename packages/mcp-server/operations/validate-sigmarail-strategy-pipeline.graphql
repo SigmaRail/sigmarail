@@ -1,0 +1,7 @@
+# @tool(name: "sigmarail_strategy_validate_pipeline", description: "Validate a tenant-scoped SigmaRail PipelineDocument strategy AST with the canonical SigmaRail Spec validator and compiler. This does not save or execute the strategy.")
+query ValidateSigmaRailStrategyPipeline(
+  $tenantId: ID!
+  $pipeline: GenericScalar!
+) {
+  sigmarailStrategyValidatePipeline(tenantId: $tenantId, pipeline: $pipeline)
+}

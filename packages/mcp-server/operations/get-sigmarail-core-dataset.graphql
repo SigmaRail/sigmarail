@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_core_dataset", description: "Inspect one registered SigmaRail dataset and its stable field IDs before composing a DataQueryV1 AST.")
+query GetSigmaRailCoreDataset($tenantId: ID!, $datasetId: String!) {
+  sigmarailCoreDataset(tenantId: $tenantId, datasetId: $datasetId)
+}

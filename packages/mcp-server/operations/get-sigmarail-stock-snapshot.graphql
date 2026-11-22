@@ -1,0 +1,16 @@
+# @tool(name: "get_sigmarail_stock_snapshot", description: "Read a stock's latest or point-in-time SigmaRail daily snapshot, including close, sector, RS rating, ATR, stage, and moving averages. Tenant membership is required; pass tenantContext from get_user_tenants when multiple tenants are available.")
+query GetSigmaRailStockSnapshot($tenantId: ID!, $ticker: String!, $asOfDate: String) {
+  sigmarailStockSnapshot(tenantId: $tenantId, ticker: $ticker, asOfDate: $asOfDate) {
+    ticker
+    asOfDate
+    companyName
+    sector
+    industry
+    close
+    rsRating
+    atr14Pct
+    stageCode
+    sma50d
+    sma200d
+  }
+}
