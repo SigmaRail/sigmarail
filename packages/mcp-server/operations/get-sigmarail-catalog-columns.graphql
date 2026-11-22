@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_catalog_columns", description: "Discover SigmaRail field IDs and owning datasets for authoring data and screen ASTs.")
+query GetSigmaRailCatalogColumns($tenantId: ID!) {
+  sigmarailCatalogColumns(tenantId: $tenantId)
+}

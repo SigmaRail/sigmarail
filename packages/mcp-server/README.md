@@ -50,8 +50,12 @@ Use `sigmarail_core_datasets` and `sigmarail_core_dataset` to discover dataset a
 IDs, `sigmarail_core_query_schema` to discover the `DataQueryV1` contract, and then
 `sigmarail_core_query` to submit an AST. Use `sigmarail_strategy_pipeline_schema`,
 `sigmarail_strategy_validate_pipeline`, and `sigmarail_strategy_compile_pipeline` for
-`PipelineDocument` authoring. The GraphQL argument is intentionally flexible; the canonical
-SigmaRail validator is authoritative and rejects unsupported fields and AST forms.
+`PipelineDocument` authoring. Screener authors can use `sigmarail_screen_schema`,
+`sigmarail_screen_compile`, `sigmarail_screen_preview`, and
+`sigmarail_screen_sector_range` with the canonical `UniverseQueryV1` AST. Catalog and
+strategy discovery tools expose registered datasets/fields, factors, presets, and installed
+templates. The GraphQL AST arguments are intentionally flexible; the canonical SigmaRail
+validators reject unsupported fields and AST forms.
 
 Apollo's generic ad hoc GraphQL `execute` tool is disabled. Agents can shape query results
 through the AST's `select` list without receiving arbitrary execution over the full
@@ -79,7 +83,9 @@ query MyQuery($tenantId: ID!, $otherParam: String) {
 ### Security
 
 - All requests go through the Django proxy which validates tenant access
-- The `tenantId` parameter is injected server-side and cannot be manipulated by clients
+- Every SigmaRail operation requires a tenant ID and checks the authenticated user's
+  accepted membership on the backend. A supplied tenant ID is never trusted without that
+  membership check.
 - Rate limiting is configured at both proxy and MCP server levels
 - Mutation mode defaults to `none` (read-only)
 - To change mutation behavior, set `MUTATION_MODE` environment variable or update `config.yaml`

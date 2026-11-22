@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_factors", description: "List canonical semantic strategy factors and their field mappings.")
+query GetSigmaRailStrategyFactors($tenantId: ID!) {
+  sigmarailStrategyFactors(tenantId: $tenantId)
+}

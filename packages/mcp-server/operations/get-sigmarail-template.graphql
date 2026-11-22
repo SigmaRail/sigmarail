@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_template", description: "Load one canonical screener or strategy template including its AST document.")
+query GetSigmaRailTemplate($tenantId: ID!, $templateId: String!) {
+  sigmarailTemplate(tenantId: $tenantId, templateId: $templateId)
+}

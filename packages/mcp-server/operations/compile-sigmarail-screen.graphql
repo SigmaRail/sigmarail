@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_screen_compile", description: "Validate and compile a UniverseQueryV1 screener AST to parameterized SQL without executing it.")
+query CompileSigmaRailScreen($tenantId: ID!, $spec: GenericScalar!) {
+  sigmarailScreenCompile(tenantId: $tenantId, spec: $spec)
+}

@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_screen_preview", description: "Run a bounded UniverseQueryV1 screen as of a date. Choose returned columns in spec.select.")
+query PreviewSigmaRailScreen($tenantId: ID!, $spec: GenericScalar!, $asOf: String!) {
+  sigmarailScreenPreview(tenantId: $tenantId, spec: $spec, asOf: $asOf)
+}

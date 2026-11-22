@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_templates", description: "List installed screener and strategy templates; optionally filter by kind and status.")
+query GetSigmaRailTemplates($tenantId: ID!, $kind: String, $status: String) {
+  sigmarailTemplates(tenantId: $tenantId, kind: $kind, status: $status)
+}

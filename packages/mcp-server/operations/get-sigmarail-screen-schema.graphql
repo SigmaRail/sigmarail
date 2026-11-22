@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_screen_schema", description: "Get the canonical UniverseQueryV1 schema before authoring point-in-time screener ASTs.")
+query GetSigmaRailScreenSchema($tenantId: ID!) {
+  sigmarailScreenSchema(tenantId: $tenantId)
+}

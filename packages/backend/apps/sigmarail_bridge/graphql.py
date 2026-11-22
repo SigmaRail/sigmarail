@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import date
+import json
+from importlib.resources import files
 
 import graphene
 from graphene.types.generic import GenericScalar
@@ -10,7 +12,7 @@ from graphql_relay import from_global_id
 from rest_framework.exceptions import ValidationError
 
 from apps.multitenancy.middleware import get_current_tenant_with_membership_check
-from .core_data import _clickhouse_client
+from .core_data import _clickhouse_client, _preview_json_value
 
 
 def _authorize_tenant(info, tenant_id):
@@ -91,6 +93,62 @@ class Query(graphene.ObjectType):
         pipeline=GenericScalar(required=True),
         tenant_id=graphene.ID(required=True),
         description="Compile a validated SigmaRail PipelineDocument into the LEAN-compatible runtime spec.",
+    )
+    sigmarail_screen_schema = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="Return the canonical UniverseQueryV1 schema used to author screener ASTs.",
+    )
+    sigmarail_screen_compile = GenericScalar(
+        spec=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Compile a canonical UniverseQueryV1 AST into parameterized SigmaRail SQL without executing it.",
+    )
+    sigmarail_screen_preview = GenericScalar(
+        spec=GenericScalar(required=True),
+        as_of=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Run a bounded point-in-time UniverseQueryV1 screen. Returned row fields follow the AST select list."
+        ),
+    )
+    sigmarail_screen_sector_range = GenericScalar(
+        spec=GenericScalar(required=True),
+        start_date=graphene.String(required=True),
+        end_date=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Summarize point-in-time universe membership by sector over a bounded date range.",
+    )
+    sigmarail_catalog_tables = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List schema-registered SigmaRail datasets and declared join relationships.",
+    )
+    sigmarail_catalog_columns = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List registered SigmaRail fields with stable IDs, owners, physical columns, and types.",
+    )
+    sigmarail_strategy_factors = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List canonical semantic strategy factors and their field mappings.",
+    )
+    sigmarail_strategy_presets = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List canonical built-in SigmaRail strategy presets.",
+    )
+    sigmarail_templates = GenericScalar(
+        kind=graphene.String(),
+        status=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="List installed screener and strategy templates from the canonical SigmaRail catalog.",
+    )
+    sigmarail_template = GenericScalar(
+        template_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Load one installed screener or strategy template, including its canonical AST body.",
+    )
+    sigmarail_strategy_compile_preset = GenericScalar(
+        preset_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Compile a named canonical strategy preset to its LEAN-compatible spec.",
     )
 
     sigmarail_stock_snapshot = graphene.Field(
@@ -187,6 +245,198 @@ class Query(graphene.ObjectType):
             materialize_swing_risk_rules(compiled)
             return compiled
         except Exception as exc:  # Match the AppTension strategy compile endpoint contract.
+            return {"error": str(exc), "code": "compile_failed"}
+
+    @staticmethod
+    def resolve_sigmarail_screen_schema(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        try:
+            return json.loads(
+                files("sigmarail_spec").joinpath("data", "strategy", "universe-query.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValidationError("SigmaRail UniverseQueryV1 schema is unavailable.") from exc
+
+    @staticmethod
+    def resolve_sigmarail_screen_compile(root, info, spec, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        spec_data = _json_object(spec, "spec")
+        from sigmarail.universe import compile_universe_spec
+
+        try:
+            sql, params = compile_universe_spec(spec_data)
+            return {"sql": sql.strip(), "params": {key: params[key] for key in sorted(params)}}
+        except Exception as exc:
+            return {"error": str(exc), "code": "invalid_universe_query"}
+
+    @staticmethod
+    def resolve_sigmarail_screen_preview(root, info, spec, as_of, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        spec_data = _json_object(spec, "spec")
+        try:
+            as_of_date = date.fromisoformat(str(as_of))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOf must be an ISO date (YYYY-MM-DD).") from exc
+
+        from sigmarail.universe import compile_universe_spec
+
+        try:
+            sql, params = compile_universe_spec(
+                spec_data,
+                start_date=as_of_date.isoformat(),
+                end_date=as_of_date.isoformat(),
+            )
+        except Exception as exc:
+            return {"error": str(exc), "code": "invalid_universe_query"}
+
+        client = _clickhouse_client()
+        try:
+            result = client.query(sql, parameters=params)
+            rows = [
+                {name: _preview_json_value(value) for name, value in zip(result.column_names, values, strict=True)}
+                for values in result.result_rows
+            ]
+            return {
+                "as_of": as_of_date.isoformat(),
+                "count": len(rows),
+                "rows": rows,
+                "screen_ir": "universe_query_v1",
+                "spec": spec_data,
+            }
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_screen_sector_range(root, info, spec, start_date, end_date, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        spec_data = _json_object(spec, "spec")
+        try:
+            start = date.fromisoformat(str(start_date))
+            end = date.fromisoformat(str(end_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("startDate and endDate must be ISO dates (YYYY-MM-DD).") from exc
+        if start > end:
+            raise ValidationError("startDate must be on or before endDate.")
+
+        from sigmarail.universe import universe_membership_sector_counts
+
+        client = _clickhouse_client()
+        try:
+            sector_counts = universe_membership_sector_counts(
+                spec_data,
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+                client=client,
+            )
+        finally:
+            client.close()
+        totals: dict[str, int] = {}
+        for row in sector_counts:
+            day = str(row["date"])
+            totals[day] = totals.get(day, 0) + int(row["count"])
+        counts = list(totals.values())
+        return {
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "dates": sorted(totals),
+            "member_counts": [totals[day] for day in sorted(totals)],
+            "sector_counts": sector_counts,
+            "summary": {
+                "trading_days": len(counts),
+                "avg_members_per_day": round(sum(counts) / len(counts), 2) if counts else 0.0,
+                "min_members_per_day": min(counts) if counts else 0,
+                "max_members_per_day": max(counts) if counts else 0,
+            },
+        }
+
+    @staticmethod
+    def resolve_sigmarail_catalog_tables(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.query import _module_manifest
+
+        manifest = _module_manifest()
+        return {
+            "spine": "screener_price_tech_daily",
+            "join_type": "declared_relationships",
+            "tables": manifest["datasets"],
+            "joins": manifest["joins"],
+        }
+
+    @staticmethod
+    def resolve_sigmarail_catalog_columns(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.query import _column_index, _datasets
+
+        datasets = _datasets()
+        columns = {}
+        candidates = {}
+        for field_id, (dataset_id, physical, meta) in sorted(_column_index().items()):
+            candidates.setdefault(str(meta["name"]), []).append((field_id, dataset_id, physical, meta))
+        for name, choices in candidates.items():
+            field_id, dataset_id, physical, meta = next(
+                (row for row in choices if row[1] == "sigmarail.core.screener_price_tech_daily"),
+                choices[0],
+            )
+            columns[name] = {
+                "id": field_id,
+                "dataset_id": dataset_id,
+                "physical": physical,
+                "table": datasets[dataset_id]["table"],
+                "type": meta.get("type"),
+                "description": meta.get("comment", ""),
+            }
+        return {"count": len(columns), "columns": columns}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_factors(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy import list_factors
+
+        return {"factors": list_factors()}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_presets(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy.presets import list_presets
+
+        return {"presets": list_presets()}
+
+    @staticmethod
+    def resolve_sigmarail_templates(root, info, tenant_id, kind=None, status=None):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.features.template_catalog import list_templates, summary_row
+
+        if kind not in (None, "screener", "strategy"):
+            raise ValidationError("kind must be screener or strategy.")
+        if status not in (None, "active", "deprecated", "draft"):
+            raise ValidationError("status must be active, deprecated, or draft.")
+        return {"templates": [summary_row(row) for row in list_templates(kind=kind, status=status)]}
+
+    @staticmethod
+    def resolve_sigmarail_template(root, info, template_id, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.features.template_catalog import get_template
+
+        try:
+            return get_template(template_id)
+        except ValueError as exc:
+            return {"error": str(exc), "code": "unknown_template"}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_compile_preset(root, info, preset_id, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy import compile_pipeline
+        from sigmarail_spec.strategy.presets import get_preset
+
+        try:
+            compiled = compile_pipeline(get_preset(preset_id))
+            from screens.risk_rules import materialize_swing_risk_rules
+
+            materialize_swing_risk_rules(compiled)
+            return compiled
+        except Exception as exc:
             return {"error": str(exc), "code": "compile_failed"}
 
     @staticmethod

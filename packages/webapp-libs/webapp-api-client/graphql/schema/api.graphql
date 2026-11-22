@@ -51,6 +51,28 @@ type Query {
   sigmarailStrategyValidatePipeline(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
   "Compile a validated SigmaRail PipelineDocument into the LEAN-compatible runtime spec."
   sigmarailStrategyCompilePipeline(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
+  "Return the canonical UniverseQueryV1 schema used to author screener ASTs."
+  sigmarailScreenSchema(tenantId: ID!): GenericScalar
+  "Compile a canonical UniverseQueryV1 AST into parameterized SigmaRail SQL without executing it."
+  sigmarailScreenCompile(spec: GenericScalar!, tenantId: ID!): GenericScalar
+  "Run a bounded point-in-time UniverseQueryV1 screen. Returned row fields follow the AST select list."
+  sigmarailScreenPreview(asOf: String!, spec: GenericScalar!, tenantId: ID!): GenericScalar
+  "Summarize point-in-time universe membership by sector over a bounded date range."
+  sigmarailScreenSectorRange(endDate: String!, spec: GenericScalar!, startDate: String!, tenantId: ID!): GenericScalar
+  "List schema-registered SigmaRail datasets and declared join relationships."
+  sigmarailCatalogTables(tenantId: ID!): GenericScalar
+  "List registered SigmaRail fields with stable IDs, owners, physical columns, and types."
+  sigmarailCatalogColumns(tenantId: ID!): GenericScalar
+  "List canonical semantic strategy factors and their field mappings."
+  sigmarailStrategyFactors(tenantId: ID!): GenericScalar
+  "List canonical built-in SigmaRail strategy presets."
+  sigmarailStrategyPresets(tenantId: ID!): GenericScalar
+  "List installed screener and strategy templates from the canonical SigmaRail catalog."
+  sigmarailTemplates(kind: String, status: String, tenantId: ID!): GenericScalar
+  "Load one installed screener or strategy template, including its canonical AST body."
+  sigmarailTemplate(templateId: String!, tenantId: ID!): GenericScalar
+  "Compile a named canonical strategy preset to its LEAN-compatible spec."
+  sigmarailStrategyCompilePreset(presetId: String!, tenantId: ID!): GenericScalar
   "Read one stock's latest or point-in-time SigmaRail daily snapshot."
   sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"

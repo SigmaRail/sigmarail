@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_screen_sector_range", description: "Get daily universe and sector member counts for a bounded date interval using the supplied UniverseQueryV1 AST.")
+query GetSigmaRailScreenSectorRange($tenantId: ID!, $spec: GenericScalar!, $startDate: String!, $endDate: String!) {
+  sigmarailScreenSectorRange(tenantId: $tenantId, spec: $spec, startDate: $startDate, endDate: $endDate)
+}
