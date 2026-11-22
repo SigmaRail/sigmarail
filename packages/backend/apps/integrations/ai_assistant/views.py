@@ -1054,7 +1054,7 @@ class ChatGPTMCPProxyView(MCPProxyView):
         if not isinstance(payload, dict):
             return response
         result = payload.get("result")
-        if isinstance(result, dict) and request_method == "initialize":
+        if isinstance(result, dict) and request_method in {"initialize", "server/discover"}:
             result["instructions"] = self.MCP_INSTRUCTIONS
         if isinstance(result, dict) and isinstance(result.get("tools"), list):
             for tool in result["tools"]:
@@ -1097,6 +1097,17 @@ class ChatGPTMCPProxyView(MCPProxyView):
         if not isinstance(mcp_request, dict):
             return Response({"error": "Expected one JSON-RPC request"}, status=status.HTTP_400_BAD_REQUEST)
 
+        method = mcp_request.get("method", "")
+
+        # This adapter terminates the MCP client connection and creates the
+        # upstream Apollo session. Apollo requires the client-side initialized
+        # notification before it will serve tools/list. Some ChatGPT discovery
+        # requests skip that notification, so the adapter completes the
+        # handshake after initialize and consumes a later duplicate from the
+        # client instead of forwarding it twice.
+        if method == "notifications/initialized":
+            return HttpResponse(status=202)
+
         memberships = self._memberships(request.user)
         tenant_membership, error_response = self._prepare_tenant_call(mcp_request, memberships, request)
         if error_response is not None:
@@ -1128,16 +1139,71 @@ class ChatGPTMCPProxyView(MCPProxyView):
             auth_header = request.headers.get("Authorization")
             if auth_header:
                 headers["Authorization"] = auth_header
-        for protocol_header in ("Mcp-Session-Id", "Mcp-Protocol-Version", "Last-Event-ID"):
+        protocol_headers = ("Mcp-Protocol-Version", "Last-Event-ID") if method == "initialize" else (
+            "Mcp-Session-Id", "Mcp-Protocol-Version", "Last-Event-ID"
+        )
+        for protocol_header in protocol_headers:
             value = request.headers.get(protocol_header)
             if value:
                 headers[protocol_header] = value
+        # MCP 2026-07-28 moved method and tool names into HTTP headers so
+        # proxies can route requests without inspecting the JSON body. Apollo
+        # validates these headers against the JSON-RPC envelope. Derive them
+        # from the already-authorized body instead of trusting client copies.
+        if request.headers.get("Mcp-Protocol-Version") == "2026-07-28":
+            headers["Mcp-Method"] = method
+            params = mcp_request.get("params")
+            if isinstance(params, dict):
+                if method in {"tools/call", "prompts/get"}:
+                    mcp_name = params.get("name")
+                elif method == "resources/read":
+                    mcp_name = params.get("uri")
+                elif method in {"tasks/get", "tasks/update", "tasks/cancel"}:
+                    mcp_name = params.get("taskId")
+                else:
+                    mcp_name = None
+                if isinstance(mcp_name, str) and mcp_name:
+                    headers["Mcp-Name"] = mcp_name
 
         try:
             with httpx.Client(timeout=60.0) as client:
                 upstream = client.post(f"{self.get_mcp_server_url()}/mcp", json=mcp_request, headers=headers)
-            if upstream.status_code < 400 and mcp_request.get("method") in {"initialize", "tools/list"}:
-                upstream = self._adapt_tool_list(upstream, mcp_request.get("method", ""))
+                if method == "initialize" and upstream.status_code < 400:
+                    initialized_headers = dict(headers)
+                    session_id = upstream.headers.get("Mcp-Session-Id")
+                    if session_id:
+                        initialized_headers["Mcp-Session-Id"] = session_id
+                    initialized = client.post(
+                        f"{self.get_mcp_server_url()}/mcp",
+                        json={"jsonrpc": "2.0", "method": "notifications/initialized"},
+                        headers=initialized_headers,
+                    )
+                    logger.info(
+                        "Apollo MCP initialized notification status=%s session=%s",
+                        initialized.status_code,
+                        "present" if session_id else "absent",
+                    )
+                    if initialized.status_code >= 400:
+                        logger.warning(
+                            "Apollo MCP initialization notification failed: status=%s content_type=%s",
+                            initialized.status_code,
+                            initialized.headers.get("content-type", ""),
+                        )
+                        return Response(
+                            {"error": "MCP server could not complete session initialization"},
+                            status=status.HTTP_502_BAD_GATEWAY,
+                        )
+            if upstream.status_code >= 400:
+                logger.warning(
+                    "Apollo MCP request failed: method=%s status=%s session=%s protocol=%s accept=%s",
+                    method,
+                    upstream.status_code,
+                    "present" if request.headers.get("Mcp-Session-Id") else "absent",
+                    request.headers.get("Mcp-Protocol-Version", "absent"),
+                    headers.get("Accept", ""),
+                )
+            if upstream.status_code < 400 and method in {"initialize", "server/discover", "tools/list"}:
+                upstream = self._adapt_tool_list(upstream, method)
             proxied = HttpResponse(
                 upstream.content,
                 status=upstream.status_code,

@@ -1,9 +1,10 @@
 # Apollo MCP Server Dockerfile for production deployments
 # This dockerfile is used for deploying to platforms like Render.com
 
-# Pin to specific SHA digest for reproducibility
-# NOTE: Update this digest carefully - different versions may have different binary locations
-FROM ghcr.io/apollographql/apollo-mcp-server:latest@sha256:a78a66c637236d2d72b1ff1fa34a0c7c7f7d2a84b372a2c54bd2eb13655a3dc1 AS mcp-source
+# Apollo MCP Server 2.2.1 supports MCP 2026-07-28 `server/discover` while
+# retaining the legacy initialize protocol. Pin the multi-architecture index
+# digest so local ARM64 and deployment AMD64 builds resolve reproducibly.
+FROM ghcr.io/apollographql/apollo-mcp-server:v2.2.1@sha256:62a803f8348a4ac1f38ecce50e515e25cf5ffbd672e50b06a3f30b4051fa6c0f AS mcp-source
 
 FROM segment/chamber:2 AS chamber
 
@@ -21,11 +22,9 @@ WORKDIR /app
 # Copy Chamber for runtime secret loading
 COPY --from=chamber /chamber /bin/chamber
 
-# Copy the Apollo MCP Server binary
-COPY --from=mcp-source /bin/apollo-mcp-server /usr/local/bin/apollo-mcp-server
-
-# Copy the Nix store libraries that the binary needs
-COPY --from=mcp-source /nix /nix
+# Apollo MCP Server v2 packages the binary under /usr/local/bin and no longer
+# needs the Nix store copied into the runtime image.
+COPY --from=mcp-source /usr/local/bin/apollo-mcp-server /usr/local/bin/apollo-mcp-server
 
 # Copy operations and schema files
 COPY packages/mcp-server/operations /app/operations

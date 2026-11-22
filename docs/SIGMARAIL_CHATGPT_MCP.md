@@ -10,6 +10,13 @@ gateway on host port 8002. MCP calls go to the authenticated AppTension adapter 
 `http://backend:80/api/ai-assistant/chatgpt/mcp/`. Apollo remains private on Compose
 port 4000.
 
+The Apollo image is pinned to v2.2.1, which handles MCP 2.0 `server/discover` and
+the stateless `2026-07-28` protocol natively, while remaining compatible with
+legacy `initialize` clients. The AppTension adapter forwards modern discovery and
+tool requests to Apollo and adds the tenant-selection instructions to discovery
+and tool-list responses. For legacy clients, it completes Apollo's
+`notifications/initialized` handshake after `initialize`.
+
 The laptop Funnel routes are:
 
 ```sh

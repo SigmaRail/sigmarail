@@ -3,6 +3,7 @@ Tests for AI Assistant views.
 """
 
 import pytest
+import httpx
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -74,6 +75,144 @@ class TestMCPProxyView:
 
         call_args = mock_client.post.call_args
         assert call_args.args[0].startswith('http://test-mcp-server:4000')
+
+
+@pytest.mark.django_db
+class TestChatGPTMCPProxyView:
+    """ChatGPT-facing MCP adapter protocol compatibility."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, user_factory):
+        self.client = APIClient()
+        self.client.force_authenticate(user=user_factory())
+        self.url = reverse('ai_assistant_chatgpt_mcp_proxy')
+
+    @patch('apps.integrations.ai_assistant.views.httpx.Client')
+    @override_settings(MCP_SERVER_URL='http://test-mcp-server:4000')
+    def test_server_discover_reaches_apollo_with_modern_protocol_header(self, mock_client_class):
+        """Modern protocol discovery must reach Apollo rather than be downgraded in the adapter."""
+        upstream_payload = {
+            'jsonrpc': '2.0',
+            'id': 'discover-1',
+            'result': {
+                'resultType': 'complete',
+                'supportedVersions': ['2025-11-25', '2026-07-28'],
+                'capabilities': {'tools': {}},
+            },
+        }
+        upstream = httpx.Response(200, json=upstream_payload)
+
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = False
+        mock_client.post.return_value = upstream
+        mock_client_class.return_value = mock_client
+
+        request = {
+            'jsonrpc': '2.0',
+            'id': 'discover-1',
+            'method': 'server/discover',
+            'params': {'_meta': {'io.modelcontextprotocol/protocolVersion': '2026-07-28'}},
+        }
+        response = self.client.post(
+            self.url,
+            request,
+            format='json',
+            HTTP_MCP_PROTOCOL_VERSION='2026-07-28',
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['result']['supportedVersions'] == ['2025-11-25', '2026-07-28']
+        assert 'get_user_tenants' in response.json()['result']['instructions']
+        args, kwargs = mock_client.post.call_args
+        assert args[0] == 'http://test-mcp-server:4000/mcp'
+        assert kwargs['json']['method'] == 'server/discover'
+        assert kwargs['headers']['Mcp-Protocol-Version'] == '2026-07-28'
+        assert kwargs['headers']['Mcp-Method'] == 'server/discover'
+
+    @patch('apps.integrations.ai_assistant.views.httpx.Client')
+    @override_settings(MCP_SERVER_URL='http://test-mcp-server:4000')
+    def test_modern_tool_call_forwards_standard_method_and_name_headers(self, mock_client_class):
+        """Modern tool calls include body-matched headers required by Apollo."""
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = False
+        mock_client.post.return_value = httpx.Response(
+            200,
+            json={'jsonrpc': '2.0', 'id': 2, 'result': {'content': []}},
+        )
+        mock_client_class.return_value = mock_client
+
+        response = self.client.post(
+            self.url,
+            {
+                'jsonrpc': '2.0',
+                'id': 2,
+                'method': 'tools/call',
+                'params': {
+                    'name': 'GetUserTenants',
+                    'arguments': {},
+                    '_meta': {
+                        'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+                        'io.modelcontextprotocol/clientCapabilities': {},
+                    },
+                },
+            },
+            format='json',
+            HTTP_MCP_PROTOCOL_VERSION='2026-07-28',
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        _, kwargs = mock_client.post.call_args
+        assert kwargs['headers']['Mcp-Method'] == 'tools/call'
+        assert kwargs['headers']['Mcp-Name'] == 'GetUserTenants'
+
+    @patch('apps.integrations.ai_assistant.views.httpx.Client')
+    def test_initialize_completes_apollo_legacy_handshake(self, mock_client_class):
+        """Legacy clients that omit notifications/initialized still get a ready Apollo session."""
+        initialize_payload = {
+            'jsonrpc': '2.0',
+            'id': 1,
+            'result': {
+                'protocolVersion': '2025-11-25',
+                'capabilities': {'tools': {}},
+                'serverInfo': {'name': 'Apollo', 'version': '2.2.1'},
+            },
+        }
+        initialize_response = httpx.Response(
+            200,
+            json=initialize_payload,
+            headers={'Mcp-Session-Id': 'apollo-session'},
+        )
+        notification_response = httpx.Response(202, headers={'content-type': 'application/json'})
+
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = False
+        mock_client.post.side_effect = [initialize_response, notification_response]
+        mock_client_class.return_value = mock_client
+
+        response = self.client.post(
+            self.url,
+            {
+                'jsonrpc': '2.0',
+                'id': 1,
+                'method': 'initialize',
+                'params': {
+                    'protocolVersion': '2025-11-25',
+                    'capabilities': {},
+                    'clientInfo': {'name': 'ChatGPT', 'version': '1'},
+                },
+            },
+            format='json',
+            HTTP_MCP_PROTOCOL_VERSION='2025-11-25',
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert mock_client.post.call_count == 2
+        notification = mock_client.post.call_args_list[1]
+        assert notification.kwargs['json']['method'] == 'notifications/initialized'
+        assert notification.kwargs['headers']['Mcp-Session-Id'] == 'apollo-session'
 
 
 @pytest.mark.django_db

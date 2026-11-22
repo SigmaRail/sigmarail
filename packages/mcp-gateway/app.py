@@ -78,17 +78,27 @@ def _b64(value: bytes) -> str:
 def _identity_assertion(userinfo: dict, token_info: dict) -> str:
     subject = userinfo.get("sub")
     email = userinfo.get("email")
-    if (
-        not isinstance(subject, str) or not subject or len(subject) > 512
-        or subject != token_info.get("sub")
-        or not isinstance(email, str) or not email.strip() or len(email) > 255
-        # Tailscale tsidp authenticates the principal from the tailnet but does
-        # not emit email_verified by default. Trust the authenticated issuer and
-        # immutable subject; AppTension only links an initial identity to an
-        # existing active, confirmed account with the matching email.
-        or userinfo.get("email_verified") is False
-    ):
-        raise ValueError("verified identity claims are missing or inconsistent")
+    # Keep failures diagnosable without writing identity values, OAuth tokens,
+    # or assertion contents to logs.
+    if not isinstance(subject, str) or not subject or len(subject) > 512:
+        raise ValueError("identity_subject_invalid")
+    introspection_subject = token_info.get("sub")
+    # tsidp has a small but important claim-format difference: its OIDC
+    # subject (and userinfo `sub`) is `userid:<id>`, while RFC 7662 introspection
+    # emits the same Tailscale user ID as a bare decimal string. Verify the
+    # exact canonical pair rather than comparing those two representations
+    # literally. Keep accepting exact matches for other standards-compliant
+    # issuers.
+    if subject != introspection_subject and subject != f"userid:{introspection_subject}":
+        raise ValueError("identity_subject_mismatch")
+    if not isinstance(email, str) or not email.strip() or len(email) > 255:
+        raise ValueError("identity_email_missing_or_invalid")
+    # Tailscale tsidp authenticates the principal from the tailnet but does
+    # not emit email_verified by default. Trust the authenticated issuer and
+    # immutable subject; AppTension only links an initial identity to an
+    # existing active, confirmed account with the matching email.
+    if userinfo.get("email_verified") is False:
+        raise ValueError("identity_email_claim_unverified")
     payload = {
         "iss": IDP,
         "aud": RESOURCE,
@@ -142,7 +152,7 @@ async def _proxy(
     body = await _body(receive) if body_override is None else body_override
     headers = []
     for key, value in scope.get("headers", []):
-        if key.lower() in HOP_BY_HOP or key.lower() in {b"host", b"authorization", b"x-mcp-gateway-identity"}:
+        if key.lower() in HOP_BY_HOP or key.lower() in {b"host", b"authorization", b"x-mcp-gateway-identity", b"tailscale-funnel-request"}:
             continue
         headers.append((key.decode("latin-1"), value.decode("latin-1")))
     if identity:
@@ -315,7 +325,8 @@ async def app(scope, receive, send):
             return
         try:
             identity = await _verified_identity(auth[7:].strip())
-        except (httpx.HTTPError, ValueError, RuntimeError, json.JSONDecodeError):
+        except (httpx.HTTPError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
+            logger.error("MCP identity verification failed: %s: %s", type(exc).__name__, str(exc) if isinstance(exc, (ValueError, RuntimeError)) else "upstream request failed")
             status, headers, body = _json(503, {"error": "identity_provider_unavailable"})
             await _send(send, status, headers, body)
             return
