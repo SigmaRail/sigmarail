@@ -52,12 +52,14 @@ IDs, `sigmarail_core_query_schema` to discover the `DataQueryV1` contract, and t
 `sigmarail_strategy_validate_pipeline`, and `sigmarail_strategy_compile_pipeline` for
 `PipelineDocument` authoring. Screener authors can use `sigmarail_screen_schema`,
 `sigmarail_screen_compile`, `sigmarail_screen_preview`, and
-`sigmarail_screen_sector_range` with the canonical `UniverseQueryV1` AST. Catalog and
+`sigmarail_screen_sector_range`, `sigmarail_screen_probe`, and the named preset discovery
+and preview tools with the canonical `UniverseQueryV1` AST. Catalog and
 strategy discovery tools expose registered datasets/fields, factors, presets, and installed
 templates. Strategy authoring also exposes canonical pipeline and portfolio schemas,
 validation, compilation/decompilation, preset compilation, setup recipes, and document
-composition. The GraphQL AST arguments are intentionally flexible; the canonical SigmaRail
-validators reject unsupported fields and AST forms.
+composition, along with semantic spec diffs and runtime-contract lint. Catalog joins and
+entity schema can be discovered directly. The GraphQL AST arguments are intentionally
+flexible; the canonical SigmaRail validators reject unsupported fields and AST forms.
 
 Apollo's generic ad hoc GraphQL `execute` tool is disabled. Agents can shape query results
 through the AST's `select` list without receiving arbitrary execution over the full

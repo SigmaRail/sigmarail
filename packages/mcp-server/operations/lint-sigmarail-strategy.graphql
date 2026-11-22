@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_lint", description: "Check a canonical PipelineDocument for validation failures and runtime-contract conflicts.")
+query LintSigmaRailStrategy($tenantId: ID!, $pipeline: GenericScalar!) {
+  sigmarailStrategyLint(tenantId: $tenantId, pipeline: $pipeline)
+}

@@ -118,6 +118,24 @@ class Query(graphene.ObjectType):
         tenant_id=graphene.ID(required=True),
         description="Summarize point-in-time universe membership by sector over a bounded date range.",
     )
+    sigmarail_screen_presets = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List supported named screen presets backed by the canonical SigmaRail universe templates.",
+    )
+    sigmarail_screen_preset_preview = GenericScalar(
+        as_of=graphene.String(required=True),
+        limit=graphene.Int(),
+        preset=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="Run one named point-in-time SigmaRail screener preset.",
+    )
+    sigmarail_screen_probe = GenericScalar(
+        input=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Inspect canonical screener AST stage prefixes using the bounded layers, asof, range, or diff probe."
+        ),
+    )
     sigmarail_catalog_tables = GenericScalar(
         tenant_id=graphene.ID(required=True),
         description="List schema-registered SigmaRail datasets and declared join relationships.",
@@ -125,6 +143,17 @@ class Query(graphene.ObjectType):
     sigmarail_catalog_columns = GenericScalar(
         tenant_id=graphene.ID(required=True),
         description="List registered SigmaRail fields with stable IDs, owners, physical columns, and types.",
+    )
+    sigmarail_catalog_join_paths = GenericScalar(
+        from_entity=graphene.String(),
+        to_entity=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="List declared SigmaRail join relationships, optionally filtered by source and destination.",
+    )
+    sigmarail_catalog_entity = GenericScalar(
+        entity=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Describe one SigmaRail dataset by stable ID or physical table name.",
     )
     sigmarail_strategy_factors = GenericScalar(
         tenant_id=graphene.ID(required=True),
@@ -182,6 +211,17 @@ class Query(graphene.ObjectType):
     sigmarail_strategy_position_fields = GenericScalar(
         tenant_id=graphene.ID(required=True),
         description="List canonical position-field bindings available to strategy expressions.",
+    )
+    sigmarail_strategy_diff = GenericScalar(
+        spec_a=GenericScalar(required=True),
+        spec_b=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Return a semantic slot-level diff between two canonical pipeline or compiled strategy specs.",
+    )
+    sigmarail_strategy_lint = GenericScalar(
+        pipeline=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Validate a PipelineDocument and report runtime-contract errors and warnings.",
     )
 
     sigmarail_stock_snapshot = graphene.Field(
@@ -385,6 +425,55 @@ class Query(graphene.ObjectType):
         }
 
     @staticmethod
+    def resolve_sigmarail_screen_presets(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from screens.adapter import list_screen_presets
+
+        return {"presets": list_screen_presets()}
+
+    @staticmethod
+    def resolve_sigmarail_screen_preset_preview(root, info, as_of, tenant_id, limit=50, preset="leaders"):
+        _authorize_tenant(info, tenant_id)
+        try:
+            as_of_date = date.fromisoformat(str(as_of))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("asOf must be an ISO date (YYYY-MM-DD).") from exc
+        from screens.adapter import preview_screen
+
+        client = _clickhouse_client()
+        try:
+            return preview_screen(
+                client,
+                as_of=as_of_date.isoformat(),
+                preset=preset or "leaders",
+                limit=min(max(int(limit or 50), 1), 100),
+            )
+        except ValueError as exc:
+            return {"error": str(exc), "code": "invalid_screen_preset"}
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_screen_probe(root, info, input, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        body = _json_object(input, "input")
+        view = str(body.get("view") or "layers").strip().lower()
+        from screens.probe import run_probe
+
+        if view == "layers":
+            try:
+                return run_probe(body)
+            except ValueError as exc:
+                return {"error": str(exc), "code": "invalid_screen_probe"}
+        client = _clickhouse_client()
+        try:
+            return run_probe(body, client=client)
+        except ValueError as exc:
+            return {"error": str(exc), "code": "invalid_screen_probe"}
+        finally:
+            client.close()
+
+    @staticmethod
     def resolve_sigmarail_catalog_tables(root, info, tenant_id):
         _authorize_tenant(info, tenant_id)
         from sigmarail.query import _module_manifest
@@ -421,6 +510,33 @@ class Query(graphene.ObjectType):
                 "description": meta.get("comment", ""),
             }
         return {"count": len(columns), "columns": columns}
+
+    @staticmethod
+    def resolve_sigmarail_catalog_join_paths(root, info, tenant_id, from_entity=None, to_entity=None):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.query import _module_manifest
+
+        joins = list(_module_manifest()["joins"])
+        if from_entity:
+            joins = [row for row in joins if row["from_dataset"] == from_entity.strip()]
+        if to_entity:
+            joins = [row for row in joins if row["to_dataset"] == to_entity.strip()]
+        return {"relationships": joins}
+
+    @staticmethod
+    def resolve_sigmarail_catalog_entity(root, info, entity, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail.query import _core_tables, _datasets
+
+        name = (entity or "").strip()
+        datasets = _datasets()
+        dataset = datasets.get(name)
+        if dataset is None:
+            dataset = next((row for row in datasets.values() if row["table"] == name), None)
+        if dataset is None:
+            return {"error": f"unknown SigmaRail core dataset {entity!r}", "code": "unknown_dataset"}
+        tables = _core_tables()
+        return {"entity": dataset["dataset_id"], "meta": {**dataset, "schema": tables[dataset["table"]]}}
 
     @staticmethod
     def resolve_sigmarail_strategy_factors(root, info, tenant_id):
@@ -545,6 +661,57 @@ class Query(graphene.ObjectType):
 
         fields = [dict(binding) for binding in POSITION_BINDINGS]
         return {"fields": fields, "count": len(fields)}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_diff(root, info, spec_a, spec_b, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        a_data = _json_object(spec_a, "specA")
+        b_data = _json_object(spec_b, "specB")
+        from sigmarail_spec.strategy import PipelineDocument, decompile_pipeline
+
+        def to_document(data, label):
+            if "Framework" in data:
+                return decompile_pipeline(data).model_dump(mode="json")
+            return PipelineDocument.model_validate(data).model_dump(mode="json")
+
+        try:
+            a = to_document(a_data, "specA")
+            b = to_document(b_data, "specB")
+        except Exception as exc:
+            return {"error": str(exc), "code": "invalid_strategy_spec"}
+        slots = ("stages", "bindings", "universe", "sizing", "risk", "execution")
+        diffs = [
+            {"slot": key, "from": a.get(key), "to": b.get(key)}
+            for key in slots if a.get(key) != b.get(key)
+        ]
+        return {"has_diff": bool(diffs), "diffs": diffs}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_lint(root, info, pipeline, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        pipeline_data = _json_object(pipeline, "pipeline")
+        from sigmarail_spec.strategy import PipelineDocument
+
+        try:
+            document = PipelineDocument.model_validate(pipeline_data)
+        except Exception as exc:
+            return {"valid": False, "code": "validation_failed", "diagnostics": [{"message": str(exc), "severity": "error"}]}
+        diagnostics = []
+        bindings = document.model_dump().get("bindings") or {}
+        if bindings.get("pcm_scale") and bindings.get("alpha_confidence"):
+            diagnostics.append({
+                "message": "bindings.pcm_scale conflicts with bindings.alpha_confidence (runtime XOR: scale expression takes precedence; confidence is ignored)",
+                "severity": "error",
+                "slot": "portfolio_construction",
+            })
+        allow = bindings.get("risk_allow_pyramid_add") or {}
+        if allow and any(token in json.dumps(allow).lower() for token in ("insight", "confidence")):
+            diagnostics.append({
+                "message": "bindings.risk_allow_pyramid_add references insight/confidence tags, but SwingProgressiveRiskManagementModel ignores them at runtime",
+                "severity": "warning",
+                "slot": "risk_management",
+            })
+        return {"valid": not any(row["severity"] == "error" for row in diagnostics), "diagnostics": diagnostics}
 
     @staticmethod
     def resolve_sigmarail_stock_snapshot(root, info, ticker, tenant_id, as_of_date=None):

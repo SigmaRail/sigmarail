@@ -59,10 +59,20 @@ type Query {
   sigmarailScreenPreview(asOf: String!, spec: GenericScalar!, tenantId: ID!): GenericScalar
   "Summarize point-in-time universe membership by sector over a bounded date range."
   sigmarailScreenSectorRange(endDate: String!, spec: GenericScalar!, startDate: String!, tenantId: ID!): GenericScalar
+  "List supported named screen presets backed by the canonical SigmaRail universe templates."
+  sigmarailScreenPresets(tenantId: ID!): GenericScalar
+  "Run one named point-in-time SigmaRail screener preset."
+  sigmarailScreenPresetPreview(asOf: String!, limit: Int, preset: String, tenantId: ID!): GenericScalar
+  "Inspect canonical screener AST stage prefixes using bounded layers, asof, range, or diff probes."
+  sigmarailScreenProbe(input: GenericScalar!, tenantId: ID!): GenericScalar
   "List schema-registered SigmaRail datasets and declared join relationships."
   sigmarailCatalogTables(tenantId: ID!): GenericScalar
   "List registered SigmaRail fields with stable IDs, owners, physical columns, and types."
   sigmarailCatalogColumns(tenantId: ID!): GenericScalar
+  "List declared SigmaRail join relationships, optionally filtered by source and destination."
+  sigmarailCatalogJoinPaths(fromEntity: String, toEntity: String, tenantId: ID!): GenericScalar
+  "Describe one SigmaRail dataset by stable ID or physical table name."
+  sigmarailCatalogEntity(entity: String!, tenantId: ID!): GenericScalar
   "List canonical semantic strategy factors and their field mappings."
   sigmarailStrategyFactors(tenantId: ID!): GenericScalar
   "List canonical built-in SigmaRail strategy presets."
@@ -87,6 +97,10 @@ type Query {
   sigmarailStrategyComposeDocument(presetId: String, setupRecipeIds: [String], tenantId: ID!): GenericScalar
   "List canonical position-field bindings available to strategy expressions."
   sigmarailStrategyPositionFields(tenantId: ID!): GenericScalar
+  "Return a semantic slot-level diff between two canonical pipeline or compiled strategy specs."
+  sigmarailStrategyDiff(specA: GenericScalar!, specB: GenericScalar!, tenantId: ID!): GenericScalar
+  "Validate a PipelineDocument and report runtime-contract errors and warnings."
+  sigmarailStrategyLint(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
   "Read one stock's latest or point-in-time SigmaRail daily snapshot."
   sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"

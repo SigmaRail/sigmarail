@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_screen_probe", description: "Inspect stage-prefix layers or compare point-in-time membership and measures for a canonical screen pipeline.")
+query ProbeSigmaRailScreen($tenantId: ID!, $input: GenericScalar!) {
+  sigmarailScreenProbe(tenantId: $tenantId, input: $input)
+}
