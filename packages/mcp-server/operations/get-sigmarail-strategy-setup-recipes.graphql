@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_setup_recipes", description: "List canonical setup expression recipes for use in composed PipelineDocuments.")
+query GetSigmaRailStrategySetupRecipes($tenantId: ID!) {
+  sigmarailStrategySetupRecipes(tenantId: $tenantId)
+}

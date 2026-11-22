@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_decompile_portfolio", description: "Convert a LEAN-compatible portfolio spec into an editable PortfolioDocument AST.")
+query DecompileSigmaRailStrategyPortfolio($tenantId: ID!, $spec: GenericScalar!) {
+  sigmarailStrategyDecompilePortfolio(tenantId: $tenantId, spec: $spec)
+}

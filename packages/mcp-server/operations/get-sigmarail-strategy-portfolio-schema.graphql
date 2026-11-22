@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_portfolio_schema", description: "Get the canonical PortfolioDocument AST schema before authoring portfolio strategies.")
+query GetSigmaRailStrategyPortfolioSchema($tenantId: ID!) {
+  sigmarailStrategyPortfolioSchema(tenantId: $tenantId)
+}

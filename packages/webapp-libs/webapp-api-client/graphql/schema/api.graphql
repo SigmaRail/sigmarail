@@ -73,6 +73,20 @@ type Query {
   sigmarailTemplate(templateId: String!, tenantId: ID!): GenericScalar
   "Compile a named canonical strategy preset to its LEAN-compatible spec."
   sigmarailStrategyCompilePreset(presetId: String!, tenantId: ID!): GenericScalar
+  "Decompile a LEAN-compatible strategy spec into its editable canonical PipelineDocument AST."
+  sigmarailStrategyDecompilePipeline(spec: GenericScalar!, tenantId: ID!): GenericScalar
+  "Return the canonical PortfolioDocument schema for portfolio strategy authoring."
+  sigmarailStrategyPortfolioSchema(tenantId: ID!): GenericScalar
+  "Compile a canonical PortfolioDocument AST into a LEAN-compatible strategy spec."
+  sigmarailStrategyCompilePortfolio(portfolio: GenericScalar!, tenantId: ID!): GenericScalar
+  "Decompile a LEAN-compatible portfolio spec into an editable PortfolioDocument AST."
+  sigmarailStrategyDecompilePortfolio(spec: GenericScalar!, tenantId: ID!): GenericScalar
+  "List canonical setup recipe packs used to compose strategy PipelineDocuments."
+  sigmarailStrategySetupRecipes(tenantId: ID!): GenericScalar
+  "Compose a canonical PipelineDocument from a strategy preset and setup recipe IDs."
+  sigmarailStrategyComposeDocument(presetId: String, setupRecipeIds: [String], tenantId: ID!): GenericScalar
+  "List canonical position-field bindings available to strategy expressions."
+  sigmarailStrategyPositionFields(tenantId: ID!): GenericScalar
   "Read one stock's latest or point-in-time SigmaRail daily snapshot."
   sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"

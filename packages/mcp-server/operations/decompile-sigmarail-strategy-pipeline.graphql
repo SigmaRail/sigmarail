@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_decompile_pipeline", description: "Convert an existing LEAN-compatible strategy spec into its editable PipelineDocument AST.")
+query DecompileSigmaRailStrategyPipeline($tenantId: ID!, $spec: GenericScalar!) {
+  sigmarailStrategyDecompilePipeline(tenantId: $tenantId, spec: $spec)
+}

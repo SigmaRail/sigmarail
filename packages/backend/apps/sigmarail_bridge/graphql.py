@@ -150,6 +150,39 @@ class Query(graphene.ObjectType):
         tenant_id=graphene.ID(required=True),
         description="Compile a named canonical strategy preset to its LEAN-compatible spec.",
     )
+    sigmarail_strategy_decompile_pipeline = GenericScalar(
+        spec=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Decompile a LEAN-compatible strategy spec into its editable canonical PipelineDocument AST.",
+    )
+    sigmarail_strategy_portfolio_schema = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="Return the canonical PortfolioDocument schema for portfolio strategy authoring.",
+    )
+    sigmarail_strategy_compile_portfolio = GenericScalar(
+        portfolio=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Compile a canonical PortfolioDocument AST into a LEAN-compatible strategy spec.",
+    )
+    sigmarail_strategy_decompile_portfolio = GenericScalar(
+        spec=GenericScalar(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Decompile a LEAN-compatible portfolio spec into an editable PortfolioDocument AST.",
+    )
+    sigmarail_strategy_setup_recipes = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List canonical setup recipe packs used to compose strategy PipelineDocuments.",
+    )
+    sigmarail_strategy_compose_document = GenericScalar(
+        preset_id=graphene.String(),
+        setup_recipe_ids=graphene.List(graphene.String),
+        tenant_id=graphene.ID(required=True),
+        description="Compose a canonical PipelineDocument from a strategy preset and setup recipe IDs.",
+    )
+    sigmarail_strategy_position_fields = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description="List canonical position-field bindings available to strategy expressions.",
+    )
 
     sigmarail_stock_snapshot = graphene.Field(
         SigmaRailStockSnapshot,
@@ -438,6 +471,80 @@ class Query(graphene.ObjectType):
             return compiled
         except Exception as exc:
             return {"error": str(exc), "code": "compile_failed"}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_decompile_pipeline(root, info, spec, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        spec_data = _json_object(spec, "spec")
+        from sigmarail_spec.strategy import decompile_pipeline
+
+        try:
+            return {"pipeline": decompile_pipeline(spec_data).model_dump(mode="json")}
+        except Exception as exc:
+            return {"error": str(exc), "code": "decompile_failed"}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_portfolio_schema(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy import PortfolioDocument
+
+        return PortfolioDocument.model_json_schema()
+
+    @staticmethod
+    def resolve_sigmarail_strategy_compile_portfolio(root, info, portfolio, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        portfolio_data = _json_object(portfolio, "portfolio")
+        from sigmarail_spec.strategy import PortfolioDocument, compile_portfolio
+
+        try:
+            return {"spec": compile_portfolio(PortfolioDocument.model_validate(portfolio_data))}
+        except Exception as exc:
+            return {"error": str(exc), "code": "compile_failed"}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_decompile_portfolio(root, info, spec, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        spec_data = _json_object(spec, "spec")
+        from sigmarail_spec.strategy import decompile_portfolio
+
+        try:
+            return {"portfolio": decompile_portfolio(spec_data).model_dump(mode="json")}
+        except Exception as exc:
+            return {"error": str(exc), "code": "decompile_failed"}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_setup_recipes(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy.setup_recipes import list_setup_recipes
+
+        return {"setup_recipes": list_setup_recipes()}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_compose_document(root, info, tenant_id, preset_id=None, setup_recipe_ids=None):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy.presets import get_preset
+        from sigmarail_spec.strategy.setup_recipes import apply_setup_recipe, list_setup_recipes
+
+        preset_id = preset_id or "minervini_sepa"
+        try:
+            document = get_preset(preset_id)
+        except ValueError as exc:
+            return {"error": str(exc), "code": "unknown_preset"}
+        recipes = setup_recipe_ids or ["champion_setup_or"]
+        known = {row["id"] for row in list_setup_recipes()}
+        for index, recipe_id in enumerate(recipes):
+            if recipe_id not in known:
+                return {"error": f"Unknown setup recipe {recipe_id!r}.", "code": "unknown_recipe"}
+            document = apply_setup_recipe(document, recipe_id, replace=index == 0)
+        return {"pipeline": document.model_dump(mode="json")}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_position_fields(root, info, tenant_id):
+        _authorize_tenant(info, tenant_id)
+        from sigmarail_spec.strategy.position_bindings import POSITION_BINDINGS
+
+        fields = [dict(binding) for binding in POSITION_BINDINGS]
+        return {"fields": fields, "count": len(fields)}
 
     @staticmethod
     def resolve_sigmarail_stock_snapshot(root, info, ticker, tenant_id, as_of_date=None):

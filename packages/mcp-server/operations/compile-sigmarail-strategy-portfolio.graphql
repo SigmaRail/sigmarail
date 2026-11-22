@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_compile_portfolio", description: "Compile a canonical PortfolioDocument AST into a LEAN-compatible strategy spec.")
+query CompileSigmaRailStrategyPortfolio($tenantId: ID!, $portfolio: GenericScalar!) {
+  sigmarailStrategyCompilePortfolio(tenantId: $tenantId, portfolio: $portfolio)
+}
