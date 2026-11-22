@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_core_query", description: "Run a bounded, read-only SigmaRail DataQueryV1 AST. Select the exact stable field IDs to return in query.select; filters, joins, dates, computed expressions, and limits are validated by SigmaRail Spec and compiled by SigmaRail Core. Discover datasets/fields first with sigmarail_core_datasets and sigmarail_core_dataset.")
+# @tool(name: "sigmarail_core_query", description: "Execute a bounded, read-only DataQueryV1 AST. First discover datasets with sigmarail_core_datasets, inspect the chosen dataset with sigmarail_core_dataset, and retrieve sigmarail_core_query_schema. Put the exact stable field IDs to return in query.select; returned columns follow that selection. SigmaRail Spec validates filters, joins, date bounds, expressions, and limits before SigmaRail Core executes. Use explicit dates for historical analysis and inspect the result metadata for missing or sparse coverage.")
 query RunSigmaRailCoreQuery(
   $tenantId: ID!
   $query: GenericScalar!

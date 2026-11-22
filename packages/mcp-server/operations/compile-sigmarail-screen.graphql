@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_screen_compile", description: "Validate and compile a UniverseQueryV1 screener AST to parameterized SQL without executing it.")
+# @tool(name: "sigmarail_screen_compile", description: "Validate and compile a UniverseQueryV1 screen to parameterized SQL without executing it. Retrieve sigmarail_screen_schema before authoring the AST. Use this to inspect validation errors before sigmarail_screen_preview; compilation does not return members or write data.")
 query CompileSigmaRailScreen($tenantId: ID!, $spec: GenericScalar!) {
   sigmarailScreenCompile(tenantId: $tenantId, spec: $spec)
 }

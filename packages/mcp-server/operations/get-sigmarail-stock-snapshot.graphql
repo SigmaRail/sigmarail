@@ -1,4 +1,4 @@
-# @tool(name: "get_sigmarail_stock_snapshot", description: "Read a stock's latest or point-in-time SigmaRail daily snapshot, including close, sector, RS rating, ATR, stage, and moving averages. Tenant membership is required; pass tenantContext from get_user_tenants when multiple tenants are available.")
+# @tool(name: "get_sigmarail_stock_snapshot", description: "Read a stock's latest or point-in-time SigmaRail daily snapshot, including close, sector, RS rating, ATR, stage, and moving averages. Set the as-of date for historical review; this endpoint returns SigmaRail daily research context, not a live broker mark. Tenant membership is required; use tenantContext from get_user_tenants only when multiple tenants are available.")
 query GetSigmaRailStockSnapshot($tenantId: ID!, $ticker: String!, $asOfDate: String) {
   sigmarailStockSnapshot(tenantId: $tenantId, ticker: $ticker, asOfDate: $asOfDate) {
     ticker

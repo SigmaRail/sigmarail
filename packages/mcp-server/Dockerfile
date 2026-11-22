@@ -29,6 +29,7 @@ COPY --from=mcp-source /usr/local/bin/apollo-mcp-server /usr/local/bin/apollo-mc
 # Copy operations and schema files
 COPY packages/mcp-server/operations /app/operations
 COPY packages/webapp-libs/webapp-api-client/graphql/schema /app/schema
+COPY packages/mcp-server/custom-scalars.json /app/custom-scalars.json
 
 # Copy entrypoint script
 COPY packages/mcp-server/docker-entrypoint.sh /app/docker-entrypoint.sh

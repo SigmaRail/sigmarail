@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_portfolio_schema", description: "Get the canonical PortfolioDocument AST schema before authoring portfolio strategies.")
+# @tool(name: "sigmarail_strategy_portfolio_schema", description: "Retrieve the authoritative PortfolioDocument AST schema before authoring portfolio rules. Discover the available position fields, then validate or compile the document for a preview. Compilation does not save a strategy, submit a backtest, or place an order.")
 query GetSigmaRailStrategyPortfolioSchema($tenantId: ID!) {
   sigmarailStrategyPortfolioSchema(tenantId: $tenantId)
 }

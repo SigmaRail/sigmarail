@@ -39,31 +39,50 @@ mcp-server/
 
 ### SigmaRail AST tools
 
-The SigmaRail MCP tools submit the canonical versioned query and strategy documents as
-GraphQL scalar inputs. GraphQL authenticates and authorizes the tenant; SigmaRail Spec
-validates the AST; SigmaRail Core compiles and executes bounded, read-only data queries.
-For query calls, `DataQueryV1.select` determines the returned columns and row values are
-returned dynamically. Strategy validation and compilation are pure previews and do not
-save or execute a strategy.
+The MCP is designed to teach its workflow through the `initialize` instructions, each
+tool's description, and canonical schema-discovery operations. When the server is behind
+AppTension, the authenticated proxy must preserve Apollo's `initialize` instructions while
+adding its tenant-selection guidance. This mirrors the useful Vera MCP pattern: discover
+the supported interface, fetch the authoritative schema, compose a bounded request, inspect
+validation output, then execute or preview.
 
-Use `sigmarail_core_datasets` and `sigmarail_core_dataset` to discover dataset and field
-IDs, `sigmarail_core_query_schema` to discover the `DataQueryV1` contract, and then
-`sigmarail_core_query` to submit an AST. Use `sigmarail_strategy_pipeline_schema`,
-`sigmarail_strategy_validate_pipeline`, and `sigmarail_strategy_compile_pipeline` for
-`PipelineDocument` authoring. Screener authors can use `sigmarail_screen_schema`,
-`sigmarail_screen_compile`, `sigmarail_screen_preview`, and
-`sigmarail_screen_sector_range`, `sigmarail_screen_probe`, and the named preset discovery
-and preview tools with the canonical `UniverseQueryV1` AST. Catalog and
-strategy discovery tools expose registered datasets/fields, factors, presets, and installed
-templates. Strategy authoring also exposes canonical pipeline and portfolio schemas,
-validation, compilation/decompilation, preset compilation, setup recipes, and document
-composition, along with semantic spec diffs and runtime-contract lint. Catalog joins and
-entity schema can be discovered directly. Read-only backtest review exposes tenant-owned
-strategies, jobs, run summaries, reports, and report comparisons; PostgreSQL ownership is
-checked before analytical run data is read from ClickHouse. Strategy saves, backtest
-submission/cancellation, portfolio actions, and live deployment actions are not exposed in
-this read-only MCP slice. The GraphQL AST arguments are intentionally flexible; the
-canonical SigmaRail validators reject unsupported fields and AST forms.
+#### Data-query workflow
+
+1. Call `sigmarail_core_datasets` to discover registered datasets and their time semantics.
+2. Call `sigmarail_core_dataset` for the chosen dataset to inspect stable field IDs and
+   declared relationships.
+3. Call `sigmarail_core_query_schema` before constructing a `DataQueryV1` AST. Treat its
+   result as the authority for supported AST fields and constraints.
+4. Call `sigmarail_core_query` with only the required fields in `query.select`, explicit
+   date bounds for historical work, and a bounded row limit. The selected IDs determine
+   the returned columns; there is no fixed result-column allowlist.
+5. Read coverage and result metadata before interpreting empty or sparse output as a real
+   zero. Schema validity does not establish source-data completeness.
+
+#### Screener workflow
+
+Fetch `sigmarail_screen_schema` before authoring a `UniverseQueryV1` AST. Use catalog field
+IDs, call `sigmarail_screen_compile` to validate/compile without execution, then call
+`sigmarail_screen_preview` with an explicit `asOf` date and bounded `spec.select`/limit.
+Use `sigmarail_screen_sector_range` or `sigmarail_screen_probe` for historical membership
+and stage-prefix analysis. Named preset discovery/preview is preferable when a suitable
+canonical preset already exists.
+
+#### Strategy and backtest-review workflow
+
+Discover factors, setup recipes, position fields, presets, or saved documents as needed.
+Fetch the canonical `PipelineDocument` or `PortfolioDocument` schema before authoring;
+validate or lint before compile/decompile/diff. These operations are previews and do not
+save or launch strategies. For backtests, list tenant-owned runs/jobs first and request a
+report only for a run visible to that tenant; ownership is checked in PostgreSQL before
+analytical artifacts are read from ClickHouse. Regime tools provide date-scoped context.
+
+GraphQL's `GenericScalar` is used to transport versioned AST documents. Apollo maps that
+scalar to an object-shaped JSON Schema so agents know to submit structured input; this is
+tool-call guidance, not semantic validation. SigmaRail Spec remains authoritative for AST
+shape and meaning. Apollo's generic ad hoc GraphQL `execute` tool is disabled. This MCP
+slice is read-only: strategy saves, backtest submission/cancellation, broker actions, and
+live deployment actions are not exposed.
 
 Read-only market context also exposes the date-scoped regime, per-ticker allocation
 explanations, entry-gate evaluation, transition weighting, candidate ranking, and comparisons

@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_backtest_runs", description: "List tenant-owned backtest run records, optionally limited to one visible strategy.")
+# @tool(name: "sigmarail_backtest_runs", description: "List backtest runs visible to the selected tenant, optionally filtered to a visible strategy. Use the returned run IDs with sigmarail_backtest_report or sigmarail_backtest_compare; ownership is enforced before analytical artifacts are accessed.")
 query ListSigmaRailBacktestRuns($tenantId: ID!, $irId: String, $limit: Int) {
   sigmarailBacktestRuns(tenantId: $tenantId, irId: $irId, limit: $limit)
 }

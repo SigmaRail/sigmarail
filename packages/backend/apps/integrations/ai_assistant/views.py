@@ -1055,7 +1055,17 @@ class ChatGPTMCPProxyView(MCPProxyView):
             return response
         result = payload.get("result")
         if isinstance(result, dict) and request_method in {"initialize", "server/discover"}:
-            result["instructions"] = self.MCP_INSTRUCTIONS
+            # Apollo's instructions describe SigmaRail's domain workflows and
+            # schema-first AST authoring. Preserve them while adding the
+            # authenticated proxy's tenant-selection contract. Replacing the
+            # upstream value here silently removed the MCP's self-documentation.
+            upstream_instructions = result.get("instructions")
+            instruction_sections = [self.MCP_INSTRUCTIONS]
+            if isinstance(upstream_instructions, str) and upstream_instructions.strip():
+                normalized = upstream_instructions.strip()
+                if normalized != self.MCP_INSTRUCTIONS:
+                    instruction_sections.append(normalized)
+            result["instructions"] = "\n\n".join(instruction_sections)
         if isinstance(result, dict) and isinstance(result.get("tools"), list):
             for tool in result["tools"]:
                 if not isinstance(tool, dict) or normalize_tool_name(tool.get("name", "")) in self.GLOBAL_MCP_TOOLS:

@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_setup_recipes", description: "List canonical setup expression recipes for use in composed PipelineDocuments.")
+# @tool(name: "sigmarail_strategy_setup_recipes", description: "Discover canonical setup expression recipes that can be included in a composed PipelineDocument. Use the returned recipe IDs instead of inventing an unsupported recipe; retrieve the pipeline schema and validate the composed document before compiling.")
 query GetSigmaRailStrategySetupRecipes($tenantId: ID!) {
   sigmarailStrategySetupRecipes(tenantId: $tenantId)
 }

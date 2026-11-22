@@ -1,0 +1,12 @@
+{
+  "GenericScalar": {
+    "type": "object",
+    "description": "A versioned SigmaRail AST or structured input. Retrieve the corresponding canonical schema tool before authoring it; SigmaRail Spec performs authoritative semantic validation.",
+    "additionalProperties": true
+  },
+  "DateTime": {
+    "type": "string",
+    "format": "date-time",
+    "description": "An ISO 8601 date-time value with timezone."
+  }
+}

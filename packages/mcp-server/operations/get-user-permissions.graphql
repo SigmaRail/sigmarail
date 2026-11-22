@@ -1,4 +1,4 @@
-# @tool(name: "get_user_permissions", description: "IMPORTANT: Always call this first to discover what data the current user can access. Returns the user's permission codes and organization roles for the tenant. Use this to determine which other tools can be called - if the user lacks a required permission, explain what access they're missing instead of calling the tool.")
+# @tool(name: "get_user_permissions", description: "Inspect the authenticated user's permission codes and organization role for a tenant when an operation's authorization requirements need clarification. Use get_user_tenants first to discover selectable tenants; this tool is supplementary because tenant membership is checked by the server on every call. If a required permission is absent, explain the access gap instead of retrying the protected action.")
 query GetUserPermissions($tenantId: ID!) {
   currentUserPermissions(tenantId: $tenantId)
   currentUserOrganizationRoles(tenantId: $tenantId) {
