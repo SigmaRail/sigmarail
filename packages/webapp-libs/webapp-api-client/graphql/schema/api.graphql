@@ -4,12 +4,17 @@ schema {
   subscription: ApiSubscription
 }
 """
+The `GenericScalar` scalar type represents a generic
+GraphQL scalar value that could be:
+String, Boolean, Int, Float, List or Object.
+"""
+scalar GenericScalar
+"""
 The `DateTime` scalar type represents a DateTime
 value as specified by
 [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
 """
 scalar DateTime
-scalar Date
 """
 The `BigInt` scalar type represents non-fractional whole numeric values.
 `BigInt` is not constrained to 32-bit like the `Int` type and thus is a less
@@ -23,12 +28,6 @@ Use of this type is *not recommended* as you lose the benefits of having a defin
 schema (one of the key benefits of GraphQL).
 """
 scalar JSONString
-"""
-The `GenericScalar` scalar type represents a generic
-GraphQL scalar value that could be:
-String, Boolean, Int, Float, List or Object.
-"""
-scalar GenericScalar
 "The `Decimal` scalar type represents a python Decimal."
 scalar Decimal
 """
@@ -43,7 +42,7 @@ type Query {
   sigmarailCoreDataset(datasetId: String!, tenantId: ID!): GenericScalar
   "Return the canonical DataQueryV1 JSON schema for authoring bounded queries."
   sigmarailCoreQuerySchema(tenantId: ID!): GenericScalar
-  "Execute a bounded read-only DataQueryV1 AST. The query select list determines returned row fields."
+  "Execute a bounded read-only DataQueryV1 AST. The query's select list determines the returned row fields; field IDs, joins, expressions, date bounds, and limits are validated against SigmaRail's canonical schema."
   sigmarailCoreQuery(query: GenericScalar!, tenantId: ID!): GenericScalar
   "Return the canonical SigmaRail PipelineDocument JSON schema for strategy authoring."
   sigmarailStrategyPipelineSchema(tenantId: ID!): GenericScalar
@@ -56,14 +55,14 @@ type Query {
   "Compile a canonical UniverseQueryV1 AST into parameterized SigmaRail SQL without executing it."
   sigmarailScreenCompile(spec: GenericScalar!, tenantId: ID!): GenericScalar
   "Run a bounded point-in-time UniverseQueryV1 screen. Returned row fields follow the AST select list."
-  sigmarailScreenPreview(asOf: String!, spec: GenericScalar!, tenantId: ID!): GenericScalar
+  sigmarailScreenPreview(spec: GenericScalar!, asOf: String!, tenantId: ID!): GenericScalar
   "Summarize point-in-time universe membership by sector over a bounded date range."
-  sigmarailScreenSectorRange(endDate: String!, spec: GenericScalar!, startDate: String!, tenantId: ID!): GenericScalar
+  sigmarailScreenSectorRange(spec: GenericScalar!, startDate: String!, endDate: String!, tenantId: ID!): GenericScalar
   "List supported named screen presets backed by the canonical SigmaRail universe templates."
   sigmarailScreenPresets(tenantId: ID!): GenericScalar
   "Run one named point-in-time SigmaRail screener preset."
   sigmarailScreenPresetPreview(asOf: String!, limit: Int, preset: String, tenantId: ID!): GenericScalar
-  "Inspect canonical screener AST stage prefixes using bounded layers, asof, range, or diff probes."
+  "Inspect canonical screener AST stage prefixes using the bounded layers, asof, range, or diff probe."
   sigmarailScreenProbe(input: GenericScalar!, tenantId: ID!): GenericScalar
   "List schema-registered SigmaRail datasets and declared join relationships."
   sigmarailCatalogTables(tenantId: ID!): GenericScalar
@@ -115,8 +114,20 @@ type Query {
   sigmarailBacktestReport(runId: String!, tenantId: ID!): GenericScalar
   "Compare two tenant-owned backtest reports and their principal performance metrics."
   sigmarailBacktestCompare(runIdA: String!, runIdB: String!, tenantId: ID!): GenericScalar
-  "Read one stock's latest or point-in-time SigmaRail daily snapshot."
-  sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
+  "Read the market-regime and allocation context for one session date."
+  sigmarailMarketRegime(asOfDate: String!, tenantId: ID!): GenericScalar
+  "Explain the regime allocation for a ticker and session date, optionally for a named policy."
+  sigmarailRegimeAllocation(asOfDate: String!, policyName: String, ticker: String, tenantId: ID!): GenericScalar
+  "Compare market breadth and regime allocation aggregates across two date windows."
+  sigmarailRegimeComparePeriods(focusStart: String!, focusEnd: String!, referenceStart: String!, referenceEnd: String!, tenantId: ID!): GenericScalar
+  "Evaluate the daily market entry gate from the canonical SigmaRail rule set."
+  sigmarailRegimeEntryGate(asOfDate: String!, tenantId: ID!): GenericScalar
+  "Compute the market-regime transition weight for a session date and base weight."
+  sigmarailRegimeTransitionWeight(asOfDate: String!, baseWeight: Float, tenantId: ID!): GenericScalar
+  "Rank a supplied list of already-passing tickers using SigmaRail regime and alpha context."
+  sigmarailRegimeRankCandidates(asOfDate: String!, passingTickers: [String]!, tenantId: ID!): GenericScalar
+  "Read the latest or point-in-time price, trend, and relative-strength snapshot for one stock from SigmaRail's read-only daily dataset."
+  sigmarailStockSnapshot(ticker: String!, tenantId: ID!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"
   backupConfig(tenantId: ID!): BackupConfigType
   "Get backup records for a tenant"
@@ -189,7 +200,6 @@ type Query {
     id: ID!
   ): Node
 }
-
 type SigmaRailStockSnapshot {
   ticker: String!
   asOfDate: String!
@@ -734,6 +744,9 @@ type CurrentUserType {
   language: String
   appearance: String
   chartPreferences: JSONString
+  watchlistPreferences: JSONString
+  tablePreferences: JSONString
+  benchmarkPreferences: JSONString
   roles: [String]
   avatar: String
 }
@@ -2049,7 +2062,15 @@ type UserProfileType implements Node {
   lastName: String!
   "User's preferred language for emails and notifications"
   language: UsersUserProfileLanguageChoices!
-  appearance: String!
+  appearance: String
+  "User's SigmaRail chart display preferences"
+  chartPreferences: JSONString!
+  "User's saved SigmaRail watchlists"
+  watchlistPreferences: JSONString
+  "User's saved SigmaRail table display preferences"
+  tablePreferences: JSONString
+  "User's saved custom benchmark symbols for backtest comparisons"
+  benchmarkPreferences: JSONString
   avatar: String
   email: String
   "The hashid of the associated user"
@@ -3118,6 +3139,9 @@ input UpdateCurrentUserMutationInput {
   language: String
   appearance: String
   chartPreferences: JSONString
+  watchlistPreferences: JSONString
+  tablePreferences: JSONString
+  benchmarkPreferences: JSONString
   clientMutationId: String
 }
 input GenerateOTPMutationInput {
