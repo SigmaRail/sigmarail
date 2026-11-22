@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_backtest_compare", description: "Compare principal performance metrics for two tenant-owned backtest runs.")
+query CompareSigmaRailBacktests($tenantId: ID!, $runIdA: String!, $runIdB: String!) {
+  sigmarailBacktestCompare(tenantId: $tenantId, runIdA: $runIdA, runIdB: $runIdB)
+}

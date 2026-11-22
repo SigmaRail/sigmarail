@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_backtest_report", description: "Read a report for a backtest run after verifying tenant ownership in PostgreSQL.")
+query GetSigmaRailBacktestReport($tenantId: ID!, $runId: String!) {
+  sigmarailBacktestReport(tenantId: $tenantId, runId: $runId)
+}

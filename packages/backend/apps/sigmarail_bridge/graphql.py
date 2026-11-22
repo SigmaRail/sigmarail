@@ -223,6 +223,45 @@ class Query(graphene.ObjectType):
         tenant_id=graphene.ID(required=True),
         description="Validate a PipelineDocument and report runtime-contract errors and warnings.",
     )
+    sigmarail_strategy_saved_specs = GenericScalar(
+        limit=graphene.Int(),
+        search=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="List strategies saved in the active tenant, limited to records visible to the signed-in user.",
+    )
+    sigmarail_strategy_saved_spec = GenericScalar(
+        ir_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Load one tenant-owned or shared strategy record with its canonical AST and lineage.",
+    )
+    sigmarail_backtest_jobs = GenericScalar(
+        limit=graphene.Int(),
+        status=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description="List AppTension-owned backtest jobs for the active tenant.",
+    )
+    sigmarail_backtest_job = GenericScalar(
+        job_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Read one tenant-owned backtest job and its progress snapshot.",
+    )
+    sigmarail_backtest_runs = GenericScalar(
+        ir_id=graphene.String(),
+        limit=graphene.Int(),
+        tenant_id=graphene.ID(required=True),
+        description="List tenant-owned backtest runs and their stored result summaries.",
+    )
+    sigmarail_backtest_report = GenericScalar(
+        run_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Read the analytical report for a backtest run owned by the active tenant.",
+    )
+    sigmarail_backtest_compare = GenericScalar(
+        run_id_a=graphene.String(required=True),
+        run_id_b=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description="Compare two tenant-owned backtest reports and their principal performance metrics.",
+    )
 
     sigmarail_stock_snapshot = graphene.Field(
         SigmaRailStockSnapshot,
@@ -712,6 +751,196 @@ class Query(graphene.ObjectType):
                 "slot": "risk_management",
             })
         return {"valid": not any(row["severity"] == "error" for row in diagnostics), "diagnostics": diagnostics}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_saved_specs(root, info, tenant_id, limit=50, search=None):
+        tenant = _authorize_tenant(info, tenant_id)
+        from django.db.models import Q
+        from .models import WorkspaceStrategyReference
+
+        rows = WorkspaceStrategyReference.objects.filter(tenant=tenant).filter(
+            Q(owner_user=info.context.user) | Q(is_shared=True) | Q(is_template=True)
+        ).exclude(spec__isnull=True).order_by("-updated_at", "ir_id")
+        if search:
+            term = str(search).strip()[:120]
+            rows = rows.filter(Q(ir_id__icontains=term) | Q(title__icontains=term) | Q(notes__icontains=term))
+        bounded_limit = min(max(int(limit or 50), 1), 200)
+        specs = [
+            {
+                "ir_id": row.ir_id,
+                "title": row.title or row.ir_id,
+                "spec_schema_version": row.spec_schema_version or 1,
+                "notes": row.notes,
+                "category": row.category,
+                "is_template": row.is_template,
+                "has_pipeline": bool(row.pipeline_document),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "ir_content_hash": row.content_hash,
+                "compiler_version": row.compiler_version,
+                "lineage": {
+                    "parent_ir_id": row.parent_ir_id or None,
+                    "parent_content_hash": row.parent_content_hash or None,
+                    "mutation_type": row.mutation_type,
+                },
+                "is_shared": row.is_shared,
+            }
+            for row in rows[:bounded_limit]
+        ]
+        return {"specs": specs, "count": len(specs)}
+
+    @staticmethod
+    def resolve_sigmarail_strategy_saved_spec(root, info, ir_id, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .views import _accessible_strategy, _strategy_json
+
+        reference = _accessible_strategy(tenant, info.context.user, str(ir_id).strip())
+        if reference is None:
+            return {"error": "Strategy spec not found.", "code": "not_found"}
+        return _strategy_json(reference)
+
+    @staticmethod
+    def resolve_sigmarail_backtest_jobs(root, info, tenant_id, limit=50, status=None):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .models import WorkspaceBacktestReference
+
+        rows = WorkspaceBacktestReference.objects.filter(tenant=tenant).order_by("-created_at")
+        if status:
+            rows = rows.filter(status=str(status).strip().lower()[:24])
+        bounded_limit = min(max(int(limit or 50), 1), 200)
+        jobs = []
+        for row in rows[:bounded_limit]:
+            progress = row.progress if isinstance(row.progress, dict) else {}
+            configuration = row.configuration if isinstance(row.configuration, dict) else {}
+            jobs.append({
+                "job_id": row.job_id,
+                "run_id": row.run_id or row.job_id,
+                "ir_id": row.ir_id,
+                "status": row.status,
+                "start_date": configuration.get("start_date"),
+                "end_date": configuration.get("end_date"),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "progress": progress,
+                "error_message": row.error_message,
+                "result_summary": row.result_summary,
+            })
+        return {"jobs": jobs, "count": len(jobs)}
+
+    @staticmethod
+    def resolve_sigmarail_backtest_job(root, info, job_id, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        from django.db.models import Q
+        from .models import WorkspaceBacktestReference
+
+        row = WorkspaceBacktestReference.objects.filter(tenant=tenant).filter(
+            Q(job_id=str(job_id).strip()) | Q(run_id=str(job_id).strip())
+        ).first()
+        if row is None:
+            return {"error": "Backtest job not found.", "code": "not_found"}
+        return {
+            "job_id": row.job_id,
+            "run_id": row.run_id or row.job_id,
+            "ir_id": row.ir_id,
+            "status": row.status,
+            "configuration": row.configuration if isinstance(row.configuration, dict) else {},
+            "progress": row.progress if isinstance(row.progress, dict) else {},
+            "error_message": row.error_message,
+            "strategy_content_hash": row.strategy_content_hash,
+            "result_summary": row.result_summary,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        }
+
+    @staticmethod
+    def resolve_sigmarail_backtest_runs(root, info, tenant_id, limit=50, ir_id=None):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .models import WorkspaceBacktestReference
+        from .views import _accessible_strategy
+
+        rows = WorkspaceBacktestReference.objects.filter(tenant=tenant)
+        if ir_id:
+            if _accessible_strategy(tenant, info.context.user, str(ir_id).strip()) is None:
+                return {"error": "Strategy spec not found.", "code": "not_found"}
+            rows = rows.filter(ir_id=str(ir_id).strip())
+        rows = rows.order_by("-created_at")
+        bounded_limit = min(max(int(limit or 50), 1), 200)
+        runs = []
+        for row in rows[:bounded_limit]:
+            runs.append({
+                "run_id": row.run_id or row.job_id,
+                "job_id": row.job_id,
+                "ir_id": row.ir_id,
+                "status": row.status,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "configuration": row.configuration if isinstance(row.configuration, dict) else {},
+                "result_summary": row.result_summary,
+                "strategy_content_hash": row.strategy_content_hash,
+            })
+        return {"runs": runs, "count": len(runs)}
+
+    @staticmethod
+    def resolve_sigmarail_backtest_report(root, info, run_id, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        from django.db.models import Q
+        from .models import WorkspaceBacktestReference
+        from sigmarail.features.backtest_report import get_backtest_report
+
+        run_id = str(run_id).strip()
+        if not run_id or not WorkspaceBacktestReference.objects.filter(tenant=tenant).filter(
+            Q(run_id=run_id) | Q(job_id=run_id)
+        ).exists():
+            return {"error": "Backtest run not found.", "code": "not_found"}
+        client = _clickhouse_client()
+        try:
+            return get_backtest_report(client, run_id)
+        finally:
+            client.close()
+
+    @staticmethod
+    def resolve_sigmarail_backtest_compare(root, info, run_id_a, run_id_b, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        from django.db.models import Q
+        from .models import WorkspaceBacktestReference
+        from sigmarail.features.backtest_report import get_backtest_report
+
+        run_ids = [str(run_id_a).strip(), str(run_id_b).strip()]
+        if not all(run_ids) or any(
+            not WorkspaceBacktestReference.objects.filter(tenant=tenant).filter(
+                Q(run_id=run_id) | Q(job_id=run_id)
+            ).exists()
+            for run_id in run_ids
+        ):
+            return {"error": "One or more backtest runs were not found.", "code": "not_found"}
+        client = _clickhouse_client()
+        try:
+            reports = [get_backtest_report(client, run_id) for run_id in run_ids]
+        finally:
+            client.close()
+        for index, report in enumerate(reports):
+            if "error" in report:
+                return {"error": f"run_{'a' if index == 0 else 'b'}: {report['error']}", "code": report.get("code")}
+        metrics_a = reports[0].get("metrics", {})
+        metrics_b = reports[1].get("metrics", {})
+        comparable = (
+            "total_return", "annual_return", "sharpe_ratio", "sortino_ratio", "max_drawdown",
+            "win_rate", "profit_factor", "total_orders", "total_fees",
+        )
+        diff = {
+            key: {
+                "a": metrics_a.get(key),
+                "b": metrics_b.get(key),
+                "delta": round(metrics_b[key] - metrics_a[key], 6)
+                if isinstance(metrics_a.get(key), (int, float)) and isinstance(metrics_b.get(key), (int, float))
+                else None,
+            }
+            for key in comparable
+        }
+        return {
+            "run_a": {"run_id": reports[0].get("run_id"), "ir_id": reports[0].get("ir_id"), "period": reports[0].get("period")},
+            "run_b": {"run_id": reports[1].get("run_id"), "ir_id": reports[1].get("ir_id"), "period": reports[1].get("period")},
+            "diff": diff,
+        }
 
     @staticmethod
     def resolve_sigmarail_stock_snapshot(root, info, ticker, tenant_id, as_of_date=None):

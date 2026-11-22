@@ -58,8 +58,12 @@ strategy discovery tools expose registered datasets/fields, factors, presets, an
 templates. Strategy authoring also exposes canonical pipeline and portfolio schemas,
 validation, compilation/decompilation, preset compilation, setup recipes, and document
 composition, along with semantic spec diffs and runtime-contract lint. Catalog joins and
-entity schema can be discovered directly. The GraphQL AST arguments are intentionally
-flexible; the canonical SigmaRail validators reject unsupported fields and AST forms.
+entity schema can be discovered directly. Read-only backtest review exposes tenant-owned
+strategies, jobs, run summaries, reports, and report comparisons; PostgreSQL ownership is
+checked before analytical run data is read from ClickHouse. Strategy saves, backtest
+submission/cancellation, portfolio actions, and live deployment actions are not exposed in
+this read-only MCP slice. The GraphQL AST arguments are intentionally flexible; the
+canonical SigmaRail validators reject unsupported fields and AST forms.
 
 Apollo's generic ad hoc GraphQL `execute` tool is disabled. Agents can shape query results
 through the AST's `select` list without receiving arbitrary execution over the full

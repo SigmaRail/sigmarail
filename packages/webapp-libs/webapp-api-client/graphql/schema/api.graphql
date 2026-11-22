@@ -101,6 +101,20 @@ type Query {
   sigmarailStrategyDiff(specA: GenericScalar!, specB: GenericScalar!, tenantId: ID!): GenericScalar
   "Validate a PipelineDocument and report runtime-contract errors and warnings."
   sigmarailStrategyLint(pipeline: GenericScalar!, tenantId: ID!): GenericScalar
+  "List strategies saved in the active tenant, limited to records visible to the signed-in user."
+  sigmarailStrategySavedSpecs(limit: Int, search: String, tenantId: ID!): GenericScalar
+  "Load one tenant-owned or shared strategy record with its canonical AST and lineage."
+  sigmarailStrategySavedSpec(irId: String!, tenantId: ID!): GenericScalar
+  "List AppTension-owned backtest jobs for the active tenant."
+  sigmarailBacktestJobs(limit: Int, status: String, tenantId: ID!): GenericScalar
+  "Read one tenant-owned backtest job and its progress snapshot."
+  sigmarailBacktestJob(jobId: String!, tenantId: ID!): GenericScalar
+  "List tenant-owned backtest runs and their stored result summaries."
+  sigmarailBacktestRuns(irId: String, limit: Int, tenantId: ID!): GenericScalar
+  "Read the analytical report for a backtest run owned by the active tenant."
+  sigmarailBacktestReport(runId: String!, tenantId: ID!): GenericScalar
+  "Compare two tenant-owned backtest reports and their principal performance metrics."
+  sigmarailBacktestCompare(runIdA: String!, runIdB: String!, tenantId: ID!): GenericScalar
   "Read one stock's latest or point-in-time SigmaRail daily snapshot."
   sigmarailStockSnapshot(tenantId: ID!, ticker: String!, asOfDate: String): SigmaRailStockSnapshot
   "Get backup configuration for a tenant"

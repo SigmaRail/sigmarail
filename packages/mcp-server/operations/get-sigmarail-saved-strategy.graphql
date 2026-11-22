@@ -1,0 +1,4 @@
+# @tool(name: "sigmarail_strategy_saved_spec", description: "Read one tenant-owned or shared strategy document with AST, spec, and lineage.")
+query GetSigmaRailSavedStrategy($tenantId: ID!, $irId: String!) {
+  sigmarailStrategySavedSpec(tenantId: $tenantId, irId: $irId)
+}
