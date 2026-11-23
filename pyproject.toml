@@ -37,6 +37,8 @@ sigmarail-load = "sigmarail.load:main"
 sigmarail-populate = "sigmarail.populate:main"
 sigmarail-schema = "sigmarail.schema:main"
 sigmarail-test-data = "sigmarail.testing.cli:main"
+sigmarail-load-alpaca = "sigmarail.alpaca_bars:main"
+sigmarail-alpaca-schema = "sigmarail.alpaca_schema:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -46,7 +48,7 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-sigmarail = ["sql/schema/*.sql", "sql/schema/*.entities.yaml", "sql/schema-manifest.json", "spec/*.json"]
+sigmarail = ["sql/schema/*.sql", "sql/schema/*.entities.yaml", "sql/schema-manifest.json", "sql/extensions/alpaca/*.sql", "spec/*.json"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
