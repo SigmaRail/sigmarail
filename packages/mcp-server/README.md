@@ -35,7 +35,7 @@ mcp-server/
 | `OPENAI_API_KEY`        | OpenAI API key                                              | Required                           |
 | `MCP_TELEMETRY_ENABLED` | Enable OpenTelemetry                                        | `false`                            |
 | `MCP_LOG_LEVEL`         | Log level                                                   | `info`                             |
-| `MUTATION_MODE`         | Mutation mode: `none`, `explicit` (pre-defined only), `all` | `none`                             |
+| `MUTATION_MODE`         | Mutation mode: `none` or `explicit` (allowlisted only)      | `explicit` in primary Compose     |
 
 ### SigmaRail AST tools
 
@@ -80,17 +80,23 @@ canonical preset already exists.
 
 Discover factors, setup recipes, position fields, presets, or saved documents as needed.
 Fetch the canonical `PipelineDocument` or `PortfolioDocument` schema before authoring;
-validate or lint before compile/decompile/diff. These operations are previews and do not
-save or launch strategies. For backtests, list tenant-owned runs/jobs first and request a
-report only for a run visible to that tenant; ownership is checked in PostgreSQL before
-analytical artifacts are read from ClickHouse. Regime tools provide date-scoped context.
+validate or lint before compile/decompile/diff. To persist a screen or strategy, call
+`SaveSigmaRailScreen` or `SaveSigmaRailStrategy` only after the user asks to save it. These
+write only tenant-owned AppTension PostgreSQL records. For backtests, use
+`SubmitSigmaRailBacktest` with an explicit date range and stable idempotency key; the strategy
+content hash is pinned at queue time, and retries with the same key/request return the same job.
+Poll jobs and inspect tenant-owned reports before reaching a conclusion. `costAssumptions` and
+`outOfSamplePeriod` are recorded as request metadata only: the current runner does not apply a
+custom fee/slippage model or automatically run a second OOS period. Regime tools provide
+date-scoped context. After a completed run has been reviewed, `RecordSigmaRailExperimentDecision`
+can append a tenant-owned retain/revise/discard/defer verdict with rationale and evidence.
 
 GraphQL's `GenericScalar` is used to transport versioned AST documents. Apollo maps that
 scalar to an object-shaped JSON Schema so agents know to submit structured input; this is
 tool-call guidance, not semantic validation. SigmaRail Spec remains authoritative for AST
-shape and meaning. Apollo's generic ad hoc GraphQL `execute` tool is disabled. This MCP
-slice is read-only: strategy saves, backtest submission/cancellation, broker actions, and
-live deployment actions are not exposed.
+shape and meaning. Apollo's generic ad hoc GraphQL `execute` tool is disabled. Only the four
+reviewed mutation operations in `mutation-allowlist.txt` are configured. CRUD demo mutations,
+cancellation, broker actions, and live deployment actions are not exposed.
 
 Read-only market context also exposes the date-scoped regime, per-ticker allocation
 explanations, entry-gate evaluation, transition weighting, candidate ranking, and comparisons
@@ -129,16 +135,16 @@ query MyToolName($tenantId: ID!, $otherParam: String) {
   accepted membership on the backend. A supplied tenant ID is never trusted without that
   membership check.
 - Rate limiting is configured at both proxy and MCP server levels
-- Mutation mode defaults to `none` (read-only)
+- Mutation mode defaults to `none`; primary Compose opts into the explicit allowlist
 - To change mutation behavior, set `MUTATION_MODE` environment variable or update `config.yaml`
 
 ### Mutation Modes
 
 | Mode       | Description                             | Recommended For            |
 | ---------- | --------------------------------------- | -------------------------- |
-| `none`     | Mutations disabled, read-only           | High security environments |
-| `explicit` | Only pre-defined mutation tools allowed | Enable only when reviewed operations need writes |
-| `all`      | AI can build arbitrary mutations        | Development only           |
+| `none`     | Mutations disabled                      | High security environments |
+| `explicit` | Only allowlisted operation files loaded | Primary Compose; exposes four named SigmaRail writes |
+| `all`      | Not supported for SigmaRail deployment  | Do not use |
 
 ## Deployment
 

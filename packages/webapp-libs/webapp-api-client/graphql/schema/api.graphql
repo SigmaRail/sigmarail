@@ -1428,6 +1428,14 @@ type FileFieldType {
   name: String
 }
 type ApiMutation {
+  "Create a private screen in the active tenant from a canonical UniverseQueryV1 AST. Compile and preview the AST first; this writes the screen to AppTension PostgreSQL."
+  sigmarailSaveScreen(tenantId: ID!, screenName: String!, spec: GenericScalar!, screenDescription: String, sourceTemplateId: String): GenericScalar
+  "Save a private versioned strategy in the active tenant. Validate and compile the canonical PipelineDocument before saving. Writes AppTension PostgreSQL; never launches a backtest or trades. Use expectedHash when updating an existing strategy to prevent overwriting newer edits."
+  sigmarailSaveStrategy(tenantId: ID!, irId: String!, title: String!, pipelineDocument: GenericScalar!, notes: String, category: String, tags: [String], expectedHash: String): GenericScalar
+  "Submit an asynchronous historical backtest for a saved, tenant-owned strategy. Requires a stable idempotencyKey and explicit date bounds. costAssumptions and outOfSamplePeriod are recorded metadata only; they do not change the LEAN fee/slippage model."
+  sigmarailSubmitBacktest(tenantId: ID!, irId: String!, startDate: String!, endDate: String!, idempotencyKey: String!, costAssumptions: GenericScalar, outOfSamplePeriod: GenericScalar): GenericScalar
+  "Record a tenant-owned research verdict for a successfully completed backtest. Allowed decisions are retain, revise, discard, and defer. This records a review decision only; it does not change strategies, launch jobs, or place trades."
+  sigmarailRecordExperimentDecision(tenantId: ID!, jobId: String!, decision: String!, rationale: String!, evidence: GenericScalar): GenericScalar
   "Create or update backup configuration for a tenant."
   updateBackupConfig(input: BackupConfigInput!): UpdateBackupConfigMutation
   "Delete a backup record and its file."

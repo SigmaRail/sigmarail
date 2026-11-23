@@ -1,0 +1,16 @@
+# Create a private tenant-owned screen after compiling and previewing its UniverseQueryV1 AST.
+mutation SaveSigmaRailScreen(
+  $tenantId: ID!
+  $screenName: String!
+  $spec: GenericScalar!
+  $screenDescription: String
+  $sourceTemplateId: String
+) {
+  sigmarailSaveScreen(
+    tenantId: $tenantId
+    screenName: $screenName
+    spec: $spec
+    screenDescription: $screenDescription
+    sourceTemplateId: $sourceTemplateId
+  )
+}

@@ -69,10 +69,12 @@ actually renews a token after connector authorization before relying on long-liv
 ## SigmaRail read tool
 
 `get_sigmarail_stock_snapshot` returns latest or as-of daily price, sector, RS rating,
-ATR, stage and moving averages. It is a read-only ClickHouse query through the
+ATR, stage and moving averages. It is a ClickHouse query through the
 SigmaRail query adapter. `tenantContext` is a proxy-only selector; the backend resolves
 it only against the signed-in user's accepted tenant memberships. Apollo is configured
-with mutation mode `none`.
+with `explicit` mode and an allowlist for screen creation, strategy saving, asynchronous
+backtest submission, and completed-run decision recording. Generic CRUD demo mutations and
+broker/live operations remain excluded.
 
 For an as-of request, inspect `requestedAsOfDate`, `asOfDate`, `availabilityStatus`, and
 `latestAvailableDate`. `prior_available` means the requested session was missing and the

@@ -11,7 +11,7 @@ import graphene
 from graphene.types.generic import GenericScalar
 from django.conf import settings
 from django.utils import timezone
-from graphql_relay import from_global_id
+from graphql_relay import from_global_id, to_global_id
 from rest_framework.exceptions import ValidationError
 
 from apps.multitenancy.middleware import get_current_tenant_with_membership_check
@@ -1315,3 +1315,329 @@ class Query(graphene.ObjectType):
             rs_rating=row.get("rs_rating"), atr_14_pct=row.get("atr_14_pct"),
             stage_code=row.get("stage_code"), sma50d=row.get("sma50d"), sma200d=row.get("sma200d"),
         )
+
+
+def _workspace_api_call(info, tenant, method, path, payload):
+    """Call an existing tenant-authorized AppTension write API in-process."""
+    from rest_framework.test import APIRequestFactory, force_authenticate
+
+    from .views import DomainAPIRouteView, WorkspaceSavedScreensView, WorkspaceStrategySpecsView
+
+    request = getattr(info.context, "_request", info.context)
+    user = getattr(info.context, "user", None)
+    views = {
+        ("POST", "/api/screens/saved"): WorkspaceSavedScreensView.as_view(),
+        ("POST", "/api/backtests/specs"): WorkspaceStrategySpecsView.as_view(),
+        ("POST", "/api/backtests/jobs"): DomainAPIRouteView.as_view(),
+    }
+    view = views.get((method.upper(), path))
+    if view is None:
+        return {"ok": False, "code": "MUTATION_NOT_ALLOWLISTED", "message": "This mutation route is not allowlisted."}
+    try:
+        django_request = APIRequestFactory().post(
+            path,
+            data=payload,
+            format="json",
+            HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.pk),
+        )
+        force_authenticate(django_request, user=user)
+        if hasattr(request, "session"):
+            django_request.session = request.session
+        response = view(django_request)
+    except Exception:
+        logger.exception("SigmaRail MCP mutation could not reach %s", path)
+        return {
+            "ok": False,
+            "code": "API_HANDLER_UNAVAILABLE",
+            "message": "The AppTension mutation handler could not process this request.",
+        }
+    body = getattr(response, "data", None)
+    if body is None:
+        try:
+            body = json.loads(response.content) if response.content else {}
+        except (TypeError, ValueError):
+            return {"ok": False, "code": "INVALID_API_RESPONSE", "status": response.status_code}
+    if not isinstance(body, dict):
+        return {"ok": False, "code": "INVALID_API_RESPONSE", "status": response.status_code}
+    if response.status_code >= 400:
+        return {
+            "ok": False,
+            "code": body.get("code") or f"HTTP_{response.status_code}",
+            "message": body.get("detail") or "The requested mutation was rejected.",
+            "status": response.status_code,
+            "details": body,
+        }
+    return {"ok": True, "status": response.status_code, "result": body}
+
+
+class Mutation(graphene.ObjectType):
+    sigmarail_save_screen = GenericScalar(
+        screen_name=graphene.String(required=True),
+        spec=GenericScalar(required=True),
+        screen_description=graphene.String(),
+        source_template_id=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Create a private screen in the active tenant from a canonical UniverseQueryV1 AST. "
+            "Compile and preview the AST first; this writes the screen to AppTension PostgreSQL."
+        ),
+    )
+    sigmarail_save_strategy = GenericScalar(
+        ir_id=graphene.String(required=True),
+        title=graphene.String(required=True),
+        pipeline_document=GenericScalar(required=True),
+        notes=graphene.String(),
+        category=graphene.String(),
+        tags=graphene.List(graphene.String),
+        expected_hash=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Save a private versioned strategy in the active tenant. Validate and compile the canonical "
+            "PipelineDocument before saving. Writes AppTension PostgreSQL; never launches a backtest or trades. "
+            "Use expectedHash when updating an existing strategy to prevent overwriting newer edits."
+        ),
+    )
+    sigmarail_submit_backtest = GenericScalar(
+        ir_id=graphene.String(required=True),
+        start_date=graphene.String(required=True),
+        end_date=graphene.String(required=True),
+        idempotency_key=graphene.String(required=True),
+        cost_assumptions=GenericScalar(),
+        out_of_sample_period=GenericScalar(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Submit an asynchronous historical backtest for a saved, tenant-owned strategy. "
+            "Requires a stable idempotencyKey and explicit date bounds. costAssumptions and "
+            "outOfSamplePeriod are recorded as experiment metadata only; they do not change the "
+            "LEAN fee/slippage model or create a second run. Inspect the resulting run before conclusions."
+        ),
+    )
+    sigmarail_record_experiment_decision = GenericScalar(
+        job_id=graphene.String(required=True),
+        decision=graphene.String(required=True),
+        rationale=graphene.String(required=True),
+        evidence=GenericScalar(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Record a tenant-owned research verdict for a successfully completed backtest. "
+            "Allowed decisions are retain, revise, discard, and defer. This records a review "
+            "decision only; it does not change strategies, launch jobs, or place trades."
+        ),
+    )
+
+    @staticmethod
+    def resolve_sigmarail_save_screen(
+        root, info, tenant_id, screen_name, spec, screen_description="", source_template_id=""
+    ):
+        tenant = _authorize_tenant(info, tenant_id)
+        screen_spec = _json_object(spec, "spec")
+        try:
+            from sigmarail.universe import compile_universe_spec
+
+            compile_universe_spec(screen_spec)
+        except Exception as exc:
+            return {"ok": False, "code": "INVALID_SCREEN_AST", "message": str(exc)}
+        result = _workspace_api_call(
+            info,
+            tenant,
+            "POST",
+            "/api/screens/saved",
+            {
+                "name": str(screen_name).strip(),
+                "description": str(screen_description or "").strip(),
+                "spec": screen_spec,
+                "source_template_id": str(source_template_id or "").strip(),
+            },
+        )
+        return result
+
+    @staticmethod
+    def resolve_sigmarail_save_strategy(
+        root, info, tenant_id, ir_id, title, pipeline_document,
+        notes="", category="", tags=None, expected_hash="",
+    ):
+        tenant = _authorize_tenant(info, tenant_id)
+        pipeline_data = _json_object(pipeline_document, "pipelineDocument")
+        try:
+            from sigmarail_spec.strategy import PipelineDocument, compile_pipeline
+            from screens.risk_rules import materialize_swing_risk_rules
+
+            strategy_spec = compile_pipeline(PipelineDocument.model_validate(pipeline_data))
+            materialize_swing_risk_rules(strategy_spec)
+        except Exception as exc:
+            return {"ok": False, "code": "INVALID_STRATEGY_AST", "message": str(exc)}
+        payload = {
+            "ir_id": str(ir_id).strip(),
+            "title": str(title).strip(),
+            "spec": strategy_spec,
+            "pipeline_document": pipeline_data,
+            "notes": str(notes or ""),
+            "category": str(category or ""),
+            "tags": tags or [],
+            "expected_hash": str(expected_hash or ""),
+        }
+        return _workspace_api_call(info, tenant, "POST", "/api/backtests/specs", payload)
+
+    @staticmethod
+    def resolve_sigmarail_submit_backtest(
+        root, info, tenant_id, ir_id, start_date, end_date, idempotency_key,
+        cost_assumptions=None, out_of_sample_period=None,
+    ):
+        tenant = _authorize_tenant(info, tenant_id)
+        try:
+            start = date.fromisoformat(str(start_date))
+            end = date.fromisoformat(str(end_date))
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("startDate and endDate must use YYYY-MM-DD.") from exc
+        if end <= start:
+            raise ValidationError("endDate must be after startDate.")
+        key = str(idempotency_key or "").strip()
+        if len(key) < 8 or len(key) > 200:
+            raise ValidationError("idempotencyKey must contain 8 to 200 characters.")
+        if cost_assumptions is not None and not isinstance(cost_assumptions, dict):
+            raise ValidationError("costAssumptions must be a JSON object.")
+        if out_of_sample_period is not None and not isinstance(out_of_sample_period, dict):
+            raise ValidationError("outOfSamplePeriod must be a JSON object.")
+
+        from .models import WorkspaceBacktestReference
+        from .views import _accessible_strategy
+        from django.db.models import Q
+        import hashlib
+        import uuid
+
+        strategy_id = str(ir_id or "").strip()
+        strategy = _accessible_strategy(tenant, info.context.user, strategy_id)
+        if strategy is None:
+            return {"ok": False, "code": "STRATEGY_NOT_FOUND", "message": "Saved strategy not found in this tenant."}
+        request_data = {
+            "ir_id": strategy_id,
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "strategy_content_hash": strategy.content_hash,
+            "cost_assumptions": cost_assumptions or {},
+            "out_of_sample_period": out_of_sample_period or {},
+        }
+        request_hash = hashlib.sha256(
+            json.dumps(request_data, separators=(",", ":"), sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        job_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"sigmarail:{tenant.pk}:{key}"))
+        existing = WorkspaceBacktestReference.objects.filter(tenant=tenant).filter(
+            Q(job_id=job_id) | Q(run_id=job_id)
+        ).first()
+        if existing is not None:
+            config = existing.configuration if isinstance(existing.configuration, dict) else {}
+            if config.get("request_hash") != request_hash:
+                return {
+                    "ok": False,
+                    "code": "IDEMPOTENCY_CONFLICT",
+                    "message": "This idempotencyKey was already used for a different backtest request.",
+                    "job_id": existing.job_id,
+                }
+            return {
+                "ok": True,
+                "replayed": True,
+                "result": {
+                    "job_id": existing.job_id,
+                    "run_id": existing.run_id or existing.job_id,
+                    "ir_id": existing.ir_id,
+                    "status": existing.status,
+                    "strategy_content_hash": existing.strategy_content_hash,
+                    "request_hash": request_hash,
+                    "configuration": config,
+                },
+            }
+        result = _workspace_api_call(
+            info,
+            tenant,
+            "POST",
+            "/api/backtests/jobs",
+            {
+                "ir_id": strategy_id,
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "job_id": job_id,
+                "idempotency_key": key,
+                "request_hash": request_hash,
+                "cost_assumptions": cost_assumptions or {},
+                "out_of_sample_period": out_of_sample_period or {},
+            },
+        )
+        if result.get("ok"):
+            result["idempotency_key"] = key
+            result["request_hash"] = request_hash
+            result["strategy_content_hash"] = strategy.content_hash
+        elif result.get("status") == 409:
+            # A concurrent identical request may win the unique job_id insert.
+            # Resolve that race to the same idempotent response contract.
+            raced = WorkspaceBacktestReference.objects.filter(tenant=tenant, job_id=job_id).first()
+            config = raced.configuration if raced and isinstance(raced.configuration, dict) else {}
+            if raced and config.get("request_hash") == request_hash:
+                return {
+                    "ok": True,
+                    "replayed": True,
+                    "result": {
+                        "job_id": raced.job_id,
+                        "run_id": raced.run_id or raced.job_id,
+                        "ir_id": raced.ir_id,
+                        "status": raced.status,
+                        "strategy_content_hash": raced.strategy_content_hash,
+                        "request_hash": request_hash,
+                        "configuration": config,
+                    },
+                }
+        return result
+
+    @staticmethod
+    def resolve_sigmarail_record_experiment_decision(
+        root, info, tenant_id, job_id, decision, rationale, evidence=None,
+    ):
+        tenant = _authorize_tenant(info, tenant_id)
+        allowed = {"retain", "revise", "discard", "defer"}
+        normalized_decision = str(decision or "").strip().lower()
+        if normalized_decision not in allowed:
+            raise ValidationError(f"decision must be one of: {', '.join(sorted(allowed))}.")
+        rationale = str(rationale or "").strip()
+        if not rationale or len(rationale) > 5000:
+            raise ValidationError("rationale must contain 1 to 5000 characters.")
+        if evidence is not None and not isinstance(evidence, dict):
+            raise ValidationError("evidence must be a JSON object.")
+        evidence = evidence or {}
+        if len(json.dumps(evidence, separators=(",", ":"), default=str)) > 64000:
+            raise ValidationError("evidence must be 64 KB or smaller.")
+
+        from django.db import transaction
+        from django.db.models import Q
+        from .models import WorkspaceBacktestReference
+
+        with transaction.atomic():
+            reference = WorkspaceBacktestReference.objects.select_for_update().filter(tenant=tenant).filter(
+                Q(job_id=str(job_id).strip()) | Q(run_id=str(job_id).strip())
+            ).first()
+            if reference is None:
+                return {"ok": False, "code": "BACKTEST_NOT_FOUND", "message": "Backtest job not found in this tenant."}
+            if reference.status != "done":
+                return {
+                    "ok": False,
+                    "code": "BACKTEST_NOT_COMPLETE",
+                    "message": "A decision can be recorded after the backtest status is done.",
+                    "status": reference.status,
+                }
+            configuration = reference.configuration if isinstance(reference.configuration, dict) else {}
+            history = configuration.get("decision_history")
+            if not isinstance(history, list):
+                history = []
+            event = {
+                "decision": normalized_decision,
+                "rationale": rationale,
+                "evidence": evidence,
+                "recorded_at": timezone.now().isoformat(),
+                "recorded_by": str(getattr(info.context.user, "pk", "")) or None,
+                "strategy_content_hash": reference.strategy_content_hash,
+                "request_hash": configuration.get("request_hash"),
+            }
+            history.append(event)
+            configuration["decision_history"] = history[-50:]
+            configuration["research_decision"] = event
+            reference.configuration = configuration
+            reference.save(update_fields=["configuration", "updated_at"])
+        return {"ok": True, "job_id": reference.job_id, "decision": event}

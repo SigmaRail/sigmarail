@@ -1,0 +1,16 @@
+# Record a research decision against a completed tenant-owned backtest; this never changes a strategy or places trades.
+mutation RecordSigmaRailExperimentDecision(
+  $tenantId: ID!
+  $jobId: String!
+  $decision: String!
+  $rationale: String!
+  $evidence: GenericScalar
+) {
+  sigmarailRecordExperimentDecision(
+    tenantId: $tenantId
+    jobId: $jobId
+    decision: $decision
+    rationale: $rationale
+    evidence: $evidence
+  )
+}

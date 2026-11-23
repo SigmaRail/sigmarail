@@ -48,6 +48,7 @@ schema = graphene.Schema(
             sso_schema.TenantOwnerMutation,
             translations_schema.TranslationsMutation,
             backup_schema.BackupMutation,
+            sigmarail_graphql.Mutation,
         ]
     ),
     subscription=graphql_subscription(

@@ -1,0 +1,20 @@
+# Submit an async historical backtest. A repeated key replays the existing job; it never submits a second run.
+mutation SubmitSigmaRailBacktest(
+  $tenantId: ID!
+  $irId: String!
+  $startDate: String!
+  $endDate: String!
+  $idempotencyKey: String!
+  $costAssumptions: GenericScalar
+  $outOfSamplePeriod: GenericScalar
+) {
+  sigmarailSubmitBacktest(
+    tenantId: $tenantId
+    irId: $irId
+    startDate: $startDate
+    endDate: $endDate
+    idempotencyKey: $idempotencyKey
+    costAssumptions: $costAssumptions
+    outOfSamplePeriod: $outOfSamplePeriod
+  )
+}

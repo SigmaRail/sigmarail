@@ -9,6 +9,20 @@ GRAPHQL_ENDPOINT="${GRAPHQL_ENDPOINT:-http://backend:5001/api/graphql/}"
 # Mutation mode: none (default), explicit (pre-defined mutations only), all (any mutations)
 MUTATION_MODE="${MUTATION_MODE:-none}"
 
+# Configure individual operation files so source-only/demo mutations are never
+# published accidentally. Only names in mutation-allowlist.txt are eligible.
+OPERATIONS_YAML=""
+for operation_file in /app/operations/*.graphql; do
+  operation_name="$(awk '$1 == "mutation" { name=$2; sub(/\(.*/, "", name); print name; exit }' "$operation_file")"
+  if [ -n "$operation_name" ]; then
+    if [ "$MUTATION_MODE" = "explicit" ] && grep -Fxq "$operation_name" /app/mutation-allowlist.txt; then
+      OPERATIONS_YAML="${OPERATIONS_YAML}    - ${operation_file}\n"
+    fi
+  else
+    OPERATIONS_YAML="${OPERATIONS_YAML}    - ${operation_file}\n"
+  fi
+done
+
 # Generate config file from template
 cat > /app/runtime-config.yaml << EOF
 # Apollo MCP Server - Runtime Configuration
@@ -49,7 +63,7 @@ custom_scalars: /app/custom-scalars.json
 # Self-documenting workflow guidance is included in MCP initialize results.
 # Keep this focused on tool discovery, query composition, and safety boundaries.
 instructions: |
-  SigmaRail MCP is a tenant-scoped, read-only interface to the SigmaRail data and strategy APIs.
+  SigmaRail MCP is a tenant-scoped interface to the SigmaRail data and strategy APIs.
   Start by calling GetUserTenants when the account's tenant is not already known. For tenant-scoped tools, pass tenantContext only when the user has multiple tenants; use an ID returned by GetUserTenants, never ask the user to find an ID. The authenticated proxy validates membership on every call and selects the sole tenant automatically. Call GetSigmaRailReadiness before research to check the selected tenant's effective permission codes and the latest price and market-context coverage.
 
   Use the named SigmaRail operations as the supported interface. Apollo's generic execute tool is disabled; do not construct arbitrary GraphQL requests. For flexible data retrieval, use the bounded DataQueryV1 path: GetSigmaRailCoreDatasets -> GetSigmaRailCoreDataset -> GetSigmaRailCoreQuerySchema -> RunSigmaRailCoreQuery. Select the exact stable field IDs needed in query.select; the returned columns follow that selection. The canonical schema returned by GetSigmaRailCoreQuerySchema is authoritative for filters, joins, date bounds, expressions, and limits.
@@ -62,13 +76,13 @@ instructions: |
 
   For deeper implementation and AST semantics, consult the public contracts: https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md, and https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md. These links explain the design; the schemas and tool results returned by this running MCP are authoritative. The public main branch can be newer than the deployed revision.
 
-  All exposed operations are read-only. Strategy saves, backtest submissions/cancellations, broker actions, and live deployment actions are not available through this MCP. For missing or failed data, preserve the returned code and action, retry only when instructed, and never convert unavailable data into a zero or a positive/negative market conclusion.
+  Four explicitly allowlisted writes are available: SaveSigmaRailScreen, SaveSigmaRailStrategy, SubmitSigmaRailBacktest, and RecordSigmaRailExperimentDecision. Use save mutations only when the user explicitly asks to persist the artifact. Compile, validate, and preview first. SubmitSigmaRailBacktest requires a stable idempotencyKey; repeating the same key and request returns the original job. costAssumptions and outOfSamplePeriod are recorded metadata only and do not change LEAN execution settings. Record a decision only after a completed run has been reviewed. No arbitrary GraphQL execution, generic CRUD demo mutations, cancellation, broker, or live-deployment mutations are exposed.
 
 # Operations to expose as MCP tools
 operations:
   source: local
   paths:
-    - /app/operations
+$(printf '%b' "$OPERATIONS_YAML")
 
 # Introspection capabilities for AI. Agent-authored query ASTs are accepted
 # only by the bounded SigmaRail GraphQL fields; do not expose Apollo's generic
@@ -89,8 +103,8 @@ introspection:
       canonical SigmaRail AST schema does not answer the question. Prefer named
       operations; this MCP does not expose arbitrary GraphQL execution.
 
-# Enable mutations (create/update/delete operations)
-# Options: none (default), explicit (pre-defined mutations only), all (any mutations)
+# Explicit mode exposes only mutation operations listed in mutation-allowlist.txt.
+# All mode is not supported for the SigmaRail MCP deployment.
 overrides:
   mutation_mode: ${MUTATION_MODE}
 EOF

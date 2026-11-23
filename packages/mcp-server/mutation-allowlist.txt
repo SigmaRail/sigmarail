@@ -1,0 +1,6 @@
+# Only these pre-defined mutation operations are exposed by Apollo.
+# Keep CRUD demo operations out of the configured operation sources.
+SaveSigmaRailScreen
+SaveSigmaRailStrategy
+SubmitSigmaRailBacktest
+RecordSigmaRailExperimentDecision

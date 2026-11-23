@@ -1,0 +1,22 @@
+# Save a private strategy version after validating and compiling its canonical PipelineDocument.
+mutation SaveSigmaRailStrategy(
+  $tenantId: ID!
+  $irId: String!
+  $title: String!
+  $pipelineDocument: GenericScalar!
+  $notes: String
+  $category: String
+  $tags: [String!]
+  $expectedHash: String
+) {
+  sigmarailSaveStrategy(
+    tenantId: $tenantId
+    irId: $irId
+    title: $title
+    pipelineDocument: $pipelineDocument
+    notes: $notes
+    category: $category
+    tags: $tags
+    expectedHash: $expectedHash
+  )
+}

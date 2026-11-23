@@ -82,7 +82,7 @@ services:
       dockerfile: packages/mcp-server/Dockerfile
     environment:
       GRAPHQL_ENDPOINT: http://backend:80/api/graphql/
-      MUTATION_MODE: ${MCP_MUTATION_MODE:-none}
+      MUTATION_MODE: ${MCP_MUTATION_MODE:-explicit}
       MCP_LOG_LEVEL: info
     expose:
       - "4000"
