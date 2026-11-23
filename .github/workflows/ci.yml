@@ -56,8 +56,22 @@ jobs:
           mkdir -p "$docker_config_dir"
           # A non-empty auth map prevents Docker CLI from auto-selecting the
           # runner's Docker Desktop Keychain helper for this temporary config.
-          printf '{"auths":{"ghcr.io":{}}}\n' > "$docker_config_dir/config.json"
+          # Preserve the installed Compose plugin, which otherwise becomes
+          # undiscoverable when DOCKER_CONFIG points to this temporary directory.
+          compose_plugin_path="$(docker info --format '{{range .ClientInfo.Plugins}}{{if eq .Name "compose"}}{{.Path}}{{end}}{{end}}')"
+          if [ -z "$compose_plugin_path" ] || [ ! -x "$compose_plugin_path" ]; then
+            echo "Docker Compose v2 plugin was not found in the runner's Docker CLI configuration."
+            exit 1
+          fi
+          python3.11 - "$docker_config_dir/config.json" "$(dirname "$compose_plugin_path")" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "w", encoding="utf-8") as config:
+              json.dump({"auths": {"ghcr.io": {}}, "cliPluginsExtraDirs": [sys.argv[2]]}, config)
+          PY
           printf 'DOCKER_CONFIG=%s\n' "$docker_config_dir" >> "$GITHUB_ENV"
+          DOCKER_CONFIG="$docker_config_dir" docker compose version
 
       - name: Check out SigmaRail
         uses: actions/checkout@v4
