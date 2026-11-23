@@ -45,17 +45,15 @@ jobs:
     needs: test
     runs-on: [self-hosted, macOS, ARM64, lean]
     timeout-minutes: 45
-    env:
-      # docker/login-action otherwise inherits Docker Desktop's credential helper
-      # on this self-hosted macOS runner and can block on an invisible Keychain UI.
-      # Keep the short-lived CI registry auth in the runner's disposable temp area.
-      DOCKER_CONFIG: ${{ runner.temp }}/sigmarail-docker-auth
     permissions:
       contents: read
       packages: read
     steps:
       - name: Prepare isolated Docker credentials
-        run: mkdir -p "$DOCKER_CONFIG"
+        run: |
+          docker_config_dir="$RUNNER_TEMP/sigmarail-docker-auth"
+          mkdir -p "$docker_config_dir"
+          printf 'DOCKER_CONFIG=%s\n' "$docker_config_dir" >> "$GITHUB_ENV"
 
       - name: Check out SigmaRail
         uses: actions/checkout@v4
