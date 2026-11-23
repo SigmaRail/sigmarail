@@ -1,7 +1,7 @@
 {
   "files": {
     "__init__.py": "eab0ba2f67d178ac0f85e151ec33d33a6deac60ad0e3a246621594c359b04107",
-    "data/fields.json": "4ae5ee7dff57156dab9663adcb8852a14d299b5a571a4865e8cb93fb7889ce75",
+    "data/fields.json": "817b7cdf90baeac56576684cb7f4bcb3b3e99e521e3a3a80735ffe05c0af9208",
     "entry_trigger_ast.py": "da882fb54acfefe3accf18f4a7b173bec8d41930dbc661d4d2006b56fbe76e6e",
     "evaluate.py": "45205062d28661de83559f930cc54b935359387e62e327664124d65feaf2d653",
     "expr.py": "9cf8b7ec22a8e09c30ca6be3f247e75e8661df1aa2d5837e7a259513be950b63",

@@ -11,6 +11,8 @@ venv/
 config.yaml
 config-*.yaml
 data/
+!trading_lab/sigmarail_spec/data/
+!trading_lab/sigmarail_spec/data/**/*.json
 !packages/sigmarail-spec/src/sigmarail_spec/data/
 !packages/sigmarail-spec/src/sigmarail_spec/data/data/
 !packages/sigmarail-spec/src/sigmarail_spec/data/**/*.json
