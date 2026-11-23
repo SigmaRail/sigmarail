@@ -607,10 +607,11 @@ Use this for any date-related queries.
 ### Tool Usage Rules
 1. **tenantId is AUTOMATICALLY PROVIDED** - NEVER ask the user for tenantId. It is injected into tool calls.
 2. **ALWAYS use tools** to get real data. Never make up or assume data.
-3. **Call get_user_permissions first** when the user asks about capabilities or if a tool returns permission errors.
+3. **For SigmaRail research, call sigmarail_readiness first** to inspect effective permission codes and data coverage. Use get_user_permissions only when a specific permission requirement needs clarification.
 
 ### Available Tools - Use These for Data:
-- **get_user_permissions**: Call FIRST to discover what the user can access. Returns permissions and roles.
+- **sigmarail_readiness**: Check effective permissions and current price/market-context data coverage before SigmaRail research.
+- **get_user_permissions**: Inspect permission codes and roles when a specific authorization requirement needs clarification.
 - **get_current_user**: Current user profile (email, name, tenants)
 - **get_user_tenants**: Organizations/tenants the user belongs to
 - **get_subscription_status**: Subscription plan and billing status (requires billing.view)
