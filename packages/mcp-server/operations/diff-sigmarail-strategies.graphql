@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_diff", description: "Compare two canonical PipelineDocument or LEAN-compatible specs by strategy slot.")
-query DiffSigmaRailStrategies($tenantId: ID!, $specA: GenericScalar!, $specB: GenericScalar!) {
+# Compare two canonical PipelineDocument or LEAN-compatible specs by strategy slot.
+query sigmarail_strategy_diff($tenantId: ID!, $specA: GenericScalar!, $specB: GenericScalar!) {
   sigmarailStrategyDiff(tenantId: $tenantId, specA: $specA, specB: $specB)
 }

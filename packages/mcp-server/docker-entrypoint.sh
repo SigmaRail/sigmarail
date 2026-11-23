@@ -50,7 +50,7 @@ custom_scalars: /app/custom-scalars.json
 # Keep this focused on tool discovery, query composition, and safety boundaries.
 instructions: |
   SigmaRail MCP is a tenant-scoped, read-only interface to the SigmaRail data and strategy APIs.
-  Start by calling get_user_tenants when the account's tenant is not already known. For tenant-scoped tools, pass tenantContext only when the user has multiple tenants; use an ID returned by get_user_tenants, never ask the user to find an ID. The authenticated proxy validates membership on every call and selects the sole tenant automatically.
+  Start by calling get_user_tenants when the account's tenant is not already known. For tenant-scoped tools, pass tenantContext only when the user has multiple tenants; use an ID returned by get_user_tenants, never ask the user to find an ID. The authenticated proxy validates membership on every call and selects the sole tenant automatically. Call sigmarail_readiness before research to check the selected tenant's effective permission codes and the latest price and market-context coverage.
 
   Use the named SigmaRail operations as the supported interface. Apollo's generic execute tool is disabled; do not construct arbitrary GraphQL requests. For flexible data retrieval, use the bounded DataQueryV1 path: sigmarail_core_datasets -> sigmarail_core_dataset -> sigmarail_core_query_schema -> sigmarail_core_query. Select the exact stable field IDs needed in query.select; the returned columns follow that selection. The canonical schema returned by sigmarail_core_query_schema is authoritative for filters, joins, date bounds, expressions, and limits.
 
@@ -62,7 +62,7 @@ instructions: |
 
   For deeper implementation and AST semantics, consult the public contracts: https://github.com/SigmaRail/sigmarail/blob/main/docs/QUERY_API.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/README.md, https://github.com/SigmaRail/sigmarail/blob/main/packages/sigmarail-spec/docs/EXPRESSIONS.md, and https://github.com/SigmaRail/sigmarail/blob/main/docs/DECISION_EVIDENCE.md. These links explain the design; the schemas and tool results returned by this running MCP are authoritative. The public main branch can be newer than the deployed revision.
 
-  All exposed operations are read-only. Strategy saves, backtest submissions/cancellations, broker actions, and live deployment actions are not available through this MCP. Do not treat a schema description as proof that data exists for every date or security.
+  All exposed operations are read-only. Strategy saves, backtest submissions/cancellations, broker actions, and live deployment actions are not available through this MCP. For missing or failed data, preserve the returned code and action, retry only when instructed, and never convert unavailable data into a zero or a positive/negative market conclusion.
 
 # Operations to expose as MCP tools
 operations:

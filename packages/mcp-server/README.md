@@ -48,16 +48,24 @@ validation output, then execute or preview.
 
 #### Data-query workflow
 
-1. Call `sigmarail_core_datasets` to discover registered datasets and their time semantics.
-2. Call `sigmarail_core_dataset` for the chosen dataset to inspect stable field IDs and
+1. Call `get_user_tenants` when the active tenant is not known, then call
+   `sigmarail_readiness` before research. It reports effective permission codes and latest
+   observed dates and row coverage for price and market-context data.
+2. Call `sigmarail_core_datasets` to discover registered datasets and their time semantics.
+3. Call `sigmarail_core_dataset` for the chosen dataset to inspect stable field IDs and
    declared relationships.
-3. Call `sigmarail_core_query_schema` before constructing a `DataQueryV1` AST. Treat its
+4. Call `sigmarail_core_query_schema` before constructing a `DataQueryV1` AST. Treat its
    result as the authority for supported AST fields and constraints.
-4. Call `sigmarail_core_query` with only the required fields in `query.select`, explicit
+5. Call `sigmarail_core_query` with only the required fields in `query.select`, explicit
    date bounds for historical work, and a bounded row limit. The selected IDs determine
    the returned columns; there is no fixed result-column allowlist.
-5. Read coverage and result metadata before interpreting empty or sparse output as a real
+6. Read coverage and result metadata before interpreting empty or sparse output as a real
    zero. Schema validity does not establish source-data completeness.
+
+`sigmarail_readiness` returns stable codes such as `DATA_BACKEND_DISABLED`,
+`DATA_NOT_AVAILABLE`, `DATA_SOURCE_UNAVAILABLE`, and `PERMISSIONS_UNAVAILABLE`, with a
+recovery action. Keep the actual available date and counts attached to any analysis; never
+interpret unavailable or empty data as a zero-valued market observation.
 
 #### Screener workflow
 
@@ -97,12 +105,13 @@ AppTension GraphQL schema.
 
 To expose new GraphQL queries as MCP tools:
 
-1. Create a new `.graphql` file in the `operations/` directory
-2. Add the `@tool` directive comment with name and description:
+1. Create a new `.graphql` file in the `operations/` directory.
+2. Give the GraphQL operation the exact MCP tool name in `snake_case`. Apollo uses the
+   GraphQL operation name as the exposed tool name and the leading comment as its description:
 
 ```graphql
-# @tool(name: "my_tool_name", description: "Description for the AI to understand when to use this tool")
-query MyQuery($tenantId: ID!, $otherParam: String) {
+# Describe when an agent should use this tool, its required workflow, and important safety or coverage limits.
+query my_tool_name($tenantId: ID!, $otherParam: String) {
   myQuery(tenantId: $tenantId, otherParam: $otherParam) {
     field1
     field2
@@ -110,7 +119,8 @@ query MyQuery($tenantId: ID!, $otherParam: String) {
 }
 ```
 
-3. Restart the MCP server to pick up the new operations
+3. Validate the tool name and description with MCP `tools/list`, then restart the MCP server
+   to pick up the new operation.
 
 ### Security
 

@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_catalog_join_paths", description: "List declared core dataset join relationships, optionally filtered by source and destination IDs.")
-query GetSigmaRailCatalogJoinPaths($tenantId: ID!, $fromEntity: String, $toEntity: String) {
+# List declared core dataset join relationships, optionally filtered by source and destination IDs.
+query sigmarail_catalog_join_paths($tenantId: ID!, $fromEntity: String, $toEntity: String) {
   sigmarailCatalogJoinPaths(tenantId: $tenantId, fromEntity: $fromEntity, toEntity: $toEntity)
 }

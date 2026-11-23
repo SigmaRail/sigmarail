@@ -1,5 +1,5 @@
-# @tool(name: "delete_crud_demo_item", description: "Delete a CRUD demo item. Requires id and tenantId. Always confirm with the user before deleting.")
-mutation DeleteCrudDemoItem($input: DeleteCrudDemoItemMutationInput!) {
+# Delete a CRUD demo item. Requires id and tenantId. Always confirm with the user before deleting.
+mutation delete_crud_demo_item($input: DeleteCrudDemoItemMutationInput!) {
   deleteCrudDemoItem(input: $input) {
     deletedIds
   }

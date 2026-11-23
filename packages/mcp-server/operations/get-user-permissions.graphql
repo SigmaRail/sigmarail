@@ -1,5 +1,5 @@
-# @tool(name: "get_user_permissions", description: "Inspect the authenticated user's permission codes and organization role for a tenant when an operation's authorization requirements need clarification. Use get_user_tenants first to discover selectable tenants; this tool is supplementary because tenant membership is checked by the server on every call. If a required permission is absent, explain the access gap instead of retrying the protected action.")
-query GetUserPermissions($tenantId: ID!) {
+# Inspect the authenticated user's permission codes and organization role for a tenant when an operation's authorization requirements need clarification. Use get_user_tenants first to discover selectable tenants; this tool is supplementary because tenant membership is checked by the server on every call. If a required permission is absent, explain the access gap instead of retrying the protected action.
+query get_user_permissions($tenantId: ID!) {
   currentUserPermissions(tenantId: $tenantId)
   currentUserOrganizationRoles(tenantId: $tenantId) {
     id

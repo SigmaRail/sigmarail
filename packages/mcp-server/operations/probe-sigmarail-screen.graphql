@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_screen_probe", description: "Diagnose a canonical UniverseQueryV1 pipeline by inspecting stage-prefix results or comparing point-in-time membership and measures. Use this when screen membership changes unexpectedly; provide explicit dates and interpret the returned stage/count evidence before attributing a cause to source data.")
-query ProbeSigmaRailScreen($tenantId: ID!, $input: GenericScalar!) {
+# Diagnose a canonical UniverseQueryV1 pipeline by inspecting stage-prefix results or comparing point-in-time membership and measures. Use this when screen membership changes unexpectedly; provide explicit dates and interpret the returned stage/count evidence before attributing a cause to source data.
+query sigmarail_screen_probe($tenantId: ID!, $input: GenericScalar!) {
   sigmarailScreenProbe(tenantId: $tenantId, input: $input)
 }

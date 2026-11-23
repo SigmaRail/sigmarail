@@ -1,5 +1,5 @@
-# @tool(name: "get_crud_demo_item", description: "Get details of a specific CRUD demo item by ID. Use when the user asks about a particular item or wants to view/edit a specific one.")
-query GetCrudDemoItem($id: ID!, $tenantId: ID!) {
+# Get details of a specific CRUD demo item by ID. Use when the user asks about a particular item or wants to view/edit a specific one.
+query get_crud_demo_item($id: ID!, $tenantId: ID!) {
   crudDemoItem(id: $id, tenantId: $tenantId) {
     id
     name

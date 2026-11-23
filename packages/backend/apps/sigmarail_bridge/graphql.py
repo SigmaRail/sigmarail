@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone as datetime_timezone
 import json
+import logging
 from importlib.resources import files
 
 import graphene
 from graphene.types.generic import GenericScalar
+from django.conf import settings
+from django.utils import timezone
 from graphql_relay import from_global_id
 from rest_framework.exceptions import ValidationError
 
 from apps.multitenancy.middleware import get_current_tenant_with_membership_check
 from .core_data import _clickhouse_client, _preview_json_value
+
+logger = logging.getLogger(__name__)
 
 
 def _authorize_tenant(info, tenant_id):
@@ -61,6 +66,14 @@ class SigmaRailStockSnapshot(graphene.ObjectType):
 
 
 class Query(graphene.ObjectType):
+    sigmarail_readiness = GenericScalar(
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Check authenticated tenant access, effective permission codes, and read-only ClickHouse "
+            "coverage for the latest price and market-context sessions. Returns actionable status codes; "
+            "an unavailable dataset is never represented as a zero-valued market result."
+        ),
+    )
     sigmarail_core_datasets = GenericScalar(
         tenant_id=graphene.ID(required=True),
         description="List schema-registered SigmaRail datasets, grains, time semantics, and lineage roots.",
@@ -317,6 +330,131 @@ class Query(graphene.ObjectType):
     )
 
     @staticmethod
+    def resolve_sigmarail_readiness(root, info, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        user = info.context.user
+        from apps.multitenancy.models import get_user_permissions_for_tenant
+
+        checked_at = datetime.now(datetime_timezone.utc).isoformat()
+        try:
+            permission_codes = sorted(get_user_permissions_for_tenant(user, tenant))
+        except Exception:
+            logger.exception("SigmaRail readiness permission lookup failed")
+            permission_codes = []
+            permission_status = {
+                "status": "unavailable",
+                "code": "PERMISSIONS_UNAVAILABLE",
+                "action": "Retry this check; do not infer access to protected actions.",
+            }
+        else:
+            permission_status = {"status": "available", "code": None}
+
+        readiness = {
+            "checked_at": checked_at,
+            "tenant_id": str(tenant.pk),
+            "overall_status": "ready",
+            "authentication": {"status": "authenticated", "code": None},
+            "permissions": {**permission_status, "codes": permission_codes},
+            "data": [],
+        }
+        if not settings.SIGMARAIL_CLICKHOUSE_ENABLED:
+            readiness["overall_status"] = "degraded"
+            readiness["data"] = [
+                {
+                    "dataset_id": dataset_id,
+                    "status": "unavailable",
+                    "code": "DATA_BACKEND_DISABLED",
+                    "action": "Enable SigmaRail's native read-only ClickHouse path before using data tools.",
+                }
+                for dataset_id in (
+                    "sigmarail.core.screener_price_tech_daily",
+                    "sigmarail.core.market_context_daily",
+                )
+            ]
+            return readiness
+
+        client = None
+        try:
+            from .core_data import _clickhouse_client
+
+            client = _clickhouse_client()
+            datasets = (
+                ("sigmarail.core.screener_price_tech_daily", "screener_price_tech_daily", True),
+                ("sigmarail.core.market_context_daily", "market_context_daily", False),
+            )
+            for dataset_id, table_name, has_ticker in datasets:
+                latest_result = client.query(f"SELECT max(date) FROM {table_name}")
+                latest_date = latest_result.result_rows[0][0] if latest_result.result_rows else None
+                if latest_date is None or str(latest_date) in {"1970-01-01", "0000-00-00"}:
+                    readiness["data"].append(
+                        {
+                            "dataset_id": dataset_id,
+                            "status": "unavailable",
+                            "latest_available_date": None,
+                            "row_count": 0,
+                            "symbol_count": 0 if has_ticker else None,
+                            "code": "DATA_NOT_AVAILABLE",
+                            "action": (
+                                "Check the loader/populate run and source coverage; "
+                                "do not treat missing data as zero."
+                            ),
+                        }
+                    )
+                    readiness["overall_status"] = "degraded"
+                    continue
+
+                if has_ticker:
+                    coverage_result = client.query(
+                        "SELECT count(), uniqExact(ticker) "
+                        "FROM screener_price_tech_daily FINAL WHERE date = {latest:Date}",
+                        parameters={"latest": latest_date},
+                    )
+                else:
+                    coverage_result = client.query(
+                        "SELECT count() FROM market_context_daily FINAL WHERE date = {latest:Date}",
+                        parameters={"latest": latest_date},
+                    )
+                counts = coverage_result.result_rows[0] if coverage_result.result_rows else (
+                    (0, 0) if has_ticker else (0,)
+                )
+                row_count = int(counts[0] or 0)
+                symbol_count = int(counts[1] or 0) if has_ticker else None
+                readiness["data"].append(
+                    {
+                        "dataset_id": dataset_id,
+                        "status": "available" if row_count else "unavailable",
+                        "latest_available_date": str(latest_date),
+                        "calendar_days_old": max((timezone.localdate() - date.fromisoformat(str(latest_date))).days, 0),
+                        "row_count": row_count,
+                        "symbol_count": symbol_count,
+                        "code": None if row_count else "DATA_NOT_AVAILABLE",
+                        "action": None if row_count else (
+                            "Check population for the reported date; "
+                            "do not infer a zero-valued result."
+                        ),
+                    }
+                )
+                if not row_count:
+                    readiness["overall_status"] = "degraded"
+        except Exception:
+            logger.exception("SigmaRail readiness data probe failed")
+            readiness["overall_status"] = "degraded"
+            readiness["data_error"] = {
+                "status": "unavailable",
+                "code": "DATA_SOURCE_UNAVAILABLE",
+                "action": (
+                    "Retry later or inspect backend and ClickHouse health; "
+                    "do not interpret missing results as zero."
+                ),
+            }
+        finally:
+            if client is not None:
+                client.close()
+        if permission_status["status"] != "available":
+            readiness["overall_status"] = "degraded"
+        return readiness
+
+    @staticmethod
     def resolve_sigmarail_core_datasets(root, info, tenant_id):
         _authorize_tenant(info, tenant_id)
         from sigmarail.query import list_datasets
@@ -355,9 +493,22 @@ class Query(graphene.ObjectType):
             # before opening a ClickHouse connection.
             compile_query(parsed_query)
         except (PydanticValidationError, ValueError) as exc:
-            return {"error": str(exc), "code": "invalid_query"}
-
-        client = _clickhouse_client()
+            return {
+                "error": str(exc),
+                "code": "invalid_query",
+                "error_code": "INVALID_SPEC",
+                "action": "Correct the DataQueryV1 fields using sigmarail_core_query_schema, then retry.",
+            }
+        try:
+            client = _clickhouse_client()
+        except Exception:
+            logger.exception("SigmaRail ClickHouse client initialization failed")
+            return {
+                "error": "The SigmaRail data service is unavailable.",
+                "code": "query_failed",
+                "error_code": "DATA_SOURCE_UNAVAILABLE",
+                "action": "Call sigmarail_readiness and retry only after the data service is available.",
+            }
         try:
             return query_dataset(parsed_query, client=client)
         finally:

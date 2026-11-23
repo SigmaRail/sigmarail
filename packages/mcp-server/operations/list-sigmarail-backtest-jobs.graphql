@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_backtest_jobs", description: "List backtest jobs owned by the selected tenant, including status and stored progress.")
-query ListSigmaRailBacktestJobs($tenantId: ID!, $limit: Int, $status: String) {
+# List backtest jobs owned by the selected tenant, including status and stored progress.
+query sigmarail_backtest_jobs($tenantId: ID!, $limit: Int, $status: String) {
   sigmarailBacktestJobs(tenantId: $tenantId, limit: $limit, status: $status)
 }

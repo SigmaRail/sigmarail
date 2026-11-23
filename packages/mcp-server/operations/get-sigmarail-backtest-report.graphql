@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_backtest_report", description: "Read the stored analytical report for a run visible to the selected tenant. First discover runs with sigmarail_backtest_runs and use the returned run ID; PostgreSQL ownership is checked before report artifacts are read. Treat report timestamps and strategy lineage as part of the evidence, and do not infer unrecorded decision explanations.")
-query GetSigmaRailBacktestReport($tenantId: ID!, $runId: String!) {
+# Read the stored analytical report for a run visible to the selected tenant. First discover runs with sigmarail_backtest_runs and use the returned run ID; PostgreSQL ownership is checked before report artifacts are read. Treat report timestamps and strategy lineage as part of the evidence, and do not infer unrecorded decision explanations.
+query sigmarail_backtest_report($tenantId: ID!, $runId: String!) {
   sigmarailBacktestReport(tenantId: $tenantId, runId: $runId)
 }

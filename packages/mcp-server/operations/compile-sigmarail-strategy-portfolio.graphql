@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_compile_portfolio", description: "Compile a canonical PortfolioDocument AST into a LEAN-compatible spec for inspection. Retrieve sigmarail_strategy_portfolio_schema first and use canonical position fields. This is a preview only; it does not persist the portfolio, start a backtest, or place orders.")
-query CompileSigmaRailStrategyPortfolio($tenantId: ID!, $portfolio: GenericScalar!) {
+# Compile a canonical PortfolioDocument AST into a LEAN-compatible spec for inspection. Retrieve sigmarail_strategy_portfolio_schema first and use canonical position fields. This is a preview only; it does not persist the portfolio, start a backtest, or place orders.
+query sigmarail_strategy_compile_portfolio($tenantId: ID!, $portfolio: GenericScalar!) {
   sigmarailStrategyCompilePortfolio(tenantId: $tenantId, portfolio: $portfolio)
 }

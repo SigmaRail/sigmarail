@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_screen_presets", description: "List installed named screen presets supported by SigmaRail Core.")
-query GetSigmaRailScreenPresets($tenantId: ID!) {
+# List installed named screen presets supported by SigmaRail Core.
+query sigmarail_screen_presets($tenantId: ID!) {
   sigmarailScreenPresets(tenantId: $tenantId)
 }

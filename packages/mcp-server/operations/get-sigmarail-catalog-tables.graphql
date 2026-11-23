@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_catalog_tables", description: "Discover SigmaRail registered datasets and declared join relationships.")
-query GetSigmaRailCatalogTables($tenantId: ID!) {
+# Discover SigmaRail registered datasets and declared join relationships.
+query sigmarail_catalog_tables($tenantId: ID!) {
   sigmarailCatalogTables(tenantId: $tenantId)
 }

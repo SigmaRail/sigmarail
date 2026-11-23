@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from unittest.mock import Mock
 
 import pytest
 
@@ -77,6 +78,36 @@ def test_compile_query_rejects_undeclared_join() -> None:
 
     with pytest.raises(ValueError, match="not declared"):
         compile_query(query)
+
+
+def test_query_dataset_returns_actionable_invalid_spec_code() -> None:
+    from sigmarail.query import query_dataset
+
+    result = query_dataset({})
+
+    assert result["error_code"] == "INVALID_SPEC"
+    assert result["code"] == "invalid_query"
+    assert "sigmarail_core_query_schema" in result["action"]
+
+
+def test_query_dataset_returns_actionable_runtime_failure_code() -> None:
+    from sigmarail.query import query_dataset
+
+    query = DataQueryV1(
+        module_id="sigmarail.core",
+        dataset_id="sigmarail.core.screener_price_tech_daily",
+        select=[{"field_id": _field_id("screener_price_tech_daily", "ticker")}],
+        as_of_date=date(2026, 11, 20),
+    )
+    client = Mock()
+    client.query.side_effect = RuntimeError("private backend detail")
+
+    result = query_dataset(query, client=client)
+
+    assert result["error_code"] == "QUERY_FAILED"
+    assert result["code"] == "query_failed"
+    assert result["error"] == "The SigmaRail data query could not be completed."
+    assert "private backend detail" not in str(result)
 
 
 @pytest.mark.integration

@@ -427,9 +427,22 @@ def query_dataset(
     try:
         query = request if isinstance(request, DataQueryV1) else DataQueryV1.model_validate(request)
     except ValidationError as exc:
-        return {"error": str(exc), "code": "invalid_query"}
+        return {
+            "error": str(exc),
+            "code": "invalid_query",
+            "error_code": "INVALID_SPEC",
+            "action": "Correct the DataQueryV1 fields using sigmarail_core_query_schema, then retry.",
+        }
     try:
         sql, params = compile_query(query, total_limit=total_limit, limit_per_date=limit_per_date)
+    except (TypeError, ValueError) as exc:
+        return {
+            "error": str(exc),
+            "code": "invalid_query",
+            "error_code": "INVALID_SPEC",
+            "action": "Correct the DataQueryV1 fields using sigmarail_core_query_schema, then retry.",
+        }
+    try:
         if client is None:
             from sigmarail.database import get_client
 
@@ -449,5 +462,16 @@ def query_dataset(
             "rows": rows,
             "limit": query.limit,
         }
-    except Exception as exc:  # returned as MCP/API envelope; no mutation method is called
-        return {"error": str(exc), "code": "query_failed"}
+    except Exception:  # returned as MCP/API envelope; no mutation method is called
+        import logging
+
+        logging.getLogger(__name__).exception("SigmaRail core data query failed")
+        return {
+            "error": "The SigmaRail data query could not be completed.",
+            "code": "query_failed",
+            "error_code": "QUERY_FAILED",
+            "action": (
+                "Check sigmarail_readiness. If the data service is available, inspect the query "
+                "and retry only after correcting its inputs."
+            ),
+        }

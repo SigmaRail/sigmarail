@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_presets", description: "List canonical built-in SigmaRail strategy presets.")
-query GetSigmaRailStrategyPresets($tenantId: ID!) {
+# List canonical built-in SigmaRail strategy presets.
+query sigmarail_strategy_presets($tenantId: ID!) {
   sigmarailStrategyPresets(tenantId: $tenantId)
 }

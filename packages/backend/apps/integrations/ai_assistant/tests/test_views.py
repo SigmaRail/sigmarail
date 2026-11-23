@@ -98,6 +98,7 @@ class TestChatGPTMCPProxyView:
                 'resultType': 'complete',
                 'supportedVersions': ['2025-11-25', '2026-07-28'],
                 'capabilities': {'tools': {}},
+                'instructions': 'Upstream workflow schema is authoritative.',
             },
         }
         upstream = httpx.Response(200, json=upstream_payload)
@@ -124,11 +125,54 @@ class TestChatGPTMCPProxyView:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()['result']['supportedVersions'] == ['2025-11-25', '2026-07-28']
         assert 'get_user_tenants' in response.json()['result']['instructions']
+        assert 'sigmarail_readiness' in response.json()['result']['instructions']
+        assert 'permission requirement needs clarification' in response.json()['result']['instructions']
+        assert 'Upstream workflow schema is authoritative.' in response.json()['result']['instructions']
         args, kwargs = mock_client.post.call_args
         assert args[0] == 'http://test-mcp-server:4000/mcp'
         assert kwargs['json']['method'] == 'server/discover'
         assert kwargs['headers']['Mcp-Protocol-Version'] == '2026-07-28'
         assert kwargs['headers']['Mcp-Method'] == 'server/discover'
+
+    @patch('apps.integrations.ai_assistant.views.httpx.Client')
+    def test_tools_list_preserves_readiness_tool_and_replaces_tenant_id_with_selector(self, mock_client_class):
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.__exit__.return_value = False
+        mock_client.post.return_value = httpx.Response(
+            200,
+            json={
+                'jsonrpc': '2.0',
+                'id': 2,
+                'result': {
+                    'tools': [
+                        {
+                            'name': 'sigmarail_readiness',
+                            'description': 'Check data readiness and effective permission codes.',
+                            'inputSchema': {
+                                'type': 'object',
+                                'properties': {'tenantId': {'type': 'string'}},
+                                'required': ['tenantId'],
+                            },
+                        }
+                    ]
+                },
+            },
+        )
+        mock_client_class.return_value = mock_client
+
+        response = self.client.post(
+            self.url,
+            {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list', 'params': {}},
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        tool = response.json()['result']['tools'][0]
+        assert tool['name'] == 'sigmarail_readiness'
+        assert 'tenantId' not in tool['inputSchema']['properties']
+        assert 'tenantContext' in tool['inputSchema']['properties']
+        assert tool['inputSchema']['required'] == []
 
     @patch('apps.integrations.ai_assistant.views.httpx.Client')
     @override_settings(MCP_SERVER_URL='http://test-mcp-server:4000')

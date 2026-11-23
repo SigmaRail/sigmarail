@@ -1,5 +1,5 @@
-# @tool(name: "create_crud_demo_item", description: "Create a new CRUD demo item. Requires name and tenantId. Use when the user wants to add a new item.")
-mutation CreateCrudDemoItem($input: CreateCrudDemoItemMutationInput!) {
+# Create a new CRUD demo item. Requires name and tenantId. Use when the user wants to add a new item.
+mutation create_crud_demo_item($input: CreateCrudDemoItemMutationInput!) {
   createCrudDemoItem(input: $input) {
     crudDemoItem {
       id

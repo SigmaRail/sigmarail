@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_position_fields", description: "List canonical position-field bindings available to strategy expressions.")
-query GetSigmaRailStrategyPositionFields($tenantId: ID!) {
+# List canonical position-field bindings available to strategy expressions.
+query sigmarail_strategy_position_fields($tenantId: ID!) {
   sigmarailStrategyPositionFields(tenantId: $tenantId)
 }

@@ -36,6 +36,9 @@ that will be handled by the multipart request spec
 """
 scalar Upload
 type Query {
+  "Check tenant access, effective permissions, and latest read-only market-data coverage."
+  sigmarailReadiness(tenantId: ID!): GenericScalar
+
   "List schema-registered SigmaRail datasets, grains, time semantics, and lineage roots."
   sigmarailCoreDatasets(tenantId: ID!): GenericScalar
   "Describe one registered dataset and its stable selectable field IDs."

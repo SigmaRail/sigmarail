@@ -1,0 +1,4 @@
+# Check tenant authorization, effective permission codes, and latest price/market-context data coverage before research. Returns actual available dates, row/symbol counts, and actionable error codes. Missing data is never a zero-valued result.
+query sigmarail_readiness($tenantId: ID!) {
+  sigmarailReadiness(tenantId: $tenantId)
+}

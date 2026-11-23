@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_compile_preset", description: "Compile one built-in SigmaRail strategy preset to its LEAN-compatible spec.")
-query CompileSigmaRailStrategyPreset($tenantId: ID!, $presetId: String!) {
+# Compile one built-in SigmaRail strategy preset to its LEAN-compatible spec.
+query sigmarail_strategy_compile_preset($tenantId: ID!, $presetId: String!) {
   sigmarailStrategyCompilePreset(tenantId: $tenantId, presetId: $presetId)
 }

@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_core_query_schema", description: "Before calling sigmarail_core_query, retrieve this authoritative DataQueryV1 schema. It defines the allowed dataset, select field IDs, filters, joins, date bounds, expressions, and limits. Use the schema to construct only the fields needed; the selected IDs determine the returned columns. Schema discovery does not prove that a dataset has rows for a requested date.")
-query GetSigmaRailCoreQuerySchema($tenantId: ID!) {
+# Before calling sigmarail_core_query, retrieve this authoritative DataQueryV1 schema. It defines the allowed dataset, select field IDs, filters, joins, date bounds, expressions, and limits. Use the schema to construct only the fields needed; the selected IDs determine the returned columns. Schema discovery does not prove that a dataset has rows for a requested date.
+query sigmarail_core_query_schema($tenantId: ID!) {
   sigmarailCoreQuerySchema(tenantId: $tenantId)
 }

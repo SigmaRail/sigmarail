@@ -1,4 +1,4 @@
-# @tool(name: "sigmarail_strategy_lint", description: "Check a PipelineDocument for canonical validation failures and runtime-contract conflicts. Retrieve the pipeline schema before authoring; use lint to identify incompatible slot or runtime assumptions, then validate and compile for detailed results. This is advisory analysis and does not save or execute a strategy.")
-query LintSigmaRailStrategy($tenantId: ID!, $pipeline: GenericScalar!) {
+# Check a PipelineDocument for canonical validation failures and runtime-contract conflicts. Retrieve the pipeline schema before authoring; use lint to identify incompatible slot or runtime assumptions, then validate and compile for detailed results. This is advisory analysis and does not save or execute a strategy.
+query sigmarail_strategy_lint($tenantId: ID!, $pipeline: GenericScalar!) {
   sigmarailStrategyLint(tenantId: $tenantId, pipeline: $pipeline)
 }

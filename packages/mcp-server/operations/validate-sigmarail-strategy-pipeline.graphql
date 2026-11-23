@@ -1,5 +1,5 @@
-# @tool(name: "sigmarail_strategy_validate_pipeline", description: "Validate a tenant-scoped PipelineDocument with the canonical SigmaRail Spec validator. Retrieve sigmarail_strategy_pipeline_schema before composing an AST; use factor and setup-recipe discovery for supported semantic references. Review returned errors and warnings, then compile only after validation. This does not save, launch, or execute the strategy.")
-query ValidateSigmaRailStrategyPipeline(
+# Validate a tenant-scoped PipelineDocument with the canonical SigmaRail Spec validator. Retrieve sigmarail_strategy_pipeline_schema before composing an AST; use factor and setup-recipe discovery for supported semantic references. Review returned errors and warnings, then compile only after validation. This does not save, launch, or execute the strategy.
+query sigmarail_strategy_validate_pipeline(
   $tenantId: ID!
   $pipeline: GenericScalar!
 ) {
