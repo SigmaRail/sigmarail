@@ -51,8 +51,9 @@ jobs:
     steps:
       - name: Prepare isolated Docker credentials
         run: |
-          docker_config_dir="$RUNNER_TEMP/sigmarail-docker-auth"
+          docker_config_dir="$RUNNER_TEMP/sigmarail-docker-auth-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p "$docker_config_dir"
+          printf '{}\n' > "$docker_config_dir/config.json"
           printf 'DOCKER_CONFIG=%s\n' "$docker_config_dir" >> "$GITHUB_ENV"
 
       - name: Check out SigmaRail
