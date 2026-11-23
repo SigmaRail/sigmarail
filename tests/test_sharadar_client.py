@@ -81,14 +81,14 @@ def test_download_pagination_writes_retail_rows_unchanged(mock_get, tmp_path):
 
 
 @patch("sigmarail.sharadar_client.requests.get")
-def test_download_tickers_preserves_retail_table_values(mock_get, tmp_path):
+def test_download_tickers_preserves_source_table_identity(mock_get, tmp_path):
     page1 = MagicMock()
     page1.raise_for_status = MagicMock()
     page1.json.return_value = {
         "count": 1,
         "data": [
             {
-                "table": "stocks",
+                "table": "SEP",
                 "permaticker": "1",
                 "ticker": "AAPL",
                 "name": "Apple",
@@ -111,5 +111,5 @@ def test_download_tickers_preserves_retail_table_values(mock_get, tmp_path):
     )
     assert n == 1
     df = pd.read_csv(out)
-    assert df.iloc[0]["table"] == "stocks"
+    assert df.iloc[0]["table"] == "SEP"
     assert "figi" in df.columns

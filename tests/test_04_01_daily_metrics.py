@@ -49,11 +49,11 @@ def sep_data(global_client: clickhouse_connect.driver.Client) -> pd.DataFrame:
     query = f"""
     SELECT * FROM (
         SELECT p.* FROM sep AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
         WHERE p.date BETWEEN toDate('{start_date.strftime('%Y-%m-%d')}') - INTERVAL 400 DAY AND toDate('{end_date.strftime('%Y-%m-%d')}')
         UNION ALL
         SELECT p.* FROM sfp AS p FINAL
-        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+        INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
         WHERE p.date BETWEEN toDate('{start_date.strftime('%Y-%m-%d')}') - INTERVAL 400 DAY AND toDate('{end_date.strftime('%Y-%m-%d')}')
     ) ORDER BY ticker, date
     """
@@ -275,12 +275,12 @@ class TestEMACalculations:
                 FROM (
                     SELECT p.ticker, p.date, p.open, p.high, p.low, p.close, p.volume, p.closeadj, p.closeunadj
                     FROM sep AS p FINAL
-                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
                     WHERE p.date BETWEEN (SELECT start_date FROM lookback_start_date) AND toDate('{chunk_end_date_str}')
                     UNION ALL
                     SELECT p.ticker, p.date, p.open, p.high, p.low, p.close, p.volume, p.closeadj, p.closeunadj
                     FROM sfp AS p FINAL
-                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
                     WHERE p.date BETWEEN (SELECT start_date FROM lookback_start_date) AND toDate('{chunk_end_date_str}')
                 ) p
                 JOIN daily_price_sequence s ON p.date = s.date

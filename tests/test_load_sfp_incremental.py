@@ -68,12 +68,13 @@ def test_tickers_download_pulls_stocks_and_funds(
         assert code == 'TICKERS'
         assert params is not None
         assert params['table'] in ('stocks', 'funds')
-        retail_table = params['table']
+        query_table = params['table']
+        source_table = {'stocks': 'SEP', 'funds': 'SFP'}[query_table]
         pd.DataFrame(
             {
-                'table': [retail_table],
-                'ticker': ['AAA' if retail_table == 'stocks' else 'BBB'],
-                'permaticker': [1 if retail_table == 'stocks' else 2],
+                'table': [source_table],
+                'ticker': ['AAA' if query_table == 'stocks' else 'BBB'],
+                'permaticker': [1 if query_table == 'stocks' else 2],
                 'figi': [''],
                 'lastupdated': ['2026-01-01'],
             }
@@ -92,4 +93,4 @@ def test_tickers_download_pulls_stocks_and_funds(
     seen = {call.kwargs['params']['table'] for call in mock_download.call_args_list}
     assert seen == {'stocks', 'funds'}
     df = pd.read_csv(out)
-    assert set(df['table']) == {'stocks', 'funds'}
+    assert set(df['table']) == {'SEP', 'SFP'}

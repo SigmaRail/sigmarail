@@ -156,10 +156,10 @@ class SurrogateRouter:
         self._build_reverse_map()
 
     def _load_catalog(self, client: Any = None) -> None:
-    """Query the configured ClickHouse etf_surrogate_catalog when available."""
+        """Query the configured ClickHouse etf_surrogate_catalog when available."""
         if client is None:
             try:
-                from vera.database import get_client
+                from sigmarail.database import get_client
                 client = get_client()
             except Exception:
                 client = None

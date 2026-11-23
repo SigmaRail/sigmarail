@@ -83,7 +83,7 @@ def test_synthetic_inputs_match_source_schemas_and_manifest():
 
         with (fixture_dir / "SHARADAR_TICKERS_SYNTHETIC.csv").open(encoding="utf-8", newline="") as stream:
             ticker_rows = list(csv.DictReader(stream))
-        assert Counter(row["table"] for row in ticker_rows) == {"stocks": 35, "funds": 16}
+        assert Counter(row["table"] for row in ticker_rows) == {"SEP": 35, "SFP": 16}
         assert Counter(row["category"] for row in ticker_rows) == {
             "Domestic Common Stock": 27,
             "Domestic Common Stock Primary Class": 8,

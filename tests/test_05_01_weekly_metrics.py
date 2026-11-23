@@ -276,11 +276,11 @@ class TestEMACalculations:
                     p.close
                 FROM (
                     SELECT p.ticker, p.date, p.close FROM sep AS p FINAL
-                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'stocks'
+                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SEP'
                     WHERE p.date BETWEEN toMonday(CAST('{chunk_start_date_str}' AS Date)) - INTERVAL 400 DAY AND toMonday(CAST('{chunk_end_date_str}' AS Date))
                     UNION ALL
                     SELECT p.ticker, p.date, p.close FROM sfp AS p FINAL
-                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'funds'
+                    INNER JOIN tickers AS t FINAL ON t.ticker = p.ticker AND t.`table` = 'SFP'
                     WHERE p.date BETWEEN toMonday(CAST('{chunk_start_date_str}' AS Date)) - INTERVAL 400 DAY AND toMonday(CAST('{chunk_end_date_str}' AS Date))
                 ) p
             ),

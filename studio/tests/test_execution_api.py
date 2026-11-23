@@ -142,6 +142,7 @@ def test_submit_immediate_with_lean_project() -> None:
         lean_project="VeraTradingLab",
         immediate=True,
         extra_env=None,
+        job_id=None,
     )
 
 

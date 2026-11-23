@@ -179,7 +179,11 @@ def generate_synthetic_dataset(destination: Path | str) -> dict:
             category = "IDX" if ticker in {"SPY", "QQQ"} else "ETF"
             scale = 6
         tickers.append({
-            "table": "funds" if index >= len(_STOCKS) else "stocks",
+            # Sharadar filters the TICKERS endpoint by "stocks" / "funds",
+            # but the returned dataset identity is SEP / SFP. The fixture must
+            # preserve that source contract because transforms route prices by
+            # the returned label.
+            "table": "SFP" if index >= len(_STOCKS) else "SEP",
             "permaticker": f"SYN{index + 1:04d}", "ticker": ticker,
             "name": f"Synthetic {ticker} Corporation", "exchange": "NYSE" if ticker in {"JPM", "XOM", "UNH"} else "NASDAQ",
             "isdelisted": "N", "category": category, "cusips": f"SYN{index:06d}", "figi": "",

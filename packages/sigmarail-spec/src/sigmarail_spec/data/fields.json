@@ -17494,7 +17494,7 @@
     },
     {
       "column": "pool",
-      "description": "Instrument classification provenance (tickers.table: stocks or funds). relative_strength_ranks percentiles are a single shared universe (the shared Sharadar universe); pool is informational for a future fund-segmented RS.",
+      "description": "Normalized instrument pool (stocks/funds) derived from Sharadar TICKERS labels SEP/SFP. relative_strength_ranks percentiles are a single shared universe; pool is informational for future fund-segmented RS.",
       "id": "sigmarail.field.relative_strength_base.pool.pool",
       "lineage_roots": [
         "sep",
@@ -17503,7 +17503,7 @@
       ],
       "metadata": {
         "computability": "sigmarail_native",
-        "definition": "Instrument classification provenance (tickers.table: stocks or funds). relative_strength_ranks percentiles are a single shared universe (the shared Sharadar universe); pool is informational for a future fund-segmented RS.",
+        "definition": "Normalized instrument pool (stocks/funds) derived from Sharadar TICKERS labels SEP/SFP. relative_strength_ranks percentiles are a single shared universe; pool is informational for future fund-segmented RS.",
         "id": "sigmarail.mart.relative_strength_base.pool",
         "kind": "concept",
         "title": "pool"
@@ -33096,7 +33096,7 @@
     },
     {
       "column": "table",
-      "description": "Table: Retail Sharadar table id (stocks, funds, fundamentals, …). Route prices via stocks vs funds, not ticker string alone.",
+      "description": "Sharadar dataset label returned in TICKERS (for example SEP and SFP). API request filters stocks/funds are not the values stored here.",
       "id": "sigmarail.field.tickers.table.table",
       "lineage_roots": [
         "tickers"

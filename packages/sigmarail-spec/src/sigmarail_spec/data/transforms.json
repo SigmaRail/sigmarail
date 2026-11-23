@@ -73,7 +73,7 @@
       ],
       "source_list_verified_by_sigmarail_generator": true,
       "sql_file": "src/sigmarail/sql/schema/007-schema-daily_prices.sql",
-      "sql_sha256": "1e444bb2d3b8298d3e3bcc846c2be7665cf61ecf186852fbfa9a43ec1110084f",
+      "sql_sha256": "e7855ff479a189016c8eac2679d83e254c87f38ddc1de7244c4c470ec66cdf1d",
       "target": "daily_prices",
       "view": "xform_daily_prices"
     },
@@ -184,7 +184,7 @@
       ],
       "source_list_verified_by_sigmarail_generator": true,
       "sql_file": "src/sigmarail/sql/schema/02-schema-daily_metrics.sql",
-      "sql_sha256": "4ca5599a4de5897fa67254aa8f0870000971349a0cb80fecec991ac9931d4563",
+      "sql_sha256": "809f6e5f07719d5e82079bf53b8f2641d78eb3ca66c22311803bfefb39dd57cc",
       "target": "daily_metrics",
       "view": "xform_daily_metrics"
     },
@@ -272,7 +272,7 @@
       ],
       "source_list_verified_by_sigmarail_generator": true,
       "sql_file": "src/sigmarail/sql/schema/04-schema-weekly-metrics.sql",
-      "sql_sha256": "d3d849d26067edb382825dbbf4c1fa0fcafeb7c457ccae10574d2bc6cb948d5d",
+      "sql_sha256": "9370dde0334f6a3378caa0ae372d59f682e3a0700ae7c23b29d55eeafdb76e61",
       "target": "weekly_metrics",
       "view": "xform_weekly_metrics"
     },
@@ -1088,7 +1088,7 @@
       ],
       "source_list_verified_by_sigmarail_generator": true,
       "sql_file": "src/sigmarail/sql/schema/48-schema-relative_strength_base.sql",
-      "sql_sha256": "ff53bc54d4c9250a3f836a00dfea96aaae801410635c635709a5a0bac732fce9",
+      "sql_sha256": "7a164fa3508ec4b8b3c9291aba2df7849949db3e17b1eb988d4a5a9f89ccf95e",
       "target": "relative_strength_base",
       "view": "xform_relative_strength_base"
     },
