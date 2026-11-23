@@ -48,31 +48,31 @@ validation output, then execute or preview.
 
 #### Data-query workflow
 
-1. Call `get_user_tenants` when the active tenant is not known, then call
-   `sigmarail_readiness` before research. It reports effective permission codes and latest
+1. Call `GetUserTenants` when the active tenant is not known, then call
+   `GetSigmaRailReadiness` before research. It reports effective permission codes and latest
    observed dates and row coverage for price and market-context data.
-2. Call `sigmarail_core_datasets` to discover registered datasets and their time semantics.
-3. Call `sigmarail_core_dataset` for the chosen dataset to inspect stable field IDs and
+2. Call `GetSigmaRailCoreDatasets` to discover registered datasets and their time semantics.
+3. Call `GetSigmaRailCoreDataset` for the chosen dataset to inspect stable field IDs and
    declared relationships.
-4. Call `sigmarail_core_query_schema` before constructing a `DataQueryV1` AST. Treat its
+4. Call `GetSigmaRailCoreQuerySchema` before constructing a `DataQueryV1` AST. Treat its
    result as the authority for supported AST fields and constraints.
-5. Call `sigmarail_core_query` with only the required fields in `query.select`, explicit
+5. Call `RunSigmaRailCoreQuery` with only the required fields in `query.select`, explicit
    date bounds for historical work, and a bounded row limit. The selected IDs determine
    the returned columns; there is no fixed result-column allowlist.
 6. Read coverage and result metadata before interpreting empty or sparse output as a real
    zero. Schema validity does not establish source-data completeness.
 
-`sigmarail_readiness` returns stable codes such as `DATA_BACKEND_DISABLED`,
+`GetSigmaRailReadiness` returns stable codes such as `DATA_BACKEND_DISABLED`,
 `DATA_NOT_AVAILABLE`, `DATA_SOURCE_UNAVAILABLE`, and `PERMISSIONS_UNAVAILABLE`, with a
 recovery action. Keep the actual available date and counts attached to any analysis; never
 interpret unavailable or empty data as a zero-valued market observation.
 
 #### Screener workflow
 
-Fetch `sigmarail_screen_schema` before authoring a `UniverseQueryV1` AST. Use catalog field
-IDs, call `sigmarail_screen_compile` to validate/compile without execution, then call
-`sigmarail_screen_preview` with an explicit `asOf` date and bounded `spec.select`/limit.
-Use `sigmarail_screen_sector_range` or `sigmarail_screen_probe` for historical membership
+Fetch `GetSigmaRailScreenSchema` before authoring a `UniverseQueryV1` AST. Use catalog field
+IDs, call `CompileSigmaRailScreen` to validate/compile without execution, then call
+`PreviewSigmaRailScreen` with an explicit `asOf` date and bounded `spec.select`/limit.
+Use `GetSigmaRailScreenSectorRange` or `ProbeSigmaRailScreen` for historical membership
 and stage-prefix analysis. Named preset discovery/preview is preferable when a suitable
 canonical preset already exists.
 
@@ -106,12 +106,12 @@ AppTension GraphQL schema.
 To expose new GraphQL queries as MCP tools:
 
 1. Create a new `.graphql` file in the `operations/` directory.
-2. Give the GraphQL operation the exact MCP tool name in `snake_case`. Apollo uses the
+2. Give the GraphQL operation its stable public MCP tool name in `PascalCase`. Apollo uses the
    GraphQL operation name as the exposed tool name and the leading comment as its description:
 
 ```graphql
 # Describe when an agent should use this tool, its required workflow, and important safety or coverage limits.
-query my_tool_name($tenantId: ID!, $otherParam: String) {
+query MyToolName($tenantId: ID!, $otherParam: String) {
   myQuery(tenantId: $tenantId, otherParam: $otherParam) {
     field1
     field2
@@ -227,11 +227,11 @@ curl -X POST http://localhost:5001/api/ai-assistant/tenants/{tenant_id}/chat/ \
 
 ## Identity, tenant access, and permissions
 
-Start with `get_user_tenants` when the user's tenant is not already known. The authenticated
+Start with `GetUserTenants` when the user's tenant is not already known. The authenticated
 proxy discovers accepted memberships and enforces tenant access on every call; for a single
 tenant it selects that tenant automatically. For multiple tenants, ask which tenant by name
-and pass only an ID returned by `get_user_tenants` as `tenantContext`. Never ask the user to
-look up an ID. `get_user_permissions` is supplementary when the authorization requirements
+and pass only an ID returned by `GetUserTenants` as `tenantContext`. Never ask the user to
+look up an ID. `GetUserPermissions` is supplementary when the authorization requirements
 of a particular operation are unclear; it is not a prerequisite for every tool call.
 
 ### Permission System
@@ -263,8 +263,8 @@ Example response when user lacks access:
 
 | Tool | Use |
 | --- | --- |
-| `get_user_tenants` | Discover accepted tenants when the user's tenant is not already known; choose by name if multiple are available. |
-| `get_user_permissions` | Inspect a tenant's permission codes when a specific tool's authorization needs clarification. It is supplementary, not a required first call. |
+| `GetUserTenants` | Discover accepted tenants when the user's tenant is not already known; choose by name if multiple are available. |
+| `GetUserPermissions` | Inspect a tenant's permission codes when a specific tool's authorization needs clarification. It is supplementary, not a required first call. |
 
 ## Troubleshooting
 
@@ -283,11 +283,11 @@ Example response when user lacks access:
 ### GraphQL operations not being recognized
 
 1. Verify the `.graphql` files are in the `operations/` directory
-2. Check that each query has a `# @tool(...)` comment
+2. Check that each query has a descriptive leading comment and the intended stable GraphQL operation name
 3. Restart the MCP server after adding new operations
 4. Send `initialize` and `tools/list` through the configured gateway. Confirm named tools such
-   as `sigmarail_core_datasets`, `sigmarail_core_query_schema`, `sigmarail_screen_schema`, and
-   `sigmarail_strategy_pipeline_schema` are present. If the client only shows a generic GraphQL
+   as `GetSigmaRailCoreDatasets`, `GetSigmaRailCoreQuerySchema`, `GetSigmaRailScreenSchema`, and
+   `GetSigmaRailStrategyPipelineSchema` are present. If the client only shows a generic GraphQL
    executor or an older AppTension tool set, check the configured server URL and refresh/recreate
    the client's cached tool catalog; do not assume a successful OAuth login means tool discovery
    succeeded.

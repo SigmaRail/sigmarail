@@ -1,4 +1,4 @@
 # Discover canonical setup expression recipes that can be included in a composed PipelineDocument. Use the returned recipe IDs instead of inventing an unsupported recipe; retrieve the pipeline schema and validate the composed document before compiling.
-query sigmarail_strategy_setup_recipes($tenantId: ID!) {
+query GetSigmaRailStrategySetupRecipes($tenantId: ID!) {
   sigmarailStrategySetupRecipes(tenantId: $tenantId)
 }

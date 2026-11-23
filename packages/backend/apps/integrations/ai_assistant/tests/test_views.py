@@ -125,7 +125,7 @@ class TestChatGPTMCPProxyView:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()['result']['supportedVersions'] == ['2025-11-25', '2026-07-28']
         assert 'get_user_tenants' in response.json()['result']['instructions']
-        assert 'sigmarail_readiness' in response.json()['result']['instructions']
+        assert 'GetSigmaRailReadiness' in response.json()['result']['instructions']
         assert 'permission requirement needs clarification' in response.json()['result']['instructions']
         assert 'Upstream workflow schema is authoritative.' in response.json()['result']['instructions']
         args, kwargs = mock_client.post.call_args
@@ -147,7 +147,7 @@ class TestChatGPTMCPProxyView:
                 'result': {
                     'tools': [
                         {
-                            'name': 'sigmarail_readiness',
+                            'name': 'GetSigmaRailReadiness',
                             'description': 'Check data readiness and effective permission codes.',
                             'inputSchema': {
                                 'type': 'object',
@@ -169,7 +169,7 @@ class TestChatGPTMCPProxyView:
 
         assert response.status_code == status.HTTP_200_OK
         tool = response.json()['result']['tools'][0]
-        assert tool['name'] == 'sigmarail_readiness'
+        assert tool['name'] == 'GetSigmaRailReadiness'
         assert 'tenantId' not in tool['inputSchema']['properties']
         assert 'tenantContext' in tool['inputSchema']['properties']
         assert tool['inputSchema']['required'] == []

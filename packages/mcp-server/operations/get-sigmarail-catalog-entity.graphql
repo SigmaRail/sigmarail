@@ -1,4 +1,4 @@
 # Describe one registered SigmaRail dataset by stable ID or physical table name.
-query sigmarail_catalog_entity($tenantId: ID!, $entity: String!) {
+query GetSigmaRailCatalogEntity($tenantId: ID!, $entity: String!) {
   sigmarailCatalogEntity(tenantId: $tenantId, entity: $entity)
 }

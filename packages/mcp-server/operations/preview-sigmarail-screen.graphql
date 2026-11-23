@@ -1,4 +1,4 @@
-# Run a bounded point-in-time UniverseQueryV1 screen for the required asOf date. Retrieve sigmarail_screen_schema first, then validate with sigmarail_screen_compile when composing a new AST. Choose returned columns in spec.select and keep the result limit appropriate to the question. This reports screen output, not proof that all source data is complete for the date.
-query sigmarail_screen_preview($tenantId: ID!, $spec: GenericScalar!, $asOf: String!) {
+# Run a bounded point-in-time UniverseQueryV1 screen for the required asOf date. Retrieve GetSigmaRailScreenSchema first, then validate with CompileSigmaRailScreen when composing a new AST. Choose returned columns in spec.select and keep the result limit appropriate to the question. This reports screen output, not proof that all source data is complete for the date.
+query PreviewSigmaRailScreen($tenantId: ID!, $spec: GenericScalar!, $asOf: String!) {
   sigmarailScreenPreview(tenantId: $tenantId, spec: $spec, asOf: $asOf)
 }

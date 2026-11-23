@@ -1,5 +1,5 @@
 # Get the current user's notifications. Returns notification type, creation time, read status, and associated data.
-query get_notifications($first: Int = 50) {
+query GetNotifications($first: Int = 50) {
   hasUnreadNotifications
   unreadNotificationsCount
   allNotifications(first: $first) {

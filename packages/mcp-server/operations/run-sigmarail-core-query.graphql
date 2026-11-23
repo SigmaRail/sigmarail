@@ -1,5 +1,5 @@
-# Execute a bounded, read-only DataQueryV1 AST. First discover datasets with sigmarail_core_datasets, inspect the chosen dataset with sigmarail_core_dataset, and retrieve sigmarail_core_query_schema. Put the exact stable field IDs to return in query.select; returned columns follow that selection. SigmaRail Spec validates filters, joins, date bounds, expressions, and limits before SigmaRail Core executes. Use explicit dates for historical analysis and inspect the result metadata for missing or sparse coverage.
-query sigmarail_core_query(
+# Execute a bounded, read-only DataQueryV1 AST. First discover datasets with GetSigmaRailCoreDatasets, inspect the chosen dataset with GetSigmaRailCoreDataset, and retrieve GetSigmaRailCoreQuerySchema. Put the exact stable field IDs to return in query.select; returned columns follow that selection. SigmaRail Spec validates filters, joins, date bounds, expressions, and limits before SigmaRail Core executes. Use explicit dates for historical analysis and inspect the result metadata for missing or sparse coverage.
+query RunSigmaRailCoreQuery(
   $tenantId: ID!
   $query: GenericScalar!
 ) {

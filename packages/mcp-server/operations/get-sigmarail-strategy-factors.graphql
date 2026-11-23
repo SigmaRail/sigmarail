@@ -1,4 +1,4 @@
 # List canonical semantic strategy factors and their field mappings.
-query sigmarail_strategy_factors($tenantId: ID!) {
+query GetSigmaRailStrategyFactors($tenantId: ID!) {
   sigmarailStrategyFactors(tenantId: $tenantId)
 }

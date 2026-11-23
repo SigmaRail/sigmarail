@@ -1,4 +1,4 @@
 # List installed named screen presets supported by SigmaRail Core.
-query sigmarail_screen_presets($tenantId: ID!) {
+query GetSigmaRailScreenPresets($tenantId: ID!) {
   sigmarailScreenPresets(tenantId: $tenantId)
 }

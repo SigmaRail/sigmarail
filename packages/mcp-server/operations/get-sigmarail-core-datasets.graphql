@@ -1,4 +1,4 @@
 # Discover SigmaRail's registered datasets, grains, time semantics, and lineage roots for the authenticated tenant.
-query sigmarail_core_datasets($tenantId: ID!) {
+query GetSigmaRailCoreDatasets($tenantId: ID!) {
   sigmarailCoreDatasets(tenantId: $tenantId)
 }

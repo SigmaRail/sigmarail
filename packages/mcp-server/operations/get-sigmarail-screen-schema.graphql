@@ -1,4 +1,4 @@
-# Retrieve the authoritative UniverseQueryV1 schema before authoring or changing a point-in-time screen. Use stable catalog field IDs and the schema's supported operators. Then call sigmarail_screen_compile to validate without running, or sigmarail_screen_preview for a bounded result at an explicit as-of date. Historical membership analysis uses sigmarail_screen_sector_range or sigmarail_screen_probe.
-query sigmarail_screen_schema($tenantId: ID!) {
+# Retrieve the authoritative UniverseQueryV1 schema before authoring or changing a point-in-time screen. Use stable catalog field IDs and the schema's supported operators. Then call CompileSigmaRailScreen to validate without running, or PreviewSigmaRailScreen for a bounded result at an explicit as-of date. Historical membership analysis uses GetSigmaRailScreenSectorRange or ProbeSigmaRailScreen.
+query GetSigmaRailScreenSchema($tenantId: ID!) {
   sigmarailScreenSchema(tenantId: $tenantId)
 }

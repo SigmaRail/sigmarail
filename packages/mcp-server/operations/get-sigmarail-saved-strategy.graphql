@@ -1,4 +1,4 @@
 # Read one tenant-owned or shared strategy document with AST, spec, and lineage.
-query sigmarail_strategy_saved_spec($tenantId: ID!, $irId: String!) {
+query GetSigmaRailSavedStrategy($tenantId: ID!, $irId: String!) {
   sigmarailStrategySavedSpec(tenantId: $tenantId, irId: $irId)
 }

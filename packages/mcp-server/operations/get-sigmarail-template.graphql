@@ -1,4 +1,4 @@
 # Load one canonical screener or strategy template including its AST document.
-query sigmarail_template($tenantId: ID!, $templateId: String!) {
+query GetSigmaRailTemplate($tenantId: ID!, $templateId: String!) {
   sigmarailTemplate(tenantId: $tenantId, templateId: $templateId)
 }

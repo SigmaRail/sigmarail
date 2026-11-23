@@ -1,5 +1,5 @@
 # Search and filter activity/audit logs for the tenant. Supports filters: entityType (e.g. CrudDemoItem, Tenant), actionType (CREATE, UPDATE, DELETE), actorEmail, fromDatetime, toDatetime, search (searches entity name, actor email, metadata). Use when the user asks about recent activity, audit trail, who did what, or changes.
-query get_action_logs(
+query GetActionLogs(
   $tenantId: ID!
   $entityType: String
   $actionType: String

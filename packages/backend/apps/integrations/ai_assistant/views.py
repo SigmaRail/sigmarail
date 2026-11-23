@@ -933,14 +933,14 @@ class ChatGPTMCPProxyView(MCPProxyView):
     }
     TENANT_ARGUMENT_KEYS = ("tenantContext", "tenant_context", "tenantId", "tenant_id")
     MCP_INSTRUCTIONS = (
-        "SigmaRail is connected as the authenticated user. Use get_user_tenants to discover "
+        "SigmaRail is connected as the authenticated user. Use GetUserTenants to discover "
         "the tenants this user may access. For tenant-scoped tools, pass tenantContext as the "
         "tenant ID returned by that tool when multiple tenants are available. If only one "
         "tenant is available, it is selected automatically. Never ask the user to find or "
         "supply a tenant ID; ask which tenant by name when the choice is ambiguous. "
-        "Tenant access is checked by the server on every call. Call sigmarail_readiness before "
+        "Tenant access is checked by the server on every call. Call GetSigmaRailReadiness before "
         "research to inspect effective permission codes and the latest price and market-context "
-        "coverage. Use get_user_permissions only when a specific permission requirement needs "
+        "coverage. Use GetUserPermissions only when a specific permission requirement needs "
         "clarification; it is not a mandatory first call. Use the named SigmaRail tools "
         "and their schema-discovery operations to learn the supported workflow; do not invent "
         "fields or treat schema availability as proof that dated data exists. For flexible "
@@ -1023,7 +1023,7 @@ class ChatGPTMCPProxyView(MCPProxyView):
             if membership is None:
                 return None, self._tenant_error(
                     request.data.get("id"),
-                    "That tenant is not available to this user. Call get_user_tenants and "
+                    "That tenant is not available to this user. Call GetUserTenants and "
                     "choose one of the returned tenants.",
                 )
             return membership, None
@@ -1033,7 +1033,7 @@ class ChatGPTMCPProxyView(MCPProxyView):
             message = "This user has no accepted tenant memberships, so tenant-scoped tools are unavailable."
         else:
             message = (
-                "This user can access multiple tenants. Call get_user_tenants, then pass "
+                "This user can access multiple tenants. Call GetUserTenants, then pass "
                 "the chosen tenant ID as tenantContext."
             )
         return None, self._tenant_error(request.data.get("id"), message)
@@ -1098,7 +1098,7 @@ class ChatGPTMCPProxyView(MCPProxyView):
                     props["tenantContext"] = {
                         "type": "string",
                         "description": (
-                            "Optional tenant ID from get_user_tenants. Omit for one tenant. "
+                            "Optional tenant ID from GetUserTenants. Omit for one tenant. "
                             "SigmaRail validates and removes this selector before forwarding."
                         ),
                     }

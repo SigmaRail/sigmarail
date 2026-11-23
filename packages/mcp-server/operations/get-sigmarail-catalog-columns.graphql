@@ -1,4 +1,4 @@
 # Discover SigmaRail field IDs and owning datasets for authoring data and screen ASTs.
-query sigmarail_catalog_columns($tenantId: ID!) {
+query GetSigmaRailCatalogColumns($tenantId: ID!) {
   sigmarailCatalogColumns(tenantId: $tenantId)
 }

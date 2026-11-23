@@ -1,4 +1,4 @@
 # List declared core dataset join relationships, optionally filtered by source and destination IDs.
-query sigmarail_catalog_join_paths($tenantId: ID!, $fromEntity: String, $toEntity: String) {
+query GetSigmaRailCatalogJoinPaths($tenantId: ID!, $fromEntity: String, $toEntity: String) {
   sigmarailCatalogJoinPaths(tenantId: $tenantId, fromEntity: $fromEntity, toEntity: $toEntity)
 }

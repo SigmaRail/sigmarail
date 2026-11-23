@@ -1,4 +1,4 @@
-# Validate and compile a UniverseQueryV1 screen to parameterized SQL without executing it. Retrieve sigmarail_screen_schema before authoring the AST. Use this to inspect validation errors before sigmarail_screen_preview; compilation does not return members or write data.
-query sigmarail_screen_compile($tenantId: ID!, $spec: GenericScalar!) {
+# Validate and compile a UniverseQueryV1 screen to parameterized SQL without executing it. Retrieve GetSigmaRailScreenSchema before authoring the AST. Use this to inspect validation errors before PreviewSigmaRailScreen; compilation does not return members or write data.
+query CompileSigmaRailScreen($tenantId: ID!, $spec: GenericScalar!) {
   sigmarailScreenCompile(tenantId: $tenantId, spec: $spec)
 }

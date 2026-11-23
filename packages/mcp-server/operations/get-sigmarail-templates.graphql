@@ -1,4 +1,4 @@
 # List installed screener and strategy templates; optionally filter by kind and status.
-query sigmarail_templates($tenantId: ID!, $kind: String, $status: String) {
+query GetSigmaRailTemplates($tenantId: ID!, $kind: String, $status: String) {
   sigmarailTemplates(tenantId: $tenantId, kind: $kind, status: $status)
 }

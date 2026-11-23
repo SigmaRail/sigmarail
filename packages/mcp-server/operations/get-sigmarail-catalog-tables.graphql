@@ -1,4 +1,4 @@
 # Discover SigmaRail registered datasets and declared join relationships.
-query sigmarail_catalog_tables($tenantId: ID!) {
+query GetSigmaRailCatalogTables($tenantId: ID!) {
   sigmarailCatalogTables(tenantId: $tenantId)
 }

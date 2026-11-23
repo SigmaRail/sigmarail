@@ -1,4 +1,4 @@
 # Inspect one registered SigmaRail dataset and its stable field IDs before composing a DataQueryV1 AST.
-query sigmarail_core_dataset($tenantId: ID!, $datasetId: String!) {
+query GetSigmaRailCoreDataset($tenantId: ID!, $datasetId: String!) {
   sigmarailCoreDataset(tenantId: $tenantId, datasetId: $datasetId)
 }

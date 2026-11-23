@@ -1,4 +1,4 @@
 # Get status and progress for one backtest job owned by the selected tenant.
-query sigmarail_backtest_job($tenantId: ID!, $jobId: String!) {
+query GetSigmaRailBacktestJob($tenantId: ID!, $jobId: String!) {
   sigmarailBacktestJob(tenantId: $tenantId, jobId: $jobId)
 }

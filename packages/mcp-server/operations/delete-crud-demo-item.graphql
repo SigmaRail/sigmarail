@@ -1,5 +1,5 @@
 # Delete a CRUD demo item. Requires id and tenantId. Always confirm with the user before deleting.
-mutation delete_crud_demo_item($input: DeleteCrudDemoItemMutationInput!) {
+mutation DeleteCrudDemoItem($input: DeleteCrudDemoItemMutationInput!) {
   deleteCrudDemoItem(input: $input) {
     deletedIds
   }

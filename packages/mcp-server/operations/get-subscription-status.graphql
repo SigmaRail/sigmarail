@@ -1,5 +1,5 @@
 # Get active subscription details including plan, status, and payment method. Use this to understand the organization's billing status. Requires billing.view permission.
-query get_subscription_status($tenantId: ID!) {
+query GetSubscriptionStatus($tenantId: ID!) {
   activeSubscription(tenantId: $tenantId) {
     id
     status

@@ -1,4 +1,4 @@
-# Retrieve the authoritative PipelineDocument AST schema before authoring or editing a strategy pipeline. Discover semantic factors and setup recipes first when needed, then use sigmarail_strategy_validate_pipeline or sigmarail_strategy_lint before compilation. Validation, lint, compile, decompile, and diff are previews; they do not save or launch a strategy.
-query sigmarail_strategy_pipeline_schema($tenantId: ID!) {
+# Retrieve the authoritative PipelineDocument AST schema before authoring or editing a strategy pipeline. Discover semantic factors and setup recipes first when needed, then use ValidateSigmaRailStrategyPipeline or LintSigmaRailStrategy before compilation. Validation, lint, compile, decompile, and diff are previews; they do not save or launch a strategy.
+query GetSigmaRailStrategyPipelineSchema($tenantId: ID!) {
   sigmarailStrategyPipelineSchema(tenantId: $tenantId)
 }

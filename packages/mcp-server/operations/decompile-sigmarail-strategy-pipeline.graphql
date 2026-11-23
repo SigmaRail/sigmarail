@@ -1,4 +1,4 @@
 # Convert an existing LEAN-compatible strategy spec into its editable PipelineDocument AST.
-query sigmarail_strategy_decompile_pipeline($tenantId: ID!, $spec: GenericScalar!) {
+query DecompileSigmaRailStrategyPipeline($tenantId: ID!, $spec: GenericScalar!) {
   sigmarailStrategyDecompilePipeline(tenantId: $tenantId, spec: $spec)
 }

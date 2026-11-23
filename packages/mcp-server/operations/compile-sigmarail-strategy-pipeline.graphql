@@ -1,5 +1,5 @@
 # Compile a validated tenant-scoped SigmaRail PipelineDocument AST into its LEAN-compatible runtime spec. This is a pure preview: it does not save, launch, or trade.
-query sigmarail_strategy_compile_pipeline(
+query CompileSigmaRailStrategyPipeline(
   $tenantId: ID!
   $pipeline: GenericScalar!
 ) {

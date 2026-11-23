@@ -1,4 +1,4 @@
 # Run a named SigmaRail screener preset for one as-of date with a bounded result count.
-query sigmarail_screen_preset_preview($tenantId: ID!, $asOf: String!, $preset: String, $limit: Int) {
+query PreviewSigmaRailScreenPreset($tenantId: ID!, $asOf: String!, $preset: String, $limit: Int) {
   sigmarailScreenPresetPreview(tenantId: $tenantId, asOf: $asOf, preset: $preset, limit: $limit)
 }

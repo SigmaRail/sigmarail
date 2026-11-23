@@ -1,4 +1,4 @@
 # Evaluate the daily market entry gate from the canonical SigmaRail rule set.
-query sigmarail_regime_entry_gate($tenantId: ID!, $asOfDate: String!) {
+query GetSigmaRailRegimeEntryGate($tenantId: ID!, $asOfDate: String!) {
   sigmarailRegimeEntryGate(tenantId: $tenantId, asOfDate: $asOfDate)
 }

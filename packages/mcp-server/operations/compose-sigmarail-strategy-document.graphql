@@ -1,4 +1,4 @@
 # Compose a PipelineDocument from a named strategy preset and optional setup recipe IDs.
-query sigmarail_strategy_compose_document($tenantId: ID!, $presetId: String, $setupRecipeIds: [String]) {
+query ComposeSigmaRailStrategyDocument($tenantId: ID!, $presetId: String, $setupRecipeIds: [String]) {
   sigmarailStrategyComposeDocument(tenantId: $tenantId, presetId: $presetId, setupRecipeIds: $setupRecipeIds)
 }

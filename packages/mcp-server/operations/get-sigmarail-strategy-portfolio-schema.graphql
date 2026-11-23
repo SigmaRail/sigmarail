@@ -1,4 +1,4 @@
 # Retrieve the authoritative PortfolioDocument AST schema before authoring portfolio rules. Discover the available position fields, then validate or compile the document for a preview. Compilation does not save a strategy, submit a backtest, or place an order.
-query sigmarail_strategy_portfolio_schema($tenantId: ID!) {
+query GetSigmaRailStrategyPortfolioSchema($tenantId: ID!) {
   sigmarailStrategyPortfolioSchema(tenantId: $tenantId)
 }

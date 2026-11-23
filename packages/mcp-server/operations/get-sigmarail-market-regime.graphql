@@ -1,4 +1,4 @@
 # Read the broad-market regime and allocation context for one session date.
-query sigmarail_market_regime($tenantId: ID!, $asOfDate: String!) {
+query GetSigmaRailMarketRegime($tenantId: ID!, $asOfDate: String!) {
   sigmarailMarketRegime(tenantId: $tenantId, asOfDate: $asOfDate)
 }
