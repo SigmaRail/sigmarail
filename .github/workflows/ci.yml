@@ -53,7 +53,9 @@ jobs:
         run: |
           docker_config_dir="$RUNNER_TEMP/sigmarail-docker-auth-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p "$docker_config_dir"
-          printf '{}\n' > "$docker_config_dir/config.json"
+          # A non-empty auth map prevents Docker CLI from auto-selecting the
+          # runner's Docker Desktop Keychain helper for this temporary config.
+          printf '{"auths":{"ghcr.io":{}}}\n' > "$docker_config_dir/config.json"
           printf 'DOCKER_CONFIG=%s\n' "$docker_config_dir" >> "$GITHUB_ENV"
 
       - name: Check out SigmaRail
