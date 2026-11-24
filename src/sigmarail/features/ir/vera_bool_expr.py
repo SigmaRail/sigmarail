@@ -88,7 +88,7 @@ _PREFIX_TO_TABLE: dict[str, str] = {
     "st": "screener_stage_weekly_daily",
     "fa": "screener_factor_daily",
     "fc": "screener_forecast_models_daily",
-    "es": "screener_estimates_daily",
+    "es": "ext_analyst_estimates_screener_estimates_daily",
     "kb": "screener_kb_daily",
     "mx": "market_context_daily",
     "tf": "symbol_technical_features_daily",

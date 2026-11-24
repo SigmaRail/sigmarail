@@ -191,7 +191,7 @@ def try_refresh_universe_v1_columns_from_client(client: Any) -> None:
             "market_context_daily",
             "ticker_rvab_daily",
             "screener_forecast_models_daily",
-            "screener_estimates_daily",
+            "ext_analyst_estimates_screener_estimates_daily",
             "screener_vcp_pivot_daily",
         ]
         r = client.query(q, parameters={"t": tables})

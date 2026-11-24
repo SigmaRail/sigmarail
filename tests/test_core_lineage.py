@@ -49,12 +49,12 @@ def test_external_overlay_fields_are_absent_and_explicitly_deferred():
     for table_name, fields in LINEAGE["excluded_fields"].items():
         assert not (set(fields) & table_columns.get(table_name, set()))
         assert all("external" in reason for reason in fields.values())
-    assert {"screener_kb_daily", "screener_estimates_daily"} == {
+    assert {"screener_kb_daily", "ext_analyst_estimates_screener_estimates_daily"} == {
         table["table"] for table in LINEAGE["deferred_external_tables"]
     }
     estimates = next(
         table for table in LINEAGE["deferred_external_tables"]
-        if table["table"] == "screener_estimates_daily"
+        if table["table"] == "ext_analyst_estimates_screener_estimates_daily"
     )
     assert not estimates["included_sharadar_columns"]
     assert {"ticker", "date", "lastupdated"} <= set(estimates["excluded_columns"])

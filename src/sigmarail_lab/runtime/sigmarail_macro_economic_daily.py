@@ -1,7 +1,7 @@
 """
 ClickHouse macro economic-environment rows for LEAN (Dalio 4-quadrant regime).
 
-Caches ``macro_economic_daily`` (growth/inflation/quadrant) by date so the
+Caches ``ext_macro_economic_daily`` (growth/inflation/quadrant) by date so the
 All Weather regime overlay can tilt leg exposure from real macro data.
 """
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 _SELECT = """
     SELECT toDate32(date) AS date, real_gdp_qoq, cpi_yoy, regime_quadrant
-    FROM macro_economic_daily
+    FROM ext_macro_economic_daily
 """
 
 

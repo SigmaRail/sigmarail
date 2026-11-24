@@ -1,0 +1,41 @@
+{
+  "manifest_version": 1,
+  "modules": {
+    "aaii": {
+      "contract": "contract.json",
+      "depends_on": [
+        "core"
+      ],
+      "description": "AAII weekly investor sentiment survey inputs. No survey observations are packaged.",
+      "manifest": "manifest.json",
+      "source_boundary": "AAII"
+    },
+    "analyst_estimates": {
+      "contract": "contract.json",
+      "depends_on": [
+        "core"
+      ],
+      "description": "Analyst consensus and actuals schema, plus its screening projection. No vendor observations or Dolt database are packaged.",
+      "manifest": "manifest.json",
+      "source_boundary": "user-configured analyst-data source"
+    },
+    "etf": {
+      "contract": "contract.json",
+      "depends_on": [
+        "core"
+      ],
+      "description": "ETF classifications, holdings snapshots, sector weights, and index proxy catalog. No provider snapshots or curated holdings are packaged.",
+      "manifest": "manifest.json",
+      "source_boundary": "user-configured ETF data sources; curated mapping metadata is user supplied"
+    },
+    "macro": {
+      "contract": "contract.json",
+      "depends_on": [
+        "core"
+      ],
+      "description": "Macro series and daily derived surface. No downloaded macro observations are packaged.",
+      "manifest": "manifest.json",
+      "source_boundary": "FRED public series"
+    }
+  }
+}

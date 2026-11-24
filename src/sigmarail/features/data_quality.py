@@ -11,7 +11,7 @@ _DATASETS = (
     "screener_price_tech_daily",
     "screener_ratings_daily",
     "screener_fundamentals_daily",
-    "screener_estimates_daily",
+    "ext_analyst_estimates_screener_estimates_daily",
     "screener_ownership_daily",
     "screener_factor_daily",
     "screener_forecast_models_daily",

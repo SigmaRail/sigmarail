@@ -1,0 +1,9 @@
+{
+  "manifest_version": 1,
+  "module": "etf",
+  "files": [
+    "123-schema-etf_classifications.sql",
+    "125-schema-etf_holdings_snapshots.sql",
+    "126-schema-index_proxy_catalog.sql"
+  ]
+}

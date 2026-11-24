@@ -1,0 +1,7 @@
+{
+  "manifest_version": 1,
+  "module": "macro",
+  "files": [
+    "191-schema-macro-economic-daily.sql"
+  ]
+}

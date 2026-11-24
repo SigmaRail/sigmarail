@@ -22,6 +22,8 @@ from sigmarail.database import get_client, load_schema
 
 from sigmarail.config import (
     create_shared_parser,
+    get_schema_contract,
+    get_schema_modules,
     process_shared_args,
     app_config,
     get_database_config,
@@ -132,8 +134,14 @@ class DataPopulator:
     AUTO_RECALC_EVENT_LOOKBACK_DAYS = 14
     PRICE_COVERAGE_LOOKBACK_DAYS = 730
 
-    def __init__(self):
-        """Initialize the DataPopulator."""
+    def __init__(self, modules: Optional[List[str]] = None):
+        """Initialize the DataPopulator for the core or selected modules."""
+        self.modules = sorted(set(modules or []))
+        # The database may contain views from other SigmaRail modules or local
+        # extensions. Only transforms admitted by the selected contracts run.
+        self.allowed_transform_targets = {
+            table["name"] for table in get_schema_contract(self.modules)
+        } - self.BASE_DATA_TABLES
         self.client = get_client()
         if not self.client:
             raise RuntimeError(f"Failed to get ClickHouse client for mode '{app_config.mode}'")
@@ -511,7 +519,7 @@ class DataPopulator:
         target out of each transform keeps this complete by construction.
         """
         tables: set[str] = set()
-        for spec in discover_transform_specs():
+        for spec in discover_transform_specs(modules=self.modules):
             if spec.target:
                 tables.add(spec.target)
         for sql_file in discover_legacy_transform_files():
@@ -521,7 +529,7 @@ class DataPopulator:
             ):
                 tables.add(match.group(1))
         # Never list base data tables even if a transform mentions them.
-        return sorted(tables - self.BASE_DATA_TABLES)
+        return sorted((tables - self.BASE_DATA_TABLES) & self.allowed_transform_targets)
 
     def _spec_matches_request(self, spec: TransformSpec, requested: str) -> bool:
         """Match --metrics by slug ('relative-strength') or target ('relative_strength')."""
@@ -568,7 +576,7 @@ class DataPopulator:
         if specs:
             file_by_view = {
                 local.view_name: local.path
-                for local in discover_transform_specs()
+                for local in discover_transform_specs(modules=self.modules)
                 if local.view_name and local.path
             }
             managed_specs: List[TransformSpec] = []
@@ -587,7 +595,7 @@ class DataPopulator:
                 managed_specs.append(spec)
             specs = managed_specs
         else:
-            specs = discover_transform_specs()
+            specs = discover_transform_specs(modules=self.modules)
 
         view_targets = {s.target for s in specs if s.target}
         for path in sorted(discover_legacy_transform_files(), key=_metric_sql_sort_key):
@@ -599,6 +607,11 @@ class DataPopulator:
             if legacy.target in view_targets:
                 continue
             specs.append(legacy)
+
+        specs = [
+            spec for spec in specs
+            if spec.target in self.allowed_transform_targets
+        ]
 
         specs.sort(key=lambda s: (s.order, s.name))
         logger.debug(f"Transform schedule: {[(s.order, s.name) for s in specs]}")
@@ -677,7 +690,9 @@ class DataPopulator:
         requested = requested_metrics or []
         run_all = not requested or 'all' in requested
         spec_by_view = {
-            spec.view_name: spec for spec in discover_transform_specs() if spec.view_name
+            spec.view_name: spec
+            for spec in discover_transform_specs(modules=self.modules)
+            if spec.view_name
         }
         blocking: List[tuple] = []
         for name, err in reg_errors:
@@ -1586,6 +1601,10 @@ def main():
     parser.add_argument('--start-date', default=None, help='Start date for metrics calculation (YYYY-MM-DD, default: auto-detected based on updates)')
     parser.add_argument('--end-date', default=None, help='End date for metrics calculation (YYYY-MM-DD, default: auto-detected based on updates)')
     parser.add_argument('--metrics', nargs='*', help='Metric tables to process (space- or comma-separated, e.g. daily-metrics or daily-metrics,weekly-metrics). If flag is present without arguments, processes all metrics.')
+    parser.add_argument(
+        '--module', action='append', choices=sorted(get_schema_modules()), default=[],
+        help='Opt in to an external-data module; repeat for multiple modules. Core remains enabled.',
+    )
     parser.add_argument('--rebuild', action='store_true', help='Drop the tables specified in --metrics before processing. If --metrics is not provided, all derived tables are dropped, and freshness checks are bypassed for the rebuild.')
     parser.add_argument('--force-refresh', action='store_true', help='(Optional) Ignore upstream freshness checks and process exactly the requested date range without requiring --rebuild.')
     parser.add_argument('--register-views', action='store_true', help='Register all xform_* transform views and exit (no population).')
@@ -1609,7 +1628,7 @@ def main():
             return name.replace('-', '_') if name else name
 
         # Create data populator instance
-        populator = DataPopulator()
+        populator = DataPopulator(modules=args.module)
         args.metrics = _split_metrics_args(args.metrics)
         if args.metrics is not None:
             args.metrics = [_normalize_metric_name(name) for name in args.metrics]
@@ -1625,7 +1644,9 @@ def main():
 
         # Register transform views only — schema inspection / ad-hoc debugging.
         if args.register_views:
-            registered, reg_errors = register_all_transform_views(populator.client)
+            registered, reg_errors = register_all_transform_views(
+                populator.client, modules=populator.modules
+            )
             print(f"Registered {len(registered)} transform view(s)", flush=True)
             for name, err in reg_errors:
                 print(f"  ⚠️ {name}: {err}", flush=True)
@@ -1643,7 +1664,7 @@ def main():
             if skip_schema:
                 logger.info("Skipping schema load due to SIGMARAIL_SKIP_SCHEMA=1")
             else:
-                if not load_schema():
+                if not load_schema(modules=args.module):
                     logger.error("Failed to load schema files")
                     print("❌ Schema loading failed", flush=True)
                     return 1
@@ -1685,7 +1706,7 @@ def main():
                 if skip_schema:
                     logger.info("Skipping schema reload after rebuild due to SIGMARAIL_SKIP_SCHEMA=1")
                 else:
-                    if not load_schema():
+                    if not load_schema(modules=args.module):
                         logger.error("Failed to reload schema files after rebuild")
                         return 1
                     logger.info("Schema files reloaded successfully after rebuild")
