@@ -88,7 +88,7 @@ services:
         SIGMARAIL_BUILD_BRANCH: main
         SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
     env_file:
-      - ../../.sigmarail/backend.env
+      - ${SIGMARAIL_WORKSPACE_ROOT:-../..}/.sigmarail/backend.env
     environment:
       DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"${SIGMARAIL_BACKTEST_DB_PASSWORD:?Set SIGMARAIL_BACKTEST_DB_PASSWORD}","host":"db","port":5432}'
       REDIS_CONNECTION: redis://redis:6379
@@ -121,6 +121,9 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    # Leave time for the worker to cancel LEAN through the Docker socket and
+    # persist the terminal job state before Compose sends SIGKILL.
+    stop_grace_period: 60s
     labels:
       org.sigmarail.source.branch: main
       org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}

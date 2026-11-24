@@ -16,6 +16,7 @@ import os
 import signal
 import socket
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,7 +28,7 @@ _STOP = False
 
 def _signal_stop(signum: int, _frame: Any) -> None:
     global _STOP
-    logger.info("received signal %s; finishing the active backtest before stopping", signum)
+    logger.info("received signal %s; stopping the active backtest before shutdown", signum)
     _STOP = True
 
 
@@ -60,6 +61,35 @@ def _touch_heartbeat() -> None:
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     path.touch()
     path.chmod(0o600)
+
+
+def _cancel_job_on_shutdown(
+    job_id: str,
+    run_finished: threading.Event,
+    cancel_job: Any,
+) -> None:
+    """Cancel the active job when worker shutdown begins, allowing LEAN to stop."""
+    while not run_finished.wait(0.25):
+        if not _STOP:
+            continue
+        try:
+            result = cancel_job(job_id)
+            if result.get("cancelled") or result.get("status") in {"cancelled", "already_finished"}:
+                logger.info("requested cancellation of active job %s during worker shutdown", job_id)
+                return
+            if result.get("error"):
+                logger.error(
+                    "could not cancel active job %s during worker shutdown: %s",
+                    job_id,
+                    result,
+                )
+                continue
+            logger.error("could not cancel active job %s during worker shutdown: %s", job_id, result)
+            return
+        except Exception:
+            logger.exception("could not cancel active job %s during worker shutdown", job_id)
+            # Keep trying while the runner is alive so a transient database
+            # error does not leave its sibling LEAN container orphaned.
 
 
 def _claim_pending_job() -> dict[str, Any] | None:
@@ -126,7 +156,7 @@ def _claim_pending_job() -> dict[str, Any] | None:
 
 def _run_claimed_job(job: dict[str, Any]) -> dict[str, Any]:
     from apps.sigmarail_bridge.models import WorkspaceBacktestReference
-    from sigmarail_studio_mcp.backtest_runner.runner import run_job
+    from sigmarail_studio_mcp.backtest_runner.runner import cancel_job, run_job
 
     job_id = str(job["job_id"])
     extra_env = {
@@ -135,6 +165,14 @@ def _run_claimed_job(job: dict[str, Any]) -> dict[str, Any]:
         "SIGMARAIL_STRATEGY_SCHEMA_VERSION": str(job["strategy_schema_version"]),
         **job.get("evaluation", {}),
     }
+    run_finished = threading.Event()
+    shutdown_watcher = threading.Thread(
+        target=_cancel_job_on_shutdown,
+        args=(job_id, run_finished, cancel_job),
+        name=f"backtest-shutdown-{job_id}",
+        daemon=True,
+    )
+    shutdown_watcher.start()
     try:
         result = run_job(
             job_id=job_id,
@@ -155,6 +193,9 @@ def _run_claimed_job(job: dict[str, Any]) -> dict[str, Any]:
             updated_at=datetime.now(timezone.utc),
         )
         return {"job_id": job_id, "status": "failed", "error": str(exc)}
+    finally:
+        run_finished.set()
+        shutdown_watcher.join(timeout=1.0)
 
 
 def run_worker(*, poll_seconds: float = 5.0, once: bool = False) -> int:
