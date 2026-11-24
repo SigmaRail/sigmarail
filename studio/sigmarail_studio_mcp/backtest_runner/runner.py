@@ -141,6 +141,7 @@ def _write_lean_clickhouse_config(
     config = {key: original[key] for key in safe_keys if key in original}
     config.update(
         {
+            "container-name": _lean_container_name(job_id),
             "clickhouse-host": host,
             "clickhouse-http-port": int(port),
             "clickhouse-database": database,
@@ -157,6 +158,34 @@ def _write_lean_clickhouse_config(
     path.write_text(json.dumps(config, indent=2) + "\n")
     path.chmod(0o600)
     return path
+
+
+def _lean_container_name(job_id: str) -> str:
+    """Stable, job-scoped Docker name so cancellation can stop the real engine."""
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", str(job_id)):
+        raise ValueError("job_id contains unsupported Docker name characters")
+    return f"sigmarail-lean-{job_id}"
+
+
+def _stop_lean_container(job_id: str) -> None:
+    """Stop the LEAN engine container owned by a cancelled backtest."""
+    import docker
+    from docker.errors import NotFound
+
+    client = docker.from_env()
+    try:
+        try:
+            container = client.containers.get(_lean_container_name(job_id))
+        except NotFound:
+            return
+        container.reload()
+        if container.status == "running":
+            container.stop(timeout=10)
+            container.reload()
+        if container.status == "running":
+            raise RuntimeError(f"LEAN container did not stop for cancelled job {job_id}")
+    finally:
+        client.close()
 
 
 def _strategy_algorithm_parameters(extra_env: dict[str, str] | None) -> dict[str, Any]:
@@ -1170,6 +1199,7 @@ def run_job(
                             ).result_rows
                             cancelled = bool(status_rows and status_rows[0][0] == "cancelled")
                         if cancelled:
+                            _stop_lean_container(job_id)
                             proc.terminate()
                             try:
                                 proc.wait(timeout=5)
@@ -1177,7 +1207,12 @@ def run_job(
                                 proc.kill()
                             break
                     except Exception:
-                        pass
+                        if cancelled:
+                            logger.exception(
+                                "Could not stop LEAN Docker container for cancelled job %s",
+                                job_id,
+                            )
+                            continue
 
                     try:
                         if postgres_control:
