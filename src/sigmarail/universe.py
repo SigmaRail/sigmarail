@@ -44,6 +44,11 @@ LEGACY_PREFIX_TABLE = {
     "ow": "screener_ownership_daily",
 }
 _COMPARISONS = {"eq", "neq", "gt", "gte", "lt", "lte"}
+# Stable aliases retained by saved v1 strategies while the canonical dataset
+# catalog uses its physical field names.
+UNIVERSE_FIELD_ALIASES = {
+    "atr_pct_14d": "atr_14_pct",
+}
 
 
 class UniverseRequestError(ValueError):
@@ -72,6 +77,7 @@ def _resolve_field(name: str, *, prior_aliases: set[str] | None = None) -> tuple
         table_hint = LEGACY_PREFIX_TABLE.get(prefix)
         if table_hint is None:
             raise UniverseRequestError(f"qualified field prefix {prefix!r} is not supported")
+    canonical_name = UNIVERSE_FIELD_ALIASES.get(raw, raw)
     tables, datasets, by_table = _catalog()
     candidates = []
     for table_name in sorted(UNIVERSE_TABLES):
@@ -82,7 +88,7 @@ def _resolve_field(name: str, *, prior_aliases: set[str] | None = None) -> tuple
             continue
         dataset_id, _ = record
         for col in tables[table_name]["columns"]:
-            if col["name"] == raw or col["id"] == raw:
+            if col["name"] == canonical_name or col["id"] == canonical_name:
                 candidates.append((dataset_id, col["name"], col))
     if not candidates:
         raise UniverseRequestError(f"field {name!r} is not registered in SigmaRail's core universe datasets")
@@ -669,6 +675,20 @@ def universe_run(body: dict[str, Any], client: Any | None = None) -> dict[str, A
         )
         if "error" in result:
             return result
+        spec = body.get("spec") if isinstance(body.get("spec"), dict) else {}
+        selected = {str(name) for name in spec.get("select", [])}
+        response_aliases: dict[str, str] = {}
+        for alias, canonical in UNIVERSE_FIELD_ALIASES.items():
+            if alias in selected and canonical not in selected:
+                response_aliases[canonical] = alias
+        if response_aliases:
+            result["rows"] = [
+                {
+                    response_aliases.get(name, name): value
+                    for name, value in row.items()
+                }
+                for row in result["rows"]
+            ]
         return {
             **envelope,
             "registry_digest": registry_digest(),

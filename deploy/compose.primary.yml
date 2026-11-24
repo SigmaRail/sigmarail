@@ -35,6 +35,7 @@ services:
     build:
       context: ../..
       dockerfile: sigmarail/packages/backend/Dockerfile
+      target: backend
       args:
         SIGMARAIL_SOURCE_DIR: sigmarail
         SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
@@ -68,6 +69,56 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_started
+    restart: unless-stopped
+    labels:
+      org.sigmarail.source.branch: main
+      org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
+      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+
+  backtest-worker:
+    image: sigmarail/backtest-worker:main
+    build:
+      context: ../..
+      dockerfile: sigmarail/packages/backend/Dockerfile
+      target: backtest_worker
+      args:
+        SIGMARAIL_SOURCE_DIR: sigmarail
+        SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
+        SIGMARAIL_BUILD_BRANCH: main
+        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+    env_file:
+      - ../../.sigmarail/backend.env
+    environment:
+      DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"${SIGMARAIL_BACKTEST_DB_PASSWORD:?Set SIGMARAIL_BACKTEST_DB_PASSWORD}","host":"db","port":5432}'
+      REDIS_CONNECTION: redis://redis:6379
+      LEAN_PROJECTS_ROOT: /Users/mdiggory/FinanceProjects/LeanProjects
+      SIGMARAIL_REPO_ROOT: /workspace
+      SIGMARAIL_TRADING_LAB_SOURCE: /workspace/trading_lab
+      SIGMARAIL_CLICKHOUSE_HOST: host.docker.internal
+      # Backtest containers join this Compose network and call Django directly;
+      # the host-published API port is intentionally loopback-only.
+      SIGMARAIL_API_URL: http://backend:80
+      SIGMARAIL_BACKTEST_DOCKER_NETWORK: sigmarail_default
+      # LEAN's CLI creates temporary files that Docker bind-mounts into each
+      # execution container. Keep those files under the host-shared workspace
+      # so the Docker Desktop daemon can resolve the source path.
+      TMPDIR: /Users/mdiggory/FinanceProjects/LeanProjects/.sigmarail/docker-tmp
+      RUNNER_ID: sigmarail-compose-backtest-worker
+      AWS_EC2_METADATA_DISABLED: "true"
+    volumes:
+      # Docker access belongs only to the worker that launches isolated LEAN
+      # job containers, never the web API or public MCP gateway.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Keep the path identical inside the worker so Docker Desktop can mount
+      # each staged LEAN project into its per-job execution container.
+      - /Users/mdiggory/FinanceProjects/LeanProjects:/Users/mdiggory/FinanceProjects/LeanProjects
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
         condition: service_started
     restart: unless-stopped
     labels:

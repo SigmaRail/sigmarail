@@ -355,6 +355,30 @@ def _apply_test_clickhouse_env_overrides(database: DatabaseConfig) -> DatabaseCo
     return database
 
 
+def _apply_clickhouse_env_overrides(database: DatabaseConfig) -> DatabaseConfig:
+    """Apply explicit ClickHouse connection settings from the process environment.
+
+    This is needed for containerized API/runtime processes: their credentials and
+    network address are injected at deploy time, while the packaged CLI config
+    intentionally is not copied into the image.
+    """
+    updates: Dict[str, Any] = {}
+    env_fields = {
+        "SIGMARAIL_CLICKHOUSE_HOST": ("host", str),
+        "SIGMARAIL_CLICKHOUSE_HTTP_PORT": ("http_port", int),
+        "SIGMARAIL_CLICKHOUSE_NATIVE_PORT": ("port", int),
+        "SIGMARAIL_CLICKHOUSE_USER": ("user", str),
+        "SIGMARAIL_CLICKHOUSE_DATABASE": ("database", str),
+    }
+    for env_name, (field_name, cast) in env_fields.items():
+        value = os.environ.get(env_name, "").strip()
+        if value:
+            updates[field_name] = cast(value)
+    if "SIGMARAIL_CLICKHOUSE_PASSWORD" in os.environ:
+        updates["password"] = os.environ["SIGMARAIL_CLICKHOUSE_PASSWORD"]
+    return database.model_copy(update=updates) if updates else database
+
+
 def _apply_local_clickhouse_keyring(database: DatabaseConfig) -> DatabaseConfig:
     """Use the native credential store only when local config has no password.
 
@@ -382,6 +406,7 @@ def load_typed_config() -> RootConfig:
 
     raw = _load_config_internal()
     database = DatabaseConfig.model_validate(raw.get("database", {}))
+    database = _apply_clickhouse_env_overrides(database)
     database = _apply_test_clickhouse_env_overrides(database)
     database = _apply_local_clickhouse_keyring(database)
     data = DataConfig.model_validate(raw.get("data", {}))

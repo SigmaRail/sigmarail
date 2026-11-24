@@ -1,0 +1,4 @@
+# Cancel a specific pending or running tenant-owned historical backtest. This does not affect live deployments or broker orders.
+mutation CancelSigmaRailBacktest($tenantId: ID!, $jobId: String!) {
+  sigmarailCancelBacktest(tenantId: $tenantId, jobId: $jobId)
+}

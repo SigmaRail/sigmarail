@@ -47,11 +47,17 @@
 !sigmarail/packages/infra/infra-core/package.json
 !sigmarail/packages/backend
 !sigmarail/packages/backend/**
+!sigmarail/packages/backtest-worker
+!sigmarail/packages/backtest-worker/**
 !sigmarail/packages/workers
 !sigmarail/packages/workers/package.json
 !sigmarail/src
 !sigmarail/src/sigmarail
 !sigmarail/src/sigmarail/**
+!sigmarail/src/sigmarail_lab
+!sigmarail/src/sigmarail_lab/**
+!sigmarail/trading_lab
+!sigmarail/trading_lab/**
 !sigmarail/studio
 !sigmarail/studio/api
 !sigmarail/studio/api/**

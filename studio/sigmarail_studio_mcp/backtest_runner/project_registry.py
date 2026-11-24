@@ -37,8 +37,12 @@ def _registry_path(root: Path | None = None) -> Path:
 
 
 def _sigmarail_project(root: Path | None = None) -> dict[str, Any]:
-    repo_root = Path(__file__).resolve().parents[3]
-    source_root = repo_root / "trading_lab"
+    configured = (os.environ.get("SIGMARAIL_TRADING_LAB_SOURCE") or "").strip()
+    source_root = (
+        Path(configured).expanduser().resolve()
+        if configured
+        else Path(__file__).resolve().parents[3] / "trading_lab"
+    )
     lean_root = root or lean_projects_root()
     return {
         "id": _DEFAULT_PROJECT_ID,

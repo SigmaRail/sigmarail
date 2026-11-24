@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone as datetime_timezone
 import json
 import logging
+import re
 from importlib.resources import files
 
 import graphene
@@ -277,6 +278,32 @@ class Query(graphene.ObjectType):
         run_id_b=graphene.String(required=True),
         tenant_id=graphene.ID(required=True),
         description="Compare two tenant-owned backtest reports and their principal performance metrics.",
+    )
+    sigmarail_live_deployments = GenericScalar(
+        limit=graphene.Int(),
+        status=graphene.String(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "List live and paper deployments owned by the active tenant, with strategy version, "
+            "approval run, environment, lifecycle state, and timestamps."
+        ),
+    )
+    sigmarail_live_deployment = GenericScalar(
+        deployment_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Read one tenant-owned deployment and its latest analytical account snapshot. "
+            "The snapshot may lag the broker/runtime mark; its timestamp is returned separately."
+        ),
+    )
+    sigmarail_live_performance = GenericScalar(
+        deployment_id=graphene.String(required=True),
+        days=graphene.Int(),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Read a bounded historical series of daily live account snapshots for one tenant-owned deployment. "
+            "This is analytical reporting, not a broker control surface."
+        ),
     )
     sigmarail_market_regime = GenericScalar(
         as_of_date=graphene.String(required=True),
@@ -1136,6 +1163,101 @@ class Query(graphene.ObjectType):
         }
 
     @staticmethod
+    def resolve_sigmarail_live_deployments(root, info, tenant_id, limit=50, status=None):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .models import WorkspaceDeploymentReference
+
+        rows = WorkspaceDeploymentReference.objects.filter(tenant=tenant).order_by("-created_at")
+        if status:
+            rows = rows.filter(status=str(status).strip().lower()[:24])
+        bounded_limit = min(max(int(limit or 50), 1), 200)
+        deployments = []
+        for row in rows[:bounded_limit]:
+            config = row.configuration if isinstance(row.configuration, dict) else {}
+            deployments.append({
+                "deployment_id": row.deployment_id,
+                "ir_id": row.ir_id,
+                "strategy_content_hash": row.strategy_content_hash,
+                "approval_run_id": row.approval_run_id or None,
+                "status": row.status,
+                "environment": config.get("lean_environment") or config.get("environment"),
+                "brokerage": config.get("brokerage"),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "stopped_at": row.stopped_at.isoformat() if row.stopped_at else None,
+            })
+        return {"deployments": deployments, "count": len(deployments)}
+
+    @staticmethod
+    def resolve_sigmarail_live_deployment(root, info, deployment_id, tenant_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .models import WorkspaceDeploymentReference
+
+        deployment_id = str(deployment_id or "").strip()
+        if not deployment_id:
+            raise ValidationError("deploymentId is required.")
+        row = WorkspaceDeploymentReference.objects.filter(
+            tenant=tenant, deployment_id=deployment_id
+        ).first()
+        if row is None:
+            return {"error": "Deployment not found.", "code": "not_found"}
+        config = row.configuration if isinstance(row.configuration, dict) else {}
+        result = {
+            "deployment_id": row.deployment_id,
+            "ir_id": row.ir_id,
+            "strategy_content_hash": row.strategy_content_hash,
+            "approval_run_id": row.approval_run_id or None,
+            "status": row.status,
+            "configuration": {
+                key: config.get(key)
+                for key in ("lean_environment", "environment", "brokerage", "data_provider", "account_profile_id")
+                if config.get(key) is not None
+            },
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            "stopped_at": row.stopped_at.isoformat() if row.stopped_at else None,
+            "latest_snapshot": None,
+            "snapshot_status": "unavailable",
+        }
+        try:
+            from sigmarail.features.live_report import get_live_status
+
+            client = _clickhouse_client()
+            try:
+                snapshot = get_live_status(client, deployment_id)
+            finally:
+                client.close()
+            if isinstance(snapshot, dict) and not snapshot.get("error"):
+                result["latest_snapshot"] = snapshot.get("latest_snapshot")
+                result["snapshot_status"] = "available"
+        except Exception:
+            # The tenant-owned control record remains useful when the optional
+            # ClickHouse account snapshot is stale or unavailable.
+            pass
+        return result
+
+    @staticmethod
+    def resolve_sigmarail_live_performance(root, info, deployment_id, tenant_id, days=30):
+        tenant = _authorize_tenant(info, tenant_id)
+        from .models import WorkspaceDeploymentReference
+
+        deployment_id = str(deployment_id or "").strip()
+        if not deployment_id:
+            raise ValidationError("deploymentId is required.")
+        if not WorkspaceDeploymentReference.objects.filter(
+            tenant=tenant, deployment_id=deployment_id
+        ).exists():
+            return {"error": "Deployment not found.", "code": "not_found"}
+
+        client = _clickhouse_client()
+        try:
+            from sigmarail.features.live_report import get_live_performance
+
+            return get_live_performance(client, deployment_id, days=days or 30)
+        finally:
+            client.close()
+
+    @staticmethod
     def resolve_sigmarail_market_regime(root, info, as_of_date, tenant_id):
         _authorize_tenant(info, tenant_id)
         try:
@@ -1331,6 +1453,11 @@ def _workspace_api_call(info, tenant, method, path, payload):
         ("POST", "/api/backtests/jobs"): DomainAPIRouteView.as_view(),
     }
     view = views.get((method.upper(), path))
+    if (
+        method.upper() == "POST"
+        and re.fullmatch(r"/api/backtests/jobs/[A-Za-z0-9][A-Za-z0-9._:-]{0,254}/cancel", path)
+    ):
+        view = DomainAPIRouteView.as_view()
     if view is None:
         return {"ok": False, "code": "MUTATION_NOT_ALLOWLISTED", "message": "This mutation route is not allowlisted."}
     try:
@@ -1410,6 +1537,14 @@ class Mutation(graphene.ObjectType):
             "Requires a stable idempotencyKey and explicit date bounds. costAssumptions and "
             "outOfSamplePeriod are recorded as experiment metadata only; they do not change the "
             "LEAN fee/slippage model or create a second run. Inspect the resulting run before conclusions."
+        ),
+    )
+    sigmarail_cancel_backtest = GenericScalar(
+        job_id=graphene.String(required=True),
+        tenant_id=graphene.ID(required=True),
+        description=(
+            "Cancel a pending or running backtest owned by the active tenant. This stops that backtest job; "
+            "it does not affect live deployments or broker orders."
         ),
     )
     sigmarail_record_experiment_decision = GenericScalar(
@@ -1586,6 +1721,40 @@ class Mutation(graphene.ObjectType):
                     },
                 }
         return result
+
+    @staticmethod
+    def resolve_sigmarail_cancel_backtest(root, info, tenant_id, job_id):
+        tenant = _authorize_tenant(info, tenant_id)
+        job_id = str(job_id or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,254}", job_id):
+            raise ValidationError("jobId must be a valid backtest identifier.")
+
+        from django.db import transaction
+        from .models import WorkspaceBacktestReference
+
+        with transaction.atomic():
+            reference = WorkspaceBacktestReference.objects.select_for_update().filter(
+                tenant=tenant, job_id=job_id
+            ).first()
+            if reference is None:
+                return {"ok": False, "code": "BACKTEST_NOT_FOUND", "message": "Backtest job not found in this tenant."}
+            if reference.status not in {"pending", "running"}:
+                return {
+                    "ok": False,
+                    "code": "BACKTEST_NOT_ACTIVE",
+                    "message": "Only pending or running backtests can be cancelled.",
+                    "status": reference.status,
+                }
+
+            result = _workspace_api_call(
+                info, tenant, "POST", f"/api/backtests/jobs/{job_id}/cancel", {}
+            )
+            if result.get("ok"):
+                reference.status = "cancelled"
+                reference.save(update_fields=["status", "updated_at"])
+                result["job_id"] = job_id
+                result["status"] = reference.status
+            return result
 
     @staticmethod
     def resolve_sigmarail_record_experiment_decision(

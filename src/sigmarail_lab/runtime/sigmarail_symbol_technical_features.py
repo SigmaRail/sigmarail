@@ -67,15 +67,27 @@ class VeraSymbolTechnicalFeaturesDaily:
         if not self._http:
             return
         escaped = ", ".join(f"'{t}'" for t in self._tickers)
-        sql = f"""
-            SELECT {self._COLS}
-            FROM symbol_technical_features_daily FINAL
-            WHERE ticker IN ({escaped})
-              AND symbol_technical_features_daily.date BETWEEN toDate('{start_date.isoformat()}')
-                           AND toDate('{end_date.isoformat()}')
-            FORMAT JSONEachRow
-        """
-        rows = self._http.query_json_each_row(sql, max_rows=500_000)
+        # Historical universes can contain thousands of distinct tickers. A
+        # single multi-year JSONEachRow response can exceed hundreds of MB and
+        # be cut off by the HTTP connection before the client can parse it.
+        # Bound each response by calendar time while retaining the same full
+        # date/ticker coverage and in-memory lookup behavior.
+        from datetime import timedelta
+
+        rows = []
+        chunk_start = start_date
+        while chunk_start <= end_date:
+            chunk_end = min(chunk_start + timedelta(days=29), end_date)
+            sql = f"""
+                SELECT {self._COLS}
+                FROM symbol_technical_features_daily FINAL
+                WHERE ticker IN ({escaped})
+                  AND symbol_technical_features_daily.date BETWEEN toDate('{chunk_start.isoformat()}')
+                               AND toDate('{chunk_end.isoformat()}')
+                FORMAT JSONEachRow
+            """
+            rows.extend(self._http.query_json_each_row(sql, max_rows=100_000))
+            chunk_start = chunk_end + timedelta(days=1)
         self._by_key = {}
         for row in rows:
             ticker = str(row.get("ticker", ""))

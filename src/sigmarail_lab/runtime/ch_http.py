@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from typing import Any, Callable
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -48,12 +50,36 @@ class ChHttpClient:
             "Content-Type": "text/plain; charset=utf-8",
         }
         req = Request(url, data=sql.encode("utf-8"), headers=headers, method="POST")
-        try:
-            with urlopen(req, timeout=timeout) as resp:
-                payload = resp.read().decode("utf-8")
-        except Exception as exc:
-            if self._debug_log:
-                self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {exc}")
+        payload = None
+        # Backtest containers can open many ClickHouse connections at startup.
+        # A brief host/network refusal must not silently turn an entire point-in-
+        # time regime series into an empty cache (which then correctly fails
+        # closed and produces a misleading zero-trade run).
+        retry_delays = (0.25, 0.75, 1.5)
+        last_error: Exception | None = None
+        for attempt in range(len(retry_delays) + 1):
+            try:
+                with urlopen(req, timeout=timeout) as resp:
+                    payload = resp.read().decode("utf-8")
+                break
+            except HTTPError as exc:
+                # ClickHouse received the request and rejected the SQL/auth;
+                # retrying that response cannot repair it.
+                if self._debug_log:
+                    self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {exc}")
+                return []
+            except (URLError, TimeoutError, ConnectionError, OSError) as exc:
+                last_error = exc
+                if attempt < len(retry_delays):
+                    time.sleep(retry_delays[attempt])
+                    continue
+                if self._debug_log:
+                    self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {exc}")
+                return []
+
+        if payload is None:
+            if self._debug_log and last_error is not None:
+                self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {last_error}")
             return []
 
         rows: list[dict[str, Any]] = []

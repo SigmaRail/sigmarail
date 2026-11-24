@@ -94,9 +94,12 @@ can append a tenant-owned retain/revise/discard/defer verdict with rationale and
 GraphQL's `GenericScalar` is used to transport versioned AST documents. Apollo maps that
 scalar to an object-shaped JSON Schema so agents know to submit structured input; this is
 tool-call guidance, not semantic validation. SigmaRail Spec remains authoritative for AST
-shape and meaning. Apollo's generic ad hoc GraphQL `execute` tool is disabled. Only the four
-reviewed mutation operations in `mutation-allowlist.txt` are configured. CRUD demo mutations,
-cancellation, broker actions, and live deployment actions are not exposed.
+shape and meaning. Apollo's generic ad hoc GraphQL `execute` tool is disabled. Only reviewed
+mutation operations in `mutation-allowlist.txt` are configured. `CancelSigmaRailBacktest`
+cancels only a pending or running backtest owned by the selected tenant. Live deployment listing
+status and daily performance history are tenant-scoped read operations; live start/stop, order
+cancellation, and liquidation are not exposed until the LEAN controller is integrated with the
+container runtime.
 
 Read-only market context also exposes the date-scoped regime, per-ticker allocation
 explanations, entry-gate evaluation, transition weighting, candidate ranking, and comparisons
@@ -143,7 +146,7 @@ query MyToolName($tenantId: ID!, $otherParam: String) {
 | Mode       | Description                             | Recommended For            |
 | ---------- | --------------------------------------- | -------------------------- |
 | `none`     | Mutations disabled                      | High security environments |
-| `explicit` | Only allowlisted operation files loaded | Primary Compose; exposes four named SigmaRail writes |
+| `explicit` | Only allowlisted operation files loaded | Primary Compose; exposes named SigmaRail writes |
 | `all`      | Not supported for SigmaRail deployment  | Do not use |
 
 ## Deployment

@@ -7,6 +7,12 @@ from rest_framework import permissions
 from django.conf import settings
 
 from common.graphql.views import DRFAuthenticatedGraphQLView
+from apps.sigmarail_bridge.lean_runtime_api import (
+    LeanRuntimeMetaView,
+    LeanRuntimeSourceFieldsView,
+    LeanRuntimeSourcesView,
+    LeanRuntimeUniverseRunView,
+)
 
 api_info = openapi.Info(title="Documentation", default_version="v1")
 
@@ -26,6 +32,11 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # Worker-only compatibility surface used inside the Compose network.
+    path("v1/meta", LeanRuntimeMetaView.as_view(), name="lean-runtime-meta"),
+    path("v1/schema/sources", LeanRuntimeSourcesView.as_view(), name="lean-runtime-sources"),
+    path("v1/schema/sources/<str:source>/fields", LeanRuntimeSourceFieldsView.as_view(), name="lean-runtime-source-fields"),
+    path("v1/universe/run", LeanRuntimeUniverseRunView.as_view(), name="lean-runtime-universe-run"),
     # Django Admin - accessible via path for deployments without subdomain support
     path("admin/", admin.site.urls),
     re_path(r"^swagger(?P<format>\.json|\.yaml)$", schema_view.without_ui(cache_timeout=0), name="schema-json"),

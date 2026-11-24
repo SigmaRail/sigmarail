@@ -4,3 +4,4 @@ SaveSigmaRailScreen
 SaveSigmaRailStrategy
 SubmitSigmaRailBacktest
 RecordSigmaRailExperimentDecision
+CancelSigmaRailBacktest

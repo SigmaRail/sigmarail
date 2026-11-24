@@ -1,0 +1,4 @@
+# List tenant-owned paper/live deployment records and their pinned strategy versions.
+query ListSigmaRailLiveDeployments($tenantId: ID!, $limit: Int, $status: String) {
+  sigmarailLiveDeployments(tenantId: $tenantId, limit: $limit, status: $status)
+}

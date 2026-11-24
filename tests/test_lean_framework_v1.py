@@ -572,3 +572,44 @@ def test_vera_screener_alpha_and_pcm_holding_retention() -> None:
     # AAPL was invested, so PCM should NOT emit a target with 0 quantity for AAPL
     aapl_targets = [t for t in targets if t.Symbol.Value == "AAPL"]
     assert len(aapl_targets) == 0 or all(t.Quantity != 0 for t in aapl_targets)
+
+
+def test_screener_pcm_honors_atr_risk_target_below_minimum_weight() -> None:
+    from datetime import datetime
+    from sigmarail_lab.runtime.qc_sigmarail_screener_framework import (
+        Insight,
+        InsightDirection,
+        Market,
+        SecurityType,
+        Symbol,
+        VeraScreenerPortfolioConstructionModel,
+    )
+
+    class Store:
+        def get_atrs(self, _as_of):
+            # SigmaRail stores ATR as percentage points: 27.465 means 27.465%.
+            return {"DKI": 27.465}
+
+    class Portfolio(dict):
+        TotalPortfolioValue = 100_000.0
+
+    class Algorithm:
+        def __init__(self):
+            self.Time = datetime(2026, 10, 8, 9, 0)
+            self.Portfolio = Portfolio()
+
+    symbol = Symbol.Create("DKI", SecurityType.Equity, Market.USA)
+    insight = Insight.Price(symbol, None, InsightDirection.Up, confidence=1.0)
+    pcm = VeraScreenerPortfolioConstructionModel(
+        Store(),
+        max_positions=10,
+        max_weight=0.10,
+        min_weight=0.05,
+        target_atr_risk=0.004,
+    )
+
+    target = pcm.CreateTargets(Algorithm(), [insight])[0]
+
+    # 0.4% / 27.465% ATR gives a 1.46% position. The 5% minimum must not
+    # override the explicit risk target for a symbol with valid ATR data.
+    assert target.Quantity == pytest.approx(0.004 / 0.27465)
