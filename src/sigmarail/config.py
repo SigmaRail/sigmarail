@@ -376,6 +376,7 @@ def _apply_clickhouse_env_overrides(database: DatabaseConfig) -> DatabaseConfig:
             updates[field_name] = cast(value)
     if "SIGMARAIL_CLICKHOUSE_PASSWORD" in os.environ:
         updates["password"] = os.environ["SIGMARAIL_CLICKHOUSE_PASSWORD"]
+    return database.model_copy(update=updates) if updates else database
 
 
 def _environment_value(name: str) -> Optional[str]:
