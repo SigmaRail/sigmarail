@@ -37,7 +37,7 @@
       "revision": "bdcd04a2b6ddf5a36427c4b486f48eab57edbc9e"
     },
     "sigmarail": {
-      "content_sha256": "780fca55dbaea508c22ad4d624366fdb73579f5ab08d9f1fd3cc3fc62033d602",
+      "content_sha256": "f39320414ef5d1933e6128a239e4a2c56466dc6ac6948a48b45456992ad4a6af",
       "hashed_paths": [
         "tools/generate_lineage_manifest.py",
         "src/sigmarail/query.py",

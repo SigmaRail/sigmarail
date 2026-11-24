@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS ext_analyst_estimates_analyst_consensus_asof
 (
     `ticker` LowCardinality(String) COMMENT 'Equity ticker',
     `asof_date` Date COMMENT 'Point-in-time snapshot date',
+    `available_at` DateTime64(3, 'America/New_York') DEFAULT toDateTime64(0, 3, 'America/New_York') COMMENT 'Public availability timestamp for this consensus snapshot; zero means unavailable and is excluded from historical projections',
     `vendor` LowCardinality(String) DEFAULT 'unspecified' COMMENT 'Feed identifier selected by the user',
     `metric` LowCardinality(String) COMMENT 'eps | sales',
     `periodicity` LowCardinality(String) COMMENT 'Q | A',
@@ -30,6 +31,6 @@ CREATE TABLE IF NOT EXISTS ext_analyst_estimates_analyst_consensus_asof
 )
 ENGINE = ReplacingMergeTree(lastupdated)
 PARTITION BY toYYYYMM(asof_date)
-ORDER BY (ticker, asof_date, metric, periodicity, relative_period, vendor)
+ORDER BY (ticker, asof_date, metric, periodicity, relative_period, vendor, available_at)
 SETTINGS index_granularity = 8192
 COMMENT 'Point-in-time analyst consensus snapshots';

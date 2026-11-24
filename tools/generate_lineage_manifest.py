@@ -81,7 +81,7 @@ DEFERRED_EXTERNAL = [
         "reason": "Knowledge Base sentiment is deferred pending source review.",
     },
     {
-        "table": "screener_estimates_daily",
+        "table": "ext_analyst_estimates_screener_estimates_daily",
         "direct_inputs": [
             "ext_analyst_estimates_analyst_consensus_asof",
             "ext_analyst_estimates_analyst_actuals",

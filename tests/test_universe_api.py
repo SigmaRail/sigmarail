@@ -184,7 +184,7 @@ def test_universe_measure_series_rejects_unregistered_alias() -> None:
     ("mutate", "message"),
     [
         (lambda body: body["spec"].update(where_sql="close > 0"), "where_sql is unsupported"),
-        (lambda body: body["spec"].update(spine="screener_estimates_daily"), "supports screener_price_tech_daily"),
+        (lambda body: body["spec"].update(spine="ext_analyst_estimates_screener_estimates_daily"), "supports screener_price_tech_daily"),
         (lambda body: body["spec"].update(select=["not_a_core_field"]), "not registered"),
         (lambda body: body["spec"].update(limit_per_day=5001), "between 1 and 5000"),
     ],

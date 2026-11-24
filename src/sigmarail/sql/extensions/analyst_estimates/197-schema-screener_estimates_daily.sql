@@ -1,10 +1,10 @@
 -- =============================================================================
--- TABLE: screener_estimates_daily
+-- TABLE: ext_analyst_estimates_screener_estimates_daily
 -- kind=delivery_projection layer=L7
 -- Wide daily consensus for universe_query_v1 (prefix es).
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS screener_estimates_daily
+CREATE TABLE IF NOT EXISTS ext_analyst_estimates_screener_estimates_daily
 (
     `ticker` String COMMENT 'Stock ticker symbol',
     `date` Date COMMENT 'Trading date (asof last snapshot <= date)',
@@ -72,9 +72,9 @@ ORDER BY (ticker, date)
 SETTINGS index_granularity = 8192
 COMMENT 'L7 wide consensus; Alpha/Studio never see vendor period labels';
 
--- Managed transform view for target: screener_estimates_daily
+-- Managed transform view for target: ext_analyst_estimates_screener_estimates_daily
 -- =============================================================================
--- TRANSFORM: Populate screener_estimates_daily (L7 consensus delivery)
+-- TRANSFORM: Populate ext_analyst_estimates_screener_estimates_daily (L7 consensus delivery)
 -- =============================================================================
 --
 -- Asof-align last consensus snapshot <= trading date. 90d revision = Δ mean
@@ -147,12 +147,13 @@ CREATE VIEW IF NOT EXISTS xform_screener_estimates_daily (
     sales_last_surprise_pct,
     sales_beat_flag
 )
-COMMENT '{"order":130,"target":"screener_estimates_daily","sources":["ext_analyst_estimates_analyst_consensus_asof","ext_analyst_estimates_analyst_actuals","screener_price_tech_daily"],"chunk_size":"1w"}'
+COMMENT '{"order":130,"target":"ext_analyst_estimates_screener_estimates_daily","sources":["ext_analyst_estimates_analyst_consensus_asof","ext_analyst_estimates_analyst_actuals","screener_price_tech_daily"],"chunk_size":"1w"}'
 AS
 WITH snaps AS (
     SELECT
         ticker,
         asof_date,
+        available_at,
         metric,
         periodicity,
         relative_period,
@@ -167,11 +168,13 @@ WITH snaps AS (
     FROM ext_analyst_estimates_analyst_consensus_asof FINAL
     WHERE asof_date >= toDate({chunk_start_date:String}) - INTERVAL 180 DAY
       AND asof_date <= toDate({chunk_end_date:String})
+      AND available_at > toDateTime64(0, 3, 'America/New_York')
 ),
 rev_tall AS (
     SELECT
         cur.ticker,
         cur.asof_date,
+        cur.available_at,
         cur.metric,
         cur.periodicity,
         cur.relative_period,
@@ -194,7 +197,7 @@ rev_tall AS (
 pivoted AS (
     SELECT
         ticker,
-        asof_date,
+        available_at,
         anyIf(mean, metric = 'eps' AND periodicity = 'Q' AND relative_period = 0) AS eps_cq_mean,
         anyIf(mean, metric = 'eps' AND periodicity = 'Q' AND relative_period = 1) AS eps_nq_mean,
         anyIf(mean, metric = 'eps' AND periodicity = 'A' AND relative_period = 0) AS eps_cy_mean,
@@ -244,33 +247,38 @@ pivoted AS (
         any(vendor) AS est_vendor,
         any(eps_basis) AS eps_basis
     FROM rev_tall
-    GROUP BY ticker, asof_date
+    GROUP BY ticker, available_at
+    ORDER BY ticker, available_at
 ),
 surp_eps AS (
     SELECT
         ticker,
-        period_end_date,
         available_at,
-        reported AS eps_last_reported,
-        estimate_at_print AS eps_last_estimate,
-        surprise_pct AS eps_last_surprise_pct,
-        multiIf(reported > estimate_at_print, 1, reported < estimate_at_print, -1, 0) AS eps_beat_flag
+        argMax(period_end_date, (period_end_date, vendor, lastupdated)) AS period_end_date,
+        argMax(reported, (period_end_date, vendor, lastupdated)) AS eps_last_reported,
+        argMax(estimate_at_print, (period_end_date, vendor, lastupdated)) AS eps_last_estimate,
+        argMax(surprise_pct, (period_end_date, vendor, lastupdated)) AS eps_last_surprise_pct,
+        multiIf(eps_last_reported > eps_last_estimate, 1, eps_last_reported < eps_last_estimate, -1, 0) AS eps_beat_flag
     FROM ext_analyst_estimates_analyst_actuals FINAL
     WHERE metric = 'eps'
       AND available_at > toDateTime64(0, 3, 'America/New_York')
+    GROUP BY ticker, available_at
+    ORDER BY ticker, available_at
 ),
 surp_sales AS (
     SELECT
         ticker,
-        period_end_date,
         available_at,
-        reported AS sales_last_reported,
-        estimate_at_print AS sales_last_estimate,
-        surprise_pct AS sales_last_surprise_pct,
-        multiIf(reported > estimate_at_print, 1, reported < estimate_at_print, -1, 0) AS sales_beat_flag
+        argMax(period_end_date, (period_end_date, vendor, lastupdated)) AS period_end_date,
+        argMax(reported, (period_end_date, vendor, lastupdated)) AS sales_last_reported,
+        argMax(estimate_at_print, (period_end_date, vendor, lastupdated)) AS sales_last_estimate,
+        argMax(surprise_pct, (period_end_date, vendor, lastupdated)) AS sales_last_surprise_pct,
+        multiIf(sales_last_reported > sales_last_estimate, 1, sales_last_reported < sales_last_estimate, -1, 0) AS sales_beat_flag
     FROM ext_analyst_estimates_analyst_actuals FINAL
     WHERE metric = 'sales'
       AND available_at > toDateTime64(0, 3, 'America/New_York')
+    GROUP BY ticker, available_at
+    ORDER BY ticker, available_at
 )
 SELECT
     px.ticker AS ticker,
@@ -339,7 +347,8 @@ FROM (
       AND ticker IN (SELECT ticker FROM ext_analyst_estimates_analyst_consensus_asof GROUP BY ticker)
 ) AS px
 ASOF LEFT JOIN pivoted AS e
-    ON px.ticker = e.ticker AND px.date >= e.asof_date
+    ON px.ticker = e.ticker
+   AND toDateTime64(concat(toString(px.date), ' 15:59:59.999'), 3, 'America/New_York') >= e.available_at
 ASOF LEFT JOIN surp_eps AS se
     ON px.ticker = se.ticker
    AND toDateTime64(concat(toString(px.date), ' 15:59:59.999'), 3, 'America/New_York') >= se.available_at

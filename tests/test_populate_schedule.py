@@ -57,9 +57,9 @@ def test_selected_extension_transform_is_discovered_and_selectable():
     } - pop.BASE_DATA_TABLES
     with patch("sigmarail.populate.transform_catalog", return_value=[]):
         tables = set(pop._get_all_derived_tables())
-        specs = pop._get_transform_specs(["screener_estimates_daily"])
-    assert "screener_estimates_daily" in tables
-    assert any(spec.target == "screener_estimates_daily" for spec in specs)
+        specs = pop._get_transform_specs(["ext_analyst_estimates_screener_estimates_daily"])
+    assert "ext_analyst_estimates_screener_estimates_daily" in tables
+    assert any(spec.target == "ext_analyst_estimates_screener_estimates_daily" for spec in specs)
 
 
 def test_actuals_projection_joins_by_public_availability_time():
@@ -73,10 +73,18 @@ def test_actuals_projection_joins_by_public_availability_time():
         Path(__file__).parents[1]
         / "src/sigmarail/sql/extensions/analyst_estimates/196-schema-analyst_actuals.sql"
     ).read_text()
+    consensus_schema = (
+        Path(__file__).parents[1]
+        / "src/sigmarail/sql/extensions/analyst_estimates/195-schema-analyst_consensus_asof.sql"
+    ).read_text()
     assert "`available_at` DateTime64(3, 'America/New_York')" in schema
     assert "available_at > toDateTime64(0, 3, 'America/New_York')" in sql
     assert "px.date >= se.period_end_date" not in sql
     assert "15:59:59.999" in sql
+    assert "available_at > toDateTime64(0, 3, 'America/New_York')" in sql
+    assert "ASOF LEFT JOIN pivoted AS e" in sql
+    assert "cur.available_at" in sql
+    assert "`available_at` DateTime64(3, 'America/New_York')" in consensus_schema
 
 
 def test_external_module_source_tables_use_the_extension_namespace():

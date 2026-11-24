@@ -7,7 +7,7 @@ columns to core tables.
 
 | Module | Domain | Tables | External data packaged? |
 | --- | --- | --- | --- |
-| `analyst_estimates` | Analyst consensus, reported actuals, daily projection | `ext_analyst_estimates_analyst_consensus_asof`, `ext_analyst_estimates_analyst_actuals`, `screener_estimates_daily` | No |
+| `analyst_estimates` | Analyst consensus, reported actuals, daily projection | `ext_analyst_estimates_analyst_consensus_asof`, `ext_analyst_estimates_analyst_actuals`, `ext_analyst_estimates_screener_estimates_daily` | No |
 | `aaii` | Weekly investor sentiment survey | `ext_aaii_sentiment_survey` | No |
 | `etf` | ETF classifications/holdings, index proxies | `ext_etf_etf_classifications`, `ext_etf_etf_holdings_snapshot`, `ext_etf_etf_sector_weights_snapshot`, `ext_etf_index_proxy_catalog` | No |
 | `macro` | Daily macroeconomic series and regime labels | `ext_macro_economic_daily` | No |
