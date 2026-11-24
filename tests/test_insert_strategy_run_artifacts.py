@@ -8,12 +8,22 @@ SPEC = importlib.util.spec_from_file_location("insert_strategy_run", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
 _sys_path = sys.path[:]
+_module_prefixes = ("sigmarail_lab", "sigmarail_spec")
+_modules = {
+    name: module
+    for name, module in sys.modules.items()
+    if any(name == prefix or name.startswith(f"{prefix}.") for prefix in _module_prefixes)
+}
 try:
     SPEC.loader.exec_module(MODULE)
 finally:
     # The CLI makes its generated TradingLab tree importable at startup. Keep
-    # that runtime behavior from shadowing the installed Spec in pytest.
+    # its import path and module cache from shadowing installed packages in pytest.
     sys.path[:] = _sys_path
+    for name in list(sys.modules):
+        if any(name == prefix or name.startswith(f"{prefix}.") for prefix in _module_prefixes):
+            sys.modules.pop(name, None)
+    sys.modules.update(_modules)
 
 
 def test_oversized_optional_day_snapshots_are_skipped_with_notice(tmp_path, capsys):
