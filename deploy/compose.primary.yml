@@ -41,7 +41,7 @@ services:
         SIGMARAIL_BUILD_BRANCH: main
         SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
     env_file:
-      - ../../.sigmarail/backend.env
+      - ${SIGMARAIL_WORKSPACE_ROOT:-../..}/.sigmarail/backend.env
     environment:
       DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"backend","host":"db","port":5432}'
       REDIS_CONNECTION: redis://redis:6379
@@ -75,6 +75,40 @@ services:
       org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
       org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
 
+  # One sequential scheduler for all SigmaRail source loads and derived-data
+  # population. It deliberately has no Docker socket and is independent of the
+  # LEAN backtest worker.
+  data-updater:
+    image: sigmarail/data-updater:main
+    build:
+      context: ..
+      dockerfile: deploy/data-updater.Dockerfile
+    profiles: [data-update]
+    environment:
+      TZ: America/New_York
+      SIGMARAIL_MODE: prod
+      SIGMARAIL_HOME: /var/lib/sigmarail
+      SIGMARAIL_LOG_DIR: /var/lib/sigmarail/logs
+      SIGMARAIL_DATA_ROOT: /var/lib/sigmarail/data/prod
+      SIGMARAIL_DATABASE_HOST: host.docker.internal
+      SIGMARAIL_DATABASE_PORT: "9000"
+      SIGMARAIL_DATABASE_HTTP_PORT: "8123"
+      SIGMARAIL_DATABASE_NAME: sigmarail
+      SIGMARAIL_DATABASE_USER: ${SIGMARAIL_DATA_UPDATER_DATABASE_USER:-default}
+      SIGMARAIL_DATABASE_PASSWORD_FILE: /run/secrets/clickhouse_password
+      SIGMARAIL_SHARADAR_API_KEY_FILE: /run/secrets/sharadar_api_key
+      SIGMARAIL_SCHEDULE_TIME: ${SIGMARAIL_DATA_UPDATER_SCHEDULE_TIME:-20:00}
+      SIGMARAIL_SCHEDULE_TIMEZONE: ${SIGMARAIL_DATA_UPDATER_TIMEZONE:-America/New_York}
+      SIGMARAIL_UPDATE_SCRIPT: /app/scripts/daily-update.sh
+    secrets:
+      - clickhouse_password
+      - sharadar_api_key
+    volumes:
+      - sigmarail_data_updater:/var/lib/sigmarail
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
   mcp-server:
     image: sigmarail/apollo-mcp:main
     build:
@@ -103,7 +137,7 @@ services:
       context: ..
       dockerfile: packages/mcp-gateway/Dockerfile
     env_file:
-      - ../../.sigmarail/gateway.env
+      - ${SIGMARAIL_WORKSPACE_ROOT:-../..}/.sigmarail/gateway.env
     environment:
       SIGMARAIL_MCP_UPSTREAM: http://backend:80/api/ai-assistant/chatgpt/mcp/
       LEGACY_MCP_GATEWAY: http://host.docker.internal:8002
@@ -167,4 +201,11 @@ volumes:
   sigmarail_redis_data:
     external: true
     name: sigmarail-studio-apptension_redis_cache
+  sigmarail_data_updater:
+
+secrets:
+  clickhouse_password:
+    environment: SIGMARAIL_DATA_UPDATER_CLICKHOUSE_PASSWORD
+  sharadar_api_key:
+    environment: SIGMARAIL_DATA_UPDATER_SHARADAR_API_KEY
 

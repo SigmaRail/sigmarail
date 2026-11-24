@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import getpass
 import json
 import uuid
 from typing import Any
@@ -9,6 +11,8 @@ from typing import Any
 
 CLICKHOUSE_KEYRING_SERVICE = "sigmarail/clickhouse"
 CLICKHOUSE_KEYRING_ACCOUNT = "local"
+SHARADAR_KEYRING_SERVICE = "sigmarail/sharadar"
+SHARADAR_KEYRING_ACCOUNT = "api_key"
 STUDIO_BROKER_KEYRING_SERVICE_PREFIX = "sigmarail-studio/broker/"
 STUDIO_BROKER_KEYRING_ACCOUNT = "credentials"
 _SECURE_BACKENDS = (
@@ -86,6 +90,59 @@ def delete_clickhouse_credentials() -> None:
         raise CredentialStoreError("Could not delete ClickHouse credentials from the OS vault") from exc
 
 
+def get_sharadar_api_key() -> str | None:
+    """Read the Sharadar API key from the local operating-system credential vault."""
+    keyring = _keyring()
+    try:
+        value = keyring.get_password(SHARADAR_KEYRING_SERVICE, SHARADAR_KEYRING_ACCOUNT)
+    except Exception as exc:
+        raise CredentialStoreError("Could not read Sharadar credentials from the OS vault") from exc
+    return value if value and value.strip() else None
+
+
+def set_sharadar_api_key(api_key: str) -> None:
+    """Store the Sharadar API key in the local operating-system credential vault."""
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise ValueError("Sharadar API key must be non-empty")
+    keyring = _keyring()
+    try:
+        keyring.set_password(SHARADAR_KEYRING_SERVICE, SHARADAR_KEYRING_ACCOUNT, api_key.strip())
+    except Exception as exc:
+        raise CredentialStoreError("Could not save Sharadar credentials to the OS vault") from exc
+
+
+def delete_sharadar_api_key() -> None:
+    """Remove the Sharadar API key from the local operating-system credential vault."""
+    keyring = _keyring()
+    try:
+        keyring.delete_password(SHARADAR_KEYRING_SERVICE, SHARADAR_KEYRING_ACCOUNT)
+    except keyring.errors.PasswordDeleteError:
+        return
+    except Exception as exc:
+        raise CredentialStoreError("Could not delete Sharadar credentials from the OS vault") from exc
+
+
+def main() -> None:
+    """Manage local Keychain credentials without writing secrets to config files."""
+    parser = argparse.ArgumentParser(description="Manage SigmaRail credentials in the OS vault")
+    parser.add_argument(
+        "action",
+        choices=("set-clickhouse", "set-sharadar"),
+    )
+    args = parser.parse_args()
+    try:
+        if args.action == "set-clickhouse":
+            username = input("ClickHouse username: ").strip()
+            password = getpass.getpass("ClickHouse password: ")
+            set_clickhouse_credentials(username, password)
+        else:
+            api_key = getpass.getpass("Sharadar API key: ")
+            set_sharadar_api_key(api_key)
+    except (CredentialStoreError, ValueError) as exc:
+        parser.exit(2, f"Credential operation failed: {exc}\n")
+    print("Credential operation completed.")
+
+
 def get_studio_alpaca_credentials(profile_id: str) -> dict[str, str] | None:
     """Read an Alpaca profile saved by SigmaRail Studio from the OS credential vault.
 
@@ -121,3 +178,7 @@ def get_studio_alpaca_credentials(profile_id: str) -> dict[str, str] | None:
     if not isinstance(api_key, str) or not api_key or not isinstance(api_secret, str) or not api_secret:
         raise CredentialStoreError("Stored Alpaca credentials are incomplete")
     return {"api_key": api_key, "api_secret": api_secret}
+
+
+if __name__ == "__main__":
+    main()

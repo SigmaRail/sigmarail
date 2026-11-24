@@ -92,7 +92,7 @@ def configure_logging(
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
-    logs_dir = get_project_root() / "logs"
+    logs_dir = Path(os.environ.get("SIGMARAIL_LOG_DIR", get_project_root() / "logs"))
     logs_dir.mkdir(exist_ok=True)
 
     file_formatter = logging.Formatter(
@@ -355,6 +355,37 @@ def _apply_test_clickhouse_env_overrides(database: DatabaseConfig) -> DatabaseCo
     return database
 
 
+def _environment_value(name: str) -> Optional[str]:
+    """Read a runtime setting directly or from a mounted secret file."""
+    if name in os.environ:
+        return os.environ[name]
+    secret_path = os.environ.get(f"{name}_FILE", "").strip()
+    if not secret_path:
+        return None
+    try:
+        return Path(secret_path).read_text(encoding="utf-8").rstrip("\r\n")
+    except OSError as exc:
+        raise RuntimeError(f"Could not read runtime secret file for {name}") from exc
+
+
+def _apply_runtime_database_env(database: DatabaseConfig) -> DatabaseConfig:
+    """Allow containers to receive ClickHouse settings without a config YAML file."""
+    mapping = {
+        "SIGMARAIL_DATABASE_HOST": "host",
+        "SIGMARAIL_DATABASE_PORT": "port",
+        "SIGMARAIL_DATABASE_HTTP_PORT": "http_port",
+        "SIGMARAIL_DATABASE_USER": "user",
+        "SIGMARAIL_DATABASE_PASSWORD": "password",
+        "SIGMARAIL_DATABASE_NAME": "database",
+    }
+    updates: Dict[str, Any] = {}
+    for env_name, field_name in mapping.items():
+        value = _environment_value(env_name)
+        if value is not None:
+            updates[field_name] = int(value) if field_name in {"port", "http_port"} else value
+    return database.model_copy(update=updates) if updates else database
+
+
 def _apply_local_clickhouse_keyring(database: DatabaseConfig) -> DatabaseConfig:
     """Use the native credential store only when local config has no password.
 
@@ -383,9 +414,23 @@ def load_typed_config() -> RootConfig:
     raw = _load_config_internal()
     database = DatabaseConfig.model_validate(raw.get("database", {}))
     database = _apply_test_clickhouse_env_overrides(database)
+    database = _apply_runtime_database_env(database)
     database = _apply_local_clickhouse_keyring(database)
     data = DataConfig.model_validate(raw.get("data", {}))
+    data_root = os.environ.get("SIGMARAIL_DATA_ROOT", "").strip()
+    if data_root:
+        data = data.model_copy(update={"root": data_root})
     sharadar_raw = dict(raw.get("sharadar") or {})
+    api_key = _environment_value("SIGMARAIL_SHARADAR_API_KEY")
+    if api_key is None and app_config.mode != "test":
+        try:
+            from sigmarail.credentials import get_sharadar_api_key
+
+            api_key = get_sharadar_api_key()
+        except Exception as exc:
+            logger.debug("No Sharadar API key available from the OS vault: %s", exc)
+    if api_key is not None:
+        sharadar_raw["api_key"] = api_key
     if "base_url" in sharadar_raw:
         sharadar_raw["base_url"] = normalize_sharadar_base_url(
             str(sharadar_raw.get("base_url") or "")

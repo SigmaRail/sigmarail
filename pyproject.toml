@@ -39,6 +39,7 @@ sigmarail-schema = "sigmarail.schema:main"
 sigmarail-test-data = "sigmarail.testing.cli:main"
 sigmarail-load-alpaca = "sigmarail.alpaca_bars:main"
 sigmarail-alpaca-schema = "sigmarail.alpaca_schema:main"
+sigmarail-credentials = "sigmarail.credentials:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

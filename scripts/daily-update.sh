@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -u
+set -o pipefail
 
 # Run the SigmaRail Sharadar load and derived-table population in order.
 # This runner deliberately does not start, stop, optimize, or migrate ClickHouse.
@@ -8,9 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_DIR="${SIGMARAIL_LOG_DIR:-$PROJECT_ROOT/logs}"
 VENV_PATH="${SIGMARAIL_VENV:-$PROJECT_ROOT/.venv}"
+PYTHON_BIN="${SIGMARAIL_PYTHON:-$VENV_PATH/bin/python}"
 RUN_LOG="$LOG_DIR/sigmarail-daily-update.log"
 ERROR_LOG="$LOG_DIR/sigmarail-daily-update-error.log"
-LOCK_DIR="${SIGMARAIL_UPDATE_LOCK_DIR:-$LOG_DIR/.sigmarail-daily-update.lockdir}"
+LOCK_FILE="${SIGMARAIL_UPDATE_LOCK_FILE:-$LOG_DIR/.sigmarail-daily-update.lock}"
 
 mkdir -p "$LOG_DIR" || exit 1
 
@@ -31,33 +33,42 @@ notify() {
   fi
 }
 
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-  log "Another SigmaRail daily update is already running (lock: $LOCK_DIR); exiting."
+if ! command -v flock >/dev/null 2>&1; then
+  log_error "flock is required to prevent overlapping SigmaRail data updates."
+  exit 1
+fi
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  log "Another SigmaRail daily update is already running (lock: $LOCK_FILE); exiting."
   exit 0
 fi
-trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT INT TERM HUP
 
-if [[ ! -x "$VENV_PATH/bin/python" ]]; then
-  log_error "Python environment not found at $VENV_PATH/bin/python; install SigmaRail into .venv or set SIGMARAIL_VENV."
+if [[ ! -x "$PYTHON_BIN" ]]; then
+  PYTHON_BIN="$(command -v python || command -v python3 || true)"
+fi
+if [[ -z "$PYTHON_BIN" || ! -x "$PYTHON_BIN" ]]; then
+  log_error "Python was not found; install SigmaRail in a virtual environment or container image."
   notify "SigmaRail update failed" "Python environment not found"
   exit 1
 fi
 
-export VIRTUAL_ENV="$VENV_PATH"
-export PATH="$VENV_PATH/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+if [[ -x "$VENV_PATH/bin/python" ]]; then
+  export VIRTUAL_ENV="$VENV_PATH"
+  export PATH="$VENV_PATH/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+fi
 export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
-LOAD_COMMAND=("$VENV_PATH/bin/sigmarail-load")
-if [[ ! -x "${LOAD_COMMAND[0]}" ]]; then
-  LOAD_COMMAND=("$VENV_PATH/bin/python" -m sigmarail.load)
+LOAD_COMMAND=("$(command -v sigmarail-load || true)")
+if [[ -z "${LOAD_COMMAND[0]}" ]]; then
+  LOAD_COMMAND=("$PYTHON_BIN" -m sigmarail.load)
 fi
-POPULATE_COMMAND=("$VENV_PATH/bin/sigmarail-populate")
-if [[ ! -x "${POPULATE_COMMAND[0]}" ]]; then
-  POPULATE_COMMAND=("$VENV_PATH/bin/python" -m sigmarail.populate)
+POPULATE_COMMAND=("$(command -v sigmarail-populate || true)")
+if [[ -z "${POPULATE_COMMAND[0]}" ]]; then
+  POPULATE_COMMAND=("$PYTHON_BIN" -m sigmarail.populate)
 fi
 
-if ! "$VENV_PATH/bin/python" -c 'import sigmarail.load, sigmarail.populate' >/dev/null 2>&1; then
-  log_error "SigmaRail modules unavailable in $VENV_PATH; install dependencies and set SIGMARAIL_VENV."
+if ! "$PYTHON_BIN" -c 'import sigmarail.load, sigmarail.populate' >/dev/null 2>&1; then
+  log_error "SigmaRail modules unavailable; install dependencies in the selected Python environment."
   notify "SigmaRail update failed" "SigmaRail modules unavailable"
   exit 1
 fi
@@ -73,8 +84,8 @@ run_step() {
   log "Starting: $label"
   # Log only the executable basename and arguments; configuration secrets are never printed.
   log "Command: $(basename "$1") ${*:2}"
-  "$@" >>"$RUN_LOG" 2>&1
-  local status=$?
+  "$@" 2>&1 | tee -a "$RUN_LOG"
+  local status=${PIPESTATUS[0]}
   if [[ $status -eq 0 ]]; then
     log "Completed: $label"
     return 0

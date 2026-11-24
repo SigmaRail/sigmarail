@@ -96,7 +96,7 @@ to stage statements as table creation, reconciliation, view removal, and view
 creation so dependent views are refreshed safely. Deleting undeclared columns
 requires both `--apply` and `--drop-extra-columns`.
 
-For the macOS nightly load/populate runner and its LaunchAgent installer, see
+For the Docker-scheduled load/populate runner and its Keychain-backed secret handoff, see
 [`scripts/README.md`](scripts/README.md). The runner uses SigmaRail's CLIs and
 does not start or modify the ClickHouse service.
 
