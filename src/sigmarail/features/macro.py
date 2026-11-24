@@ -2,7 +2,7 @@
 
 Fetches CPI-U (inflation) and Real GDP (growth) from the FRED public CSV
 endpoint (no API key), computes YoY/QoQ deltas, forward-fills to daily, and
-classifies the Dalio 4-quadrant environment. Populates ``macro_economic_daily``
+classifies the Dalio 4-quadrant environment. Populates ``ext_macro_economic_daily``
 so the All Weather regime overlay can be driven by real macro data in backtests.
 """
 
@@ -125,12 +125,12 @@ def load(client: Any, *, persist: bool = True) -> dict[str, Any]:
 
     if persist and rows:
         client.command(
-            "CREATE TABLE IF NOT EXISTS macro_economic_daily"
+            "CREATE TABLE IF NOT EXISTS ext_macro_economic_daily"
             " (date Date32, real_gdp_qoq Float64, cpi_yoy Float64, regime_quadrant LowCardinality(String))"
             " ENGINE = MergeTree ORDER BY date"
         )
         client.insert(
-            "macro_economic_daily",
+            "ext_macro_economic_daily",
             [[r["date"], r["real_gdp_qoq"], r["cpi_yoy"], r["regime_quadrant"]] for r in rows],
             column_names=["date", "real_gdp_qoq", "cpi_yoy", "regime_quadrant"],
         )

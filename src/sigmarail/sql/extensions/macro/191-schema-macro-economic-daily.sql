@@ -8,7 +8,7 @@
 -- Populate with the opt-in SigmaRail macro loader.
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS macro_economic_daily
+CREATE TABLE IF NOT EXISTS ext_macro_economic_daily
 (
     `date` Date32,
     `real_gdp_qoq` Float64 COMMENT 'Real GDP QoQ % change, annualized (forward-filled)',

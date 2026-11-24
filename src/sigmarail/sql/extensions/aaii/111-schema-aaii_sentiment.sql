@@ -1,6 +1,6 @@
 -- AAII investor sentiment survey (weekly)
 
-CREATE TABLE IF NOT EXISTS aaii_sentiment_survey
+CREATE TABLE IF NOT EXISTS ext_aaii_sentiment_survey
 (
     `survey_date` Date COMMENT 'AAII survey week ending date',
     `bullish_pct` Float64,

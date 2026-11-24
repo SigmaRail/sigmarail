@@ -536,7 +536,9 @@ def discover_transform_files(project_root: Optional[Path] = None) -> List[Path]:
     return sorted({spec.path for spec in discover_transform_specs(project_root) if spec.path})
 
 
-def discover_transform_specs(project_root: Optional[Path] = None) -> List[TransformSpec]:
+def discover_transform_specs(
+    project_root: Optional[Path] = None, modules: Optional[List[str]] = None
+) -> List[TransformSpec]:
     """Parse managed views from any SQL file under ``sql/schema``.
 
     A schema script may contain table DDL and multiple managed views. Each
@@ -544,12 +546,14 @@ def discover_transform_specs(project_root: Optional[Path] = None) -> List[Transf
     not determine the transform identity or its populate configuration.
     """
     schema_dir = transform_files_dir(project_root)
-    if not schema_dir.is_dir():
-        return []
+    if project_root is None:
+        schema_files = get_schema_files(modules)
+    else:
+        schema_files = sorted(schema_dir.glob("*.sql"), key=_metric_sql_sort_key)
+        for module in sorted(set(modules or ())):
+            module_dir = Path(project_root) / "sql" / "extensions" / module
+            schema_files.extend(sorted(module_dir.glob("*.sql"), key=_metric_sql_sort_key))
     specs: List[TransformSpec] = []
-    schema_files = get_schema_files() if project_root is None else sorted(
-        schema_dir.glob("*.sql"), key=_metric_sql_sort_key
-    )
     for path in sorted(schema_files, key=_metric_sql_sort_key):
         for statement in split_sql_statements(path.read_text(encoding="utf-8")):
             sql = _strip_sql_comments(statement).strip()
@@ -612,12 +616,12 @@ def register_transform_view(client, spec: TransformSpec, *, name: Optional[str] 
 
 
 def register_all_transform_views(
-    client, project_root: Optional[Path] = None
+    client, project_root: Optional[Path] = None, modules: Optional[List[str]] = None
 ) -> tuple[List[str], List[tuple[str, str]]]:
     """Register every managed view found in schema SQL. Returns (registered, errors)."""
     registered: List[str] = []
     errors: List[tuple[str, str]] = []
-    for spec in discover_transform_specs(project_root):
+    for spec in discover_transform_specs(project_root, modules):
         try:
             register_transform_view(client, spec)
             registered.append(spec.view_name or spec.name)

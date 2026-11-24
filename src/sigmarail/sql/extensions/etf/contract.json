@@ -58,7 +58,7 @@
       ],
       "kind": "external_extension",
       "module": "etf",
-      "name": "etf_classifications",
+      "name": "ext_etf_etf_classifications",
       "schema_file": "123-schema-etf_classifications.sql"
     },
     {
@@ -101,7 +101,7 @@
       ],
       "kind": "external_extension",
       "module": "etf",
-      "name": "etf_holdings_snapshot",
+      "name": "ext_etf_etf_holdings_snapshot",
       "schema_file": "125-schema-etf_holdings_snapshots.sql"
     },
     {
@@ -139,7 +139,7 @@
       ],
       "kind": "external_extension",
       "module": "etf",
-      "name": "etf_sector_weights_snapshot",
+      "name": "ext_etf_etf_sector_weights_snapshot",
       "schema_file": "125-schema-etf_holdings_snapshots.sql"
     },
     {
@@ -182,7 +182,7 @@
       ],
       "kind": "external_extension",
       "module": "etf",
-      "name": "index_proxy_catalog",
+      "name": "ext_etf_index_proxy_catalog",
       "schema_file": "126-schema-index_proxy_catalog.sql"
     }
   ]

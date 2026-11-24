@@ -43,7 +43,7 @@
       ],
       "kind": "external_extension",
       "module": "aaii",
-      "name": "aaii_sentiment_survey",
+      "name": "ext_aaii_sentiment_survey",
       "schema_file": "111-schema-aaii_sentiment.sql"
     }
   ]

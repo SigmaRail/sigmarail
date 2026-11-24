@@ -28,7 +28,7 @@
       ],
       "kind": "external_extension",
       "module": "macro",
-      "name": "macro_economic_daily",
+      "name": "ext_macro_economic_daily",
       "schema_file": "191-schema-macro-economic-daily.sql"
     }
   ]

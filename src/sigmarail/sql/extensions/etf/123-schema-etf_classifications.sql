@@ -5,7 +5,7 @@
 -- then coalesce those values over the core ticker table via `ticker_classification_v1`.
 --
 -- Overwrite policy: ReplacingMergeTree on `ingested_at` so edits to the mapping replace prior rows.
-CREATE TABLE IF NOT EXISTS etf_classifications
+CREATE TABLE IF NOT EXISTS ext_etf_etf_classifications
 (
     `ticker` LowCardinality(String),
     `sector` LowCardinality(String) DEFAULT '',
@@ -40,5 +40,5 @@ SELECT
     e.method,
     e.source_url
 FROM tickers AS t
-LEFT JOIN etf_classifications AS e
+LEFT JOIN ext_etf_etf_classifications AS e
     ON t.ticker = e.ticker;

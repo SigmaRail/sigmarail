@@ -1,6 +1,6 @@
 -- External ETF holdings and sector-weight snapshots.
 
-CREATE TABLE IF NOT EXISTS etf_holdings_snapshot
+CREATE TABLE IF NOT EXISTS ext_etf_etf_holdings_snapshot
 (
     `etf_ticker` LowCardinality(String),
     `as_of_date` Date,
@@ -15,7 +15,7 @@ PARTITION BY toYYYYMM(as_of_date)
 ORDER BY (etf_ticker, as_of_date, holding_symbol)
 SETTINGS index_granularity = 8192;
 
-CREATE TABLE IF NOT EXISTS etf_sector_weights_snapshot
+CREATE TABLE IF NOT EXISTS ext_etf_etf_sector_weights_snapshot
 (
     `etf_ticker` LowCardinality(String),
     `as_of_date` Date,

@@ -1,11 +1,11 @@
 -- =============================================================================
--- TABLE: analyst_consensus_asof
+-- TABLE: ext_analyst_estimates_analyst_consensus_asof
 -- kind=raw_fact layer=L4
 -- Vendor-neutral street consensus snapshots (I/B/E/S / FactSet grain).
 -- Vendor-specific identifiers belong to the selected local data source.
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS analyst_consensus_asof
+CREATE TABLE IF NOT EXISTS ext_analyst_estimates_analyst_consensus_asof
 (
     `ticker` LowCardinality(String) COMMENT 'Equity ticker',
     `asof_date` Date COMMENT 'Point-in-time snapshot date',

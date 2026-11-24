@@ -108,7 +108,7 @@
       ],
       "kind": "external_extension",
       "module": "analyst_estimates",
-      "name": "analyst_consensus_asof",
+      "name": "ext_analyst_estimates_analyst_consensus_asof",
       "schema_file": "195-schema-analyst_consensus_asof.sql"
     },
     {
@@ -122,6 +122,11 @@
           "comment": "Fiscal period end",
           "name": "period_end_date",
           "type": "Date"
+        },
+        {
+          "comment": "Public release timestamp for this reported value; zero means unavailable and is excluded from historical projections",
+          "name": "available_at",
+          "type": "DateTime64(3, 'America/New_York')"
         },
         {
           "comment": "eps | sales",
@@ -161,7 +166,7 @@
       ],
       "kind": "external_extension",
       "module": "analyst_estimates",
-      "name": "analyst_actuals",
+      "name": "ext_analyst_estimates_analyst_actuals",
       "schema_file": "196-schema-analyst_actuals.sql"
     },
     {

@@ -1,7 +1,7 @@
 -- Index proxy catalog: maps sectors and market buckets to tradable ETF/index proxies (SPY, XLK, …).
 -- Used by `ticker_index_proxy_v1` and `daily_index_proxy_sentiment`.
 
-CREATE TABLE IF NOT EXISTS index_proxy_catalog
+CREATE TABLE IF NOT EXISTS ext_etf_index_proxy_catalog
 (
     `proxy_ticker` LowCardinality(String),
     `proxy_type` LowCardinality(String),
@@ -43,7 +43,7 @@ SELECT
     c.proxy_type AS proxy_type,
     'direct' AS mapping_kind
 FROM tickers AS t
-INNER JOIN index_proxy_catalog AS c
+INNER JOIN ext_etf_index_proxy_catalog AS c
     ON c.proxy_ticker = t.ticker
 UNION ALL
 SELECT
@@ -54,7 +54,7 @@ SELECT
 FROM tickers AS t
 INNER JOIN sector_normalized_v1 AS s
     ON s.ticker = t.ticker
-INNER JOIN index_proxy_catalog AS c
+INNER JOIN ext_etf_index_proxy_catalog AS c
     ON c.proxy_type = 'sector'
    AND c.bucket_key = s.sector_norm
 WHERE s.sector_norm != ''
@@ -65,7 +65,7 @@ SELECT
     c.proxy_type AS proxy_type,
     'market' AS mapping_kind
 FROM tickers AS t
-INNER JOIN index_proxy_catalog AS c
+INNER JOIN ext_etf_index_proxy_catalog AS c
     ON c.proxy_type = 'market'
    AND c.bucket_key = 'US_domestic'
 WHERE t.category LIKE 'Domestic Common Stock%';

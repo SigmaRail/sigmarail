@@ -519,7 +519,7 @@ class DataPopulator:
         target out of each transform keeps this complete by construction.
         """
         tables: set[str] = set()
-        for spec in discover_transform_specs():
+        for spec in discover_transform_specs(modules=self.modules):
             if spec.target:
                 tables.add(spec.target)
         for sql_file in discover_legacy_transform_files():
@@ -576,7 +576,7 @@ class DataPopulator:
         if specs:
             file_by_view = {
                 local.view_name: local.path
-                for local in discover_transform_specs()
+                for local in discover_transform_specs(modules=self.modules)
                 if local.view_name and local.path
             }
             managed_specs: List[TransformSpec] = []
@@ -595,7 +595,7 @@ class DataPopulator:
                 managed_specs.append(spec)
             specs = managed_specs
         else:
-            specs = discover_transform_specs()
+            specs = discover_transform_specs(modules=self.modules)
 
         view_targets = {s.target for s in specs if s.target}
         for path in sorted(discover_legacy_transform_files(), key=_metric_sql_sort_key):
@@ -690,7 +690,9 @@ class DataPopulator:
         requested = requested_metrics or []
         run_all = not requested or 'all' in requested
         spec_by_view = {
-            spec.view_name: spec for spec in discover_transform_specs() if spec.view_name
+            spec.view_name: spec
+            for spec in discover_transform_specs(modules=self.modules)
+            if spec.view_name
         }
         blocking: List[tuple] = []
         for name, err in reg_errors:
@@ -1642,7 +1644,9 @@ def main():
 
         # Register transform views only — schema inspection / ad-hoc debugging.
         if args.register_views:
-            registered, reg_errors = register_all_transform_views(populator.client)
+            registered, reg_errors = register_all_transform_views(
+                populator.client, modules=populator.modules
+            )
             print(f"Registered {len(registered)} transform view(s)", flush=True)
             for name, err in reg_errors:
                 print(f"  ⚠️ {name}: {err}", flush=True)

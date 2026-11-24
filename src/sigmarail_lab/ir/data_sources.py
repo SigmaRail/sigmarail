@@ -156,7 +156,7 @@ grain="daily",
     ),
     "macro": DataSourceSpec(
 name="macro",
-table="macro_economic_daily",
+table="ext_macro_economic_daily",
 select=[
     "date",
     "real_gdp_qoq",

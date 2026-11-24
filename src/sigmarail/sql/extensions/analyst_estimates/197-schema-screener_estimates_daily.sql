@@ -80,7 +80,7 @@ COMMENT 'L7 wide consensus; Alpha/Studio never see vendor period labels';
 -- Asof-align last consensus snapshot <= trading date. 90d revision = Δ mean
 -- vs snapshot at asof-90d on the same period_end (not a CQ/NQ slot roll).
 -- Surprise = latest actual period_end <= date. Px spine is restricted to
--- tickers present in analyst_consensus_asof.
+-- tickers present in ext_analyst_estimates_analyst_consensus_asof.
 -- snaps/rev_tall are bounded to [chunk_start - 180d, chunk_end] so weekly
 -- populate chunks prune monthly partitions instead of ASOF-joining 14M rows.
 --
@@ -147,7 +147,7 @@ CREATE VIEW IF NOT EXISTS xform_screener_estimates_daily (
     sales_last_surprise_pct,
     sales_beat_flag
 )
-COMMENT '{"order":130,"target":"screener_estimates_daily","sources":["analyst_consensus_asof","analyst_actuals","screener_price_tech_daily"],"chunk_size":"1w"}'
+COMMENT '{"order":130,"target":"screener_estimates_daily","sources":["ext_analyst_estimates_analyst_consensus_asof","ext_analyst_estimates_analyst_actuals","screener_price_tech_daily"],"chunk_size":"1w"}'
 AS
 WITH snaps AS (
     SELECT
@@ -164,7 +164,7 @@ WITH snaps AS (
         vendor,
         eps_basis,
         period_end_date
-    FROM analyst_consensus_asof FINAL
+    FROM ext_analyst_estimates_analyst_consensus_asof FINAL
     WHERE asof_date >= toDate({chunk_start_date:String}) - INTERVAL 180 DAY
       AND asof_date <= toDate({chunk_end_date:String})
 ),
@@ -250,25 +250,27 @@ surp_eps AS (
     SELECT
         ticker,
         period_end_date,
+        available_at,
         reported AS eps_last_reported,
         estimate_at_print AS eps_last_estimate,
         surprise_pct AS eps_last_surprise_pct,
         multiIf(reported > estimate_at_print, 1, reported < estimate_at_print, -1, 0) AS eps_beat_flag
-    FROM analyst_actuals FINAL
+    FROM ext_analyst_estimates_analyst_actuals FINAL
     WHERE metric = 'eps'
-      AND period_end_date <= toDate({chunk_end_date:String})
+      AND available_at > toDateTime64(0, 3, 'America/New_York')
 ),
 surp_sales AS (
     SELECT
         ticker,
         period_end_date,
+        available_at,
         reported AS sales_last_reported,
         estimate_at_print AS sales_last_estimate,
         surprise_pct AS sales_last_surprise_pct,
         multiIf(reported > estimate_at_print, 1, reported < estimate_at_print, -1, 0) AS sales_beat_flag
-    FROM analyst_actuals FINAL
+    FROM ext_analyst_estimates_analyst_actuals FINAL
     WHERE metric = 'sales'
-      AND period_end_date <= toDate({chunk_end_date:String})
+      AND available_at > toDateTime64(0, 3, 'America/New_York')
 )
 SELECT
     px.ticker AS ticker,
@@ -334,11 +336,13 @@ FROM (
     SELECT ticker, date
     FROM screener_price_tech_daily FINAL
     WHERE date BETWEEN {chunk_start_date:String} AND {chunk_end_date:String}
-      AND ticker IN (SELECT ticker FROM analyst_consensus_asof GROUP BY ticker)
+      AND ticker IN (SELECT ticker FROM ext_analyst_estimates_analyst_consensus_asof GROUP BY ticker)
 ) AS px
 ASOF LEFT JOIN pivoted AS e
     ON px.ticker = e.ticker AND px.date >= e.asof_date
 ASOF LEFT JOIN surp_eps AS se
-    ON px.ticker = se.ticker AND px.date >= se.period_end_date
+    ON px.ticker = se.ticker
+   AND toDateTime64(concat(toString(px.date), ' 15:59:59.999'), 3, 'America/New_York') >= se.available_at
 ASOF LEFT JOIN surp_sales AS ss
-    ON px.ticker = ss.ticker AND px.date >= ss.period_end_date;
+    ON px.ticker = ss.ticker
+   AND toDateTime64(concat(toString(px.date), ' 15:59:59.999'), 3, 'America/New_York') >= ss.available_at;

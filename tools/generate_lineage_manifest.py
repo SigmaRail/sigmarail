@@ -83,8 +83,8 @@ DEFERRED_EXTERNAL = [
     {
         "table": "screener_estimates_daily",
         "direct_inputs": [
-            "analyst_consensus_asof",
-            "analyst_actuals",
+            "ext_analyst_estimates_analyst_consensus_asof",
+            "ext_analyst_estimates_analyst_actuals",
             "screener_price_tech_daily",
         ],
         "included_sharadar_columns": [],
