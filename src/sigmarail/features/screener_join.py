@@ -27,7 +27,7 @@ def _require_sqlglot():  # type: ignore[no-untyped-def]
         from sqlglot import exp
     except ImportError as e:  # pragma: no cover
         raise RuntimeError(
-            "spec.sql requires sqlglot (listed in vera install_requires). "
+            "spec.sql requires sqlglot (a SigmaRail runtime dependency). "
             "Re-install the package: pip install -e ."
         ) from e
     return sqlglot, exp
