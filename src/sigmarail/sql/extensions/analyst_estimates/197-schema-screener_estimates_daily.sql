@@ -203,6 +203,7 @@ rev_tall AS (
         ON cur.ticker = prior.ticker
         AND cur.metric = prior.metric
         AND cur.periodicity = prior.periodicity
+        AND cur.vendor = prior.vendor
         AND cur.period_end_date = prior.period_end_date
         AND (cur.available_at - INTERVAL 90 DAY) >= prior.available_at
 ),
