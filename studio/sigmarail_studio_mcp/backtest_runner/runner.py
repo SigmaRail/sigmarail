@@ -288,10 +288,38 @@ def _update_postgres_job(job_id: str, *, status: str, **telemetry: Any) -> bool:
             updates["result_summary"] = telemetry["result_summary"]
         if telemetry.get("run_id") is not None:
             updates["run_id"] = telemetry["run_id"]
-        return WorkspaceBacktestReference.objects.filter(job_id=job_id).update(**updates) == 1
+        allowed_current_statuses = {
+            "pending": ("pending",),
+            "running": ("pending", "running"),
+            "done": ("running",),
+            "failed": ("running",),
+            "cancelled": ("pending", "running", "cancelled"),
+        }.get(status)
+        if not allowed_current_statuses:
+            return False
+        jobs = WorkspaceBacktestReference.objects.filter(job_id=job_id)
+        updated = jobs.filter(status__in=allowed_current_statuses).update(**updates)
+        if updated == 1:
+            return True
+        # Cancellation is idempotent: the user-facing cancel operation may
+        # have committed the terminal state before this runner observes it.
+        return status == "cancelled" and jobs.filter(status="cancelled").exists()
     except Exception:
         logger.exception("Could not update AppTension backtest record %s", job_id)
         return False
+
+
+def _postgres_job_status(job_id: str) -> str | None:
+    """Read the authoritative status before starting or finalizing LEAN."""
+    import django
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    django.setup()
+    from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+    return WorkspaceBacktestReference.objects.filter(job_id=job_id).values_list(
+        "status", flat=True
+    ).first()
 
 
 # ---------------------------------------------------------------------------
@@ -1062,6 +1090,19 @@ def run_job(
     finally:
         client.close()
 
+    if postgres_control:
+        current_status = _postgres_job_status(job_id)
+        if current_status is None:
+            raise RuntimeError(f"PostgreSQL backtest record disappeared for job {job_id}")
+        if current_status != "running":
+            return {
+                "job_id": job_id,
+                "status": current_status,
+                "lean_project": lean_project,
+                "log_path": str(log_path),
+                "output_path": str(output_path),
+            }
+
     if detach:
         worker_env = os.environ.copy()
         studio_root = str(Path(__file__).resolve().parents[2])
@@ -1282,7 +1323,12 @@ def run_job(
             result_summary=result_summary,
         )
         if not updated:
-            raise RuntimeError(f"Could not persist final PostgreSQL state for job {job_id}")
+            persisted_status = _postgres_job_status(job_id)
+            if persisted_status not in {"done", "failed", "cancelled"}:
+                raise RuntimeError(f"Could not persist final PostgreSQL state for job {job_id}")
+            final_status = persisted_status
+            if final_status == "cancelled":
+                error_msg = "Cancelled by user"
     else:
         client = get_client()
         try:

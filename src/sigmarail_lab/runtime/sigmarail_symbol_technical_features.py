@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 class VeraSymbolTechnicalFeaturesDaily:
     """Cache rows from symbol_technical_features_daily keyed by (ticker, date)."""
 
+    _TICKERS_PER_QUERY = 250
+    _MAX_ROWS_PER_QUERY = 100_000
+
     _COLS = """
         ticker,
         toString(date) AS trade_date,
@@ -66,7 +69,11 @@ class VeraSymbolTechnicalFeaturesDaily:
     def load_range(self, start_date, end_date) -> None:
         if not self._http:
             return
-        escaped = ", ".join(f"'{t}'" for t in self._tickers)
+        tickers = sorted(set(self._tickers))
+        self._by_key = {}
+        self._dates_by_ticker = {}
+        if not tickers:
+            return
         # Historical universes can contain thousands of distinct tickers. A
         # single multi-year JSONEachRow response can exceed hundreds of MB and
         # be cut off by the HTTP connection before the client can parse it.
@@ -78,17 +85,25 @@ class VeraSymbolTechnicalFeaturesDaily:
         chunk_start = start_date
         while chunk_start <= end_date:
             chunk_end = min(chunk_start + timedelta(days=29), end_date)
-            sql = f"""
-                SELECT {self._COLS}
-                FROM symbol_technical_features_daily FINAL
-                WHERE ticker IN ({escaped})
-                  AND symbol_technical_features_daily.date BETWEEN toDate('{chunk_start.isoformat()}')
-                               AND toDate('{chunk_end.isoformat()}')
-                FORMAT JSONEachRow
-            """
-            rows.extend(self._http.query_json_each_row(sql, max_rows=100_000))
+            for ticker_start in range(0, len(tickers), self._TICKERS_PER_QUERY):
+                ticker_batch = tickers[ticker_start:ticker_start + self._TICKERS_PER_QUERY]
+                escaped = ", ".join(
+                    "'" + ticker.replace("'", "''") + "'" for ticker in ticker_batch
+                )
+                sql = f"""
+                    SELECT {self._COLS}
+                    FROM symbol_technical_features_daily FINAL
+                    WHERE ticker IN ({escaped})
+                      AND symbol_technical_features_daily.date BETWEEN toDate('{chunk_start.isoformat()}')
+                                   AND toDate('{chunk_end.isoformat()}')
+                    FORMAT JSONEachRow
+                """
+                rows.extend(self._http.query_json_each_row(
+                    sql,
+                    max_rows=self._MAX_ROWS_PER_QUERY,
+                    fail_on_error=True,
+                ))
             chunk_start = chunk_end + timedelta(days=1)
-        self._by_key = {}
         for row in rows:
             ticker = str(row.get("ticker", ""))
             d = str(row.get("trade_date", row.get("date", "")))[:10]

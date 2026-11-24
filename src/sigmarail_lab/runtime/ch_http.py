@@ -35,12 +35,15 @@ class ChHttpClient:
         sql: str,
         max_rows: int = 100_000,
         timeout: float = 30.0,
+        *,
+        fail_on_error: bool = False,
     ) -> list[dict[str, Any]]:
         query_params = urlencode(
             {
                 "database": self._settings.database,
                 "default_format": "JSONEachRow",
                 "max_result_rows": str(max_rows),
+                "result_overflow_mode": "throw",
             }
         )
         url = f"http://{self._settings.host}:{self._settings.port}/?{query_params}"
@@ -67,6 +70,10 @@ class ChHttpClient:
                 # retrying that response cannot repair it.
                 if self._debug_log:
                     self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {exc}")
+                if fail_on_error:
+                    raise RuntimeError(
+                        f"ClickHouse rejected the feature query (HTTP {exc.code})"
+                    ) from exc
                 return []
             except (URLError, TimeoutError, ConnectionError, OSError) as exc:
                 last_error = exc
@@ -75,11 +82,15 @@ class ChHttpClient:
                     continue
                 if self._debug_log:
                     self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {exc}")
+                if fail_on_error:
+                    raise RuntimeError("ClickHouse feature query failed after retries") from exc
                 return []
 
         if payload is None:
             if self._debug_log and last_error is not None:
                 self._debug_log(f"ClickHouse query error ({url[:80]} user={self._settings.user}): {last_error}")
+            if fail_on_error:
+                raise RuntimeError("ClickHouse feature query returned no response")
             return []
 
         rows: list[dict[str, Any]] = []
@@ -94,6 +105,8 @@ class ChHttpClient:
                 parse_errors += 1
         if parse_errors and self._debug_log:
             self._debug_log(f"ClickHouse parse errors={parse_errors} first_bytes={payload[:200]!r}")
+        if fail_on_error and parse_errors:
+            raise RuntimeError(f"ClickHouse feature query returned {parse_errors} malformed row(s)")
         return rows
 
     def query_one_json_row(
