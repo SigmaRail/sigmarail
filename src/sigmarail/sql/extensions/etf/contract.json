@@ -1,0 +1,189 @@
+{
+  "contract_version": 1,
+  "module": "etf",
+  "source_boundary": "user-configured ETF data sources; curated mapping metadata is user supplied",
+  "tables": [
+    {
+      "columns": [
+        {
+          "comment": "",
+          "name": "ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "sector",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "industry",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "market_bucket",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "region_bucket",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "asset_class",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "provider",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "method",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "source_url",
+          "type": "String"
+        },
+        {
+          "comment": "",
+          "name": "ingested_at",
+          "type": "DateTime64(3)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "etf",
+      "name": "ext_etf_etf_classifications",
+      "schema_file": "123-schema-etf_classifications.sql"
+    },
+    {
+      "columns": [
+        {
+          "comment": "",
+          "name": "etf_ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "as_of_date",
+          "type": "Date"
+        },
+        {
+          "comment": "",
+          "name": "holding_symbol",
+          "type": "String"
+        },
+        {
+          "comment": "",
+          "name": "holding_name",
+          "type": "String"
+        },
+        {
+          "comment": "",
+          "name": "weight",
+          "type": "Float32"
+        },
+        {
+          "comment": "",
+          "name": "provider",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "fetched_at",
+          "type": "DateTime64(3)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "etf",
+      "name": "ext_etf_etf_holdings_snapshot",
+      "schema_file": "125-schema-etf_holdings_snapshots.sql"
+    },
+    {
+      "columns": [
+        {
+          "comment": "",
+          "name": "etf_ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "as_of_date",
+          "type": "Date"
+        },
+        {
+          "comment": "",
+          "name": "sector",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "weight",
+          "type": "Float32"
+        },
+        {
+          "comment": "",
+          "name": "provider",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "fetched_at",
+          "type": "DateTime64(3)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "etf",
+      "name": "ext_etf_etf_sector_weights_snapshot",
+      "schema_file": "125-schema-etf_holdings_snapshots.sql"
+    },
+    {
+      "columns": [
+        {
+          "comment": "",
+          "name": "proxy_ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "proxy_type",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "bucket_key",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "priority",
+          "type": "UInt8"
+        },
+        {
+          "comment": "",
+          "name": "provider",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "",
+          "name": "notes",
+          "type": "String"
+        },
+        {
+          "comment": "",
+          "name": "ingested_at",
+          "type": "DateTime64(3)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "etf",
+      "name": "ext_etf_index_proxy_catalog",
+      "schema_file": "126-schema-index_proxy_catalog.sql"
+    }
+  ]
+}

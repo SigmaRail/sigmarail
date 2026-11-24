@@ -1,0 +1,9 @@
+{
+  "manifest_version": 1,
+  "module": "analyst_estimates",
+  "files": [
+    "195-schema-analyst_consensus_asof.sql",
+    "196-schema-analyst_actuals.sql",
+    "197-schema-screener_estimates_daily.sql"
+  ]
+}

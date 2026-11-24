@@ -271,7 +271,7 @@ class TableQueryV1Spec(BaseModel):
             raise ValueError(
                 f"Table {self.from_!r} does not exist. The screener is an L7 star schema rooted at spine table "
                 f"'screener_price_tech_daily' (joined with screener_ratings_daily, screener_fundamentals_daily, "
-                f"screener_estimates_daily, etc. on ticker, date). Query 'screener_price_tech_daily' directly "
+                f"ext_analyst_estimates_screener_estimates_daily, etc. on ticker, date). Query 'screener_price_tech_daily' directly "
                 f"or use universe_query_v1 / screen_stocks."
             )
         return self
