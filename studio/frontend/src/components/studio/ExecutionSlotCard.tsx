@@ -27,9 +27,10 @@ export function ExecutionSlotCard({
             title={
               session === "moo"
                 ? "Evaluate signals on T-1 close, fill at the T open — classic overnight-gap swing entry"
-                : "Evaluate signals on T close data, fill at that same close — no overnight gap between decision and fill"
+                : "Use the prior completed daily data and submit an order before the close"
             }
             onClick={() => onChangeFillSession(session)}
+            aria-pressed={fillSession === session}
             className={
               fillSession === session
                 ? "rounded border border-accent bg-accent/10 px-2 py-1 text-[11px] font-semibold text-accent-ink"
@@ -41,9 +42,8 @@ export function ExecutionSlotCard({
         ))}
       </div>
       <p className="text-[9px] leading-snug text-ink-faint">
-        Choice affects fill price only — sizing (1R), scale-in phases, and exits are unchanged.
-        MOC is the more conservative backtest fill because the decision and the fill share a
-        bar; MOO implicitly trades the overnight gap.
+        Orders are submitted before the selected session. Both choices use the prior completed
+        daily data. Fill timing and price can affect position sizes and subsequent decisions.
       </p>
     </div>
   );

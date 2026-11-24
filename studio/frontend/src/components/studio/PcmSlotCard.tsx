@@ -96,9 +96,9 @@ export function PcmSlotCard({
           </span>
           {(
             [
-              ["scale_expr", "Exposure scale → regime.scale", ["acct", "regime"]],
-              ["slots_expr", "Position capacity → acct.scaled_max_positions", ["acct", "regime"]],
-              ["order_expr", "Fill-order key per unit", ["cand", "hold"]],
+              ["scale_expr", "Exposure", ["acct", "regime"]],
+              ["slots_expr", "Position limit", ["acct", "regime"]],
+              ["order_expr", "Allocation order", ["cand", "hold"]],
             ] as [PcmBookExprKey, string, string[]][]
           ).map(([key, label, nss]) => {
             const expr = bookExprs?.[key] ?? null;
@@ -107,8 +107,7 @@ export function PcmSlotCard({
               <div key={key} className="space-y-1 rounded border border-line/60 bg-surface/50 p-1.5">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] text-ink">
-                    {key}{" "}
-                    <span className="font-sans text-ink-faint">{label}</span>
+                    <span className="font-sans font-semibold">{label}</span>
                   </span>
                   {expr ? (
                     <button
