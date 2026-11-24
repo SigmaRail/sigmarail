@@ -49,7 +49,7 @@ def test_test_mode_never_falls_back_to_local_keyring(monkeypatch):
     assert resolved.password == ""
 
 
-def test_keyring_failure_does_not_replace_config(monkeypatch):
+def test_keyring_failure_does_not_leak_or_replace_config(monkeypatch):
     monkeypatch.setattr(config.app_config, "mode", "prod")
 
     def raise_store_error():
