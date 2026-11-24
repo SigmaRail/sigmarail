@@ -112,6 +112,9 @@ def get_stock_introspection(
         SELECT ticker, date, argMax(sector, lastupdated) AS sector,
                argMax(industry, lastupdated) AS industry
         FROM ticker_classification_daily
+        WHERE date != toDate('1970-01-01')
+          AND date <= toDate(%(as_of)s)
+          AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
         GROUP BY ticker, date
         ORDER BY ticker, date
     ) cls ON cls.ticker = p.ticker AND p.date >= cls.date
@@ -879,7 +882,8 @@ def get_stock_introspection(
                 period_end_date,
                 metric,
                 periodicity,
-                argMax(mean, (available_at, lastupdated, vendor)) AS estimate
+                argMax(mean, (available_at, lastupdated, vendor)) AS estimate,
+                argMax(available_at, (available_at, lastupdated, vendor)) AS available_at
             FROM ext_analyst_estimates_analyst_consensus_asof FINAL
             WHERE ticker = %(ticker)s
               AND available_at > toDateTime64(0, 3, 'America/New_York')
@@ -900,6 +904,7 @@ def get_stock_introspection(
                     if m == "sales":
                         analyst_actuals_rows.append({
                             "period_end_date": ped_str,
+                            "available_at": chr_row[4],
                             "metric": "sales",
                             "reported": None,
                             "estimate_at_print": val,
@@ -909,6 +914,7 @@ def get_stock_introspection(
                         if not any(a.get("period_end_date") == ped_str and a.get("metric") == "eps" for a in analyst_actuals_rows):
                             analyst_actuals_rows.append({
                                 "period_end_date": ped_str,
+                                "available_at": chr_row[4],
                                 "metric": "eps",
                                 "reported": None,
                                 "estimate_at_print": val,
@@ -1089,6 +1095,9 @@ def get_stock_introspection(
                 SELECT ticker, date, argMax(industry, lastupdated) AS industry,
                        argMax(sector, lastupdated) AS sector
                 FROM ticker_classification_daily
+                WHERE date != toDate('1970-01-01')
+                  AND date <= toDate(%(as_of)s)
+                  AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
                 GROUP BY ticker, date
                 ORDER BY ticker, date
             ) c ON c.ticker = p.ticker AND p.date >= c.date
@@ -1096,9 +1105,14 @@ def get_stock_introspection(
             WHERE p.date = toDate(%(as_of)s)
               AND position(p.category, 'Common Stock') > 0
               AND c.industry = (
-                  SELECT industry FROM ticker_classification_daily FINAL
-                  WHERE ticker = %(ticker)s AND date <= toDate(%(as_of)s)
-                  ORDER BY date DESC LIMIT 1
+                  SELECT industry FROM (
+                      SELECT date, argMax(industry, lastupdated) AS industry
+                      FROM ticker_classification_daily
+                      WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                        AND date <= toDate(%(as_of)s)
+                        AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                      GROUP BY date ORDER BY date DESC LIMIT 1
+                  )
               )
               AND p.ticker != %(ticker)s
               AND p.close > 0
@@ -1127,6 +1141,9 @@ def get_stock_introspection(
                     SELECT ticker, date, argMax(industry, lastupdated) AS industry,
                            argMax(sector, lastupdated) AS sector
                     FROM ticker_classification_daily
+                    WHERE date != toDate('1970-01-01')
+                      AND date <= toDate(%(as_of)s)
+                      AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
                     GROUP BY ticker, date
                     ORDER BY ticker, date
                 ) c ON c.ticker = p.ticker AND p.date >= c.date
@@ -1134,14 +1151,24 @@ def get_stock_introspection(
                 WHERE p.date = toDate(%(as_of)s)
                   AND position(p.category, 'Common Stock') > 0
                   AND (c.industry = (
-                         SELECT industry FROM ticker_classification_daily FINAL
-                         WHERE ticker = %(ticker)s AND date <= toDate(%(as_of)s)
-                         ORDER BY date DESC LIMIT 1
+                         SELECT industry FROM (
+                             SELECT date, argMax(industry, lastupdated) AS industry
+                             FROM ticker_classification_daily
+                             WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                               AND date <= toDate(%(as_of)s)
+                               AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                             GROUP BY date ORDER BY date DESC LIMIT 1
+                         )
                        )
                        OR (c.industry = '' AND c.sector = (
-                         SELECT sector FROM ticker_classification_daily FINAL
-                         WHERE ticker = %(ticker)s AND date <= toDate(%(as_of)s)
-                         ORDER BY date DESC LIMIT 1
+                         SELECT sector FROM (
+                             SELECT date, argMax(sector, lastupdated) AS sector
+                             FROM ticker_classification_daily
+                             WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                               AND date <= toDate(%(as_of)s)
+                               AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                             GROUP BY date ORDER BY date DESC LIMIT 1
+                         )
                        )))
                   AND p.ticker != %(ticker)s
                   AND p.close > 0

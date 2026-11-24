@@ -31,6 +31,8 @@ def test_stock_introspection_uses_publication_time_and_dated_classification():
     assert "ASOF LEFT JOIN ticker_classification_daily" not in source
     assert "argMax(industry, lastupdated)" in source
     assert "cls.sector, cls.industry" in source
+    assert "date != toDate('1970-01-01')" in source
+    assert "lastupdated <= toDateTime64" in source
 
 
 
