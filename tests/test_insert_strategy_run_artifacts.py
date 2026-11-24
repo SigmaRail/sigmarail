@@ -1,12 +1,19 @@
 import importlib.util
 from pathlib import Path
+import sys
 
 
 SCRIPT = Path(__file__).parents[1] / "trading_lab" / "scripts" / "insert_strategy_run.py"
 SPEC = importlib.util.spec_from_file_location("insert_strategy_run", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
-SPEC.loader.exec_module(MODULE)
+_sys_path = sys.path[:]
+try:
+    SPEC.loader.exec_module(MODULE)
+finally:
+    # The CLI makes its generated TradingLab tree importable at startup. Keep
+    # that runtime behavior from shadowing the installed Spec in pytest.
+    sys.path[:] = _sys_path
 
 
 def test_oversized_optional_day_snapshots_are_skipped_with_notice(tmp_path, capsys):
