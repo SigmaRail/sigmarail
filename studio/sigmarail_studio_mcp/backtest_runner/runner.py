@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+from functools import wraps
 import hashlib
 import json
 import logging
@@ -28,6 +29,24 @@ from sigmarail_studio_mcp.backtest_runner.project_registry import (
 from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
 
 logger = logging.getLogger(__name__)
+
+
+def _cleanup_lean_config_after_job(func):
+    """Remove the per-job config overlay even when setup or execution fails."""
+
+    @wraps(func)
+    def wrapped(job_id: str, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return func(job_id, *args, **kwargs)
+        finally:
+            overlay = lean_projects_root() / f".lean-config-{job_id}.json"
+            try:
+                overlay.unlink(missing_ok=True)
+            except OSError:
+                logger.exception("Could not remove temporary LEAN config overlay %s", overlay)
+                raise
+
+    return wrapped
 
 
 def _default_image(project: dict[str, Any] | None = None) -> str:
@@ -780,7 +799,9 @@ def _read_lean_result_summary(output_path: Path) -> dict[str, int | float | None
         "sortino_ratio": number("Sortino Ratio"),
         "max_drawdown": number("Drawdown"),
         "win_rate": number("Win Rate"),
-        "profit_factor": number("Profit-Loss Ratio"),
+        # LEAN's Profit-Loss Ratio is average win / average loss, not the
+        # closed-trade profit factor stored by SigmaRail's backtest report.
+        "profit_factor": None,
         "total_orders": number("Total Orders"),
         "total_fees": number("Total Fees"),
         "start_equity": number("Start Equity"),
@@ -909,6 +930,7 @@ def submit_job(
     return job_id
 
 
+@_cleanup_lean_config_after_job
 def run_job(
     job_id: str,
     ir_id: str,
