@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from screens.marketsurge_payload import (
     attach_surprises_to_events,
+    append_missing_quarterly_actuals,
     build_annual_growth,
     clamp_revision_pct,
     enrich_as_of_kpis_street,
@@ -247,6 +248,44 @@ def test_overlay_street_eps_and_sales_with_beat_miss():
     assert q2["revenue_estimate"] == 98.0
     assert q2["revenue_surprise_m"] == 4.0
     assert q2["revenue_beat_miss"] == "beat"
+
+
+def test_market_close_availability_filters_future_actuals():
+    quarterly = [{"report_date": "2025-05-01", "eps": 1.0}]
+    actuals = [
+        {
+            "period_end_date": "2025-03-31",
+            "available_at": "2025-05-01T08:00:00-04:00",
+            "metric": "eps",
+            "reported": 1.2,
+            "estimate_at_print": 1.1,
+        },
+        {
+            "period_end_date": "2025-03-31",
+            "available_at": "2025-05-01T16:15:00-04:00",
+            "metric": "eps",
+            "reported": 9.9,
+            "estimate_at_print": 1.1,
+        },
+    ]
+    overlaid = overlay_street_eps(quarterly, actuals, as_of="2025-05-01")
+    assert overlaid[0]["eps"] == 1.2
+
+
+def test_missing_quarter_actuals_need_a_public_availability_timestamp():
+    quarterly = []
+    actuals = [
+        {"period_end_date": "2025-03-31", "metric": "eps", "reported": 2.0},
+        {
+            "period_end_date": "2025-03-31",
+            "available_at": "2025-05-01T16:15:00-04:00",
+            "metric": "eps",
+            "reported": 2.0,
+        },
+    ]
+    assert append_missing_quarterly_actuals(
+        quarterly, actuals, as_of="2025-05-01"
+    ) == []
 
 
 def test_build_annual_growth_separates_actual_and_estimate():

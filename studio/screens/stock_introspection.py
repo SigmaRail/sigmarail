@@ -64,7 +64,7 @@ def get_stock_introspection(
     es_as_of = as_of_date
     try:
         es_date_sql = """
-        SELECT max(date) FROM screener_estimates_daily
+        SELECT max(date) FROM ext_analyst_estimates_screener_estimates_daily
         WHERE ticker = %(ticker)s AND date <= toDate(%(as_of)s)
         """
         es_date_res = client.query(es_date_sql, parameters={"ticker": sym, "as_of": as_of_date})
@@ -77,7 +77,7 @@ def get_stock_introspection(
     # 1. Fetch point-in-time as-of metrics
     as_of_sql = f"""
     SELECT
-        p.ticker, p.date, p.company_name, p.sector, p.industry, p.exchange,
+        p.ticker, p.date, p.company_name, cls.sector, cls.industry, p.exchange,
         p.open, p.high, p.low, p.close, p.volume,
         p.high_52w, p.low_52w,
         p.sma10d, p.sma20d, p.sma50d, p.sma150d, p.sma200d, p.ema21d,
@@ -101,15 +101,23 @@ def get_stock_introspection(
         es.sales_nq_rev_pct_90d, es.sales_ny_rev_pct_90d, es.eps_last_surprise_pct,
         es.eps_last_reported, es.eps_last_estimate, es.eps_beat_flag,
         es.sales_last_reported, es.sales_last_estimate, es.sales_last_surprise_pct, es.sales_beat_flag,
-        dv.marketcap, dv.pe, dv.ps,
-        t.firstpricedate, t.location
+        dv.marketcap, dv.pe, dv.ps
     FROM screener_price_tech_daily p FINAL
     LEFT JOIN screener_ratings_daily r FINAL ON p.ticker = r.ticker AND p.date = r.date
     LEFT JOIN screener_fundamentals_daily f FINAL ON p.ticker = f.ticker AND p.date = f.date
     LEFT JOIN screener_ownership_daily o FINAL ON p.ticker = o.ticker AND p.date = o.date
-    LEFT JOIN screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
+    LEFT JOIN ext_analyst_estimates_screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
     LEFT JOIN daily_valuation dv ON p.ticker = dv.ticker AND p.date = dv.date
-    LEFT JOIN tickers t ON p.ticker = t.ticker
+    ASOF LEFT JOIN (
+        SELECT ticker, date, argMax(sector, lastupdated) AS sector,
+               argMax(industry, lastupdated) AS industry
+        FROM ticker_classification_daily
+        WHERE date != toDate('1970-01-01')
+          AND date <= toDate(%(as_of)s)
+          AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+        GROUP BY ticker, date
+        ORDER BY ticker, date
+    ) cls ON cls.ticker = p.ticker AND p.date >= cls.date
     WHERE p.ticker = %(ticker)s AND p.date = toDate(%(as_of)s)
     LIMIT 1
     """
@@ -800,10 +808,18 @@ def get_stock_introspection(
     if include_dossier:
         try:
             act_sql = """
-            SELECT period_end_date, metric, reported, estimate_at_print, surprise_pct
-            FROM analyst_actuals
+            SELECT
+                period_end_date,
+                argMax(available_at, (available_at, lastupdated, vendor)) AS available_at,
+                metric,
+                argMax(reported, (available_at, lastupdated, vendor)) AS reported,
+                argMax(estimate_at_print, (available_at, lastupdated, vendor)) AS estimate_at_print,
+                argMax(surprise_pct, (available_at, lastupdated, vendor)) AS surprise_pct
+            FROM ext_analyst_estimates_analyst_actuals FINAL
             WHERE ticker = %(ticker)s AND metric IN ('eps', 'sales')
-              AND period_end_date <= toDate(%(as_of)s)
+              AND available_at > toDateTime64(0, 3, 'America/New_York')
+              AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+            GROUP BY period_end_date, metric
             ORDER BY period_end_date ASC
             """
             act_res = client.query(act_sql, parameters={"ticker": sym, "as_of": as_of_date})
@@ -812,10 +828,11 @@ def get_stock_introspection(
                 ped_str = ped.isoformat() if hasattr(ped, "isoformat") else str(ped)
                 analyst_actuals_rows.append({
                     "period_end_date": ped_str,
-                    "metric": str(ar[1] or "eps"),
-                    "reported": float(ar[2]) if ar[2] is not None else None,
-                    "estimate_at_print": float(ar[3]) if ar[3] is not None else None,
-                    "surprise_pct": float(ar[4]) if ar[4] is not None else None,
+                    "available_at": ar[1],
+                    "metric": str(ar[2] or "eps"),
+                    "reported": float(ar[3]) if ar[3] is not None else None,
+                    "estimate_at_print": float(ar[4]) if ar[4] is not None else None,
+                    "surprise_pct": float(ar[5]) if ar[5] is not None else None,
                 })
         except Exception:
             analyst_actuals_rows = []
@@ -823,12 +840,16 @@ def get_stock_introspection(
         try:
             cons_sql = """
             SELECT relative_period, period_end_date, periodicity
-            FROM analyst_consensus_asof
+            FROM ext_analyst_estimates_analyst_consensus_asof FINAL
             WHERE ticker = %(ticker)s
-              AND asof_date = (
-                SELECT max(asof_date) FROM analyst_consensus_asof
-                WHERE ticker = %(ticker)s AND asof_date <= toDate(%(as_of)s)
+              AND available_at > toDateTime64(0, 3, 'America/New_York')
+              AND available_at = (
+                SELECT max(available_at) FROM ext_analyst_estimates_analyst_consensus_asof FINAL
+                WHERE ticker = %(ticker)s
+                  AND available_at > toDateTime64(0, 3, 'America/New_York')
+                  AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
               )
+              AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
               AND metric = 'eps'
               AND (
                 (periodicity = 'Q' AND relative_period IN (0, 1))
@@ -861,10 +882,12 @@ def get_stock_introspection(
                 period_end_date,
                 metric,
                 periodicity,
-                argMax(mean, asof_date) AS estimate
-            FROM analyst_consensus_asof
+                argMax(mean, (available_at, lastupdated, vendor)) AS estimate,
+                argMax(available_at, (available_at, lastupdated, vendor)) AS available_at
+            FROM ext_analyst_estimates_analyst_consensus_asof FINAL
             WHERE ticker = %(ticker)s
-              AND asof_date <= toDate(%(as_of)s)
+              AND available_at > toDateTime64(0, 3, 'America/New_York')
+              AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
             GROUP BY period_end_date, metric, periodicity
             ORDER BY period_end_date ASC
             """
@@ -881,6 +904,7 @@ def get_stock_introspection(
                     if m == "sales":
                         analyst_actuals_rows.append({
                             "period_end_date": ped_str,
+                            "available_at": chr_row[4],
                             "metric": "sales",
                             "reported": None,
                             "estimate_at_print": val,
@@ -890,6 +914,7 @@ def get_stock_introspection(
                         if not any(a.get("period_end_date") == ped_str and a.get("metric") == "eps" for a in analyst_actuals_rows):
                             analyst_actuals_rows.append({
                                 "period_end_date": ped_str,
+                                "available_at": chr_row[4],
                                 "metric": "eps",
                                 "reported": None,
                                 "estimate_at_print": val,
@@ -956,11 +981,11 @@ def get_stock_introspection(
             annual_sales_rows = []
 
     earnings_events = overlay_street_eps_on_events(earnings_events, analyst_actuals_rows)
-    quarterly_growth = overlay_street_eps(quarterly_growth, analyst_actuals_rows)
+    quarterly_growth = overlay_street_eps(
+        quarterly_growth, analyst_actuals_rows, as_of=as_of_date
+    )
     quarterly_growth = append_missing_quarterly_actuals(
-        quarterly_growth,
-        analyst_actuals_rows,
-        as_of=as_of_date,
+        quarterly_growth, analyst_actuals_rows, as_of=as_of_date
     )
 
     quarterly_growth = merge_forward_estimates(
@@ -1003,6 +1028,8 @@ def get_stock_introspection(
         annual_estimates_by_fy=annual_estimates_by_fy,
     )
 
+    # SigmaRail's daily market contract does not expose listing inception or HQ location.
+    # Keep those optional KPIs absent instead of joining the retired vera.tickers dimension.
     as_of_dict = enrich_as_of_kpis_street(
         as_of_dict,
         {
@@ -1029,10 +1056,7 @@ def get_stock_introspection(
             "sales_last_surprise_pct": as_of_dict.get("sales_last_surprise_pct"),
             "sales_beat_flag": as_of_dict.get("sales_beat_flag"),
         },
-        {
-            "firstpricedate": as_of_dict.get("firstpricedate"),
-            "location": as_of_dict.get("location"),
-        },
+        {},
         {
             "marketcap": as_of_dict.get("marketcap"),
             "pe": as_of_dict.get("pe"),
@@ -1046,7 +1070,8 @@ def get_stock_introspection(
         series_map[c["time"]] = c
     chart_series_sorted = [series_map[t] for t in sorted(series_map.keys())]
 
-    # 7. Query Top Industry Peers & Comparable Valuation Statistics (Prioritizing Exact SEC SIC Code)
+    # 7. Query peers from point-in-time classification snapshots. Before daily
+    # snapshots began, the schema's 1970 seed is current-state and can be stale.
     industry_peers: list[dict[str, Any]] = []
     peer_group_name = ""
     if include_dossier:
@@ -1054,8 +1079,8 @@ def get_stock_introspection(
             peers_sql = """
             SELECT
                 p.ticker,
-                t.name AS company_name,
-                t.sicindustry,
+                p.company_name,
+                c.industry,
                 p.close,
                 p.rs_rating,
                 fc.growth_rate_pct,
@@ -1066,13 +1091,29 @@ def get_stock_introspection(
                 fc.valuation_spread_pct,
                 fc.valuation_status
             FROM screener_price_tech_daily p
-            INNER JOIN (
-                SELECT ticker, name, industry, sector, siccode, sicindustry FROM tickers
-                WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
-            ) t ON p.ticker = t.ticker
+            ASOF LEFT JOIN (
+                SELECT ticker, date, argMax(industry, lastupdated) AS industry,
+                       argMax(sector, lastupdated) AS sector
+                FROM ticker_classification_daily
+                WHERE date != toDate('1970-01-01')
+                  AND date <= toDate(%(as_of)s)
+                  AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                GROUP BY ticker, date
+                ORDER BY ticker, date
+            ) c ON c.ticker = p.ticker AND p.date >= c.date
             LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
             WHERE p.date = toDate(%(as_of)s)
-              AND t.siccode = (SELECT siccode FROM tickers WHERE ticker = %(ticker)s LIMIT 1)
+              AND position(p.category, 'Common Stock') > 0
+              AND c.industry = (
+                  SELECT industry FROM (
+                      SELECT date, argMax(industry, lastupdated) AS industry
+                      FROM ticker_classification_daily
+                      WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                        AND date <= toDate(%(as_of)s)
+                        AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                      GROUP BY date ORDER BY date DESC LIMIT 1
+                  )
+              )
               AND p.ticker != %(ticker)s
               AND p.close > 0
             ORDER BY (p.close * p.avg_vol_20d) DESC
@@ -1084,8 +1125,8 @@ def get_stock_introspection(
                 peers_sql_fallback = """
                 SELECT
                     p.ticker,
-                    t.name AS company_name,
-                    t.industry,
+                    p.company_name,
+                    c.industry,
                     p.close,
                     p.rs_rating,
                     fc.growth_rate_pct,
@@ -1096,14 +1137,39 @@ def get_stock_introspection(
                     fc.valuation_spread_pct,
                     fc.valuation_status
                 FROM screener_price_tech_daily p
-                INNER JOIN (
-                    SELECT ticker, name, industry, sector, siccode, sicindustry FROM tickers
-                    WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
-                ) t ON p.ticker = t.ticker
+                ASOF LEFT JOIN (
+                    SELECT ticker, date, argMax(industry, lastupdated) AS industry,
+                           argMax(sector, lastupdated) AS sector
+                    FROM ticker_classification_daily
+                    WHERE date != toDate('1970-01-01')
+                      AND date <= toDate(%(as_of)s)
+                      AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                    GROUP BY ticker, date
+                    ORDER BY ticker, date
+                ) c ON c.ticker = p.ticker AND p.date >= c.date
                 LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
                 WHERE p.date = toDate(%(as_of)s)
-                  AND (t.industry = (SELECT industry FROM tickers WHERE ticker = %(ticker)s LIMIT 1)
-                       OR (t.industry = '' AND t.sector = (SELECT sector FROM tickers WHERE ticker = %(ticker)s LIMIT 1)))
+                  AND position(p.category, 'Common Stock') > 0
+                  AND (c.industry = (
+                         SELECT industry FROM (
+                             SELECT date, argMax(industry, lastupdated) AS industry
+                             FROM ticker_classification_daily
+                             WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                               AND date <= toDate(%(as_of)s)
+                               AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                             GROUP BY date ORDER BY date DESC LIMIT 1
+                         )
+                       )
+                       OR (c.industry = '' AND c.sector = (
+                         SELECT sector FROM (
+                             SELECT date, argMax(sector, lastupdated) AS sector
+                             FROM ticker_classification_daily
+                             WHERE ticker = %(ticker)s AND date != toDate('1970-01-01')
+                               AND date <= toDate(%(as_of)s)
+                               AND lastupdated <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
+                             GROUP BY date ORDER BY date DESC LIMIT 1
+                         )
+                       )))
                   AND p.ticker != %(ticker)s
                   AND p.close > 0
                 ORDER BY (p.close * p.avg_vol_20d) DESC

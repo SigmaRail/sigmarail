@@ -5,10 +5,32 @@ No ClickHouse I/O — unit-testable without a live warehouse.
 
 from __future__ import annotations
 
+from datetime import date, datetime, time
 from typing import Any
+from zoneinfo import ZoneInfo
 
 
 REVISION_CLAMP_ABS = 40.0
+_NEW_YORK = ZoneInfo("America/New_York")
+
+
+def _available_by_market_close(item: dict[str, Any], as_of: str) -> bool:
+    """Whether a reported value was public by the close of the requested date."""
+    value = item.get("available_at")
+    if value is None:
+        return False
+    try:
+        available = value if isinstance(value, datetime) else datetime.fromisoformat(
+            str(value).replace("Z", "+00:00")
+        )
+        if available.tzinfo is None:
+            available = available.replace(tzinfo=_NEW_YORK)
+        cutoff = datetime.combine(
+            date.fromisoformat(str(as_of)[:10]), time(15, 59, 59, 999000), tzinfo=_NEW_YORK
+        )
+        return available.astimezone(_NEW_YORK) <= cutoff
+    except (TypeError, ValueError):
+        return False
 
 
 def clamp_revision_pct(value: float | None, *, limit: float = REVISION_CLAMP_ABS) -> float | None:
@@ -396,6 +418,8 @@ def merge_forward_estimates(
 def overlay_street_eps(
     quarterly: list[dict[str, Any]],
     actuals: list[dict[str, Any]],
+    *,
+    as_of: str | None = None,
 ) -> list[dict[str, Any]]:
     """Replace GAAP mrq EPS & sales with nearest street analyst_actuals.reported."""
     if not quarterly:
@@ -417,6 +441,8 @@ def overlay_street_eps(
 
     if not actuals:
         return [_init_row(q) for q in quarterly]
+    if as_of is not None:
+        actuals = [a for a in actuals if _available_by_market_close(a, as_of)]
 
     out: list[dict[str, Any]] = []
     for q in quarterly:
@@ -521,6 +547,8 @@ def append_missing_quarterly_actuals(
     """Fill quarterly history from reported analyst actuals absent in fundamentals."""
     periods: dict[str, dict[str, dict[str, Any]]] = {}
     for item in actuals:
+        if not _available_by_market_close(item, as_of):
+            continue
         period = str(item.get("period_end_date") or "")
         metric = str(item.get("metric") or "eps")
         if not period or period > as_of or metric not in {"eps", "sales"}:
