@@ -1,0 +1,7 @@
+{
+  "manifest_version": 1,
+  "module": "aaii",
+  "files": [
+    "111-schema-aaii_sentiment.sql"
+  ]
+}

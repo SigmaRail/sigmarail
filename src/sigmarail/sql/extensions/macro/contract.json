@@ -1,0 +1,35 @@
+{
+  "contract_version": 1,
+  "module": "macro",
+  "source_boundary": "FRED public series",
+  "tables": [
+    {
+      "columns": [
+        {
+          "comment": "",
+          "name": "date",
+          "type": "Date32"
+        },
+        {
+          "comment": "Real GDP QoQ % change, annualized (forward-filled)",
+          "name": "real_gdp_qoq",
+          "type": "Float64"
+        },
+        {
+          "comment": "CPI-U YoY % change (forward-filled)",
+          "name": "cpi_yoy",
+          "type": "Float64"
+        },
+        {
+          "comment": "reflation | goldilocks | stagflation | deflation",
+          "name": "regime_quadrant",
+          "type": "LowCardinality(String)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "macro",
+      "name": "macro_economic_daily",
+      "schema_file": "191-schema-macro-economic-daily.sql"
+    }
+  ]
+}

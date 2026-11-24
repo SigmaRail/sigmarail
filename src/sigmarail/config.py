@@ -66,20 +66,56 @@ def get_schema_dir() -> Path:
     return Path(__file__).resolve().parent / "sql" / "schema"
 
 
-def get_schema_files() -> list[Path]:
-    """Return only the SQL files explicitly admitted to the core schema."""
+def get_schema_modules() -> dict[str, dict[str, Any]]:
+    """Return the packaged, opt-in data-domain modules."""
+    path = Path(__file__).resolve().parent / "sql" / "extensions" / "modules.json"
+    return json.loads(path.read_text(encoding="utf-8"))["modules"]
+
+
+def get_schema_files(modules: Optional[list[str]] = None) -> list[Path]:
+    """Return core SQL and explicitly selected extension SQL in declared order."""
     manifest_path = Path(__file__).resolve().parent / "sql" / "schema-manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    directory = get_schema_dir()
     files: list[Path] = []
-    for filename in manifest["files"]:
-        if Path(filename).name != filename or not filename.endswith(".sql"):
-            raise ValueError(f"Invalid SigmaRail core schema filename: {filename!r}")
-        path = directory / filename
-        if not path.is_file():
-            raise FileNotFoundError(f"SigmaRail core schema file is missing: {path}")
-        files.append(path)
+    selections: list[tuple[Path, list[str]]] = [(get_schema_dir(), manifest["files"])]
+    available = get_schema_modules()
+    unknown = sorted(set(modules or ()) - set(available))
+    if unknown:
+        raise ValueError(f"Unknown SigmaRail module(s): {', '.join(unknown)}")
+    for module in sorted(set(modules or ())):
+        module_dir = Path(__file__).resolve().parent / "sql" / "extensions" / module
+        module_manifest_path = module_dir / "manifest.json"
+        module_manifest = json.loads(module_manifest_path.read_text(encoding="utf-8"))
+        if module_manifest.get("module") != module:
+            raise ValueError(f"Invalid SigmaRail module manifest: {module_manifest_path}")
+        selections.append((module_dir, module_manifest["files"]))
+    for directory, filenames in selections:
+        for filename in filenames:
+            if Path(filename).name != filename or not filename.endswith(".sql"):
+                raise ValueError(f"Invalid SigmaRail schema filename: {filename!r}")
+            path = directory / filename
+            if not path.is_file():
+                raise FileNotFoundError(f"SigmaRail schema file is missing: {path}")
+            files.append(path)
     return files
+
+
+def get_schema_contract(modules: Optional[list[str]] = None) -> list[dict[str, Any]]:
+    """Combine the core SQL-derived contract with selected module contracts."""
+    package_dir = Path(__file__).resolve().parent
+    core = json.loads((package_dir / "spec" / "lineage-manifest.json").read_text(encoding="utf-8"))
+    tables = list(core["tables"])
+    available = get_schema_modules()
+    for module in sorted(set(modules or ())):
+        if module not in available:
+            raise ValueError(f"Unknown SigmaRail module: {module}")
+        module_dir = package_dir / "sql" / "extensions" / module
+        module_contract = json.loads((module_dir / "contract.json").read_text(encoding="utf-8"))
+        tables.extend(module_contract["tables"])
+    names = [table["name"] for table in tables]
+    if len(names) != len(set(names)):
+        raise ValueError("Selected SigmaRail modules declare duplicate table names")
+    return tables
 
 
 def configure_logging(

@@ -22,6 +22,7 @@ from sigmarail.config import (
     get_database_config,
     get_data_config,
     get_schema_files,
+    get_schema_contract,
     get_schema_dir,
     get_project_root,
     load_config,
@@ -415,11 +416,16 @@ def optimize_tables(
     return total_tables_processed == (total_tables - total_tables_skipped)
 
 
-def get_client(db_config: Optional[DatabaseConfig] = None) -> clickhouse_connect.driver.Client:
+def get_client(
+    db_config: Optional[DatabaseConfig] = None,
+    database: Optional[str] = None,
+) -> clickhouse_connect.driver.Client:
     """Get a configured ClickHouse client instance.
 
     Args:
         db_config: Optional DatabaseConfig. If None, uses get_database_config().
+        database: Optional database override, used to connect to a control database
+            while the configured application database does not exist.
 
     Returns:
         Configured ClickHouse client instance.
@@ -429,9 +435,9 @@ def get_client(db_config: Optional[DatabaseConfig] = None) -> clickhouse_connect
 
     if db_config is None:
         db_config = get_database_config()
-    database_name = db_config.database
+    database_name = database or db_config.database
     # Test mode: connect to `default` first — clickhouse_connect cannot open a session on a missing database.
-    if app_config.mode == "test":
+    if app_config.mode == "test" and database is None:
         try:
             temp_client = clickhouse_connect.get_client(
                 host=db_config.host,
@@ -963,6 +969,7 @@ def _schema_reconciliation_statements(
 
 def _print_schema_plan(
     database: str,
+    create_database: bool,
     create_statements: List[str],
     other_statements: List[str],
     alter_statements: List[str],
@@ -974,6 +981,7 @@ def _print_schema_plan(
     """Print a compact, reproducible schema plan."""
     label = "Applying" if apply else "Preview (read-only)"
     print(f"SigmaRail schema {label} for database {database}")
+    print(f"  Create database if missing: {'yes' if create_database else 'no'}")
     print(f"  Create missing tables: {len(create_statements)}")
     for statement in create_statements:
         head = _sql_statement_head(statement).strip().splitlines()[0]
@@ -1001,8 +1009,12 @@ def _schema_object_name(statement: str, kind: str) -> Optional[str]:
     return match.group(1) if match else None
 
 
-def load_schema(drop_extra_columns: bool = False, apply: bool = True) -> bool:
-    """Plan or apply creation, reconciliation, and refresh of the core schema.
+def load_schema(
+    drop_extra_columns: bool = False,
+    apply: bool = True,
+    modules: Optional[List[str]] = None,
+) -> bool:
+    """Plan or apply creation, reconciliation, and refresh of core plus selected modules.
 
     The packaged SQL remains the source of truth. Core tables are described by
     the generated lineage manifest; extension data belongs in separate tables.
@@ -1016,7 +1028,7 @@ def load_schema(drop_extra_columns: bool = False, apply: bool = True) -> bool:
         if not schema_dir.is_dir():
             logger.error("Schema directory not found: %s", schema_dir)
             return False
-        sql_files = get_schema_files()
+        sql_files = get_schema_files(modules)
         if not sql_files:
             logger.error("No SQL statements found in %s", schema_dir)
             return False
@@ -1040,12 +1052,28 @@ def load_schema(drop_extra_columns: bool = False, apply: bool = True) -> bool:
                 elif head:
                     other.append(statement)
 
-        client = get_client()
+        # Connect to `default` first so preview works even before the target
+        # database exists. Preview remains read-only; creation requires --apply.
+        control_client = get_client(db_config, database="default")
+        database_result = control_client.query(
+            "SELECT name FROM system.databases "
+            f"WHERE name = {_quote_ch_string(db_config.database)}"
+        )
+        database_exists = bool(database_result.result_rows)
+        create_database = not database_exists
+        if apply:
+            if create_database:
+                control_client.command(
+                    f"CREATE DATABASE IF NOT EXISTS {_quote_ch_identifier(db_config.database)}"
+                )
+            control_client.close()
+            client = get_client(db_config)
+        else:
+            client = control_client
         if not client:
             logger.error("Failed to get ClickHouse client")
             return False
-        contract_path = Path(__file__).resolve().parent / "spec" / "lineage-manifest.json"
-        expected_tables = json.loads(contract_path.read_text(encoding="utf-8"))["tables"]
+        expected_tables = get_schema_contract(modules)
         names = [table["name"] for table in expected_tables]
         escaped_names = ",".join(_quote_ch_string(name) for name in names)
         existing_result = client.query(
@@ -1076,7 +1104,7 @@ def load_schema(drop_extra_columns: bool = False, apply: bool = True) -> bool:
             expected_present, list(result.result_rows), drop_extra_columns=drop_extra_columns
         )
         _print_schema_plan(
-            db_config.database, create_statements, other, alter_statements,
+            db_config.database, create_database, create_statements, other, alter_statements,
             issues, drops, views, apply,
         )
         if issues:

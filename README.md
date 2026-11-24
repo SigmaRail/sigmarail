@@ -53,10 +53,16 @@ recorded in [`docs/LINEAGE_SCOPE.md`](docs/LINEAGE_SCOPE.md).
 The current inventory contains 70 tables and 1,844 columns, including all 13
 Sharadar source-table schemas.
 
-KB sentiment, analyst estimates, external classification overlays, portfolio
-allocations, and policy-composed regime/backtest views remain outside the
-schema. The excluded fields and tables are enumerated in the lineage spec. The
-external-overlay `gic_*` fields are omitted from `ticker_classification_daily`.
+KB sentiment, portfolio allocations, and policy-composed regime/backtest views
+remain outside the core. Analyst estimates, AAII sentiment, ETF/index data, and
+macro data are available as separately selected schema modules; they are not
+created or populated by the default install. The excluded fields and tables
+are enumerated in the lineage spec. The external-overlay `gic_*` fields are
+omitted from `ticker_classification_daily`.
+
+These optional modules currently provide schema contracts only. They do not
+download or load provider data; see [Optional data modules](docs/OPTIONAL_DATA_MODULES.md)
+for their boundaries and the remaining ingestion work.
 
 The core module also exposes a bounded, read-only query API for schema-declared tables.
 Its dataset and join catalog is generated from the packaged lineage manifest plus reviewed
@@ -65,7 +71,26 @@ grain annotations; it does not modify core tables or load optional provider data
 
 ## Initial setup
 
-1. Install ClickHouse and create the database with `sql/init.sql`.
+The PyPI release is not published yet. Until then, install from the GitHub
+repository or clone it locally. To install the latest repository version directly:
+
+```bash
+python -m pip install "git+https://github.com/SigmaRail/sigmarail.git"
+```
+
+For development, clone the repository, create a virtual environment, and install
+it in editable mode:
+
+```bash
+git clone https://github.com/SigmaRail/sigmarail.git
+cd sigmarail
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+```
+
+Then:
+
+1. Install and start ClickHouse. SigmaRail does not bundle or install the server.
 2. Copy `config.yaml.example` to SigmaRail's user config directory, then enter your
    ClickHouse and Sharadar credentials locally. The default directory is
    `~/.config/sigmarail` on Linux, `~/Library/Application Support/sigmarail` on macOS,
@@ -73,11 +98,15 @@ grain annotations; it does not modify core tables or load optional provider data
    `config-test.yaml.example` to `config-test.yaml` in the same directory.
 3. Install Core, Spec, and Studio together from the repository root:
    `python -m pip install -e 'packages/sigmarail-spec[build,test]' -e ".[dev]" -e "./studio[dev]"`.
-4. Review the schema plan with `sigmarail-schema`, then apply it with
-   `sigmarail-schema --apply`.
-5. Install Studio-owned application tables with `sigmarail-studio-schema`.
-6. Download and load Sharadar sources with `sigmarail-load --download`.
-7. Build the derived screening tables with `sigmarail-populate --metrics all`.
+4. Review the schema plan with `sigmarail-schema`. It is read-only and works even
+   when the configured database does not exist yet.
+5. Run `sigmarail-schema --apply` to create the configured database if needed,
+   then create and reconcile the core tables and views from the packaged SQL.
+   Optional schema-only modules can be selected with `--module`; see
+   [Optional data modules](docs/OPTIONAL_DATA_MODULES.md).
+6. Install Studio-owned application tables with `sigmarail-studio-schema`.
+7. Download and load Sharadar sources with `sigmarail-load --download`.
+8. Build the derived screening tables with `sigmarail-populate --metrics all`.
 
 Installed settings use the OS-specific user config directory above. Existing
 project-local `config.yaml` files are still honored, and `SIGMARAIL_HOME` can point
@@ -88,13 +117,13 @@ points at the configured production database.
 
 ## Scope of the commands
 
-`sigmarail-load` accepts only the Sharadar tables defined in the packaged source
-schema. `sigmarail-populate` discovers transforms only from the packaged core
-manifest and rejects targets outside that set. Schema SQL remains the source
-of truth; `sigmarail-schema` defaults to a read-only plan. Use `sigmarail-schema --apply`
-to stage statements as table creation, reconciliation, view removal, and view
-creation so dependent views are refreshed safely. Deleting undeclared columns
-requires both `--apply` and `--drop-extra-columns`.
+`sigmarail-load` accepts only the Sharadar tables defined in the packaged core
+schema. `sigmarail-populate` defaults to transforms admitted by the core
+contract; optional-module targets require an explicit `--module`. Schema SQL
+remains the source of truth; `sigmarail-schema` defaults to a read-only plan.
+Use `sigmarail-schema --apply` to apply the core schema, or select optional
+modules as described in [Optional data modules](docs/OPTIONAL_DATA_MODULES.md).
+Deleting undeclared columns requires both `--apply` and `--drop-extra-columns`.
 
 ## Tests
 

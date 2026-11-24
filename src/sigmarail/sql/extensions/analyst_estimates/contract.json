@@ -1,0 +1,471 @@
+{
+  "contract_version": 1,
+  "module": "analyst_estimates",
+  "source_boundary": "user-configured analyst-data source",
+  "tables": [
+    {
+      "columns": [
+        {
+          "comment": "Equity ticker",
+          "name": "ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Point-in-time snapshot date",
+          "name": "asof_date",
+          "type": "Date"
+        },
+        {
+          "comment": "Feed identifier selected by the user",
+          "name": "vendor",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "eps | sales",
+          "name": "metric",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Q | A",
+          "name": "periodicity",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "0=current unreported, 1=next",
+          "name": "relative_period",
+          "type": "UInt8"
+        },
+        {
+          "comment": "Fiscal period end",
+          "name": "period_end_date",
+          "type": "Date"
+        },
+        {
+          "comment": "Consensus mean supplied by the selected vendor",
+          "name": "mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "Consensus median when vendor supplies",
+          "name": "median",
+          "type": "Float64"
+        },
+        {
+          "comment": "Highest estimate in nest",
+          "name": "high",
+          "type": "Float64"
+        },
+        {
+          "comment": "Lowest estimate in nest",
+          "name": "low",
+          "type": "Float64"
+        },
+        {
+          "comment": "Stdev of nest",
+          "name": "stdev",
+          "type": "Float64"
+        },
+        {
+          "comment": "Analyst count",
+          "name": "n_estimates",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Most recent estimate when supplied",
+          "name": "recent",
+          "type": "Float64"
+        },
+        {
+          "comment": "street | gaap | bnri | unknown",
+          "name": "eps_basis",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Estimate currency",
+          "name": "currency",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Up revisions in vendor window",
+          "name": "n_up",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Down revisions in vendor window",
+          "name": "n_down",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Vendor revision window days",
+          "name": "rev_window_days",
+          "type": "UInt16"
+        },
+        {
+          "comment": "ReplacingMergeTree version",
+          "name": "lastupdated",
+          "type": "DateTime('America/New_York')"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "analyst_estimates",
+      "name": "analyst_consensus_asof",
+      "schema_file": "195-schema-analyst_consensus_asof.sql"
+    },
+    {
+      "columns": [
+        {
+          "comment": "Equity ticker",
+          "name": "ticker",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Fiscal period end",
+          "name": "period_end_date",
+          "type": "Date"
+        },
+        {
+          "comment": "eps | sales",
+          "name": "metric",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Feed identifier selected by the user",
+          "name": "vendor",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "Reported value",
+          "name": "reported",
+          "type": "Float64"
+        },
+        {
+          "comment": "Consensus at print",
+          "name": "estimate_at_print",
+          "type": "Float64"
+        },
+        {
+          "comment": "(reported - estimate) / abs(estimate)",
+          "name": "surprise_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "street | gaap | bnri | unknown",
+          "name": "eps_basis",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "ReplacingMergeTree version",
+          "name": "lastupdated",
+          "type": "DateTime('America/New_York')"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "analyst_estimates",
+      "name": "analyst_actuals",
+      "schema_file": "196-schema-analyst_actuals.sql"
+    },
+    {
+      "columns": [
+        {
+          "comment": "Stock ticker symbol",
+          "name": "ticker",
+          "type": "String"
+        },
+        {
+          "comment": "Trading date (asof last snapshot <= date)",
+          "name": "date",
+          "type": "Date"
+        },
+        {
+          "comment": "ReplacingMergeTree version",
+          "name": "lastupdated",
+          "type": "DateTime('America/New_York')"
+        },
+        {
+          "comment": "EPS current-quarter mean",
+          "name": "eps_cq_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS next-quarter mean",
+          "name": "eps_nq_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS current-year mean",
+          "name": "eps_cy_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS next-year mean",
+          "name": "eps_ny_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CQ median",
+          "name": "eps_cq_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NQ median",
+          "name": "eps_nq_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CY median",
+          "name": "eps_cy_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NY median",
+          "name": "eps_ny_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CQ estimate count",
+          "name": "eps_cq_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "EPS NQ estimate count",
+          "name": "eps_nq_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "EPS CY estimate count",
+          "name": "eps_cy_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "EPS NY estimate count",
+          "name": "eps_ny_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "EPS CQ high",
+          "name": "eps_cq_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NQ high",
+          "name": "eps_nq_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CY high",
+          "name": "eps_cy_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NY high",
+          "name": "eps_ny_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CQ low",
+          "name": "eps_cq_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NQ low",
+          "name": "eps_nq_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CY low",
+          "name": "eps_cy_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NY low",
+          "name": "eps_ny_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CQ mean",
+          "name": "sales_cq_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NQ mean",
+          "name": "sales_nq_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CY mean",
+          "name": "sales_cy_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NY mean",
+          "name": "sales_ny_mean",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CQ median",
+          "name": "sales_cq_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NQ median",
+          "name": "sales_nq_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CY median",
+          "name": "sales_cy_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NY median",
+          "name": "sales_ny_median",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CQ count",
+          "name": "sales_cq_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Sales NQ count",
+          "name": "sales_nq_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Sales CY count",
+          "name": "sales_cy_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Sales NY count",
+          "name": "sales_ny_n",
+          "type": "UInt16"
+        },
+        {
+          "comment": "Sales CQ high",
+          "name": "sales_cq_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NQ high",
+          "name": "sales_nq_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CY high",
+          "name": "sales_cy_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NY high",
+          "name": "sales_ny_high",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CQ low",
+          "name": "sales_cq_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NQ low",
+          "name": "sales_nq_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales CY low",
+          "name": "sales_cy_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NY low",
+          "name": "sales_ny_low",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CQ mean \u0394 vs asof-90d / abs(prior)",
+          "name": "eps_cq_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NQ 90d revision",
+          "name": "eps_nq_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS CY 90d revision",
+          "name": "eps_cy_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "EPS NY 90d revision",
+          "name": "eps_ny_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NQ 90d revision",
+          "name": "sales_nq_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "Sales NY 90d revision",
+          "name": "sales_ny_rev_pct_90d",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest reported EPS at print",
+          "name": "eps_last_reported",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest EPS consensus estimate at print",
+          "name": "eps_last_estimate",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest reported EPS surprise vs estimate-at-print",
+          "name": "eps_last_surprise_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest EPS print: 1 = Beat, -1 = Miss, 0 = In-line / none",
+          "name": "eps_beat_flag",
+          "type": "Int8"
+        },
+        {
+          "comment": "Latest reported sales at print",
+          "name": "sales_last_reported",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest sales consensus estimate at print",
+          "name": "sales_last_estimate",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest reported sales surprise vs estimate-at-print",
+          "name": "sales_last_surprise_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "Latest sales print: 1 = Beat, -1 = Miss, 0 = In-line / none",
+          "name": "sales_beat_flag",
+          "type": "Int8"
+        },
+        {
+          "comment": "Active vendor on this date",
+          "name": "est_vendor",
+          "type": "LowCardinality(String)"
+        },
+        {
+          "comment": "street | gaap | bnri | unknown",
+          "name": "eps_basis",
+          "type": "LowCardinality(String)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "analyst_estimates",
+      "name": "screener_estimates_daily",
+      "schema_file": "197-schema-screener_estimates_daily.sql"
+    }
+  ]
+}

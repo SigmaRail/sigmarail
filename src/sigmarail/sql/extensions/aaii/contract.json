@@ -1,0 +1,50 @@
+{
+  "contract_version": 1,
+  "module": "aaii",
+  "source_boundary": "AAII",
+  "tables": [
+    {
+      "columns": [
+        {
+          "comment": "AAII survey week ending date",
+          "name": "survey_date",
+          "type": "Date"
+        },
+        {
+          "comment": "",
+          "name": "bullish_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "",
+          "name": "neutral_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "",
+          "name": "bearish_pct",
+          "type": "Float64"
+        },
+        {
+          "comment": "bullish - bearish",
+          "name": "bull_bear_spread",
+          "type": "Float64"
+        },
+        {
+          "comment": "",
+          "name": "source_url",
+          "type": "String"
+        },
+        {
+          "comment": "",
+          "name": "fetched_at",
+          "type": "DateTime64(3)"
+        }
+      ],
+      "kind": "external_extension",
+      "module": "aaii",
+      "name": "aaii_sentiment_survey",
+      "schema_file": "111-schema-aaii_sentiment.sql"
+    }
+  ]
+}

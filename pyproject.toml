@@ -48,7 +48,16 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-sigmarail = ["sql/schema/*.sql", "sql/schema/*.entities.yaml", "sql/schema-manifest.json", "sql/extensions/alpaca/*.sql", "spec/*.json"]
+sigmarail = [
+  "sql/schema/*.sql",
+  "sql/schema/*.entities.yaml",
+  "sql/schema-manifest.json",
+  "sql/extensions/alpaca/*.sql",
+  "sql/extensions/modules.json",
+  "sql/extensions/*/*.sql",
+  "sql/extensions/*/*.json",
+  "spec/*.json",
+]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
