@@ -25,8 +25,8 @@ def test_stock_overview_endpoint_validation():
 @pytest.mark.django_db
 @pytest.mark.skip(
     reason=(
-        "Legacy stock overview requires mixed-source tables and the Vera ticker database; "
-        "it is outside SigmaRail Core's Sharadar-only synthetic fixture."
+        "The stock overview requires joined, populated screener history and estimate fixtures; "
+        "the lightweight test database does not materialize that dataset."
     )
 )
 def test_stock_overview_happy_path():

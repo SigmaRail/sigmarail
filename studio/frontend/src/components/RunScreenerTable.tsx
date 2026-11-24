@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { BacktestRunSummary } from "../types";
 import { CopyIdBadge } from "./CopyIdBadge";
+import { ResponsiveTable } from "./ui/primitives";
 
 function formatPct(val: number | null | undefined): string {
   if (val == null || Number.isNaN(val)) return "—";
@@ -127,7 +128,7 @@ export function RunScreenerTable({
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-xs">
+    <ResponsiveTable className="flex flex-1 flex-col overflow-hidden shadow-panel">
       <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
         <table className="w-full text-left text-[11.5px] border-collapse">
           <thead className="sticky top-0 z-20 border-b border-line bg-surface-sunk/95 backdrop-blur-xs text-ink-faint">
@@ -419,6 +420,6 @@ export function RunScreenerTable({
           </tbody>
         </table>
       </div>
-    </div>
+    </ResponsiveTable>
   );
 }

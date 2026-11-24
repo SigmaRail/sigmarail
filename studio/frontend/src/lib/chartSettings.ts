@@ -62,11 +62,11 @@ export const DEFAULT_INDICATORS_1D: ChartIndicatorConfig = {
   expectationTracks: false,
   multipleRibbon: false,
   forecast: false,
-  ema10: true,
+  ema10: false,
   ema21: true,
   sma50: true,
-  sma200: true,
-  spxOverlay: true,
+  sma200: false,
+  spxOverlay: false,
 };
 
 export const DEFAULT_INDICATORS_1W: ChartIndicatorConfig = {
@@ -75,8 +75,8 @@ export const DEFAULT_INDICATORS_1W: ChartIndicatorConfig = {
 };
 
 export const DEFAULTS: ChartSettingsV2 = {
-  lastTimeframe: "1W",
-  "1D": { indicators: { ...DEFAULT_INDICATORS_1D }, range: "6M" },
+  lastTimeframe: "1D",
+  "1D": { indicators: { ...DEFAULT_INDICATORS_1D }, range: "1Y" },
   "1W": { indicators: { ...DEFAULT_INDICATORS_1W }, range: "2Y" },
 };
 

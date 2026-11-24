@@ -1,5 +1,5 @@
 export type StudioMode = "screen" | "research" | "deploy" | "monitor";
-export type WorkbenchTab = "screens" | "charts" | "watchlists" | "compose" | "runs" | "optimize" | "deploy" | "monitor" | "market";
+export type WorkbenchTab = "screens" | "charts" | "watchlists" | "compose" | "runs" | "optimize" | "deploy" | "monitor" | "market" | "settings" | "profile";
 export type BacktestSubTab = "compose" | "runs" | "optimize" | "paper";
 
 export type ScreenSource = "preset" | "ir";

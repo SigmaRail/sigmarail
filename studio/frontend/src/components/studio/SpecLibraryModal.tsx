@@ -5,6 +5,7 @@ import { fetchBacktestSpecDetail, fetchBacktestSpecs } from "../../api/backtests
 import { fetchCatalogTemplates } from "../../api/strategy";
 import type { BacktestSpecSummary } from "../../types";
 import { CopyIdBadge } from "../CopyIdBadge";
+import { Button } from "../ui/primitives";
 
 /** Studio compose only lists AST templates that compile against the current pipeline. */
 const STUDIO_STRATEGY_TEMPLATE_IDS = [
@@ -21,6 +22,10 @@ interface SpecLibraryModalProps {
   onSelectSpec: (spec: BacktestSpecSummary) => void;
   /** Clone: copy to a new ir_id and open. */
   onDuplicateSpec: (spec: BacktestSpecSummary) => void;
+  currentTitle?: string;
+  onSaveCurrent?: () => Promise<void> | void;
+  onSaveAsTemplate?: () => void;
+  savePending?: boolean;
 }
 
 export function SpecLibraryModal({
@@ -28,6 +33,10 @@ export function SpecLibraryModal({
   onClose,
   onSelectSpec,
   onDuplicateSpec,
+  currentTitle = "Untitled strategy",
+  onSaveCurrent,
+  onSaveAsTemplate,
+  savePending = false,
 }: SpecLibraryModalProps) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +44,22 @@ export function SpecLibraryModal({
   const [schemaFilter, setSchemaFilter] = useState<"all" | "modern" | "legacy">("all");
   const [alphaFilter, setAlphaFilter] = useState<string>("all");
   const [inspectingJsonSpec, setInspectingJsonSpec] = useState<BacktestSpecSummary | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
+  const [savingCurrent, setSavingCurrent] = useState(false);
+
+  async function saveCurrentStrategy() {
+    if (!onSaveCurrent || savingCurrent || savePending) return;
+    setSavingCurrent(true);
+    setSaveFeedback(null);
+    try {
+      await onSaveCurrent();
+      setSaveFeedback("Current strategy saved.");
+    } catch (error) {
+      setSaveFeedback(error instanceof Error ? error.message : "Strategy save failed.");
+    } finally {
+      setSavingCurrent(false);
+    }
+  }
 
   // Close on Escape key
   useEffect(() => {
@@ -185,27 +210,41 @@ export function SpecLibraryModal({
             </div>
             <div>
               <h2 className="text-base font-bold text-ink flex items-center gap-2">
-                Strategy Spec & Template Library
+                Strategy library
                 <span className="rounded-full bg-surface-sunk border border-line px-2 py-0.5 text-[10px] font-mono text-ink-muted">
                   {filteredSpecs.length} / {allSpecs.length}
                 </span>
               </h2>
               <p className="text-[11.5px] text-ink-muted">
-                Open a Strategy or Template in compose, or Clone a copy. Template is a filter tag.
+                Open or duplicate a saved strategy, or save the current workspace here.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-line bg-surface-sunk px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface-raised hover:border-accent/40 transition-colors"
-            >
-              Close (Esc)
-            </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="hidden min-w-0 text-right md:block">
+              <span className="block text-[10px] font-medium uppercase tracking-wide text-ink-faint">Current workspace</span>
+              <span className="block max-w-48 truncate text-xs font-semibold text-ink">{currentTitle}</span>
+            </div>
+            {onSaveCurrent && (
+              <Button type="button" variant="primary" className="min-h-9 px-3 text-xs" onClick={() => void saveCurrentStrategy()} disabled={savingCurrent || savePending}>
+                {savingCurrent || savePending ? "Saving…" : "Save current"}
+              </Button>
+            )}
+            {onSaveAsTemplate && (
+              <Button type="button" variant="secondary" className="min-h-9 px-3 text-xs" onClick={onSaveAsTemplate}>
+                Save as template
+              </Button>
+            )}
+            <Button type="button" variant="ghost" className="min-h-9 px-3 text-xs" onClick={onClose}>Close</Button>
           </div>
         </div>
+
+        {saveFeedback && (
+          <div role="status" className="border-b border-line bg-surface px-6 py-2 text-xs text-ink-muted">
+            {saveFeedback}
+          </div>
+        )}
 
         {/* Filter & Search Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 bg-surface-sunk/60 px-6 py-3">
@@ -518,9 +557,9 @@ export function SpecLibraryModal({
                             onClose();
                           }}
                           className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface hover:border-accent/40 transition-colors"
-                          title="Clone a copy and open it"
+                          title="Create a duplicate and open it"
                         >
-                          Clone
+                          Duplicate
                         </button>
 
                         {!spec.catalog_template_id && (

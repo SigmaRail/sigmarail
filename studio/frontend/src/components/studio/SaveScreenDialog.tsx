@@ -1,15 +1,11 @@
-import { useState, useEffect } from "react";
-import { cn } from "../../lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { Button, Dialog, FormField, TextArea, TextInput } from "../ui/primitives";
 
 interface SaveScreenDialogProps {
   open: boolean;
-  /** Default name to prefill */
   defaultName: string;
-  /** Whether we are updating an existing screen (vs creating new) */
   isUpdate?: boolean;
-  /** Show description field */
   showDescription?: boolean;
-  /** Optional error message to display above the action buttons */
   error?: string | null;
   onCancel: () => void;
   onConfirm: (payload: { name: string; description?: string }) => void;
@@ -26,120 +22,58 @@ export function SaveScreenDialog({
 }: SaveScreenDialogProps) {
   const [name, setName] = useState(defaultName);
   const [description, setDescription] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setName(defaultName);
-      setDescription("");
-    }
-  }, [open, defaultName]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
-      if (e.key === "Enter" && name.trim()) {
-        e.preventDefault();
-        onConfirm({ name: name.trim(), description: description.trim() || undefined });
-      }
-    }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, name, description, onCancel, onConfirm]);
+    setName(defaultName);
+    setDescription("");
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [open, defaultName]);
 
-  if (!open) return null;
+  const submit = () => {
+    if (!name.trim()) return;
+    onConfirm({ name: name.trim(), description: description.trim() || undefined });
+  };
 
   return (
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
+    <Dialog
+      open={open}
+      title="Save universe screen"
+      onClose={onCancel}
+      footer={<>
+        <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button type="button" variant="primary" disabled={!name.trim()} onClick={submit}>
+          {isUpdate ? "Update screen" : "Save screen"}
+        </Button>
+      </>}
     >
-      <div className="flex w-[min(440px,94vw)] flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-line bg-surface-raised px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-ink">💾 Save Universe Screen</span>
-            <span
-              className={cn(
-                "rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider",
-                isUpdate ? "bg-amber-500/15 text-amber-500" : "bg-emerald-500/15 text-emerald-600",
-              )}
-            >
-              {isUpdate ? "Update Existing" : "New Screen"}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded border border-line bg-surface-sunk px-2 py-1 text-[11px] font-semibold text-ink-muted hover:text-ink transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-3 px-4 py-4">
-          <div>
-            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-              Screen Name
-            </label>
-            <input
-              autoFocus
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Momentum Screen"
-              className="w-full rounded-lg border border-line bg-surface-sunk px-3 py-2 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-            />
-          </div>
-
-          {showDescription && (
-            <div>
-              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                Description (optional)
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                placeholder="What does this screen select?"
-                className="w-full resize-none rounded-lg border border-line bg-surface-sunk px-3 py-2 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-              />
-            </div>
-          )}
-
-          {isUpdate && (
-            <p className="rounded bg-surface-sunk px-2.5 py-1.5 text-[10.5px] text-ink-muted">
-              Saving will overwrite the currently loaded screen. Rename above to save as a copy instead.
-            </p>
-          )}
-        </div>
-
-        {error && (
-          <p className="px-4 pb-1 text-[11px] font-semibold text-red-500" role="alert">
-            {error}
-          </p>
+      <div className="space-y-3">
+        <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${isUpdate ? "border-warn/30 bg-warn/10 text-warn" : "border-line bg-slate-50 text-ink-muted"}`}>
+          {isUpdate ? "Updating loaded screen" : "New screen"}
+        </span>
+        <FormField label="Screen name">
+          <TextInput
+            ref={inputRef}
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } }}
+            placeholder="e.g. My Momentum Screen"
+          />
+        </FormField>
+        {showDescription && (
+          <FormField label="Description" hint="Optional. Describe what this screen selects.">
+            <TextArea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} />
+          </FormField>
         )}
-
-        <div className="flex justify-end gap-2 border-t border-line bg-surface-raised px-4 py-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-line bg-surface px-3.5 py-1.5 text-[11.5px] font-semibold text-ink-muted hover:text-ink transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!name.trim()}
-            onClick={() => onConfirm({ name: name.trim(), description: description.trim() || undefined })}
-            className="rounded-lg bg-accent px-4 py-1.5 text-[11.5px] font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-40"
-          >
-            {isUpdate ? "Update Screen" : "Save Screen"}
-          </button>
-        </div>
+        {isUpdate && <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-ink-muted">
+          Saving updates the loaded screen. Change its name to save a separate copy.
+        </p>}
+        {error && <p className="text-xs font-medium text-danger" role="alert">{error}</p>}
       </div>
-    </div>
+    </Dialog>
   );
 }
 

@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from "react";
 import type { StockIntrospectionData } from "../../types";
 import { BookmarkButton } from "./BookmarkButton";
 import { cn } from "../../lib/utils";
+import { Button, TextInput } from "../ui/primitives";
 
 interface QuoteHeaderProps {
   ticker: string;
@@ -91,28 +92,30 @@ export function QuoteHeader({
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-1.5 text-[11px] font-mono">
-      <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+    <div className="quote-header">
+      <div className="quote-header-main">
         {showSearch && (
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-1">
-            <input
+          <form onSubmit={handleSearchSubmit} className="quote-search">
+            <TextInput
               type="text"
               value={searchValue ?? ticker}
               onChange={(e) => onSearchChange?.(e.target.value.toUpperCase())}
               placeholder="Ticker"
-              className="w-24 rounded border border-line bg-surface-sunk px-2 py-0.5 font-bold text-ink focus:border-accent focus:outline-none"
+              aria-label="Ticker symbol"
+              className="h-9 min-h-9 w-[5.5rem] px-2 font-mono font-bold uppercase"
             />
-            <button
+            <Button
               type="submit"
-              className="rounded bg-accent px-2 py-0.5 font-bold text-white hover:bg-accent/90"
+              variant="secondary"
+              className="min-h-9 px-2 text-xs"
             >
               Go
-            </button>
+            </Button>
           </form>
         )}
 
-        <div className="flex min-w-0 items-baseline gap-1.5">
-          <span className="text-base font-bold text-accent">{ticker}</span>
+        <div className="quote-instrument">
+          <span className="text-base font-bold text-ink">{ticker}</span>
           {data?.company_name && data.company_name !== ticker && (
             <span className="max-w-[220px] truncate text-[11px] font-semibold text-ink">
               {data.company_name}
@@ -126,46 +129,17 @@ export function QuoteHeader({
           <BookmarkButton ticker={ticker} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 text-[11px]">
-          <span className="font-bold text-ink">
-            {close !== null ? `$${close.toFixed(2)}` : "—"}
-            <span className={cn("ml-1 font-bold", pctClass(perf5d))}>
-              {formatSignedPct(perf5d)}
-            </span>
-          </span>
-          <span className="text-ink-muted">
-            Vol <span className="font-bold text-ink">{formatVol(avgVol)}</span>
-          </span>
-          <span className="text-ink-muted">
-            Mkt <span className="font-bold text-ink">{formatMarketCap(marketcap)}</span>
-          </span>
-          <span className="text-ink-muted">
-            52w{" "}
-            <span className={cn("font-bold", pctClass(off52w !== null ? -off52w : null))}>
-              {off52w !== null ? `-${off52w.toFixed(1)}%` : "—"}
-            </span>
-          </span>
-          <span className="text-ink-muted">
-            ATR <span className="font-bold text-ink">{formatSignedPct(atrPct).replace("+", "")}</span>
-          </span>
-        </div>
+        <label className="quote-asof"><span>As of</span>{onAsOfDateChange ? <TextInput type="date" value={asOfDate}
+          onChange={(e) => onAsOfDateChange(e.target.value)} className="h-9 min-h-9 w-auto px-2 py-1 font-mono text-xs" /> : <strong>{asOfDate}</strong>}</label>
+        {trailing}
       </div>
 
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 font-bold text-amber-500">
-          <span>As-Of</span>
-          {onAsOfDateChange ? (
-            <input
-              type="date"
-              value={asOfDate}
-              onChange={(e) => onAsOfDateChange(e.target.value)}
-              className="bg-transparent text-amber-400 focus:outline-none"
-            />
-          ) : (
-            <span>{asOfDate}</span>
-          )}
-        </label>
-        {trailing}
+      <div className="quote-header-metrics" aria-label="Key market metrics">
+        <span className="quote-metric quote-price">{close !== null ? `$${close.toFixed(2)}` : "—"}<span className={cn("font-bold", pctClass(perf5d))}>{formatSignedPct(perf5d)}</span></span>
+        <span className="quote-metric">Vol <strong>{formatVol(avgVol)}</strong></span>
+        <span className="quote-metric">Mkt <strong>{formatMarketCap(marketcap)}</strong></span>
+        <span className="quote-metric">52w <strong className={pctClass(off52w !== null ? -off52w : null)}>{off52w !== null ? `-${off52w.toFixed(1)}%` : "—"}</strong></span>
+        <span className="quote-metric">ATR <strong>{formatSignedPct(atrPct).replace("+", "")}</strong></span>
       </div>
     </div>
   );

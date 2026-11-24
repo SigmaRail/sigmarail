@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchLiveDeployments, fetchLocalLiveRuntime } from "../api/live";
 import type { StudioMode } from "../types";
+import { Button, PageHeader, Panel, ResponsiveTable } from "./ui/primitives";
 
 function truncateId(id: string, head = 8, tail = 6): string {
   if (id.length <= head + tail + 1) return id;
@@ -32,22 +33,18 @@ export function MonitorView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface">
-      <div className="shrink-0 border-b border-line bg-surface-raised px-4 py-3">
-        <h2 className="text-sm font-semibold text-ink">Monitor</h2>
-        <p className="mt-0.5 text-[11px] text-ink-muted">
-          LEAN performance by algorithm. Snapshot time is shown for every deployment.
-        </p>
-        <button
+      <PageHeader title="Monitor" description="LEAN performance by algorithm. Snapshot time is shown for every deployment."
+        actions={<Button
           type="button"
+          variant="secondary"
           onClick={() => onModeChange("deploy")}
-          className="mt-2 rounded border border-line bg-surface-sunk px-2.5 py-1 text-[12px] font-medium text-ink hover:border-accent hover:bg-accent-soft"
+          className="text-xs"
         >
           Go to Deploy →
-        </button>
-      </div>
+        </Button>} />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <section className="mb-4 rounded border border-line bg-surface-raised">
+        <Panel className="mb-4 p-0">
           <div className="border-b border-line px-3 py-2">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
               Algorithm performance · local LEAN
@@ -103,9 +100,10 @@ export function MonitorView({
                         </div>
 
                         {metrics.holdings.length > 0 ? (
-                          <div className="mt-3 overflow-x-auto">
+                          <div className="mt-3">
                             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Holdings</div>
-                            <table className="w-full text-left text-[10px]">
+                            <ResponsiveTable className="rounded-lg">
+                            <table className="w-full min-w-[460px] text-left text-[10px]">
                               <thead className="text-ink-faint"><tr><th className="py-1 pr-3">Symbol</th><th className="py-1 pr-3">Qty</th><th className="py-1 pr-3">Market value</th><th className="py-1">Unrealized P&amp;L</th></tr></thead>
                               <tbody>{metrics.holdings.slice(0, 8).map((holding) => (
                                 <tr key={holding.symbol} className="border-t border-line text-ink">
@@ -113,6 +111,7 @@ export function MonitorView({
                                 </tr>
                               ))}</tbody>
                             </table>
+                            </ResponsiveTable>
                           </div>
                         ) : null}
 
@@ -130,9 +129,9 @@ export function MonitorView({
               })}
             </ul>
           )}
-        </section>
+        </Panel>
 
-        <section className="rounded border border-line bg-surface-raised">
+        <Panel className="p-0">
           <div className="border-b border-line px-3 py-2">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
               Deployment registry
@@ -145,13 +144,14 @@ export function MonitorView({
               <p className="text-[12px] text-ink-muted">
                 No paper deployments registered yet.
               </p>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={() => onModeChange("deploy")}
-                className="mt-3 rounded bg-ink px-3 py-1.5 text-[12px] font-medium text-white"
+                className="mt-3 text-xs"
               >
                 Register in Deploy
-              </button>
+              </Button>
             </div>
           ) : (
             <ul>
@@ -178,7 +178,7 @@ export function MonitorView({
               ))}
             </ul>
           )}
-        </section>
+        </Panel>
       </div>
     </div>
   );

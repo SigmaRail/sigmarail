@@ -17,6 +17,7 @@ import {
 import { cn } from "../lib/utils";
 import type { ScreenField, IrOperand } from "../types";
 import { FieldInfoPopover } from "./studio/FieldInfoPopover";
+import { Button } from "./ui/primitives";
 
 /**
  * GridColumn<T> — a single configurable column definition for the shared
@@ -351,29 +352,31 @@ export function DataTable<T>({
           {toolbar}
           <div className="ml-auto flex items-center gap-1.5">
             {showDensityToggle && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   const next = compact ? "comfortable" : "compact";
                   setDensity(next);
                   saveDensity(viewId, next);
                 }}
-                className="rounded border border-line bg-surface px-2 py-1 font-mono text-[10px] font-bold text-ink-muted hover:bg-surface-sunk"
+                className="min-h-8 px-2 py-1 font-mono text-[10px]"
                 title="Toggle row density"
               >
                 {compact ? "▤" : "▦"} Density
-              </button>
+              </Button>
             )}
             {showColumnToggle && (
               <div className="relative" ref={menuRef}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded border border-line bg-surface px-2 py-1 font-mono text-[10px] font-bold text-ink-muted hover:bg-surface-sunk"
+                  className="min-h-8 px-2 py-1 font-mono text-[10px]"
                   title="Choose displayed columns"
                 >
                   Columns ▾
-                </button>
+                </Button>
                 {menuOpen && (
                   <div className="absolute right-0 top-full z-30 mt-1 max-h-72 min-w-56 overflow-auto rounded-lg border border-line bg-surface-raised py-1 shadow-lg">
                     {columns.map((col) => {
@@ -427,13 +430,14 @@ export function DataTable<T>({
                     })}
                     {onAddColumn && (
                       <div className="border-t border-line px-1 py-1">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={onAddColumn}
-                          className="w-full rounded px-2 py-1 text-left text-[11px] font-semibold text-accent hover:bg-accent/10"
+                          className="min-h-8 w-full justify-start rounded px-2 py-1 text-left text-[11px] font-semibold text-accent"
                         >
                           + Add Column
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>

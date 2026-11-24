@@ -9,6 +9,37 @@ import type { ChartCandlePoint } from "../../types";
 import { FundamentalsRail } from "./FundamentalsRail";
 import { QuoteHeader } from "./QuoteHeader";
 import { StockChartEngine } from "./StockChartEngine";
+import { Button } from "../ui/primitives";
+
+export function StockChartLoadError({
+  ticker,
+  error,
+  onRetry,
+}: {
+  ticker: string;
+  error: unknown;
+  onRetry: () => void;
+}) {
+  return (
+    <div role="alert" className="flex h-full min-w-0 flex-col items-center justify-center gap-3 px-4 text-center">
+      <p className="text-sm font-semibold text-ink">Chart unavailable for {ticker}</p>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={onRetry}
+        className="text-xs"
+      >
+        Retry chart
+      </Button>
+      <details className="w-full max-w-full text-left">
+        <summary className="cursor-pointer text-[11px] text-ink-muted">Technical details</summary>
+        <pre className="mt-2 max-h-32 max-w-full overflow-auto whitespace-pre-wrap break-all rounded border border-line bg-surface-raised p-2 font-mono text-[10px] text-rose-500">
+          {error instanceof Error ? error.message : "Failed to load chart"}
+        </pre>
+      </details>
+    </div>
+  );
+}
 
 /**
  * MarketSurge-style chart body shared by Charts tab, Screener introspection,
@@ -36,7 +67,11 @@ export function StockIntrospectionPanel({
   >(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [railOpen, setRailOpen] = useState(() => loadFundamentalsRailOpen());
+  const [railOpen, setRailOpen] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches
+      ? loadFundamentalsRailOpen()
+      : false,
+  );
 
   useEffect(() => {
     setActiveTicker(ticker);
@@ -100,22 +135,25 @@ export function StockIntrospectionPanel({
         trailing={
           <div className="flex items-center gap-1.5">
             {activeTicker !== ticker ? (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setActiveTicker(ticker)}
-                className="rounded border border-accent/40 bg-accent/20 px-2 py-0.5 font-mono text-[10px] text-accent hover:bg-accent/30"
+                className="min-h-8 px-2 py-0.5 font-mono text-[10px]"
               >
                 ← {ticker}
-              </button>
+              </Button>
             ) : null}
             {onClose ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                aria-label="Close stock chart"
                 onClick={onClose}
-                className="rounded-lg border border-line bg-surface p-1.5 text-xs text-ink-muted hover:bg-surface-sunk hover:text-ink"
+                className="min-h-8 min-w-8 px-2 py-1 text-xs"
               >
                 ✕
-              </button>
+              </Button>
             ) : null}
           </div>
         }
@@ -143,13 +181,14 @@ export function StockIntrospectionPanel({
               Loading ClickHouse candlestick series…
             </div>
           ) : overviewQuery.isError ? (
-            <div className="flex h-full items-center justify-center px-4 text-center font-mono text-xs text-rose-500">
-              {overviewQuery.error instanceof Error
-                ? overviewQuery.error.message
-                : "Failed to load chart"}
-            </div>
+            <StockChartLoadError
+              ticker={activeTicker}
+              error={overviewQuery.error}
+              onRetry={() => void overviewQuery.refetch()}
+            />
           ) : data?.chart_series && data.chart_series.length > 0 ? (
             <StockChartEngine
+              compact={compact}
               candles={mergedChartSeries}
               screenAsOfDate={asOfDate}
               inspectedDate={inspectedDate}

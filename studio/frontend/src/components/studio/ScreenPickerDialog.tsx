@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { cn } from "../../lib/utils";
 import { deleteSavedScreen } from "../../api/screens";
 import type { SavedScreen } from "../../types";
+import { Button, Dialog, TextInput } from "../ui/primitives";
 
 interface ScreenPickerDialogProps {
   isOpen: boolean;
@@ -31,17 +31,6 @@ export function ScreenPickerDialog({
     },
   });
 
-  useEffect(() => {
-    if (!isOpen) return;
-    function handler(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   const systemScreens = screens.filter((s) => s.is_system);
   const customScreens = screens.filter((s) => !s.is_system);
 
@@ -58,72 +47,57 @@ export function ScreenPickerDialog({
   });
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    <Dialog
+      open={isOpen}
+      title="Load universe screen"
+      onClose={onClose}
+      className="w-[min(94vw,36rem)] max-h-[84dvh]"
     >
-      <div className="flex w-[min(580px,94vw)] flex-col rounded-xl border border-line bg-surface shadow-2xl overflow-hidden max-h-[78vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-line bg-surface-raised px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-ink">📂 Load Universe Screen</span>
-            <span className="text-[11px] font-mono text-ink-muted">({screens.length} available)</span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-line bg-surface-sunk px-2.5 py-1 text-[11px] font-semibold text-ink-muted hover:text-ink transition-colors"
-          >
-            ✕
-          </button>
-        </div>
+      <div className="mb-3 text-xs text-ink-muted">{screens.length} available</div>
 
-        {/* Filter Pills + Search */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised px-4 py-2">
-          <div className="inline-flex rounded border border-line bg-surface-sunk p-0.5">
-            <button
+      {/* Filter pills and search */}
+      <div className="grid gap-2 border-b border-line pb-3 sm:flex sm:items-center sm:justify-between">
+        <div role="group" aria-label="Filter screens" className="flex flex-wrap gap-1">
+            <Button
               type="button"
+              variant={filter === "all" ? "primary" : "secondary"}
+              aria-pressed={filter === "all"}
               onClick={() => setFilter("all")}
-              className={cn(
-                "rounded px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                filter === "all" ? "bg-accent text-surface-canvas font-bold shadow-sm" : "text-ink-muted hover:text-ink"
-              )}
+              className="min-h-8 px-2.5 text-[11px]"
             >
               All ({screens.length})
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={filter === "system" ? "primary" : "secondary"}
+              aria-pressed={filter === "system"}
               onClick={() => setFilter("system")}
-              className={cn(
-                "rounded px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                filter === "system" ? "bg-accent text-surface-canvas font-bold shadow-sm" : "text-ink-muted hover:text-ink"
-              )}
+              className="min-h-8 px-2.5 text-[11px]"
             >
               ⭐ System ({systemScreens.length})
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={filter === "custom" ? "primary" : "secondary"}
+              aria-pressed={filter === "custom"}
               onClick={() => setFilter("custom")}
-              className={cn(
-                "rounded px-2.5 py-1 text-[11px] font-semibold transition-colors",
-                filter === "custom" ? "bg-accent text-surface-canvas font-bold shadow-sm" : "text-ink-muted hover:text-ink"
-              )}
+              className="min-h-8 px-2.5 text-[11px]"
             >
               💾 Custom ({customScreens.length})
-            </button>
-          </div>
+            </Button>
+        </div>
 
-          <input
+        <TextInput
             type="text"
             placeholder="Search screens…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-44 rounded border border-line bg-surface px-2.5 py-1 text-[11px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-          />
-        </div>
+            aria-label="Search screens"
+            className="min-h-9 w-full px-2.5 py-1 text-[11px] sm:w-44"
+        />
+      </div>
 
-        {/* Unified Screen List */}
-        <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-line">
+      <div className="-mx-2 min-h-0 max-h-[55dvh] divide-y divide-line overflow-y-auto sm:-mx-3">
           {displayedScreens.length === 0 ? (
             <div className="p-8 text-center text-[12px] text-ink-muted">
               No screens found matching your filter or search criteria.
@@ -132,19 +106,19 @@ export function ScreenPickerDialog({
             displayedScreens.map((s) => (
               <div
                 key={String(s.id)}
-                className="flex items-center justify-between px-4 py-3 hover:bg-surface-sunk transition-colors group"
+                className="flex flex-wrap items-center justify-between gap-2 px-2 py-3 transition-colors hover:bg-slate-50 sm:px-3"
               >
                 <button
                   type="button"
                   onClick={() => { onSelectScreen(s); onClose(); }}
-                  className="flex-1 text-left flex flex-col gap-0.5 cursor-pointer pr-3"
+                  className="min-w-0 flex-1 text-left flex flex-col gap-0.5 cursor-pointer pr-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[12px] text-ink group-hover:text-accent transition-colors">
+                    <span className="font-bold text-[12px] text-ink hover:text-accent transition-colors">
                       {s.name}
                     </span>
                     {s.is_system ? (
-                      <span className="text-[9.5px] font-mono px-1.5 py-0.2 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold">
+                      <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded-md border border-sky-600/20 bg-sky-50 text-sky-700 font-semibold">
                         ⭐ System
                       </span>
                     ) : (
@@ -166,34 +140,36 @@ export function ScreenPickerDialog({
                 </button>
 
                 <div className="flex items-center gap-1.5">
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    className="min-h-8 px-2.5 text-[11px]"
                     onClick={() => { onSelectScreen(s); onClose(); }}
-                    className="rounded border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-bold text-accent hover:bg-accent hover:text-surface-canvas transition-colors"
                   >
                     Load
-                  </button>
+                  </Button>
                   {!s.is_system && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      className="min-h-8 min-w-8 px-1.5 text-xs"
+                      aria-label={`Delete screen ${s.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (confirm(`Delete screen "${s.name}"?`)) {
                           deleteMutation.mutate(s.id);
                         }
                       }}
-                      className="rounded border border-line bg-surface px-2 py-1 text-[11px] text-ink-muted hover:text-rose-400 hover:border-rose-500/40 transition-colors opacity-0 group-hover:opacity-100"
                       title="Delete screen"
                     >
                       🗑️
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
             ))
           )}
-        </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

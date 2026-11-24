@@ -2,10 +2,12 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStockIntrospection } from "../../api/screens";
 import { StockChartEngine } from "./StockChartEngine";
+import { StockChartLoadError } from "./StockIntrospectionPanel";
 import { QuoteHeader } from "./QuoteHeader";
 import { FundamentalsRail } from "./FundamentalsRail";
 import { WatchlistSidebar } from "./WatchlistSidebar";
 import { TradingViewForecastAccuracyChart } from "./TradingViewForecastAccuracyChart";
+import { Dialog } from "../ui/primitives";
 import { addRecentlyViewed } from "../../lib/watchlistStore";
 import {
   loadFundamentalsRailOpen,
@@ -56,7 +58,11 @@ export function ChartsView({
   const [extraHistoryCandles, setExtraHistoryCandles] = useState<ChartCandlePoint[] | null>(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [railOpen, setRailOpen] = useState(() => loadFundamentalsRailOpen());
+  const [railOpen, setRailOpen] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches
+      ? loadFundamentalsRailOpen()
+      : false,
+  );
   const [watchlistOpen, setWatchlistOpen] = useState(() => loadWatchlistOpen());
   const [forecastModalOpen, setForecastModalOpen] = useState(false);
 
@@ -73,6 +79,15 @@ export function ChartsView({
       setInspectedDate(initialAsOfDate);
     }
   }, [initialAsOfDate]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 640px)");
+    const collapseOnPhone = () => {
+      if (!media.matches) setRailOpen(false);
+    };
+    media.addEventListener("change", collapseOnPhone);
+    return () => media.removeEventListener("change", collapseOnPhone);
+  }, []);
 
   const chartQuery = useQuery({
     queryKey: ["stock-introspection-chart", ticker, asOfDate],
@@ -179,9 +194,11 @@ export function ChartsView({
               Loading ClickHouse candlestick series for {ticker}…
             </div>
           ) : chartQuery.isError ? (
-            <div className="flex h-full items-center justify-center px-6 text-center font-mono text-xs text-rose-500">
-              {chartQuery.error instanceof Error ? chartQuery.error.message : "Failed to load chart"}
-            </div>
+            <StockChartLoadError
+              ticker={ticker}
+              error={chartQuery.error}
+              onRetry={() => void chartQuery.refetch()}
+            />
           ) : data?.chart_series && data.chart_series.length > 0 ? (
             <StockChartEngine
               ticker={ticker}
@@ -225,25 +242,20 @@ export function ChartsView({
       />
 
       {/* TradingView Forecasts & Estimates Accuracy Modal */}
-      {forecastModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setForecastModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-xl border border-line bg-surface shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <TradingViewForecastAccuracyChart
-              ticker={ticker}
-              asOfDate={inspectedDate}
-              quarterlyGrowth={data?.quarterly_growth}
-              annualGrowth={data?.annual_growth}
-              onClose={() => setForecastModalOpen(false)}
-            />
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={forecastModalOpen}
+        title="Forecast and estimates accuracy"
+        onClose={() => setForecastModalOpen(false)}
+        className="w-[min(96vw,80rem)] max-h-[92dvh]"
+      >
+        <TradingViewForecastAccuracyChart
+          ticker={ticker}
+          asOfDate={inspectedDate}
+          quarterlyGrowth={data?.quarterly_growth}
+          annualGrowth={data?.annual_growth}
+          onClose={() => setForecastModalOpen(false)}
+        />
+      </Dialog>
     </div>
   );
 }

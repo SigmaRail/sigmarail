@@ -37,6 +37,7 @@ import { INITIAL_EVALUATION_CONFIG } from "./studio/EvaluationSettingsPanel";
 import { evaluationExtraEnv, readEvaluation, stampEvaluation } from "../lib/evaluationSpec";
 import { exitRulesFromDoc, patchExitRules } from "../lib/pipelineSlotBindings";
 import { parseRules } from "../lib/rulesAst";
+import { Button } from "./ui/primitives";
 
 const COMPOSE_DEBOUNCE_MS = 500;
 
@@ -100,35 +101,6 @@ function initialUniverseChoice(
   return { kind: "inline" };
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded border border-line bg-surface px-3 py-3">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-        {title}
-      </h3>
-      <div className="mt-2 space-y-2">{children}</div>
-    </section>
-  );
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block text-[11px] font-medium text-ink-muted">
-      {children}
-    </label>
-  );
-}
-
-function textInputClassName(): string {
-  return "mt-0.5 w-full rounded border border-line bg-surface-raised px-2 py-1.5 font-mono text-[12px] text-ink";
-}
-
 export function BacktestComposePanel({
   savedScreens,
   savedScreenId,
@@ -187,6 +159,8 @@ export function BacktestComposePanel({
   }, []);
   const [specHash, setSpecHash] = useState<string | null>(null);
   const [composeDirty, setComposeDirty] = useState(false);
+  const [pipelineDirty, setPipelineDirty] = useState(false);
+  const hasUnsavedWork = composeDirty || pipelineDirty;
   const [activeFrameworkSpec, setActiveFrameworkSpec] = useState<AssembledFrameworkSpec | null>(null);
   const [specLibraryOpen, setSpecLibraryOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
@@ -291,6 +265,7 @@ export function BacktestComposePanel({
       }
     }
     setComposeDirty(false);
+    setPipelineDirty(false);
     setPendingRemote(null);
   }
 
@@ -679,6 +654,7 @@ export function BacktestComposePanel({
             expected_hash: specHash ?? undefined,
           });
           setComposeDirty(false);
+          setPipelineDirty(false);
         }
 
         await launchOptimizerMutation.mutateAsync(req);
@@ -710,7 +686,7 @@ export function BacktestComposePanel({
       setActionError("Start and end dates are required.");
       return;
     }
-    if (!composeResult.validation.ok) {
+    if (!composeResult.validation?.ok) {
       setActionError(
         validationMessage(composeResult.validation) ?? "Spec validation failed.",
       );
@@ -769,6 +745,7 @@ export function BacktestComposePanel({
         expected_hash: specHash ?? undefined,
       });
       setComposeDirty(false);
+      setPipelineDirty(false);
       setLoadedSpec((prev) => ({
         ...(prev || {}),
         ir_id: irId.trim(),
@@ -871,7 +848,7 @@ export function BacktestComposePanel({
   const acceptRemoteUpdate = useCallback(async () => {
     const id = irId.trim();
     if (!id || !pendingRemote) return;
-    if (composeDirty) {
+    if (hasUnsavedWork) {
       const ok = window.confirm(
         "Accepting will overwrite unsaved local edits with the remote strategy. Continue?",
       );
@@ -887,7 +864,7 @@ export function BacktestComposePanel({
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to load remote update");
     }
-  }, [irId, pendingRemote, composeDirty]);
+  }, [irId, pendingRemote, hasUnsavedWork]);
 
   const dismissRemoteUpdate = useCallback(() => {
     if (pendingRemote) setDismissedRemoteHash(pendingRemote.hash);
@@ -940,6 +917,7 @@ export function BacktestComposePanel({
         setIrIdTouched(true);
         setTitle(saveTitle);
         setComposeDirty(false);
+        setPipelineDirty(false);
         if (saved.ir_content_hash) setSpecHash(String(saved.ir_content_hash));
 
         // Confirm persistence from ClickHouse (not just local state).
@@ -994,7 +972,7 @@ export function BacktestComposePanel({
     ],
   );
 
-  const validationOk = composeResult?.validation.ok ?? false;
+  const validationOk = composeResult?.validation?.ok ?? false;
   const executionReady = healthQuery.data?.ready ?? false;
   const canRunBacktest =
     Boolean(composeResult?.spec) &&
@@ -1039,7 +1017,7 @@ export function BacktestComposePanel({
     return (
       <div className="p-4 text-sm" role="status">
         {routeLoadError ? `Could not open strategy ${routeStrategyIrId}.` : `Opening strategy ${routeStrategyIrId}…`}
-        {routeLoadError && <button className="workbench-control" onClick={() => onNavigateStrategy?.(null)}>Open a new draft</button>}
+        {routeLoadError && <Button variant="secondary" onClick={() => onNavigateStrategy?.(null)}>Open a new draft</Button>}
       </div>
     );
   }
@@ -1047,7 +1025,7 @@ export function BacktestComposePanel({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface-raised">
 
-      <div className="mx-auto w-full max-w-7xl space-y-4 px-3 sm:px-6 py-4">
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 pb-6 sm:px-6">
 
 
 
@@ -1074,14 +1052,12 @@ export function BacktestComposePanel({
           onChangeFramework={(fw) => {
             setAssembledFramework(fw);
             setActiveFrameworkSpec(fw);
-            setComposeDirty(true);
           }}
           onChangeFullSpec={(spec) => {
             setPipelineSpec(spec);
-            setComposeDirty(true);
           }}
           onChangeAuthoredPipeline={handleAuthoredPipelineChange}
-          onSaveStrategy={() => void handleSaveStrategy()}
+          onSaveStrategy={handleSaveStrategy}
           onForkStrategy={async (newId, newTitle, notes) => {
             await handleSaveStrategy({
               forceNewVersion: true,
@@ -1094,6 +1070,8 @@ export function BacktestComposePanel({
           prefillScreen={universeChoice.kind === "inline" ? inlineSpec : null}
           saveStrategyPending={saveMutation.isPending}
           composeDirty={composeDirty}
+          onDirtyChange={setPipelineDirty}
+          autoSaveKey={`${irId}|${isTemplate}|${title}`}
           onLaunchBacktest={() => void handleRunBacktest()}
           onLaunchOptimizer={() => setSweepModalOpen(true)}
           evaluationConfig={evaluationConfig}
@@ -1102,71 +1080,25 @@ export function BacktestComposePanel({
           composeTitle={title}
           onChangeTitle={setTitle}
           onOpenSpecLibrary={() => setSpecLibraryOpen(true)}
-          onOpenSaveTemplate={(fw) => {
-            setActiveFrameworkSpec(fw);
-            setSaveTemplateOpen(true);
+          strategyIrId={irId}
+          onChangeStrategyIrId={(value) => {
+            setIrIdTouched(true);
+            setIrId(value);
+          }}
+          isTemplate={isTemplate}
+          onChangeIsTemplate={(value) => {
+            setIsTemplate(value);
+            setComposeDirty(true);
           }}
         />
 
-        <Section title="Identity">
-          <div>
-            <FieldLabel>Title</FieldLabel>
-            <input
-              type="text"
-              className={textInputClassName()}
-              placeholder="My screener backtest"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div>
-            <FieldLabel>ir_id</FieldLabel>
-            <input
-              type="text"
-              className={textInputClassName()}
-              placeholder="Auto-filled from compose"
-              value={irId}
-              onChange={(e) => {
-                setIrIdTouched(true);
-                setIrId(e.target.value);
-              }}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-[11px] text-ink-muted">
-            <input
-              type="checkbox"
-              checked={isTemplate}
-              onChange={(e) => {
-                setIsTemplate(e.target.checked);
-                setComposeDirty(true);
-              }}
-            />
-            Template tag (Browse filter only — still editable)
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="rounded border border-accent bg-accent-soft px-2.5 py-1 text-[11px] font-semibold text-ink hover:opacity-90"
-              onClick={() => void handleSaveStrategy()}
-              disabled={saveMutation.isPending}
-            >
-              {saveMutation.isPending ? "Saving…" : "Save strategy"}
-            </button>
-          </div>
-          {composeResult && !validationOk ? (
-            <p className="text-[11px] text-warn">
-              {validationMessage(composeResult.validation) ?? "Validation failed"}
-            </p>
-          ) : null}
-          {composeError ? (
-            <p className="text-[11px] text-danger">{composeError}</p>
-          ) : null}
-        </Section>
-
-        <section className="rounded border border-line bg-surface px-3 py-3">
-          <button
+        <section className="ui-panel p-3">
+          <Button
             type="button"
-            className="flex w-full items-center justify-between text-left"
+            variant="ghost"
+            className="min-h-8 w-full justify-between px-0 text-left"
+            aria-expanded={previewOpen}
+            aria-controls="compose-preview-content"
             onClick={() => setPreviewOpen((o) => !o)}
             disabled={!composeResult?.spec}
           >
@@ -1176,44 +1108,41 @@ export function BacktestComposePanel({
             <span className="text-[11px] text-ink-muted">
               {previewOpen ? "Collapse" : "Expand"}
             </span>
-          </button>
+          </Button>
           {previewOpen && composeResult?.spec ? (
-            <div className="mt-2 space-y-2">
+            <div id="compose-preview-content" className="mt-2 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex gap-1">
-                  <button
+                  <Button
                     type="button"
-                    className={`rounded border px-2 py-0.5 text-[10px] ${
-                      previewTab === "json"
-                        ? "border-accent bg-accent-soft text-ink"
-                        : "border-line text-ink-muted hover:bg-surface-sunk"
-                    }`}
+                    variant={previewTab === "json" ? "primary" : "secondary"}
+                    aria-pressed={previewTab === "json"}
+                    className="min-h-8 px-2 py-0.5 text-[10px]"
                     onClick={() => setPreviewTab("json")}
                   >
                     JSON
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className={`rounded border px-2 py-0.5 text-[10px] ${
-                      previewTab === "sql"
-                        ? "border-accent bg-accent-soft text-ink"
-                        : "border-line text-ink-muted hover:bg-surface-sunk"
-                    }`}
+                    variant={previewTab === "sql" ? "primary" : "secondary"}
+                    aria-pressed={previewTab === "sql"}
+                    className="min-h-8 px-2 py-0.5 text-[10px]"
                     onClick={() => setPreviewTab("sql")}
                   >
                     SQL
-                  </button>
+                  </Button>
                 </div>
                 {previewTab === "sql" && universeSql ? (
-                  <button
+                  <Button
                     type="button"
-                    className="rounded border border-line px-2 py-0.5 text-[10px] text-ink-muted hover:bg-surface-sunk"
+                    variant="secondary"
+                    className="min-h-8 px-2 py-0.5 text-[10px]"
                     onClick={() => {
                       void navigator.clipboard?.writeText(universeSql);
                     }}
                   >
                     Copy SQL
-                  </button>
+                  </Button>
                 ) : null}
               </div>
               {previewTab === "json" ? (
@@ -1250,23 +1179,25 @@ export function BacktestComposePanel({
             <p className="mt-0.5 text-[11px] text-ink-muted">
               Hash {pendingRemote.hash.slice(0, 12)}…
               {pendingRemote.updated_at ? ` · ${pendingRemote.updated_at}` : ""}
-              {composeDirty ? " · local edits will be overwritten on Accept" : ""}
+              {hasUnsavedWork ? " · local edits will be overwritten on Accept" : ""}
             </p>
             <div className="mt-2 flex gap-2">
-              <button
+              <Button
                 type="button"
-                className="rounded bg-accent px-2.5 py-1 text-[11px] font-semibold text-accent-fg"
+                variant="primary"
+                className="min-h-8 px-2.5 py-1 text-[11px]"
                 onClick={() => void acceptRemoteUpdate()}
               >
                 Accept
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="rounded border border-line px-2.5 py-1 text-[11px] text-ink-muted hover:bg-surface-sunk"
+                variant="secondary"
+                className="min-h-8 px-2.5 py-1 text-[11px]"
                 onClick={dismissRemoteUpdate}
               >
                 Dismiss
-              </button>
+              </Button>
             </div>
           </div>
         ) : null}
@@ -1298,6 +1229,13 @@ export function BacktestComposePanel({
       <SpecLibraryModal
         isOpen={specLibraryOpen}
         onClose={() => setSpecLibraryOpen(false)}
+        currentTitle={title || loadedSpec?.title || "Untitled strategy"}
+        onSaveCurrent={handleSaveStrategy}
+        onSaveAsTemplate={() => {
+          setActiveFrameworkSpec(assembledFramework);
+          setSaveTemplateOpen(true);
+        }}
+        savePending={saveMutation.isPending}
         onSelectSpec={(spec) => {
           const catalogId =
             typeof spec.catalog_template_id === "string" ? spec.catalog_template_id : "";

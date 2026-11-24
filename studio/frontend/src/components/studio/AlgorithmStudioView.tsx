@@ -1,6 +1,6 @@
 import { backtestRunPath, STRATEGY_SLOTS, strategySlotFromSearch } from "../../routes";
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { UniverseSlotCard, type UniverseChoice } from "./UniverseSlotCard";
 import { PcmSlotCard } from "./PcmSlotCard";
 import { RiskSlotCard } from "./RiskSlotCard";
@@ -18,6 +18,8 @@ import { irToFilterTrees, normalizeDocumentScreen } from "../../lib/filterTreeCh
 import { decompilePipeline } from "../../api/strategy";
 import { ForkStrategyVersionModal } from "./ForkStrategyVersionModal";
 import { StrategyDocumentationBanner } from "./StrategyDocumentationBanner";
+import { cn } from "../../lib/utils";
+import { Button, Dialog, FormField, TextInput } from "../ui/primitives";
 
 /** Deterministically serializes an object with sorted keys for accurate dirty checking */
 function stableSerialize(val: unknown): string {
@@ -83,20 +85,6 @@ function specDataFromLoadedSpec(
   }
   return null;
 }
-
-const EMPTY_FRAMEWORK: AssembledFrameworkSpec = {
-  UniverseSelection: { Type: "VeraScreenerUniverseSelectionModel", Parameters: {} },
-  Alpha: { Type: "VeraPyramidAlphaModel", Parameters: {} },
-  PortfolioConstruction: {
-    Type: "RiskBudgetedPortfolioConstructionModel",
-    Parameters: {},
-  },
-  RiskManagement: {
-    Type: "SwingProgressiveRiskManagementModel",
-    Parameters: {},
-  },
-  Execution: { Type: "VeraScreenerExecutionModel", Parameters: {} },
-};
 
 const HYGIENE_STAGE_NAME = "Universe Hygiene";
 
@@ -164,17 +152,22 @@ interface AlgorithmStudioViewProps {
   onChangeEvaluationConfig?: (cfg: EvaluationConfig) => void;
   loadedSpec?: BacktestSpecSummary | null;
   onOpenSpecLibrary?: () => void;
-  onOpenSaveTemplate?: (spec: AssembledFrameworkSpec) => void;
+  strategyIrId?: string;
+  onChangeStrategyIrId?: (irId: string) => void;
+  isTemplate?: boolean;
+  onChangeIsTemplate?: (isTemplate: boolean) => void;
   composeTitle?: string;
   onChangeTitle?: (title: string) => void;
   /** Authored PipelineDocument for save/agent round-trip. */
   onChangeAuthoredPipeline?: (doc: PipelineDocument | null) => void;
   /** Persist current pipeline + compiled spec to ClickHouse. */
-  onSaveStrategy?: () => void;
+  onSaveStrategy?: () => Promise<void> | void;
   /** Fork strategy as an incremented/named version. */
   onForkStrategy?: (newIrId: string, newTitle: string, notes?: string) => Promise<void> | void;
   saveStrategyPending?: boolean;
   composeDirty?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
+  autoSaveKey?: string;
   savedVersionRunId?: string;
   prefillScreen?: UniverseQueryV1 | null;
 }
@@ -194,7 +187,10 @@ export function AlgorithmStudioView({
   onChangeEvaluationConfig,
   loadedSpec,
   onOpenSpecLibrary,
-  onOpenSaveTemplate,
+  strategyIrId = "",
+  onChangeStrategyIrId,
+  isTemplate = false,
+  onChangeIsTemplate,
   composeTitle = "",
   onChangeTitle,
   onChangeAuthoredPipeline,
@@ -202,10 +198,11 @@ export function AlgorithmStudioView({
   onForkStrategy,
   saveStrategyPending = false,
   composeDirty = false,
+  onDirtyChange,
+  autoSaveKey = "",
   savedVersionRunId,
   prefillScreen,
 }: AlgorithmStudioViewProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const activeSlot = strategySlotFromSearch(location.search);
   const draftKey = loadedSpec
@@ -221,7 +218,9 @@ export function AlgorithmStudioView({
     pipelineJson: string;
     pipelineDoc: PipelineDocument;
   } | null>(null);
+  const [strategySettingsOpen, setStrategySettingsOpen] = useState(false);
   const [forkModalOpen, setForkModalOpen] = useState(false);
+  const autoSaveAttemptRef = useRef("");
 
   const normalizePipeline = useCallback((doc: PipelineDocument | null) => {
     if (!doc) return null;
@@ -546,16 +545,43 @@ export function AlgorithmStudioView({
   const isCatalog = Boolean(loadedSpec?.ir_id?.startsWith("catalog:") || loadedSpec?.is_system);
   const isNewDraft = !loadedSpec || !loadedSpec.ir_id;
   const isLegacySpec = Boolean(loadedSpec && loadedSpec.schema_status === "legacy" && !loadedSpec.has_pipeline);
+  const canAutoSave = Boolean(onSaveStrategy && loadedSpec && !isCatalog && !isNewDraft && !isLegacySpec);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "waiting" | "saving" | "saved" | "error">("idle");
 
   const currentPipelineJson = useMemo(() => stableSerialize(pipelineDoc), [pipelineDoc]);
   const currentTitleClean = (composeTitle || "").trim();
+  const autoSaveSignature = stableSerialize([loadedSpec?.ir_id, currentPipelineJson, currentTitleClean, autoSaveKey]);
 
-  const hasUnsavedEdits = useMemo(() => {
+  const hasLocalUnsavedEdits = useMemo(() => {
     if (!baselineSnapshot || baselineSnapshot.irId !== (loadedSpec?.ir_id ?? "")) return false;
     const docChanged = currentPipelineJson !== baselineSnapshot.pipelineJson;
     const titleChanged = currentTitleClean !== baselineSnapshot.title;
     return docChanged || titleChanged;
   }, [baselineSnapshot, loadedSpec?.ir_id, currentPipelineJson, currentTitleClean]);
+  const hasUnsavedEdits = hasLocalUnsavedEdits || composeDirty;
+
+  useEffect(() => {
+    if (!canAutoSave || !hasUnsavedEdits || !onSaveStrategy) return;
+    if (autoSaveAttemptRef.current === autoSaveSignature) return;
+    if (saveStrategyPending) {
+      setAutoSaveStatus("saving");
+      return;
+    }
+    setAutoSaveStatus("waiting");
+    const timeout = window.setTimeout(() => {
+      autoSaveAttemptRef.current = autoSaveSignature;
+      setAutoSaveStatus("saving");
+      Promise.resolve(onSaveStrategy()).then(
+        () => setAutoSaveStatus("saved"),
+        () => setAutoSaveStatus("error"),
+      );
+    }, 900);
+    return () => window.clearTimeout(timeout);
+  }, [canAutoSave, hasUnsavedEdits, onSaveStrategy, saveStrategyPending, draftKey, autoSaveSignature]);
+
+  useEffect(() => {
+    onDirtyChange?.(hasLocalUnsavedEdits);
+  }, [hasLocalUnsavedEdits, onDirtyChange]);
 
   useEffect(() => {
     if (!pipelineDoc || !baselineSnapshot || baselineSnapshot.irId !== (loadedSpec?.ir_id ?? "")) return;
@@ -563,42 +589,60 @@ export function AlgorithmStudioView({
     else strategyDrafts.delete(draftKey);
   }, [draftKey, pipelineDoc, composeTitle, hasUnsavedEdits, baselineSnapshot, loadedSpec?.ir_id]);
 
-  const handleRevert = useCallback(() => {
-    if (!baselineSnapshot) return;
-    setPipelineDoc(baselineSnapshot.pipelineDoc);
-    if (baselineSnapshot.title && onChangeTitle) {
-      onChangeTitle(baselineSnapshot.title);
-    }
-  }, [baselineSnapshot, setPipelineDoc, onChangeTitle]);
-
   return (
     <div className="space-y-4">
-      <nav aria-label="Strategy slots" className="slot-navigation">
-        {STRATEGY_SLOTS.map(slot => {
-          const params = new URLSearchParams(location.search);
-          params.set("slot", slot.id);
-          return (
-            <Link key={slot.id} className="slot-link" aria-current={slot.id === activeSlot.id ? "page" : undefined}
-              to={{ pathname: location.pathname, search: params.toString(), hash: location.hash }}>
-              {slot.label}
-            </Link>
-          );
-        })}
-      </nav>
-      {/* Top Strategy Spec & Template Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-line bg-surface p-2.5 shadow-xs">
-        <label className="flex min-w-[220px] max-w-xs flex-1 items-center gap-2">
-          <span className="shrink-0 text-[10.5px] font-semibold uppercase tracking-wider text-ink-faint">
-            Strategy
-          </span>
-          <input
-            type="text"
-            value={strategyNameValue}
-            onChange={(e) => {
-              const name = e.target.value;
-              onChangeTitle?.(name);
-              setPipelineDoc((doc) =>
-                doc
+      <div className="strategy-workspace-toolbar" aria-label="Strategy workspace">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">Strategy</span>
+          <strong className="truncate text-sm font-semibold text-ink">{strategyNameValue || "Untitled strategy"}</strong>
+          {canAutoSave && (
+            <span role="status" className={cn(
+              "hidden rounded-full px-2 py-1 text-[10px] font-medium sm:inline-flex",
+              autoSaveStatus === "error" ? "bg-danger-soft text-danger" :
+                autoSaveStatus === "waiting" || autoSaveStatus === "saving" ? "bg-warn/10 text-warn" :
+                  "bg-surface-sunk text-ink-muted",
+            )}>
+              {autoSaveStatus === "waiting" ? "Saving shortly" : autoSaveStatus === "saving" ? "Saving…" : autoSaveStatus === "error" ? "Save failed" : autoSaveStatus === "saved" ? "Saved" : "Up to date"}
+            </span>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {onOpenSpecLibrary && (
+            <Button type="button" variant="secondary" className="min-h-9 px-3 text-xs" onClick={onOpenSpecLibrary}>
+              Strategies
+            </Button>
+          )}
+          <Button type="button" variant="ghost" className="min-h-9 px-2.5 text-xs" aria-label="Strategy settings" onClick={() => setStrategySettingsOpen(true)}>
+            <span aria-hidden="true">⚙</span><span className="hidden sm:inline">Settings</span>
+          </Button>
+        </div>
+      </div>
+      <Dialog
+        open={strategySettingsOpen}
+        title="Strategy settings"
+        onClose={() => setStrategySettingsOpen(false)}
+        footer={(
+          <>
+            {loadedSpec && !isCatalog && (
+              <Button type="button" variant="secondary" onClick={() => {
+                setStrategySettingsOpen(false);
+                setForkModalOpen(true);
+              }}>Fork version…</Button>
+            )}
+            <Button type="button" variant="primary" onClick={() => setStrategySettingsOpen(false)}>Done</Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <p className="text-xs leading-5 text-ink-muted">Workspace metadata for this strategy. Pipeline behavior remains configured in the five slots.</p>
+          <FormField label="Strategy name" hint="Shown in the strategy library and backtest records.">
+            <TextInput
+              type="text"
+              value={strategyNameValue}
+              onChange={(event) => {
+                const name = event.target.value;
+                onChangeTitle?.(name);
+                setPipelineDoc((doc) => doc
                   ? { ...doc, strategy_name: name }
                   : pinChampionPipeline({
                       strategy_name: name,
@@ -607,188 +651,43 @@ export function AlgorithmStudioView({
                       sizing: { policy: "risk_budgeted", max_positions: 10, risk_per_trade_pct: 0.005, max_weight: 0.25 },
                       risk: { max_positions: 10 },
                       execution: { type: "market_order" },
-                    },
-                  ),
-              );
-            }}
-            placeholder="Strategy name"
-            className="min-w-0 w-full rounded border border-line bg-surface-raised px-2.5 py-1 text-xs font-semibold text-ink focus:border-accent focus:outline-none"
-          />
-        </label>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Spec State Badge */}
-          {isCatalog ? (
-            <span
-              className="rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-semibold text-sky-400 flex items-center gap-1.5"
-              title="Read-only system catalog seed"
-            >
-              <span>🌟</span> System Template
-            </span>
-          ) : isNewDraft ? (
-            <span className="rounded border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[11px] font-semibold text-blue-400">
-              New Strategy Draft
-            </span>
-          ) : hasUnsavedEdits ? (
-            <div className="flex items-center gap-1.5">
-              <span
-                className="rounded border border-warn/40 bg-warn/10 px-2 py-1 text-[11px] font-semibold text-warn flex items-center gap-1.5"
-                title="In-memory draft differs from ClickHouse spec snapshot"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-warn animate-pulse" />
-                Unsaved edits
-              </span>
-              {baselineSnapshot && (
-                <button
-                  type="button"
-                  onClick={handleRevert}
-                  className="rounded border border-line bg-surface px-2 py-1 text-[11px] font-medium text-ink hover:bg-surface-sunk transition-colors"
-                  title="Discard unsaved edits and restore loaded baseline"
-                >
-                  ↺ Revert
-                </button>
-              )}
-            </div>
-          ) : (
-            <span
-              className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5"
-              title="In-memory draft matches ClickHouse spec snapshot"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Up to date
-            </span>
-          )}
-
-          {/* Active Spec Info: Schema & Content Hash & Runs */}
-          {loadedSpec && (
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              {/* Schema Badge */}
-              {isLegacySpec ? (
-                <span
-                  className="rounded bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400"
-                  title="Legacy AST spec (without pipeline_json stage definitions)"
-                >
-                  v1 Legacy AST
-                </span>
-              ) : (
-                <span className="rounded bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-                  v2 Pipeline
-                </span>
-              )}
-
-              {/* Hash Badge */}
-              {loadedSpec.ir_content_hash ? (
-                <span
-                  className="font-mono rounded bg-surface-sunk border border-line px-1.5 py-0.5 text-[10px] text-ink-muted"
-                  title={`Immutable Content Hash: ${loadedSpec.ir_content_hash}`}
-                >
-                  #{loadedSpec.ir_content_hash.slice(0, 8)}
-                </span>
-              ) : null}
-
-              {/* Runs Quick Link */}
-              {!isCatalog && (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/backtests?ir_id=${encodeURIComponent(loadedSpec.ir_id)}`)}
-                  className="rounded border border-line bg-surface-sunk px-2 py-0.5 text-[11px] font-medium text-ink hover:border-accent hover:text-accent transition-colors flex items-center gap-1"
-                  title="View Backtest Runs for this Strategy Spec"
-                >
-                  <span>📊</span>
-                  <span>Strategy runs</span>
-                </button>
-              )}
-
-              <CopyIdBadge
-                id={loadedSpec.ir_id}
-                label="IR"
-                head={8}
-                tail={4}
-                sqlQuery={`SELECT * FROM strategy_algorithm_specs FINAL WHERE ir_id = '${loadedSpec.ir_id}'`}
-              />
-            </div>
-          )}
-
-          {/* Primary Save Action */}
-          {onSaveStrategy ? (
-            isCatalog ? (
-              <button
-                type="button"
-                onClick={() => setForkModalOpen(true)}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 disabled:opacity-50"
-                title="System templates are read-only seeds. Save as a new strategy to customize."
-              >
-                <span>📥</span>
-                <span>Save as Strategy</span>
-              </button>
-            ) : isLegacySpec ? (
-              <button
-                type="button"
-                onClick={() => onSaveStrategy()}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 shadow-sm"
-                title="Save compiled pipeline to upgrade this spec to v2 Pipeline"
-              >
-                <span>🚀</span>
-                <span>{saveStrategyPending ? "Upgrading…" : "Upgrade & Save (v2)"}</span>
-              </button>
-            ) : hasUnsavedEdits ? (
-              <button
-                type="button"
-                onClick={() => onSaveStrategy()}
-                disabled={saveStrategyPending}
-                className="flex items-center gap-1.5 rounded-md border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg hover:opacity-90 shadow-sm"
-              >
-                <span>💾</span>
-                <span>{saveStrategyPending ? "Saving…" : "Save Changes"}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="flex items-center gap-1.5 rounded-md border border-line bg-surface-sunk px-3 py-1.5 text-xs font-semibold text-ink-muted opacity-60 cursor-default"
-                title="No unsaved changes in this strategy"
-              >
-                <span>✓</span>
-                <span>Saved</span>
-              </button>
-            )
-          ) : null}
-
-          {/* Fork / New Version Button */}
-          {loadedSpec && !isCatalog && (
-            <button
-              type="button"
-              onClick={() => setForkModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-accent hover:text-accent transition-colors"
-              title="Save a new version (fork) to preserve the previous version and its backtests"
-            >
-              <span>🌱</span>
-              <span>Fork Version</span>
-            </button>
-          )}
-
-          {/* Library and Template Buttons */}
-          <button
-            type="button"
-            onClick={onOpenSpecLibrary}
-            className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-ink hover:border-accent hover:text-accent transition-colors"
-          >
-            <span>📚</span>
-            <span>Browse Specs & Templates</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenSaveTemplate?.(compiledFromAlpha ?? EMPTY_FRAMEWORK)}
-            className="flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold text-accent hover:bg-surface-sunk transition-colors"
-          >
-            <span>💾</span>
-            <span>Save as Template</span>
-          </button>
+                    }));
+              }}
+              placeholder="Strategy name"
+            />
+          </FormField>
+          <FormField label="Strategy ID" hint="Stable registry identity; existing saved strategy links use this value.">
+            <TextInput
+              type="text"
+              value={strategyIrId}
+              onChange={(event) => onChangeStrategyIrId?.(event.target.value)}
+              placeholder="Assigned when saved"
+              className="font-mono"
+            />
+          </FormField>
+          <label className="flex items-center gap-2 text-xs text-ink-muted">
+            <input type="checkbox" checked={isTemplate} onChange={(event) => onChangeIsTemplate?.(event.target.checked)} />
+            Show in the template filter
+          </label>
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3 text-xs text-ink-muted">
+            <span>{isCatalog ? "System template" : isNewDraft ? "New draft" : isLegacySpec ? "Legacy format" : "Five-slot pipeline"}</span>
+            {loadedSpec?.ir_id && <CopyIdBadge id={loadedSpec.ir_id} label="Copy strategy ID" head={10} tail={6} />}
+          </div>
         </div>
-      </div>
-
+      </Dialog>
+      <nav aria-label="Strategy slots" className="slot-navigation">
+        {STRATEGY_SLOTS.map((slot, index) => {
+          const params = new URLSearchParams(location.search);
+          params.set("slot", slot.id);
+          return (
+            <Link key={slot.id} className="slot-link" aria-current={slot.id === activeSlot.id ? "page" : undefined}
+              to={{ pathname: location.pathname, search: params.toString(), hash: location.hash }}>
+              <span aria-hidden="true" className="slot-step-number">{index + 1}</span>
+              <span className="slot-step-label">{slot.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
       <div className="space-y-3">
 
         <div>
@@ -1045,31 +944,36 @@ export function AlgorithmStudioView({
       )}
 
       {/* Bottom Lifecycle Action Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-panel">
-        <div className="flex items-center gap-2 text-[12px] text-ink-muted">
-          <span className="font-semibold text-ink">Ready to evaluate:</span>
-          <span>{dynamicUniverseTitle} + Pyramid Alpha + Risk-Budgeted PCM</span>
+      <div className="evaluation-action-bar">
+        <div className="evaluation-action-summary" aria-live="polite">
+          <span className="evaluation-action-kicker">Backtest</span>
+          <span className="evaluation-action-title">Ready to run</span>
+          <span className="evaluation-action-detail">
+            {dynamicUniverseTitle} · {evalConfig.start_date}–{evalConfig.end_date} · {evalConfig.benchmark}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           {evalConfig.strategy === "optimization_sweep" ? (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={onLaunchOptimizer ?? onLaunchBacktest}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-fg shadow-sm hover:opacity-90 transition-opacity"
+              className="min-h-11 w-full px-4 text-xs font-bold shadow-sm sm:w-auto"
             >
               <span>⚡</span>
               <span>Launch Optimization Sweep</span>
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={onLaunchBacktest}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-accent-fg shadow-sm hover:opacity-90 transition-opacity"
+              className="min-h-11 w-full px-4 text-xs font-bold shadow-sm sm:w-auto"
             >
               <span>▶</span>
               <span>Launch Baseline Backtest</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

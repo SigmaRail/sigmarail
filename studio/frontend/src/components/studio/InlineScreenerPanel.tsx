@@ -11,6 +11,7 @@ import { DataTable, type GridColumn, type SortSpec } from "../../components/Data
 import { cn } from "../../lib/utils";
 import { previewScreen, previewIr, fetchAsOfRange } from "../../api/screens";
 import { nextFilterId } from "../../lib/irFilters";
+import { Button, SelectInput } from "../ui/primitives";
 import {
   emptyGroup,
   stripIds,
@@ -503,12 +504,12 @@ export function InlineScreenerPanel({
   }, [asOf, fields]);
 
   return (
-    <div className="relative rounded-lg border border-accent/30 bg-surface shadow-sm">
+    <div className="relative overflow-hidden rounded-xl border border-line bg-white shadow-panel">
       {/* Screen Header Row */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-accent/20 bg-accent/5 px-2.5 py-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-slate-50 px-3 py-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-[9.5px] font-bold uppercase tracking-wider text-accent">Selected Universe Screen</span>
-          <span className="rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] font-semibold text-accent border border-accent/30">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink">Stock universe</span>
+          <span className="rounded-md border border-line bg-white px-1.5 py-0.5 font-mono text-[9px] font-semibold text-ink-muted">
             ClickHouse AST
           </span>
           {previewQuery.isFetching && (
@@ -526,32 +527,35 @@ export function InlineScreenerPanel({
               }}
             />
           )}
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => setPickerOpen(true)}
-            className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink-muted hover:text-ink hover:border-accent transition-colors"
+            className="min-h-8 px-2 text-xs"
           >
             📂 Load
-          </button>
+          </Button>
           {onSaveTemplate && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => onSaveTemplate(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
-              className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink-muted hover:text-ink hover:border-accent transition-colors"
+              className="min-h-8 px-2 text-xs"
               title="Save current screen as a reusable template"
             >
               💾 Save
-            </button>
+            </Button>
           )}
           {onSendToStrategy && (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={() => onSendToStrategy(buildSpec(spec, stripIds(whereRoot), sortBy, activeLimit))}
-              className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:bg-accent/20 transition-colors"
+              className="min-h-8 px-2.5 text-xs"
               title="Send screen conditions into Strategy Pipeline as a filter stage"
             >
               ⚡ Send to Strategy
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -579,10 +583,11 @@ export function InlineScreenerPanel({
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Sort:</span>
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleOpenSortPicker}
-              className="inline-flex max-w-[300px] items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 font-semibold text-accent hover:border-accent/60 transition-colors text-[10.5px]"
+              className="min-h-8 max-w-[300px] px-2 text-xs text-accent"
               title="Open the shared field/expression browser to set ORDER BY"
             >
               {sortBy.length === 0 ? (
@@ -591,26 +596,27 @@ export function InlineScreenerPanel({
                 <span className="truncate">{sortBy[0].label ?? sortBy[0].field ?? "expression"}</span>
               )}
               <span className="shrink-0 text-[9px]">⚙</span>
-            </button>
+            </Button>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleSortDirToggle}
             disabled={sortBy.length === 0}
-            className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10.5px] font-semibold text-ink hover:border-accent transition-colors disabled:opacity-40"
+            className="min-h-8 px-2 font-mono text-xs"
             title="Toggle Spec sort direction"
           >
             <span>{activeSortDir === "desc" ? "DESC" : "ASC"}</span>
             <span className="text-accent">{activeSortDir === "desc" ? "▼" : "▲"}</span>
-          </button>
+          </Button>
 
           <div className="flex items-center gap-1 ml-1 pl-2 border-l border-line">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Top:</span>
-            <select
+            <SelectInput
               value={activeLimit}
               onChange={(e) => handleLimitChange(Number(e.target.value))}
-              className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10.5px] text-ink focus:border-accent focus:outline-none"
+              className="min-h-8 w-auto px-2 font-mono text-xs"
               title="ClickHouse Spec limit_per_day"
             >
               <option value={10}>10</option>
@@ -618,7 +624,7 @@ export function InlineScreenerPanel({
               <option value={50}>50</option>
               <option value={100}>100</option>
               <option value={200}>200</option>
-            </select>
+            </SelectInput>
           </div>
         </div>
 

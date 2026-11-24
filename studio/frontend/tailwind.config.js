@@ -19,9 +19,11 @@ export default {
           strong: "#a8b3c2",
         },
         accent: {
-          DEFAULT: "#0b6e4f",
-          soft: "#d8f0e6",
-          muted: "#3d8b6e",
+          DEFAULT: "#4f46e5",
+          soft: "#eef2ff",
+          muted: "#6366f1",
+          ink: "#3730a3",
+          fg: "#ffffff",
         },
         warn: {
           DEFAULT: "#b45309",

@@ -100,15 +100,13 @@ def get_stock_introspection(
         es.sales_nq_rev_pct_90d, es.sales_ny_rev_pct_90d, es.eps_last_surprise_pct,
         es.eps_last_reported, es.eps_last_estimate, es.eps_beat_flag,
         es.sales_last_reported, es.sales_last_estimate, es.sales_last_surprise_pct, es.sales_beat_flag,
-        dv.marketcap, dv.pe, dv.ps,
-        t.firstpricedate, t.location
+        dv.marketcap, dv.pe, dv.ps
     FROM screener_price_tech_daily p FINAL
     LEFT JOIN screener_ratings_daily r FINAL ON p.ticker = r.ticker AND p.date = r.date
     LEFT JOIN screener_fundamentals_daily f FINAL ON p.ticker = f.ticker AND p.date = f.date
     LEFT JOIN screener_ownership_daily o FINAL ON p.ticker = o.ticker AND p.date = o.date
     LEFT JOIN screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
     LEFT JOIN daily_valuation dv ON p.ticker = dv.ticker AND p.date = dv.date
-    LEFT JOIN vera.tickers t ON p.ticker = t.ticker
     WHERE p.ticker = %(ticker)s AND p.date = toDate(%(as_of)s)
     LIMIT 1
     """
@@ -997,6 +995,8 @@ def get_stock_introspection(
         annual_estimates_by_fy=annual_estimates_by_fy,
     )
 
+    # SigmaRail's daily market contract does not expose listing inception or HQ location.
+    # Keep those optional KPIs absent instead of joining the retired vera.tickers dimension.
     as_of_dict = enrich_as_of_kpis_street(
         as_of_dict,
         {
@@ -1023,10 +1023,7 @@ def get_stock_introspection(
             "sales_last_surprise_pct": as_of_dict.get("sales_last_surprise_pct"),
             "sales_beat_flag": as_of_dict.get("sales_beat_flag"),
         },
-        {
-            "firstpricedate": as_of_dict.get("firstpricedate"),
-            "location": as_of_dict.get("location"),
-        },
+        {},
         {
             "marketcap": as_of_dict.get("marketcap"),
             "pe": as_of_dict.get("pe"),
@@ -1040,7 +1037,7 @@ def get_stock_introspection(
         series_map[c["time"]] = c
     chart_series_sorted = [series_map[t] for t in sorted(series_map.keys())]
 
-    # 7. Query Top Industry Peers & Comparable Valuation Statistics (Prioritizing Exact SEC SIC Code)
+    # 7. Query peers from the same point-in-time SigmaRail industry/sector snapshot.
     industry_peers: list[dict[str, Any]] = []
     peer_group_name = ""
     if include_dossier:
@@ -1048,8 +1045,8 @@ def get_stock_introspection(
             peers_sql = """
             SELECT
                 p.ticker,
-                t.name AS company_name,
-                t.sicindustry,
+                p.company_name,
+                p.industry,
                 p.close,
                 p.rs_rating,
                 fc.growth_rate_pct,
@@ -1060,13 +1057,13 @@ def get_stock_introspection(
                 fc.valuation_spread_pct,
                 fc.valuation_status
             FROM screener_price_tech_daily p
-            INNER JOIN (
-                SELECT ticker, name, industry, sector, siccode, sicindustry FROM vera.tickers
-                WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
-            ) t ON p.ticker = t.ticker
             LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
             WHERE p.date = toDate(%(as_of)s)
-              AND t.siccode = (SELECT siccode FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)
+              AND position(p.category, 'Common Stock') > 0
+              AND p.industry = (
+                  SELECT industry FROM screener_price_tech_daily
+                  WHERE ticker = %(ticker)s AND date = toDate(%(as_of)s) LIMIT 1
+              )
               AND p.ticker != %(ticker)s
               AND p.close > 0
             ORDER BY (p.close * p.avg_vol_20d) DESC
@@ -1078,8 +1075,8 @@ def get_stock_introspection(
                 peers_sql_fallback = """
                 SELECT
                     p.ticker,
-                    t.name AS company_name,
-                    t.industry,
+                    p.company_name,
+                    p.industry,
                     p.close,
                     p.rs_rating,
                     fc.growth_rate_pct,
@@ -1090,14 +1087,17 @@ def get_stock_introspection(
                     fc.valuation_spread_pct,
                     fc.valuation_status
                 FROM screener_price_tech_daily p
-                INNER JOIN (
-                    SELECT ticker, name, industry, sector, siccode, sicindustry FROM vera.tickers
-                    WHERE position(category, 'Common Stock') > 0 AND isdelisted = 'N'
-                ) t ON p.ticker = t.ticker
                 LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
                 WHERE p.date = toDate(%(as_of)s)
-                  AND (t.industry = (SELECT industry FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)
-                       OR (t.industry = '' AND t.sector = (SELECT sector FROM vera.tickers WHERE ticker = %(ticker)s LIMIT 1)))
+                  AND position(p.category, 'Common Stock') > 0
+                  AND (p.industry = (
+                         SELECT industry FROM screener_price_tech_daily
+                         WHERE ticker = %(ticker)s AND date = toDate(%(as_of)s) LIMIT 1
+                       )
+                       OR (p.industry = '' AND p.sector = (
+                         SELECT sector FROM screener_price_tech_daily
+                         WHERE ticker = %(ticker)s AND date = toDate(%(as_of)s) LIMIT 1
+                       )))
                   AND p.ticker != %(ticker)s
                   AND p.close > 0
                 ORDER BY (p.close * p.avg_vol_20d) DESC

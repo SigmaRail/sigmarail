@@ -26,6 +26,7 @@ import {
   RESULTS_GRID_CHUNK,
 } from "./components/ResultsGrid";
 import { WorkbenchShell } from "./components/WorkbenchShell";
+import { WorkspaceProfileView, WorkspaceSettingsView } from "./components/admin/WorkspaceAdminViews";
 import { FieldPickerProvider } from "./components/studio/FieldPickerProvider";
 import { ScreenerStudioModal } from "./components/studio/ScreenerStudioModal";
 import { ScreensView } from "./components/studio/ScreensView";
@@ -888,6 +889,10 @@ function StudioApp() {
         />
       ) : activeTab === "monitor" ? (
         <MonitorView onModeChange={(m) => handleTabChange(m as WorkbenchTab)} />
+      ) : activeTab === "settings" ? (
+        <WorkspaceSettingsView />
+      ) : activeTab === "profile" ? (
+        <WorkspaceProfileView />
       ) : (
         <BacktestView
           activeTab={activeTab}

@@ -26,6 +26,7 @@ import type {
 } from "../types";
 import { CopyIdBadge } from "./CopyIdBadge";
 import { studioAgentBridge } from "../lib/studioAgentBridge";
+import { Button, FormField, SelectInput, TextInput } from "./ui/primitives";
 
 function truncateId(id: string, head = 8, tail = 6): string {
   if (id.length <= head + tail + 1) return id;
@@ -57,7 +58,7 @@ function GateMetrics({ gate }: { gate: PromotionGateResult | undefined }) {
 
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-line bg-surface px-2.5 py-2">
+    <div className="rounded-lg border border-line bg-slate-50 px-3 py-2.5">
       <div className="text-[10px] text-ink-muted">{label}</div>
       <div className="mt-0.5 text-[13px] font-semibold tabular-nums text-ink">{value}</div>
     </div>
@@ -378,7 +379,7 @@ export function PromotePanel({
             Run up to two isolated local LEAN Docker deployments with a supported brokerage and account profile.
           </p>
 
-          <div className="mt-4 rounded border border-line bg-surface p-3">
+          <div className="ui-panel mt-4 p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h3 className="text-[13px] font-semibold text-ink">Brokerage account</h3>
@@ -388,23 +389,23 @@ export function PromotePanel({
                 {account?.credentials_configured ? "Credentials secured" : "Not connected"}
               </span>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <label className="text-[11px] text-ink-muted">Saved account
-                <select value={creatingAccount ? "new" : (account?.id ?? "new")} onChange={(e) => {
+            <div className="mt-3 max-w-xl">
+              <FormField label="Saved account">
+                <SelectInput value={creatingAccount ? "new" : (account?.id ?? "new")} onChange={(e) => {
                   if (e.target.value === "new") {
                     setCreatingAccount(true); setSelectedAccountId(null); setAccountProvider("alpaca"); setAccountDataProvider("alpaca"); setAccountEnvironment("paper"); setAccountName("Alpaca paper"); setAccountIdentifier(""); setCredentialValues({});
                   } else {
                     setCreatingAccount(false); setSelectedAccountId(e.target.value);
                   }
-                }} className="ml-2 rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
+                }}>
                   {accounts.map((item) => <option key={item.id} value={item.id}>{item.display_name} · {item.provider} · {item.environment} · {item.data_provider} feed{item.active ? "" : " · disabled"}</option>)}
                   <option value="new">+ Add account</option>
-                </select>
-              </label>
+                </SelectInput>
+              </FormField>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <label className="text-[11px] text-ink-muted">LEAN brokerage
-                <select value={accountProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => {
+              <FormField label="LEAN brokerage">
+                <SelectInput value={accountProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => {
                   const next = brokerages.find((item) => item.id === e.target.value);
                   setAccountProvider(e.target.value);
                   setAccountDataProvider(next?.default_data_provider ?? "alpaca");
@@ -412,57 +413,57 @@ export function PromotePanel({
                   setAccountEnvironment(nextEnv);
                   setAccountName(`${next?.label ?? e.target.value} ${nextEnv}`);
                   setCredentialValues({});
-                }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
+                }}>
                   {brokerages.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                </select>
-              </label>
-              <label className="text-[11px] text-ink-muted">Live data provider (separate from brokerage)
-                <select value={accountDataProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountDataProvider(e.target.value); setCredentialValues({}); }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
+                </SelectInput>
+              </FormField>
+              <FormField label="Live data provider (separate from brokerage)">
+                <SelectInput value={accountDataProvider} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountDataProvider(e.target.value); setCredentialValues({}); }}>
                   {dataProviders.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-                </select>
-              </label>
-              <label className="text-[11px] text-ink-muted">Account environment
-                <select value={accountEnvironment} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountEnvironment(e.target.value as "paper" | "live"); setAccountName(`${selectedBrokerage?.label ?? accountProvider} ${e.target.value}`); }} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
+                </SelectInput>
+              </FormField>
+              <FormField label="Account environment">
+                <SelectInput value={accountEnvironment} disabled={!creatingAccount && Boolean(account)} onChange={(e) => { setAccountEnvironment(e.target.value as "paper" | "live"); setAccountName(`${selectedBrokerage?.label ?? accountProvider} ${e.target.value}`); }}>
                   {(Object.keys(selectedBrokerage?.environments ?? { paper: "paper" }) as Array<"paper" | "live">).map((env) => <option key={env} value={env}>{env === "live" ? "Live account" : "Paper / test account"}</option>)}
-                </select>
-              </label>
-              <label className="text-[11px] text-ink-muted">Account label
-                <input value={accountName} onChange={(e) => setAccountName(e.target.value)} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink" />
-              </label>
-              <label className="text-[11px] text-ink-muted">Account ID / label (optional)
-                <input value={accountIdentifier} onChange={(e) => setAccountIdentifier(e.target.value)} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink" />
-              </label>
-              {credentialFields.map((field) => <label key={field.key} className="text-[11px] text-ink-muted">{field.label}
+                </SelectInput>
+              </FormField>
+              <FormField label="Account label">
+                <TextInput value={accountName} onChange={(e) => setAccountName(e.target.value)} />
+              </FormField>
+              <FormField label="Account ID / label (optional)">
+                <TextInput value={accountIdentifier} onChange={(e) => setAccountIdentifier(e.target.value)} />
+              </FormField>
+              {credentialFields.map((field) => <FormField key={field.key} label={field.label}>
                 {field.choices ? (
-                  <select value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 text-[12px] text-ink">
+                  <SelectInput value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))}>
                     <option value="">Choose…</option>
                     {field.choices.map((choice) => <option key={choice} value={choice}>{choice}</option>)}
-                  </select>
+                  </SelectInput>
                 ) : (
-                  <input type={field.secret ? "password" : "text"} autoComplete="new-password" value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="mt-1 w-full rounded border border-line bg-surface-raised px-2 py-1.5 font-mono text-[12px] text-ink" />
+                  <TextInput type={field.secret ? "password" : "text"} autoComplete="new-password" value={credentialValues[field.key] ?? ""} onChange={(e) => setCredentialValues((current) => ({ ...current, [field.key]: e.target.value }))} className="font-mono" />
                 )}
-              </label>)}
+              </FormField>)}
             </div>
             <p className="mt-2 text-[10px] text-ink-faint">Real-time coverage depends on the selected provider’s subscription, market, and instrument entitlements. A paper brokerage account can still use a separate live-data provider.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button type="button" disabled={saveAccountMutation.isPending || !accountName.trim()} onClick={() => saveAccountMutation.mutate()} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+              <Button type="button" variant="primary" disabled={saveAccountMutation.isPending || !accountName.trim()} onClick={() => saveAccountMutation.mutate()} className="text-xs">
                 {saveAccountMutation.isPending ? "Saving…" : "Save account and vault credentials"}
-              </button>
+              </Button>
               {account ? (
                 <>
                   {account.connection_verification_available ? (
-                    <button type="button" disabled={!account.credentials_configured || verifyAccountMutation.isPending} onClick={() => verifyAccountMutation.mutate(account.id)} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+                    <Button type="button" variant="secondary" disabled={!account.credentials_configured || verifyAccountMutation.isPending} onClick={() => verifyAccountMutation.mutate(account.id)} className="text-xs">
                       {verifyAccountMutation.isPending ? "Verifying…" : "Verify broker connection"}
-                    </button>
+                    </Button>
                   ) : null}
-                  <button type="button" disabled={accountActiveMutation.isPending} onClick={() => accountActiveMutation.mutate({ profileId: account.id, active: !account.active })} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">
+                  <Button type="button" variant="secondary" disabled={accountActiveMutation.isPending} onClick={() => accountActiveMutation.mutate({ profileId: account.id, active: !account.active })} className="text-xs">
                     {account.active ? "Disable account" : "Enable account"}
-                  </button>
-                  <button type="button" disabled={deleteAccountMutation.isPending} onClick={() => {
+                  </Button>
+                  <Button type="button" variant="danger" disabled={deleteAccountMutation.isPending} onClick={() => {
                     if (window.confirm(`Remove ${account.display_name} and its credentials from the OS vault? This cannot be undone.`)) deleteAccountMutation.mutate(account.id);
-                  }} className="rounded border border-danger/50 px-3 py-1.5 text-[11px] font-medium text-danger disabled:opacity-40">
+                  }} className="text-xs">
                     Remove account
-                  </button>
+                  </Button>
                 </>
               ) : null}
               {account?.account_identifier ? <span className="text-[10px] text-ink-faint">Account: {account.account_identifier}</span> : null}
@@ -472,7 +473,7 @@ export function PromotePanel({
             {verificationMessage ? <p className="mt-2 text-[11px] text-accent">{verificationMessage}</p> : account?.credentials_configured ? <p className="mt-2 text-[11px] text-ink-muted">Credentials configured; connection not verified. A broker check does not confirm market-data entitlement.</p> : null}
           </div>
 
-          <div className="mt-3 rounded border border-line bg-surface p-3">
+          <div className="ui-panel mt-3 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-[12px] font-semibold text-ink">Runtime: {runtime?.status ?? "checking"}</div>
@@ -481,7 +482,7 @@ export function PromotePanel({
               </div>
               {runtimeDeployment?.deployment_id && runtimeDeployment.account_profile_id && runtimeDeployment.status === "running" ? (
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" disabled={runtimeAction.isPending} onClick={() => {
+                  <Button type="button" variant="secondary" disabled={runtimeAction.isPending} onClick={() => {
                     const deploymentId = runtimeDeployment.deployment_id!;
                     if (runtimeDeployment.mode === "live") {
                       const expected = `STOP ${deploymentId.slice(-8)}`;
@@ -489,8 +490,8 @@ export function PromotePanel({
                     } else if (window.confirm("Stop this LEAN algorithm and Docker container? Existing paper positions will remain open.")) {
                       runtimeAction.mutate({ action: "stop", deployment_id: deploymentId });
                     }
-                  }} className="rounded border border-line px-3 py-1.5 text-[11px] font-medium text-ink disabled:opacity-40">Stop selected</button>
-                  <button type="button" disabled={runtimeAction.isPending} onClick={() => {
+                  }} className="text-xs">Stop selected</Button>
+                  <Button type="button" variant="danger" disabled={runtimeAction.isPending} onClick={() => {
                     const deploymentId = runtimeDeployment.deployment_id!;
                     const isLive = runtimeDeployment.mode === "live";
                     if (isLive) {
@@ -499,7 +500,7 @@ export function PromotePanel({
                     } else if (window.confirm("Send market liquidation orders for all open paper positions? LEAN will stay running so you can confirm fills.")) {
                       runtimeAction.mutate({ action: "liquidate", deployment_id: deploymentId });
                     }
-                  }} className="rounded border border-danger/50 px-3 py-1.5 text-[11px] font-medium text-danger disabled:opacity-40">Liquidate selected</button>
+                  }} className="text-xs">Liquidate selected</Button>
                 </div>
               ) : null}
             </div>
@@ -511,10 +512,10 @@ export function PromotePanel({
               <div className="mt-3 space-y-1 border-t border-line pt-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Managed deployments</div>
                 {runtimeDeployments.map((deployment) => (
-                  <button key={deployment.deployment_id} type="button" onClick={() => setSelectedLocalDeploymentId(deployment.deployment_id ?? null)} className={`flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-[11px] ${deployment.deployment_id === selectedLocalDeploymentId ? "bg-accent-soft text-accent" : "text-ink hover:bg-surface-sunk"}`}>
+                  <Button key={deployment.deployment_id} type="button" variant="ghost" aria-pressed={deployment.deployment_id === selectedLocalDeploymentId} onClick={() => setSelectedLocalDeploymentId(deployment.deployment_id ?? null)} className={`min-h-9 w-full justify-between rounded px-2 py-1.5 text-left text-[11px] ${deployment.deployment_id === selectedLocalDeploymentId ? "bg-accent-soft text-accent" : "text-ink hover:bg-surface-sunk"}`}>
                     <span className="min-w-0 truncate">{deployment.account_name ?? "Paper account"} · {deployment.ir_id ?? "strategy"}</span>
                     <span className="shrink-0 font-mono">{deployment.status}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             ) : null}
@@ -574,8 +575,9 @@ export function PromotePanel({
               )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant={account?.environment === "live" ? "danger" : "primary"}
                   disabled={!canPromote || !runtime?.enabled || !account?.active || !account?.credentials_configured || runtimeLimitReached || runtimeAction.isPending}
                   onClick={() => {
                     if (!account) return;
@@ -588,10 +590,10 @@ export function PromotePanel({
                       if (window.prompt(`This starts a LIVE brokerage account and may place real orders. Type ${expected} to continue.`) === expected) runtimeAction.mutate({ action: "start-live", ir_id: irId, approval_backtest_run_id: selectedRunId!, account_profile_id: account.id, live_confirmation: expected });
                     }
                   }}
-                  className="rounded bg-ink px-3 py-1.5 text-[12px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="text-xs"
                 >
                   {runtimeAction.isPending ? "Starting…" : `Start ${account?.environment === "live" ? "LIVE" : "paper"} ${selectedBrokerage?.label ?? "LEAN"} deployment`}
-                </button>
+                </Button>
                 {runtimeLimitReached ? <span className="text-[11px] text-warn">{runtime?.status === "external_running" ? "Stop the unmanaged LEAN runtime before starting a Studio deployment." : `Stop a managed run before starting another (limit ${runtime?.max_concurrent ?? 2}).`}</span> : null}
                 {!account?.credentials_configured ? <span className="text-[11px] text-warn">Save this account and its credentials first</span> : null}
                 {account?.environment === "live" ? <span className="rounded bg-danger-soft px-2 py-1 text-[11px] font-semibold text-danger">LIVE account — orders can move real money</span> : null}

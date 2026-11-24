@@ -4,17 +4,22 @@ import { Link, useLocation } from "react-router-dom";
 import { fetchExecutionHealth } from "../api/backtests";
 import { TAB_PATHS, tabForPath } from "../routes";
 import type { WorkbenchTab } from "../types";
+import { Button } from "./ui/primitives";
 
 const groups = [
-  { label: "Research", tabs: ["compose", "screens", "charts", "watchlists", "market", "runs", "optimize"] },
+  { label: "Research", tabs: ["compose", "screens", "charts", "watchlists", "market"] },
+  { label: "Backtests", tabs: ["runs", "optimize"] },
   { label: "Deploy", tabs: ["deploy"] },
   { label: "Monitor", tabs: ["monitor"] },
+  { label: "Settings", tabs: ["settings"] },
+  { label: "Profile", tabs: ["profile"] },
 ] as const;
 
 const destinations: Record<WorkbenchTab, [string, string]> = {
   compose: ["Strategies", "St"], screens: ["Screens", "Sc"], charts: ["Charts", "Ch"],
   watchlists: ["Watchlists", "Wl"], market: ["Market", "Mk"], runs: ["Backtests", "Bt"],
   optimize: ["Optimize", "Op"], deploy: ["Deploy", "De"], monitor: ["Monitor", "Mo"],
+  settings: ["Settings", "Se"], profile: ["Profile", "Pr"],
 };
 
 export function WorkbenchShell({ children }: { children: ReactNode }) {
@@ -69,13 +74,14 @@ export function WorkbenchShell({ children }: { children: ReactNode }) {
   return (
     <div className="workbench">
       <header className="workbench-header">
-        <button type="button" className="workbench-control lg:hidden" aria-label="Open navigation"
+        <Button type="button" variant="ghost" className="workbench-control" aria-label="Open navigation"
           aria-controls="workbench-menu" aria-haspopup="dialog" aria-expanded={drawerOpen}
           onClick={() => { dialog.current?.showModal(); setDrawerOpen(true); }}>
-          <span aria-hidden="true">☰</span> Menu
-        </button>
-        <h1 className="font-semibold tracking-tight">SigmaRail Studio</h1>
-        <span className="truncate text-xs text-ink-muted">{destinations[active][0]}</span>
+          <span aria-hidden="true">☰</span><span className="hidden sm:inline">Menu</span>
+        </Button>
+        <Link to={TAB_PATHS.screens} className="workbench-brand"><span className="workbench-brand-mark" aria-hidden="true">S</span><span>SigmaRail</span></Link>
+        <span className="hidden text-ink-faint sm:inline" aria-hidden="true">/</span>
+        <span className="truncate text-sm font-medium text-ink-muted">{destinations[active][0]}</span>
         {health && (
           <div className="ml-auto hidden items-center gap-2 font-mono text-xs text-ink-muted md:flex" aria-label="Execution health">
             <span className={health.ready ? "text-accent" : "text-warn"}>{health.ready ? "Ready" : "Unavailable"}</span>
@@ -87,8 +93,8 @@ export function WorkbenchShell({ children }: { children: ReactNode }) {
       </header>
       <div className="flex min-h-0 min-w-0 flex-1">
         <aside className={`workbench-sidebar ${compact ? "w-16" : "w-44"}`}>
-          <button type="button" className="workbench-control" aria-label={compact ? "Expand navigation" : "Collapse navigation"}
-            aria-expanded={!compact} onClick={() => setCompact(!compact)}>{compact ? "»" : "« Collapse"}</button>
+          <Button type="button" variant="ghost" className="workbench-collapse" aria-label={compact ? "Expand navigation" : "Collapse navigation"}
+            aria-expanded={!compact} onClick={() => setCompact(!compact)}>{compact ? "»" : "Collapse"}</Button>
           {navigation(compact)}
         </aside>
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">{children}</main>
@@ -97,7 +103,7 @@ export function WorkbenchShell({ children }: { children: ReactNode }) {
         onClose={() => setDrawerOpen(false)} onClick={event => {
           if (event.target === event.currentTarget && event.clientX >= event.currentTarget.getBoundingClientRect().right) dialog.current?.close();
         }}>
-        <button type="button" autoFocus className="workbench-control" onClick={() => dialog.current?.close()}>Close menu</button>
+        <div className="workbench-drawer-heading"><strong>Workspace</strong><Button type="button" variant="ghost" onClick={() => dialog.current?.close()}>Close</Button></div>
         {navigation(false)}
       </dialog>
     </div>

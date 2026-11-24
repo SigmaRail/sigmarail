@@ -37,8 +37,10 @@ import {
   type ChartTimeframe,
 } from "../../lib/chartSettings";
 import { cn } from "../../lib/utils";
+import { Button, TextInput } from "../ui/primitives";
 
 interface StockChartEngineProps {
+  compact?: boolean;
   ticker?: string;
   candles: ChartCandlePoint[];
   screenAsOfDate: string;
@@ -197,6 +199,7 @@ function loadSavedChartHeight(): number {
 }
 
 export function StockChartEngine({
+  compact = false,
   ticker,
   candles,
   screenAsOfDate,
@@ -244,6 +247,7 @@ export function StockChartEngine({
   const [isLogScale, setIsLogScale] = useState(false);
   const [indicatorMenuOpen, setIndicatorMenuOpen] = useState(false);
   const [indicatorSearch, setIndicatorSearch] = useState("");
+  const [quarterlyDetailsOpen, setQuarterlyDetailsOpen] = useState(false);
   const indicatorMenuRef = useRef<HTMLDivElement | null>(null);
   const indicatorButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -596,12 +600,8 @@ export function StockChartEngine({
 
     const bars = dedupeByTime(processedCandles);
     const container = chartContainerRef.current;
-    const width = Math.max(container.clientWidth || 0, 400);
-    const height = Math.max(container.clientHeight || 0, 300);
-
     const chart = createChart(container, {
-      width,
-      height,
+      autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "#ffffff" },
         textColor: "#475569",
@@ -1237,16 +1237,7 @@ export function StockChartEngine({
       applyRangeToChart(chart, activeRange, bars);
     }
 
-    // Resize observer
-    const resizeObserver = new ResizeObserver((entries) => {
-      if (entries.length === 0 || !entries[0].contentRect) return;
-      const { width, height } = entries[0].contentRect;
-      chart.applyOptions({ width, height });
-    });
-    resizeObserver.observe(container);
-
     return () => {
-      resizeObserver.disconnect();
       chart.remove();
       chartApiRef.current = null;
     };
@@ -1312,27 +1303,27 @@ export function StockChartEngine({
   }, [quarterlyGrowth]);
 
   return (
-    <div className={cn("flex flex-col h-full w-full rounded-lg border border-line bg-surface overflow-hidden", className)}>
+    <div className={cn("stock-chart-engine flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface", compact && "stock-chart-engine--compact", className)}>
       {/* Chart Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-1.5 bg-surface-raised text-[11px]">
+      <div className="flex min-w-0 flex-col gap-1.5 border-b border-line bg-surface-raised px-2 py-1.5 text-[11px] sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-3">
         {/* Active Stats */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {activeCandle && (
-            <div className="flex items-center gap-2 font-mono text-[10.5px]">
-              <span className={cn("font-bold px-1.5 py-0.5 rounded border", isAtScreenDate ? "bg-amber-500/15 border-amber-500/40 text-amber-500" : "bg-emerald-500/15 border-emerald-500/40 text-emerald-500")}>
-                {isAtScreenDate ? `📍 ${activeCandle.time}` : `🔍 ${activeCandle.time}`}
+            <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap font-mono text-[10px] sm:gap-2 sm:text-[10.5px]">
+              <span className={cn("shrink-0 rounded-md border px-1.5 py-0.5 font-bold", isAtScreenDate ? "border-highlight/30 bg-highlight-soft text-highlight" : "border-line bg-slate-100 text-ink-muted")}>
+                {isAtScreenDate ? "📍" : "🔍"} <span className="hidden sm:inline">{activeCandle.time}</span>
               </span>
-              <span className="text-ink">
+              <span className="hidden text-ink sm:inline">
                 <strong className="text-ink-muted">O: </strong>${typeof activeCandle.open === "number" ? activeCandle.open.toFixed(2) : "—"}
               </span>
-              <span className="text-ink">
+              <span className="hidden text-ink sm:inline">
                 <strong className="text-ink-muted">H: </strong>${typeof activeCandle.high === "number" ? activeCandle.high.toFixed(2) : "—"}
               </span>
-              <span className="text-ink">
+              <span className="hidden text-ink sm:inline">
                 <strong className="text-ink-muted">L: </strong>${typeof activeCandle.low === "number" ? activeCandle.low.toFixed(2) : "—"}
               </span>
               <span className={cn("font-bold", typeof activeCandle.close === "number" && typeof activeCandle.open === "number" && activeCandle.close >= activeCandle.open ? "text-emerald-500" : "text-rose-500")}>
-                <strong className="text-ink-muted font-normal">C: </strong>${typeof activeCandle.close === "number" ? activeCandle.close.toFixed(2) : "—"}
+                <strong className="font-normal text-ink-muted">{activeCandle.time.slice(5)} · C </strong>${typeof activeCandle.close === "number" ? activeCandle.close.toFixed(2) : "—"}
               </span>
               <span className="text-ink-muted hidden xl:inline">
                 Vol: {typeof activeCandle.volume === "number" ? `${(activeCandle.volume / 1e6).toFixed(2)}M` : "—"}
@@ -1353,76 +1344,71 @@ export function StockChartEngine({
         </div>
 
         {/* Controls Strip: Timeframe & Indicators & Blind Mode */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 w-full flex-wrap items-center gap-1.5 sm:w-auto sm:flex-nowrap sm:gap-2">
           {/* Timeframe Switcher */}
-          <div className="inline-flex rounded border border-line bg-surface p-0.5 font-mono text-[10px]">
-            <button
+          <div role="group" aria-label="Chart timeframe" className="inline-flex rounded-lg border border-line bg-slate-50 p-0.5 font-mono text-[10px]">
+            <Button
               type="button"
+              variant={timeframe === "1D" ? "primary" : "ghost"}
+              aria-pressed={timeframe === "1D"}
               onClick={() => setTimeframe("1D")}
-              className={cn(
-                "rounded px-2 py-0.5 font-bold transition-colors",
-                timeframe === "1D" ? "bg-accent text-accent-ink shadow-xs" : "text-ink-muted hover:text-ink"
-              )}
+              className="min-h-8 rounded-md px-2 py-0.5 font-mono text-[10px]"
             >
               1D
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={timeframe === "1W" ? "primary" : "ghost"}
+              aria-pressed={timeframe === "1W"}
               onClick={() => setTimeframe("1W")}
-              className={cn(
-                "rounded px-2 py-0.5 font-bold transition-colors",
-                timeframe === "1W" ? "bg-accent text-accent-ink shadow-xs" : "text-ink-muted hover:text-ink"
-              )}
+              className="min-h-8 rounded-md px-2 py-0.5 font-mono text-[10px]"
             >
               1W
-            </button>
+            </Button>
           </div>
 
           {/* Logarithmic / Linear Scale Toggle */}
-          <button
+          <Button
             type="button"
+            variant={isLogScale ? "primary" : "secondary"}
+            aria-pressed={isLogScale}
             onClick={() => setIsLogScale((p) => !p)}
-            className={cn(
-              "rounded px-2 py-0.5 border font-mono text-[10px] font-bold transition-all",
-              isLogScale
-                ? "border-purple-500/50 bg-purple-500/15 text-purple-400 shadow-xs"
-                : "border-line bg-surface text-ink-muted hover:text-ink"
-            )}
+            className="min-h-8 px-2 py-0.5 font-mono text-[10px]"
             title={isLogScale ? "Switch to Linear Scale (LIN)" : "Switch to Logarithmic Scale (LOG)"}
           >
             {isLogScale ? "LOG" : "LIN"}
-          </button>
+          </Button>
 
           {/* Range Jump Selector & Lazy Loading Indicator */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 w-full flex-wrap items-center gap-1.5 sm:w-auto sm:flex-nowrap sm:gap-2">
             {isLoadingMoreHistory && (
               <span className="text-[10px] text-accent animate-pulse font-mono flex items-center gap-1">
                 <span>⏳</span> Loading historical depth…
               </span>
             )}
-            <div className="hidden sm:inline-flex items-center rounded border border-line bg-surface p-0.5 font-mono text-[9.5px]">
+            <div role="group" aria-label="Chart date range" className="flex max-w-full min-w-0 items-center overflow-x-auto rounded-lg border border-line bg-slate-50 p-0.5 font-mono text-[9px] sm:max-w-none sm:text-[9.5px]">
               {(["3M", "6M", "1Y", "2Y", "6Y", "ALL"] as ChartRangePreset[]).map((r) => (
-                <button
+                <Button
                   key={r}
                   type="button"
+                  variant={activeRange === r ? "primary" : "ghost"}
+                  aria-pressed={activeRange === r}
                   onClick={() => handleRangePreset(r)}
-                  className={cn(
-                    "rounded px-1.5 py-0.5 font-semibold transition-colors",
-                    activeRange === r ? "bg-surface-sunk text-accent font-bold" : "text-ink-muted hover:text-ink"
-                  )}
+                  className="min-h-8 shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold sm:py-0.5"
                   title={r === "6Y" ? "4 Years History + 2 Years Forecast (FAST Graphs Perspective)" : undefined}
                 >
                   {r === "6Y" ? "6Y (4+2)" : r}
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleResetView}
-                className="ml-1 rounded border-l border-line pl-1.5 pr-1 py-0.5 font-bold text-accent hover:bg-accent/15 transition-colors"
+                className="ml-1 min-h-8 shrink-0 rounded-none border-l border-line py-1 pl-1.5 pr-1 text-[10px] font-bold text-accent sm:py-0.5"
                 title="Reset view to sensible 2Y default (or right-click chart)"
               >
                 🔄 Reset
-              </button>
+              </Button>
             </div>
 
             {/* Chart Height Slider */}
@@ -1443,16 +1429,14 @@ export function StockChartEngine({
           </div>
 
           <div className="relative">
-            <button
+            <Button
               ref={indicatorButtonRef}
               type="button"
+              variant={indicatorMenuOpen ? "primary" : "secondary"}
+              aria-expanded={indicatorMenuOpen}
+              aria-controls="chart-indicator-menu"
               onClick={() => setIndicatorMenuOpen((open) => !open)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded border px-2 py-1 text-[10px] font-mono font-bold transition-all",
-                indicatorMenuOpen
-                  ? "border-accent/60 bg-accent/15 text-accent"
-                  : "border-line bg-surface text-ink-muted hover:border-accent hover:text-ink"
-              )}
+              className="min-h-8 px-2 py-1 text-[10px] font-mono"
               title="Indicator settings"
             >
               <span>Indicators</span>
@@ -1460,10 +1444,11 @@ export function StockChartEngine({
                 "inline-flex min-w-[1.25rem] items-center justify-center rounded-full border px-1 text-[9px] font-bold",
                 indicatorMenuOpen ? "border-accent/60 bg-accent/20 text-accent" : "border-line bg-surface-sunk text-ink-muted"
               )}>{activeIndicatorCount}</span>
-            </button>
+            </Button>
 
             {indicatorMenuOpen && (
               <div
+                id="chart-indicator-menu"
                 ref={indicatorMenuRef}
                 className="absolute right-0 z-50 mt-2 w-[min(360px,calc(100vw-1rem))] overflow-hidden rounded-xl border border-line bg-surface shadow-2xl shadow-slate-950/25"
               >
@@ -1471,11 +1456,12 @@ export function StockChartEngine({
                   <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-ink">
                     {timeframe === "1W" ? "Weekly studies" : "Daily studies"}
                   </div>
-                  <input
+                  <TextInput
                     value={indicatorSearch}
                     onChange={(event) => setIndicatorSearch(event.target.value)}
                     placeholder="Search indicators..."
-                    className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[11px] font-mono text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                    aria-label="Search indicators"
+                    className="min-h-9 px-2.5 py-1.5 font-mono text-[11px]"
                   />
                 </div>
 
@@ -1489,9 +1475,11 @@ export function StockChartEngine({
                         const enabled = weeklyOnlyDisabled ? false : indicatorConfig[option.key];
                         const label = timeframe === "1W" ? (option.weeklyLabel ?? option.label) : option.label;
                         return (
-                          <button
+                          <Button
                             key={option.key}
                             type="button"
+                            variant="ghost"
+                            aria-pressed={enabled}
                             disabled={weeklyOnlyDisabled}
                             onClick={() => {
                               if (weeklyOnlyDisabled) return;
@@ -1530,7 +1518,7 @@ export function StockChartEngine({
                             >
                               {enabled ? "✓" : ""}
                             </span>
-                          </button>
+                          </Button>
                         );
                       })
                     )}
@@ -1548,42 +1536,41 @@ export function StockChartEngine({
 
           {/* Forecast Accuracy Button */}
           {onOpenForecastModal && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={onOpenForecastModal}
-              className="inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent hover:bg-accent/20 transition-all"
+              className="min-h-8 px-2 py-0.5 text-[10px] font-bold"
               title="Open TradingView-style forecast accuracy analysis"
             >
-              <span>📊 Accuracy</span>
-            </button>
+              <span className="sm:hidden">📊</span><span className="hidden sm:inline">📊 Accuracy</span>
+            </Button>
           )}
 
           {/* Reveal Future / Blind Mode Toggle */}
           {onToggleRevealFuture && (
-            <button
+            <Button
               type="button"
+              variant={revealFuture ? "primary" : "secondary"}
+              aria-pressed={!revealFuture}
               onClick={() => onToggleRevealFuture(!revealFuture)}
-              className={cn(
-                "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[10px] font-bold transition-all",
-                revealFuture
-                  ? "border-accent/60 bg-accent/15 text-accent"
-                  : "border-line bg-surface text-ink-muted hover:border-accent hover:text-ink"
-              )}
+              className="min-h-8 px-2 py-0.5 text-[10px] font-bold"
               title={
                 revealFuture
                   ? "Click to hide future candles (Blind flashcard study mode)"
                   : "Click to reveal forward-walk outcome"
               }
             >
-              <span>{revealFuture ? "👁 Outcome Revealed" : "🙈 Blind Test Mode"}</span>
-            </button>
+              <span className="sm:hidden">{revealFuture ? "👁" : "🙈"}</span>
+              <span className="hidden sm:inline">{revealFuture ? "👁 Outcome Revealed" : "🙈 Blind Test Mode"}</span>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Chart Canvas Area */}
       <div
-        className="relative w-full"
+        className="stock-chart-canvas relative w-full min-w-0"
         style={{ height: `${chartHeight}px`, minHeight: "340px" }}
         ref={chartContainerRef}
         onMouseLeave={() => setHoveredCandle(null)}
@@ -1597,7 +1584,15 @@ export function StockChartEngine({
 
       {/* Bottom quarterly table: last 8 reported + 2 estimates */}
       {ribbonQuarters.length > 0 && (
-        <div className="overflow-x-auto border-t border-line bg-surface px-2 py-1 font-mono text-[10px]">
+        <details
+          className="border-t border-line bg-surface"
+          open={quarterlyDetailsOpen}
+          onToggle={(event) => setQuarterlyDetailsOpen(event.currentTarget.open)}
+        >
+          <summary className="min-h-10 cursor-pointer px-3 py-2 text-[11px] font-semibold text-ink-muted hover:bg-slate-50">
+            Quarterly fundamentals & estimates
+          </summary>
+          <div className="overflow-x-auto px-2 py-1 font-mono text-[10px]">
           <table className="w-full min-w-[560px] text-left">
             <thead className="text-[8.5px] uppercase text-ink-muted">
               <tr>
@@ -1790,7 +1785,8 @@ export function StockChartEngine({
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+        </details>
       )}
 
       {/* Interactive Time Travel Scrubber Bar */}
@@ -1800,7 +1796,7 @@ export function StockChartEngine({
           <button
             type="button"
             onClick={() => handleStepBars(-20)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            className="hidden rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted transition-colors hover:border-accent hover:text-ink sm:inline-flex"
             title="Step back 20 bars (~1 month)"
           >
             ◀◀ -20
@@ -1808,7 +1804,7 @@ export function StockChartEngine({
           <button
             type="button"
             onClick={() => handleStepBars(-5)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            className="hidden rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted transition-colors hover:border-accent hover:text-ink sm:inline-flex"
             title="Step back 5 bars (~1 week)"
           >
             ◀ -5
@@ -1819,7 +1815,7 @@ export function StockChartEngine({
             className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink hover:border-accent hover:text-accent transition-colors"
             title="Step back 1 bar (-1D / -1W)"
           >
-            ◀ -1 Bar
+            <span className="sm:hidden">◀ 1</span><span className="hidden sm:inline">◀ -1 Bar</span>
           </button>
 
           {/* Auto Replay Toggle */}
@@ -1834,7 +1830,7 @@ export function StockChartEngine({
             )}
             title={isPlayingReplay ? "Pause Replay" : "Play Bar-by-Bar Replay (1 bar / 600ms)"}
           >
-            {isPlayingReplay ? "⏸ Pause" : "▶ Replay"}
+            {isPlayingReplay ? "⏸" : "▶"}<span className="hidden sm:inline">{isPlayingReplay ? " Pause" : " Replay"}</span>
           </button>
 
           <button
@@ -1843,12 +1839,12 @@ export function StockChartEngine({
             className="rounded border border-line bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink hover:border-accent hover:text-accent transition-colors"
             title="Step forward 1 bar (+1D / +1W)"
           >
-            +1 Bar ▶
+            <span className="sm:hidden">1 ▶</span><span className="hidden sm:inline">+1 Bar ▶</span>
           </button>
           <button
             type="button"
             onClick={() => handleStepBars(5)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            className="hidden rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted transition-colors hover:border-accent hover:text-ink sm:inline-flex"
             title="Step forward 5 bars (~1 week)"
           >
             +5 ▶
@@ -1856,7 +1852,7 @@ export function StockChartEngine({
           <button
             type="button"
             onClick={() => handleStepBars(20)}
-            className="rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted hover:border-accent hover:text-ink transition-colors"
+            className="hidden rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-muted transition-colors hover:border-accent hover:text-ink sm:inline-flex"
             title="Step forward 20 bars (~1 month)"
           >
             +20 ▶▶

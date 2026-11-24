@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   normalizeSearchStrategy,
   type EvaluationConfig,
@@ -6,6 +6,7 @@ import {
   type OptimizationSweepConfig,
   type SweepParamRange,
 } from "../../types";
+import { Button, FormField, SelectInput, TextInput } from "../ui/primitives";
 
 export const DEFAULT_SWEEPABLE_PARAMS: SweepParamRange[] = [
   { name: "risk_per_trade_pct", label: "Risk Budget % (1R)", target_slot: "Portfolio", min: 0.005, max: 0.02, step: 0.0025 },
@@ -46,6 +47,7 @@ export function EvaluationSettingsPanel({
 }: EvaluationSettingsPanelProps) {
   const sweep = config.sweep ?? INITIAL_EVALUATION_CONFIG.sweep!;
   const isSweep = config.strategy === "optimization_sweep";
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const paramOptions = useMemo(() => {
     return availableParams.length > 0 ? availableParams : DEFAULT_SWEEPABLE_PARAMS;
@@ -96,78 +98,72 @@ export function EvaluationSettingsPanel({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-xs space-y-4">
-      {/* Header & Protocol Segmented Control */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
-            <span>🔬</span>
-            <span>Evaluation & Simulation Protocol</span>
+    <section className="ui-panel" aria-label="Evaluation setup">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink">
+            <span aria-hidden="true">🔬</span>
+            <span>Evaluation setup</span>
           </h3>
-          <p className="mt-0.5 text-[11px] text-ink-muted">
-            Research window, starting cash, and benchmark. These are written into the spec JSON and passed to backtest, optimizer, and future live jobs.
+          <p className="mt-1 text-[11px] text-ink-muted">
+            {config.start_date} – {config.end_date} <span aria-hidden="true">·</span> ${config.initial_cash.toLocaleString()} <span aria-hidden="true">·</span> {config.benchmark}
+            <span className="sr-only">Research dates, initial capital, and benchmark</span>
           </p>
         </div>
-
-        {/* Segmented Buttons */}
-        <div className="inline-flex rounded-lg border border-line bg-surface-sunk p-1">
-          <button
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          <div className="grid min-h-10 flex-1 grid-cols-2 rounded-lg border border-line bg-surface-sunk p-1 sm:flex-none">
+          <Button
             type="button"
+            variant={!isSweep ? "primary" : "ghost"}
             onClick={() => setStrategy("baseline")}
-            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              !isSweep
-                ? "bg-accent text-accent-fg shadow-xs"
-                : "text-ink-muted hover:text-ink"
-            }`}
+            className="min-h-8 px-2 text-xs"
           >
             <span>🎯</span>
             <span>Baseline</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={isSweep ? "primary" : "ghost"}
             onClick={() => setStrategy("optimization_sweep")}
-            className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              config.strategy === "optimization_sweep"
-                ? "bg-accent text-accent-fg shadow-xs"
-                : "text-ink-muted hover:text-ink"
-            }`}
+            className="min-h-8 px-2 text-xs"
           >
             <span>⚡</span>
             <span>Parameter Sweep</span>
-          </button>
+          </Button>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-10 text-xs"
+            aria-expanded={settingsOpen}
+            aria-controls="evaluation-settings-fields"
+            onClick={() => setSettingsOpen((open) => !open)}
+          >
+            {settingsOpen ? "Hide settings" : "Edit settings"}
+          </Button>
         </div>
       </div>
 
       {/* Date Range & Common Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <div>
-          <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-            Start Date
-          </label>
-          <input
+      <div id="evaluation-settings-fields" className={`${settingsOpen ? "grid" : "hidden"} mt-4 grid-cols-1 gap-3 border-t border-line pt-4 sm:grid-cols-2 2xl:grid-cols-4`}>
+        <FormField label="Start Date" className="text-[11px] font-bold uppercase">
+          <TextInput
             type="date"
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-mono text-ink focus:border-accent focus:outline-none"
+            className="font-mono"
             value={config.start_date}
             onChange={(e) => onChangeConfig({ ...config, start_date: e.target.value })}
           />
-        </div>
-        <div>
-          <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-            End Date
-          </label>
-          <input
+        </FormField>
+        <FormField label="End Date" className="text-[11px] font-bold uppercase">
+          <TextInput
             type="date"
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-mono text-ink focus:border-accent focus:outline-none"
+            className="font-mono"
             value={config.end_date}
             onChange={(e) => onChangeConfig({ ...config, end_date: e.target.value })}
           />
-        </div>
-        <div>
-          <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-            Initial Capital
-          </label>
-          <select
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
+        </FormField>
+        <FormField label="Initial Capital" className="text-[11px] font-bold uppercase">
+          <SelectInput
             value={config.initial_cash}
             onChange={(e) => onChangeConfig({ ...config, initial_cash: Number(e.target.value) })}
           >
@@ -175,14 +171,10 @@ export function EvaluationSettingsPanel({
             <option value={50000}>$50,000 USD (Standard Margin)</option>
             <option value={100000}>$100,000 USD (Institutional Base)</option>
             <option value={500000}>$500,000 USD (High Capacity)</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-[11px] font-bold text-ink-muted uppercase mb-1">
-            Benchmark
-          </label>
-          <select
-            className="w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:border-accent focus:outline-none"
+          </SelectInput>
+        </FormField>
+        <FormField label="Benchmark" className="text-[11px] font-bold uppercase">
+          <SelectInput
             value={config.benchmark}
             onChange={(e) => onChangeConfig({ ...config, benchmark: e.target.value })}
           >
@@ -190,12 +182,12 @@ export function EvaluationSettingsPanel({
             <option value="QQQ">QQQ (Nasdaq 100 ETF)</option>
             <option value="IWM">IWM (Russell 2000 ETF)</option>
             <option value="BIL">BIL (1-3M T-Bills Risk-Free)</option>
-          </select>
-        </div>
+          </SelectInput>
+        </FormField>
       </div>
 
       {/* Mode Specific Section: Parameter Sweep Matrix */}
-      {config.strategy === "optimization_sweep" && (
+      {settingsOpen && config.strategy === "optimization_sweep" && (
         <div className="rounded-lg border border-line bg-surface-raised p-3.5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -431,6 +423,6 @@ export function EvaluationSettingsPanel({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

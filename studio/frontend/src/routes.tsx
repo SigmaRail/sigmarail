@@ -14,6 +14,8 @@ export const TAB_PATHS: Record<WorkbenchTab, string> = {
   deploy: "/deploy",
   monitor: "/monitor",
   market: "/market",
+  settings: "/settings",
+  profile: "/profile",
 };
 
 const SEGMENT_TO_TAB: Record<string, WorkbenchTab> = {
@@ -28,6 +30,8 @@ const SEGMENT_TO_TAB: Record<string, WorkbenchTab> = {
   deploy: "deploy",
   monitor: "monitor",
   market: "market",
+  settings: "settings",
+  profile: "profile",
 };
 
 /** Map a URL pathname back to the active workbench tab (defaults to screens). */

@@ -16,6 +16,7 @@ import type {
   ScreenTemplateSummary,
   UniverseQueryV1,
 } from "../../types";
+import { PageHeader } from "../ui/primitives";
 
 const todayIso = () => {
   const d = new Date();
@@ -213,29 +214,9 @@ export function ScreensView({
   };
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-canvas">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Loading a screen has one entry point: the panel's Load dialog (system screens
-              = templates, plus saved). The template dropdown was a second one. */}
-          {/* The universe is the screen's filter tree (the same UniverseTreeEditor the
-              strategy's Universe Selection uses) — there is no separate hardcoded list. */}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[11px] font-bold text-ink-muted uppercase">📍 As-Of:</span>
-          <input
-            type="date"
-            value={asOfDate}
-            onChange={(e) => {
-              setAsOfDate(e.target.value);
-              onAsOfChange?.(e.target.value);
-            }}
-            className="bg-transparent text-amber-400 focus:outline-none cursor-pointer font-mono text-xs"
-          />
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto p-3">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-surface">
+      <PageHeader title="Stock screener" description="Build a point-in-time universe and inspect matching stocks." />
+      <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
         <InlineScreenerPanel
           spec={inlineSpec}
           activePresetId={null}

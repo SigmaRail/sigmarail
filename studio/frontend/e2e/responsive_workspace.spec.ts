@@ -10,31 +10,54 @@ for (const device of [
     test.use({ viewport: { width: device.width, height: device.height }, hasTouch: device.hasTouch });
     test("navigates the lifecycle and restores a strategy slot", async ({ page }) => {
       const errors: string[] = [];
+      const savedSpecs: Array<{ ir_id: string; title: string }> = [];
+      let savedTitle = "Research One";
       page.on("pageerror", error => errors.push(error.message));
       await page.route("**/api/**", route => {
         const path = new URL(route.request().url()).pathname;
         if (!path.startsWith("/api/")) return route.continue();
+        if (path === "/api/strategy/pipelines/compile") return route.fulfill({ json: {} });
+        if (path === "/api/backtests/specs" && route.request().method() === "POST") {
+          const payload = route.request().postDataJSON() as { ir_id: string; title: string };
+          savedTitle = payload.title;
+          savedSpecs.push(payload);
+          return route.fulfill({ json: { ...payload, ir_content_hash: "saved1234" } });
+        }
         if (path === "/api/backtests/runs") return route.fulfill({ json: { runs: [
           { run_id: "older", ir_id: "research-one", ir_content_hash: "old" },
           { run_id: "pinned", ir_id: "research-one", ir_content_hash: "abc12345" },
         ] } });
         const body = path === "/api/backtests/specs/research-one"
-          ? { ir_id: "research-one", title: "Research One", spec: {}, ir_content_hash: "abc12345",
-              pipeline_document: { strategy_name: "Research One", stages: [] } }
+          ? { ir_id: "research-one", title: savedTitle, spec: {}, ir_content_hash: savedSpecs.length ? "saved1234" : "abc12345",
+              pipeline_document: { strategy_name: savedTitle, stages: [], universe: { source: "screener", screen: [{ op: "gte", left: "close", right: 5 }] } } }
           : {};
         return route.fulfill({ json: body });
       });
       await page.goto("/strategies/research-one?slot=alpha");
+      const menuTrigger = page.getByRole("button", { name: "Open navigation" });
+      if (device.hasTouch) await menuTrigger.tap(); else await menuTrigger.click();
+      const drawer = page.getByRole("dialog", { name: "Navigation" });
+      const currentStrategy = drawer.getByRole("region", { name: "Current strategy" });
+      await expect(currentStrategy).toBeVisible();
+      await expect(currentStrategy.getByRole("button", { name: "Load strategy or template…" })).toBeVisible();
+      const backtestAction = page.locator(".evaluation-action-bar");
+      await expect(backtestAction).toBeVisible();
+      expect(await backtestAction.evaluate(node => getComputedStyle(node).position)).toBe("static");
       const slots = page.getByRole("navigation", { name: "Strategy slots" });
       const currentSlot = slots.locator('[aria-current="page"]');
-      await expect(currentSlot).toHaveText("Alpha");
-      await expect(page.getByPlaceholder("Strategy name")).toHaveValue("Research One");
+      await expect(currentSlot).toContainText("Alpha");
+      expect(await slots.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+      const strategyName = drawer.getByPlaceholder("Strategy name");
+      await expect(strategyName).toHaveValue("Research One");
       await expect(page.getByRole("link", { name: "Inspect dated run pinned" })).toHaveAttribute("href", "/backtests/pinned/scrubber");
-      await page.getByPlaceholder("Strategy name").fill("Edited title");
+      await strategyName.fill("Edited title");
+      await expect.poll(() => savedSpecs.length).toBeGreaterThan(0);
+      await expect(currentStrategy.getByRole("status")).toContainText("Auto-saved");
+      await drawer.getByRole("button", { name: "Close menu" }).click();
       for (const label of ["Universe", "Portfolio Construction", "Risk Management", "Execution"]) {
         const link = slots.getByRole("link", { name: label, exact: true });
         if (device.hasTouch) await link.tap(); else await link.click();
-        await expect(currentSlot).toHaveText(label);
+        await expect(currentSlot).toContainText(label);
         await expect(page.getByRole("region", { name: label, exact: true })).toBeVisible();
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
         expect(overflow).toBe(false);
@@ -45,16 +68,18 @@ for (const device of [
       if (device.hasTouch) {
         await page.setViewportSize({ width: device.height, height: device.width });
         await expect(executionChoice).toHaveAttribute("aria-pressed", "true");
-        await expect(currentSlot).toHaveText("Execution");
+        await expect(currentSlot).toContainText("Execution");
         await page.setViewportSize({ width: device.width, height: device.height });
       }
-      await expect(page.getByPlaceholder("Strategy name")).toHaveValue("Edited title");
+      if (device.hasTouch) await menuTrigger.tap(); else await menuTrigger.click();
+      await expect(drawer.getByPlaceholder("Strategy name")).toHaveValue("Edited title");
+      await drawer.getByRole("button", { name: "Close menu" }).click();
       await page.goBack();
-      await expect(currentSlot).toHaveText("Risk Management");
+      await expect(currentSlot).toContainText("Risk Management");
       await page.goForward();
-      await expect(currentSlot).toHaveText("Execution");
+      await expect(currentSlot).toContainText("Execution");
       await page.reload();
-      await expect(currentSlot).toHaveText("Execution");
+      await expect(currentSlot).toContainText("Execution");
       if (device.width < 1024) {
         const trigger = page.getByRole("button", { name: "Open navigation" });
         await trigger.tap();
@@ -76,7 +101,7 @@ for (const device of [
         await nav.getByRole("link", { name: "Strategies" }).click();
       }
       await expect(page).toHaveURL(/\/strategies\/research-one\?slot=execution$/);
-      await expect(currentSlot).toHaveText("Execution");
+      await expect(currentSlot).toContainText("Execution");
       expect(errors).toEqual([]);
     });
   });
@@ -96,6 +121,7 @@ test.describe("phone destinations", () => {
       return route.fulfill({ json: {} });
     });
     await page.goto("/stock/UBER/chart?as_of=2026-09-14");
+    await expect(page.getByTitle("Open fundamentals rail")).toBeVisible();
     const menu = page.getByRole("button", { name: "Open navigation" });
     const drawer = page.getByRole("dialog", { name: "Navigation" });
     for (const name of ["Screens", "Watchlists", "Market", "Strategies", "Backtests", "Optimize", "Deploy", "Monitor", "Charts"]) {
@@ -115,6 +141,7 @@ test.describe("phone destinations", () => {
     await expect(page).toHaveURL(/deployment=paper-21/);
     expect(errors).toEqual([]);
   });
+
 });
 
 test("keeps a dated saved screen through refresh and browser history", async ({ page }) => {
@@ -161,18 +188,27 @@ test("switches saved strategies and resumes each strategy's edited slots", async
     const detail = library.find(spec => path === "/api/backtests/specs/" + spec.ir_id);
     return route.fulfill({ json: detail ?? {} });
   });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/strategies/one?slot=execution");
-  const name = page.getByPlaceholder("Strategy name");
+  const trigger = page.getByRole("button", { name: "Open navigation" });
+  await trigger.click();
+  const drawer = page.getByRole("dialog", { name: "Navigation" });
+  const name = drawer.getByPlaceholder("Strategy name");
   await expect(name).toHaveValue("One");
   await name.fill("One draft");
+  await drawer.getByRole("button", { name: "Close menu" }).click();
   await page.getByRole("button", { name: "MOC (close of T)" }).click();
-  await page.getByRole("button", { name: /Browse Specs/ }).click();
+  await trigger.click();
+  await drawer.getByRole("button", { name: "Load strategy or template…" }).click();
   await page.getByPlaceholder(/Search title/).fill("Two");
   await page.getByRole("button", { name: "Open", exact: true }).click();
+  await trigger.click();
   await expect(name).toHaveValue("Two");
   await expect(page).toHaveURL(/\/two\?slot=execution/);
   await page.goBack();
+  await expect(drawer).toBeHidden();
+  await trigger.click();
   await expect(name).toHaveValue("One draft");
   await expect(page.getByRole("button", { name: "MOC (close of T)" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Unsaved edits", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status")).toBeVisible();
 });
