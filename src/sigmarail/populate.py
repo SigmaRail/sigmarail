@@ -1521,6 +1521,8 @@ class DataPopulator:
                     print(f"✅ Completed: {label}", flush=True)
 
             self._warn_on_empty_targets(sql_files)
+            if any(spec.target == 'screener_price_tech_daily' for spec in sql_files):
+                self._verify_screener_price_tech_coverage(end_date)
 
             logger.info("Metrics population process finished.")
             return True
@@ -1528,6 +1530,67 @@ class DataPopulator:
         except Exception as e:
             logger.error(f"Error during metrics population: {e}")
             raise
+
+    def _verify_screener_price_tech_coverage(self, end_date: str) -> None:
+        """Fail if the latest processed price-spine date is missing or partial.
+
+        The screener price/tech projection is a left-join enrichment of
+        ``daily_metrics`` and must retain its full ticker/date key set. Date-only
+        chunk checks cannot catch a partially inserted latest session.
+        """
+        result = self.client.query(
+            """
+            WITH (
+                SELECT max(date)
+                FROM daily_price_sequence FINAL
+                WHERE date <= {end_date:Date}
+            ) AS expected_date
+            SELECT
+                toString(expected_date) AS source_latest_date,
+                (SELECT toString(max(date))
+                 FROM screener_price_tech_daily FINAL
+                 WHERE date <= {end_date:Date}) AS target_date,
+                (SELECT countDistinct(ticker)
+                 FROM daily_metrics FINAL
+                 WHERE date = expected_date) AS expected_tickers,
+                (SELECT countDistinct(ticker)
+                 FROM screener_price_tech_daily FINAL
+                 WHERE date = expected_date) AS actual_tickers,
+                (SELECT count()
+                 FROM (SELECT DISTINCT ticker FROM daily_metrics FINAL WHERE date = expected_date) AS s
+                 LEFT ANTI JOIN
+                      (SELECT DISTINCT ticker FROM screener_price_tech_daily FINAL WHERE date = expected_date) AS t
+                 USING (ticker)) AS missing_tickers,
+                (SELECT count()
+                 FROM (SELECT DISTINCT ticker FROM screener_price_tech_daily FINAL WHERE date = expected_date) AS t
+                 LEFT ANTI JOIN
+                      (SELECT DISTINCT ticker FROM daily_metrics FINAL WHERE date = expected_date) AS s
+                 USING (ticker)) AS extra_tickers
+            """,
+            parameters={"end_date": end_date},
+        )
+        if not result.result_rows:
+            raise RuntimeError("Could not verify screener_price_tech_daily coverage")
+
+        expected_date, target_date, expected, actual, missing, extra = result.result_rows[0]
+        expected_date = str(expected_date)[:10]
+        target_date = str(target_date)[:10] if target_date is not None else ""
+        if expected_date == "1970-01-01":
+            raise RuntimeError(
+                f"No daily_price_sequence session exists on or before {end_date}"
+            )
+        if (
+            target_date != expected_date
+            or int(expected) != int(actual)
+            or int(missing) > 0
+            or int(extra) > 0
+        ):
+            raise RuntimeError(
+                "screener_price_tech_daily is stale or incomplete for the latest source session "
+                f"{expected_date}: target_date={target_date or 'none'}, "
+                f"expected_tickers={int(expected)}, actual_tickers={int(actual)}, "
+                f"missing_tickers={int(missing)}, extra_tickers={int(extra)}"
+            )
 
     def _warn_on_empty_targets(self, sql_files: List[Path]) -> None:
         """Warn when a processed transform's target table has zero rows.

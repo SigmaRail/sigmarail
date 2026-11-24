@@ -38,3 +38,15 @@ def test_vcp_empty_state_matches_on_hold_schedule(global_client) -> None:
     spec = next(s for s in discover_transform_specs() if s.target == "screener_vcp_pivot_daily")
     assert spec.config.get("on_hold") is True
     assert _count(global_client, "screener_vcp_pivot_daily") == 0
+
+
+def test_screener_price_tech_has_complete_latest_session(global_client) -> None:
+    from sigmarail.populate import DataPopulator
+
+    latest = global_client.query(
+        "SELECT max(date) FROM daily_price_sequence FINAL"
+    ).result_rows[0][0]
+    populator = DataPopulator.__new__(DataPopulator)
+    populator.client = global_client
+
+    populator._verify_screener_price_tech_coverage(str(latest)[:10])

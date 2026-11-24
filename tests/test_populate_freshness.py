@@ -115,3 +115,37 @@ def test_get_freshness_for_transform_skips_sep_when_target_has_no_timestamp():
         }
         assert pop._get_freshness_start_date_for_transform(sql) is None
     pop.client.query.assert_not_called()
+
+
+def test_screener_price_tech_coverage_guard_accepts_complete_latest_session():
+    pop = DataPopulator.__new__(DataPopulator)
+    pop.client = MagicMock()
+    pop.client.query.return_value.result_rows = [
+        ("2026-11-20", "2026-11-20", 12000, 12000, 0, 0)
+    ]
+
+    pop._verify_screener_price_tech_coverage("2026-11-23")
+
+    assert pop.client.query.call_args.kwargs["parameters"] == {"end_date": "2026-11-23"}
+
+
+def test_screener_price_tech_coverage_guard_rejects_stale_or_partial_session():
+    pop = DataPopulator.__new__(DataPopulator)
+    pop.client = MagicMock()
+    pop.client.query.return_value.result_rows = [
+        ("2026-11-20", "2026-11-19", 12000, 11696, 304, 0)
+    ]
+
+    with pytest.raises(RuntimeError, match="stale or incomplete.*missing_tickers=304"):
+        pop._verify_screener_price_tech_coverage("2026-11-23")
+
+
+def test_screener_price_tech_coverage_guard_rejects_no_source_session():
+    pop = DataPopulator.__new__(DataPopulator)
+    pop.client = MagicMock()
+    pop.client.query.return_value.result_rows = [
+        ("1970-01-01", "1970-01-01", 0, 0, 0, 0)
+    ]
+
+    with pytest.raises(RuntimeError, match="No daily_price_sequence session"):
+        pop._verify_screener_price_tech_coverage("2026-11-23")

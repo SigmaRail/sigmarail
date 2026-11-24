@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+import sys
 
 import pandas as pd
 
-from sigmarail.load import earliest_date_from_csv, format_download_earliest_date
+from sigmarail.load import earliest_date_from_csv, format_download_earliest_date, main
 
 
 def test_earliest_date_from_csv(tmp_path: Path) -> None:
@@ -33,3 +35,21 @@ def test_format_download_earliest_date() -> None:
     assert format_download_earliest_date("2026-01-01", has_date_field=True) == "2026-01-01"
     assert format_download_earliest_date(None, has_date_field=True) == "-"
     assert format_download_earliest_date(None, has_date_field=False) == "n/a"
+
+
+def test_main_reports_download_failure_even_when_existing_csvs_load(monkeypatch) -> None:
+    loader = MagicMock()
+    loader.SHARADAR_TABLES = {"SEP": {"date_field": "lastupdated"}}
+    loader.download_data.side_effect = RuntimeError("Sharadar unavailable")
+    loader.load_csv_files.return_value = True
+    monkeypatch.setattr(sys, "argv", ["sigmarail-load", "--download", "--tables", "SEP", "--no-splice"])
+
+    with (
+        patch("sigmarail.load.DataLoader", return_value=loader),
+        patch("sigmarail.load.process_shared_args"),
+        patch("sigmarail.load.optimize_tables", return_value=True),
+        patch("sigmarail.load._print_event_summary"),
+    ):
+        assert main() == 1
+
+    loader.load_csv_files.assert_called_once_with(tables=["sep"])

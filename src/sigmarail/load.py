@@ -768,6 +768,7 @@ def main() -> int:
             # No need for the old auto-determination logic here
 
         # Download data if requested
+        downloads_succeeded = True
         if args.download:
             # If no tables specified, use all SHARADAR tables
             tables_to_download = args.tables if args.tables else list(loader.SHARADAR_TABLES.keys())
@@ -785,7 +786,6 @@ def main() -> int:
             else:
                 logger.info(f"Starting full data download for tables: {', '.join(tables_to_download)} from {start_date} to {end_date}")
 
-            successful_downloads = True
             download_summary: Dict[str, Dict[str, Any]] = {}  # records + earliest per table
             ticker_filter = parse_ticker_list(args.tickers)
 
@@ -813,7 +813,7 @@ def main() -> int:
                         "earliest": None,
                         "has_date_field": bool(date_field),
                     }
-                    successful_downloads = False
+                    downloads_succeeded = False
 
             # Print download summary
             print("\n" + "="*80)
@@ -834,7 +834,7 @@ def main() -> int:
             print(f"{'TOTAL':<15} {total_records:>20,} {'':>15}")
             print("="*80 + "\n")
 
-            if not successful_downloads:
+            if not downloads_succeeded:
                 logger.warning("One or more downloads failed. Continuing with existing data...")
             else:
                 logger.info("Data download completed.")
@@ -874,6 +874,12 @@ def main() -> int:
 
         # Event summary: high-impact events that drive recalculations (last 7 days)
         _print_event_summary(lookback_days=7)
+
+        if not downloads_succeeded:
+            logger.error(
+                "SigmaRail load completed with stale or partial inputs because one or more downloads failed."
+            )
+            return 1
 
         logger.info("SigmaRail load process completed successfully!")
         return 0
