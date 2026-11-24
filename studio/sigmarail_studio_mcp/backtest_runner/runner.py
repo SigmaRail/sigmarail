@@ -1185,6 +1185,7 @@ def run_job(
                     elapsed = int((datetime.utcnow() - started_at).total_seconds())
                     est_rem = max(0, int((elapsed / prog) - elapsed)) if prog > 0.02 else 0
 
+                    cancelled = False
                     try:
                         if postgres_control:
                             from apps.sigmarail_bridge.models import WorkspaceBacktestReference
@@ -1213,6 +1214,7 @@ def run_job(
                                 job_id,
                             )
                             continue
+                        logger.exception("Could not check cancellation status for job %s", job_id)
 
                     try:
                         if postgres_control:
