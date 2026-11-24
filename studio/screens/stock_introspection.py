@@ -14,6 +14,7 @@ from typing import Any
 import datetime
 
 from screens.marketsurge_payload import (
+    append_missing_quarterly_actuals,
     build_annual_growth,
     enrich_as_of_kpis_street,
     ibd_fiscal_year_label,
@@ -63,7 +64,7 @@ def get_stock_introspection(
     es_as_of = as_of_date
     try:
         es_date_sql = """
-        SELECT max(date) FROM screener_estimates_daily
+        SELECT max(date) FROM ext_analyst_estimates_screener_estimates_daily
         WHERE ticker = %(ticker)s AND date <= toDate(%(as_of)s)
         """
         es_date_res = client.query(es_date_sql, parameters={"ticker": sym, "as_of": as_of_date})
@@ -76,7 +77,7 @@ def get_stock_introspection(
     # 1. Fetch point-in-time as-of metrics
     as_of_sql = f"""
     SELECT
-        p.ticker, p.date, p.company_name, p.sector, p.industry, p.exchange,
+        p.ticker, p.date, p.company_name, cls.sector, cls.industry, p.exchange,
         p.open, p.high, p.low, p.close, p.volume,
         p.high_52w, p.low_52w,
         p.sma10d, p.sma20d, p.sma50d, p.sma150d, p.sma200d, p.ema21d,
@@ -105,8 +106,15 @@ def get_stock_introspection(
     LEFT JOIN screener_ratings_daily r FINAL ON p.ticker = r.ticker AND p.date = r.date
     LEFT JOIN screener_fundamentals_daily f FINAL ON p.ticker = f.ticker AND p.date = f.date
     LEFT JOIN screener_ownership_daily o FINAL ON p.ticker = o.ticker AND p.date = o.date
-    LEFT JOIN screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
+    LEFT JOIN ext_analyst_estimates_screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
     LEFT JOIN daily_valuation dv ON p.ticker = dv.ticker AND p.date = dv.date
+    ASOF LEFT JOIN (
+        SELECT ticker, date, argMax(sector, lastupdated) AS sector,
+               argMax(industry, lastupdated) AS industry
+        FROM ticker_classification_daily
+        GROUP BY ticker, date
+        ORDER BY ticker, date
+    ) cls ON cls.ticker = p.ticker AND p.date >= cls.date
     WHERE p.ticker = %(ticker)s AND p.date = toDate(%(as_of)s)
     LIMIT 1
     """
@@ -829,12 +837,16 @@ def get_stock_introspection(
         try:
             cons_sql = """
             SELECT relative_period, period_end_date, periodicity
-            FROM ext_analyst_estimates_analyst_consensus_asof
+            FROM ext_analyst_estimates_analyst_consensus_asof FINAL
             WHERE ticker = %(ticker)s
-              AND asof_date = (
-                SELECT max(asof_date) FROM ext_analyst_estimates_analyst_consensus_asof
-                WHERE ticker = %(ticker)s AND asof_date <= toDate(%(as_of)s)
+              AND available_at > toDateTime64(0, 3, 'America/New_York')
+              AND available_at = (
+                SELECT max(available_at) FROM ext_analyst_estimates_analyst_consensus_asof FINAL
+                WHERE ticker = %(ticker)s
+                  AND available_at > toDateTime64(0, 3, 'America/New_York')
+                  AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
               )
+              AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
               AND metric = 'eps'
               AND (
                 (periodicity = 'Q' AND relative_period IN (0, 1))
@@ -867,10 +879,11 @@ def get_stock_introspection(
                 period_end_date,
                 metric,
                 periodicity,
-                argMax(mean, asof_date) AS estimate
-            FROM ext_analyst_estimates_analyst_consensus_asof
+                argMax(mean, (available_at, lastupdated, vendor)) AS estimate
+            FROM ext_analyst_estimates_analyst_consensus_asof FINAL
             WHERE ticker = %(ticker)s
-              AND asof_date <= toDate(%(as_of)s)
+              AND available_at > toDateTime64(0, 3, 'America/New_York')
+              AND available_at <= toDateTime64(concat(toString(toDate(%(as_of)s)), ' 15:59:59.999'), 3, 'America/New_York')
             GROUP BY period_end_date, metric, periodicity
             ORDER BY period_end_date ASC
             """
@@ -1072,8 +1085,13 @@ def get_stock_introspection(
                 fc.valuation_spread_pct,
                 fc.valuation_status
             FROM screener_price_tech_daily p
-            ASOF LEFT JOIN ticker_classification_daily c
-                ON c.ticker = p.ticker AND p.date >= c.date
+            ASOF LEFT JOIN (
+                SELECT ticker, date, argMax(industry, lastupdated) AS industry,
+                       argMax(sector, lastupdated) AS sector
+                FROM ticker_classification_daily
+                GROUP BY ticker, date
+                ORDER BY ticker, date
+            ) c ON c.ticker = p.ticker AND p.date >= c.date
             LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
             WHERE p.date = toDate(%(as_of)s)
               AND position(p.category, 'Common Stock') > 0
@@ -1105,8 +1123,13 @@ def get_stock_introspection(
                     fc.valuation_spread_pct,
                     fc.valuation_status
                 FROM screener_price_tech_daily p
-                ASOF LEFT JOIN ticker_classification_daily c
-                    ON c.ticker = p.ticker AND p.date >= c.date
+                ASOF LEFT JOIN (
+                    SELECT ticker, date, argMax(industry, lastupdated) AS industry,
+                           argMax(sector, lastupdated) AS sector
+                    FROM ticker_classification_daily
+                    GROUP BY ticker, date
+                    ORDER BY ticker, date
+                ) c ON c.ticker = p.ticker AND p.date >= c.date
                 LEFT ANY JOIN screener_forecast_models_daily fc ON p.ticker = fc.ticker AND p.date = fc.date AND fc.model_type = 'historical_cagr_3y'
                 WHERE p.date = toDate(%(as_of)s)
                   AND position(p.category, 'Common Stock') > 0

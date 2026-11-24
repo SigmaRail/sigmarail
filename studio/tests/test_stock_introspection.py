@@ -8,6 +8,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
 from rest_framework.test import APIClient
+from screens import stock_introspection
 
 
 @pytest.mark.django_db
@@ -16,10 +17,21 @@ def test_stock_overview_endpoint_validation():
     # Missing ticker
     res = client.get("/api/screens/stock-overview?as_of=2026-06-15")
     assert res.status_code == 400
-
     # Missing as_of
     res = client.get("/api/screens/stock-overview?ticker=NVDA")
     assert res.status_code == 400
+
+
+def test_stock_introspection_uses_publication_time_and_dated_classification():
+    from pathlib import Path
+
+    assert callable(stock_introspection.append_missing_quarterly_actuals)
+    source = (Path(__file__).parents[1] / "screens" / "stock_introspection.py").read_text()
+    assert "available_at <= toDateTime64" in source
+    assert "ASOF LEFT JOIN ticker_classification_daily" not in source
+    assert "argMax(industry, lastupdated)" in source
+    assert "cls.sector, cls.industry" in source
+
 
 
 @pytest.mark.django_db
