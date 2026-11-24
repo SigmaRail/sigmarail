@@ -1,7 +1,8 @@
 """
 Resolve ClickHouse HTTP settings: CLICKHOUSE_* env, then LEAN parameters / lean.json.
 
-Precedence per field: non-empty env var → GetParameter/Config aliases → default.
+Precedence per field: env var → GetParameter/Config aliases → default.
+An explicitly empty ClickHouse password is valid and disables password auth.
 """
 
 from __future__ import annotations
@@ -18,15 +19,22 @@ _DEFAULT_USER = "testuser"
 _DEFAULT_PASSWORD = "testanalysis"
 
 
-def _env_or_param(algorithm, env_key: str, param_keys: tuple[str, ...], default: str) -> str:
+def _env_or_param(
+    algorithm,
+    env_key: str,
+    param_keys: tuple[str, ...],
+    default: str,
+    *,
+    allow_empty: bool = False,
+) -> str:
     v = os.environ.get(env_key)
-    if v is not None and str(v).strip() != "":
+    if v is not None and (allow_empty or str(v).strip() != ""):
         return str(v).strip()
     if algorithm is not None:
         from .lean_runtime_parameters import get_param
 
         p = get_param(*param_keys, algorithm=algorithm, default=None)
-        if p is not None and str(p).strip() != "":
+        if p is not None and (allow_empty or str(p).strip() != ""):
             return str(p).strip()
     return default
 
@@ -69,6 +77,7 @@ def resolve_clickhouse_settings(algorithm=None) -> ChHttpSettings:
         "CLICKHOUSE_PASSWORD",
         ("clickhouse-password", "vera-password"),
         _DEFAULT_PASSWORD,
+        allow_empty=True,
     )
     return ChHttpSettings(
         host=host,
