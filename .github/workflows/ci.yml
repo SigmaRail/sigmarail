@@ -39,7 +39,7 @@ jobs:
         run: corepack pnpm nx run webapp:build
 
   lean-smoke:
-    # LEAN's private image and a self-hosted Docker Desktop runner are required.
+    # A self-hosted Docker Desktop runner is required for the ClickHouse integration.
     # Do not expose this runner or its credentials to pull requests from forks.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     needs: test
@@ -47,8 +47,32 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
-      packages: read
+    env:
+      LEAN_IMAGE: ghcr.io/sigmarail/lean/lean-clickhouse@sha256:d4f1c21a538046af806ce18dbfe8b48d94e7e84552327420b5e754203ae5a62a
     steps:
+      - name: Prepare isolated Docker credentials
+        run: |
+          docker_config_dir="$RUNNER_TEMP/sigmarail-docker-auth-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$docker_config_dir"
+          # A non-empty auth map prevents Docker CLI from auto-selecting the
+          # runner's Docker Desktop Keychain helper for this temporary config.
+          # Preserve the installed Compose plugin, which otherwise becomes
+          # undiscoverable when DOCKER_CONFIG points to this temporary directory.
+          compose_plugin_path="$(docker info --format '{{range .ClientInfo.Plugins}}{{if eq .Name "compose"}}{{.Path}}{{end}}{{end}}')"
+          if [ -z "$compose_plugin_path" ] || [ ! -x "$compose_plugin_path" ]; then
+            echo "Docker Compose v2 plugin was not found in the runner's Docker CLI configuration."
+            exit 1
+          fi
+          python3.11 - "$docker_config_dir/config.json" "$(dirname "$compose_plugin_path")" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "w", encoding="utf-8") as config:
+              json.dump({"auths": {"ghcr.io": {}}, "cliPluginsExtraDirs": [sys.argv[2]]}, config)
+          PY
+          printf 'DOCKER_CONFIG=%s\n' "$docker_config_dir" >> "$GITHUB_ENV"
+          DOCKER_CONFIG="$docker_config_dir" docker compose version
+
       - name: Check out SigmaRail
         uses: actions/checkout@v4
         with:
@@ -86,17 +110,8 @@ jobs:
           && python3.11 packages/sigmarail-spec/tools/sync_lean_vendor.py
           --destination trading_lab/sigmarail_spec
 
-      - name: Log in to private LEAN image registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ secrets.SIGMARAIL_PLATFORM_READ_TOKEN && 'mdiggory' || github.actor }}
-          # Grant SigmaRail repository access to the package or set this secret
-          # to a read-only token with access to the private image.
-          password: ${{ secrets.SIGMARAIL_PLATFORM_READ_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Pull platform LEAN image
-        run: docker pull ghcr.io/mdiggory/lean-clickhouse:arm64-latest
+      - name: Pull public, digest-pinned LEAN image
+        run: docker pull "$LEAN_IMAGE"
 
       - name: Run full synthetic ClickHouse to SigmaRail to LEAN smoke
         env:
@@ -105,7 +120,7 @@ jobs:
           SIGMARAIL_SPEC_SOURCE: ${{ github.workspace }}/packages/sigmarail-spec/src
           SIGMARAIL_STUDIO_PYTHON: ${{ steps.local-python.outputs.python-path }}
           SIGMARAIL_LEAN_PYTHON: ${{ steps.local-python.outputs.python-path }}
-          SIGMARAIL_LEAN_IMAGE: ghcr.io/mdiggory/lean-clickhouse:arm64-latest
+          SIGMARAIL_LEAN_IMAGE: ${{ env.LEAN_IMAGE }}
         run: python3.11 -m pytest -s -q tests/test_lean_smoke.py --sigmarail-clickhouse
 
   publish-spec:

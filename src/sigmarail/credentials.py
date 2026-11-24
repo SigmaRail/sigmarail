@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import uuid
 from typing import Any
 
 
 CLICKHOUSE_KEYRING_SERVICE = "sigmarail/clickhouse"
 CLICKHOUSE_KEYRING_ACCOUNT = "local"
+STUDIO_BROKER_KEYRING_SERVICE_PREFIX = "sigmarail-studio/broker/"
+STUDIO_BROKER_KEYRING_ACCOUNT = "credentials"
 _SECURE_BACKENDS = (
     "keyring.backends.macOS",
     "keyring.backends.Windows",
@@ -81,3 +84,40 @@ def delete_clickhouse_credentials() -> None:
         return
     except Exception as exc:
         raise CredentialStoreError("Could not delete ClickHouse credentials from the OS vault") from exc
+
+
+def get_studio_alpaca_credentials(profile_id: str) -> dict[str, str] | None:
+    """Read an Alpaca profile saved by SigmaRail Studio from the OS credential vault.
+
+    Studio keeps profile metadata in its local database and stores the API key pair
+    under ``sigmarail-studio/broker/<profile UUID>`` in the native OS vault. This
+    reader intentionally accepts only a profile UUID, never credentials in argv or
+    a SigmaRail configuration file.
+    """
+    try:
+        normalized_profile_id = str(uuid.UUID(str(profile_id)))
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise ValueError("Studio credential profile id must be a UUID") from exc
+
+    keyring = _keyring()
+    service = f"{STUDIO_BROKER_KEYRING_SERVICE_PREFIX}{normalized_profile_id}"
+    try:
+        stored = keyring.get_password(service, STUDIO_BROKER_KEYRING_ACCOUNT)
+    except Exception as exc:
+        raise CredentialStoreError("Could not read Alpaca credentials from the OS vault") from exc
+    if not stored:
+        return None
+    try:
+        value = json.loads(stored)
+    except json.JSONDecodeError as exc:
+        raise CredentialStoreError("Stored Alpaca credential entry is invalid") from exc
+    if not isinstance(value, dict):
+        raise CredentialStoreError("Stored Alpaca credential entry is invalid")
+
+    # Studio's canonical saved-profile keys, with compatibility for its original
+    # generic Alpaca form. Neither form is returned or logged by the CLI.
+    api_key = value.get("alpaca-api-key", value.get("api_key"))
+    api_secret = value.get("alpaca-api-secret", value.get("api_secret"))
+    if not isinstance(api_key, str) or not api_key or not isinstance(api_secret, str) or not api_secret:
+        raise CredentialStoreError("Stored Alpaca credentials are incomplete")
+    return {"api_key": api_key, "api_secret": api_secret}
