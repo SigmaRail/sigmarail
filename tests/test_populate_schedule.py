@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
+from sigmarail.config import get_schema_contract
 from sigmarail.populate import DataPopulator, _metric_sql_sort_key
 from sigmarail.transform_sql import discover_transform_specs
 
@@ -26,6 +27,9 @@ def test_dependency_transforms_precede_their_consumers():
 def test_all_schedule_excludes_explicitly_held_vcp_transform():
     pop = DataPopulator.__new__(DataPopulator)
     pop.client = MagicMock()
+    pop.allowed_transform_targets = {
+        table["name"] for table in get_schema_contract()
+    } - pop.BASE_DATA_TABLES
     with patch("sigmarail.populate.transform_catalog", return_value=[]):
         specs = pop._get_transform_specs(["all"])
     assert all(spec.target != "screener_vcp_pivot_daily" for spec in specs)
@@ -34,6 +38,9 @@ def test_all_schedule_excludes_explicitly_held_vcp_transform():
 def test_explicit_vcp_request_remains_held():
     pop = DataPopulator.__new__(DataPopulator)
     pop.client = MagicMock()
+    pop.allowed_transform_targets = {
+        table["name"] for table in get_schema_contract()
+    } - pop.BASE_DATA_TABLES
     with patch("sigmarail.populate.transform_catalog", return_value=[]):
         specs = pop._get_transform_specs(["screener_vcp_pivot_daily"])
     assert not any(spec.target == "screener_vcp_pivot_daily" for spec in specs)

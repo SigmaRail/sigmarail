@@ -90,14 +90,6 @@ class DataPopulator:
         'events', 'sf2', 'sf3', 'sf3a', 'sf3b', 'sp500',
     }
 
-    def __init__(self, modules: Optional[List[str]] = None):
-        self.modules = sorted(set(modules or []))
-        # The database may contain views from other SigmaRail modules or local
-        # extensions. Only transforms admitted by the selected contracts run.
-        self.allowed_transform_targets = {
-            table["name"] for table in get_schema_contract(self.modules)
-        } - self.BASE_DATA_TABLES
-
     # Marts whose rows must track vendor price rewrites (sep/sfp lastupdated).
     PRICE_PIPELINE_TARGETS = frozenset({
         'daily_prices',
@@ -142,8 +134,14 @@ class DataPopulator:
     AUTO_RECALC_EVENT_LOOKBACK_DAYS = 14
     PRICE_COVERAGE_LOOKBACK_DAYS = 730
 
-    def __init__(self):
-        """Initialize the DataPopulator."""
+    def __init__(self, modules: Optional[List[str]] = None):
+        """Initialize the DataPopulator for the core or selected modules."""
+        self.modules = sorted(set(modules or []))
+        # The database may contain views from other SigmaRail modules or local
+        # extensions. Only transforms admitted by the selected contracts run.
+        self.allowed_transform_targets = {
+            table["name"] for table in get_schema_contract(self.modules)
+        } - self.BASE_DATA_TABLES
         self.client = get_client()
         if not self.client:
             raise RuntimeError(f"Failed to get ClickHouse client for mode '{app_config.mode}'")

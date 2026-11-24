@@ -109,7 +109,8 @@ def test_load_schema_creates_tables_then_drops_views_alters_and_recreates(tmp_pa
             pass
 
     monkeypatch.setattr(database, "get_schema_dir", lambda: schema)
-    monkeypatch.setattr(database, "get_schema_files", lambda: [first, second])
+    monkeypatch.setattr(database, "get_schema_files", lambda modules=None: [first, second])
+    monkeypatch.setattr(database, "get_schema_contract", lambda modules=None: contract)
     monkeypatch.setattr(database, "get_database_config", lambda: SimpleNamespace(database="sigmarail_test"))
     monkeypatch.setattr(database, "_validate_test_mode_safety", lambda: None)
     monkeypatch.setattr(database, "get_client", lambda *args, **kwargs: FakeClient())
@@ -156,7 +157,8 @@ def test_load_schema_preview_is_read_only_and_prints_actions(tmp_path, monkeypat
             pass
 
     monkeypatch.setattr(database, "get_schema_dir", lambda: schema)
-    monkeypatch.setattr(database, "get_schema_files", lambda: [sql_file])
+    monkeypatch.setattr(database, "get_schema_files", lambda modules=None: [sql_file])
+    monkeypatch.setattr(database, "get_schema_contract", lambda modules=None: contract)
     monkeypatch.setattr(database, "get_database_config", lambda: SimpleNamespace(database="sigmarail_test"))
     monkeypatch.setattr(database, "_validate_test_mode_safety", lambda: None)
     monkeypatch.setattr(database, "get_client", lambda *args, **kwargs: FakeClient())
@@ -195,7 +197,8 @@ def test_load_schema_preview_plans_database_creation_without_mutating(tmp_path, 
             pass
 
     monkeypatch.setattr(database, "get_schema_dir", lambda: schema)
-    monkeypatch.setattr(database, "get_schema_files", lambda: [sql_file])
+    monkeypatch.setattr(database, "get_schema_files", lambda modules=None: [sql_file])
+    monkeypatch.setattr(database, "get_schema_contract", lambda modules=None: contract)
     monkeypatch.setattr(database, "get_database_config", lambda: SimpleNamespace(database="sigmarail_test"))
     monkeypatch.setattr(database, "_validate_test_mode_safety", lambda: None)
     monkeypatch.setattr(database, "get_client", lambda *args, **kwargs: FakeClient())
@@ -238,7 +241,8 @@ def test_load_schema_apply_creates_missing_database_before_tables(tmp_path, monk
 
     clients = iter((FakeClient("control"), FakeClient("target")))
     monkeypatch.setattr(database, "get_schema_dir", lambda: schema)
-    monkeypatch.setattr(database, "get_schema_files", lambda: [sql_file])
+    monkeypatch.setattr(database, "get_schema_files", lambda modules=None: [sql_file])
+    monkeypatch.setattr(database, "get_schema_contract", lambda modules=None: contract)
     monkeypatch.setattr(database, "get_database_config", lambda: SimpleNamespace(database="sigmarail_test"))
     monkeypatch.setattr(database, "_validate_test_mode_safety", lambda: None)
     monkeypatch.setattr(database, "get_client", lambda *args, **kwargs: next(clients))
@@ -269,8 +273,8 @@ def test_schema_cli_defaults_to_preview_and_supports_apply(monkeypatch):
     assert schema_cli.main() == 0
 
     assert calls == [
-        {"drop_extra_columns": False, "apply": False},
-        {"drop_extra_columns": True, "apply": True},
+        {"drop_extra_columns": False, "apply": False, "modules": []},
+        {"drop_extra_columns": True, "apply": True, "modules": []},
     ]
 
 
@@ -304,7 +308,8 @@ def test_load_schema_stops_on_undeclared_columns_without_dropping_views(tmp_path
             pass
 
     monkeypatch.setattr(database, "get_schema_dir", lambda: schema)
-    monkeypatch.setattr(database, "get_schema_files", lambda: [sql_file])
+    monkeypatch.setattr(database, "get_schema_files", lambda modules=None: [sql_file])
+    monkeypatch.setattr(database, "get_schema_contract", lambda modules=None: contract)
     monkeypatch.setattr(database, "get_database_config", lambda: SimpleNamespace(database="sigmarail_test"))
     monkeypatch.setattr(database, "_validate_test_mode_safety", lambda: None)
     monkeypatch.setattr(database, "get_client", lambda *args, **kwargs: FakeClient())
