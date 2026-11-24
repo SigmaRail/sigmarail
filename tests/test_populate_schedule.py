@@ -84,6 +84,8 @@ def test_actuals_projection_joins_by_public_availability_time():
     assert "available_at > toDateTime64(0, 3, 'America/New_York')" in sql
     assert "ASOF LEFT JOIN pivoted AS e" in sql
     assert "cur.available_at" in sql
+    assert "cur.available_at - INTERVAL 90 DAY" in sql
+    assert "snaps_single_vendor" in sql
     assert "`available_at` DateTime64(3, 'America/New_York')" in consensus_schema
 
 

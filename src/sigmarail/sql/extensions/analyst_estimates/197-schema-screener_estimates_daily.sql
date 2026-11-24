@@ -77,8 +77,9 @@ COMMENT 'L7 wide consensus; Alpha/Studio never see vendor period labels';
 -- TRANSFORM: Populate ext_analyst_estimates_screener_estimates_daily (L7 consensus delivery)
 -- =============================================================================
 --
--- Asof-align last consensus snapshot <= trading date. 90d revision = Δ mean
--- vs snapshot at asof-90d on the same period_end (not a CQ/NQ slot roll).
+-- Asof-align last consensus snapshot publicly available by the trading close.
+-- 90d revision = Δ mean vs a same-period snapshot available at least 90 days
+-- earlier (not a CQ/NQ slot roll, and not a later backfill keyed to old asof_date).
 -- Surprise = latest actual period_end <= date. Px spine is restricted to
 -- tickers present in ext_analyst_estimates_analyst_consensus_asof.
 -- snaps/rev_tall are bounded to [chunk_start - 180d, chunk_end] so weekly
@@ -170,6 +171,17 @@ WITH snaps AS (
       AND asof_date <= toDate({chunk_end_date:String})
       AND available_at > toDateTime64(0, 3, 'America/New_York')
 ),
+snaps_single_vendor AS (
+    -- If multiple feeds share a publication time, choose one complete,
+    -- deterministic source rather than mixing fields across vendors.
+    SELECT s.*
+    FROM snaps AS s
+    INNER JOIN (
+        SELECT ticker, available_at, min(vendor) AS vendor
+        FROM snaps
+        GROUP BY ticker, available_at
+    ) AS chosen USING (ticker, available_at, vendor)
+),
 rev_tall AS (
     SELECT
         cur.ticker,
@@ -186,13 +198,13 @@ rev_tall AS (
         cur.vendor,
         cur.eps_basis,
         if(prior.mean = 0, 0, (cur.mean - prior.mean) / abs(prior.mean)) AS rev_pct_90d
-    FROM snaps AS cur
-    ASOF LEFT JOIN snaps AS prior
+    FROM snaps_single_vendor AS cur
+    ASOF LEFT JOIN snaps_single_vendor AS prior
         ON cur.ticker = prior.ticker
         AND cur.metric = prior.metric
         AND cur.periodicity = prior.periodicity
         AND cur.period_end_date = prior.period_end_date
-        AND (cur.asof_date - 90) >= prior.asof_date
+        AND (cur.available_at - INTERVAL 90 DAY) >= prior.available_at
 ),
 pivoted AS (
     SELECT

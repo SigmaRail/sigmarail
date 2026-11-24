@@ -16,6 +16,11 @@
           "type": "Date"
         },
         {
+          "comment": "Public availability timestamp for this consensus snapshot; zero means unavailable and is excluded from historical projections",
+          "name": "available_at",
+          "type": "DateTime64(3, 'America/New_York')"
+        },
+        {
           "comment": "Feed identifier selected by the user",
           "name": "vendor",
           "type": "LowCardinality(String)"
@@ -469,7 +474,7 @@
       ],
       "kind": "external_extension",
       "module": "analyst_estimates",
-      "name": "screener_estimates_daily",
+      "name": "ext_analyst_estimates_screener_estimates_daily",
       "schema_file": "197-schema-screener_estimates_daily.sql"
     }
   ]
