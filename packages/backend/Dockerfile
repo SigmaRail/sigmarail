@@ -102,3 +102,17 @@ ENV PYTHONPATH=/workspace:/pkgs/.venv/lib/python3.11/site-packages \
     SIGMARAIL_BUILD_TREE=${SIGMARAIL_BUILD_TREE}
 
 CMD ["./scripts/runtime/run.sh"]
+
+# LEAN orchestration is isolated from the public API process. This worker has
+# the Docker CLI and daemon socket needed to launch one short-lived LEAN
+# container per queued backtest; the API container receives neither.
+FROM backend AS backtest_worker
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends docker.io \
+  && rm -rf /var/lib/apt/lists/* \
+  && uv pip install --python /pkgs/.venv/bin/python lean==1.0.229
+COPY ${SIGMARAIL_SOURCE_DIR}/trading_lab/ /workspace/trading_lab/
+COPY ${SIGMARAIL_SOURCE_DIR}/src/sigmarail_lab/ /workspace/src/sigmarail_lab/
+COPY ${SIGMARAIL_SOURCE_DIR}/packages/backtest-worker/entrypoint.sh /app/scripts/runtime/backtest-worker-entrypoint.sh
+RUN chmod +x /app/scripts/runtime/backtest-worker-entrypoint.sh
+ENTRYPOINT ["/app/scripts/runtime/backtest-worker-entrypoint.sh"]

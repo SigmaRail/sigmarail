@@ -1,13 +1,9 @@
-"""lean backtest subprocess invocation and job-state management.
-
-Post-run result insertion follows the same pattern as backtest.yml:
-  1. find *-summary.json / *.json / *-order-events.json in the output dir
-  2. call the generated SigmaRail LEAN project's scripts/insert_strategy_run.py via subprocess
-     with --run-id = job_id so strategy_runs.run_id matches backtest_jobs.job_id
-"""
+"""LEAN backtest subprocess invocation and AppTension job-state management."""
 
 from __future__ import annotations
 
+import base64
+from functools import wraps
 import hashlib
 import json
 import logging
@@ -33,6 +29,24 @@ from sigmarail_studio_mcp.backtest_runner.project_registry import (
 from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
 
 logger = logging.getLogger(__name__)
+
+
+def _cleanup_lean_config_after_job(func):
+    """Remove the per-job config overlay even when setup or execution fails."""
+
+    @wraps(func)
+    def wrapped(job_id: str, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return func(job_id, *args, **kwargs)
+        finally:
+            overlay = lean_projects_root() / f".lean-config-{job_id}.json"
+            try:
+                overlay.unlink(missing_ok=True)
+            except OSError:
+                logger.exception("Could not remove temporary LEAN config overlay %s", overlay)
+                raise
+
+    return wrapped
 
 
 def _default_image(project: dict[str, Any] | None = None) -> str:
@@ -70,6 +84,123 @@ def _sigmarail_api_url_for_container() -> str | None:
         scheme = parsed.scheme or "http"
         return f"{scheme}://{docker_host}:{port}".rstrip("/")
     return raw.rstrip("/")
+
+
+def _clickhouse_host_for_lean_container() -> str:
+    """Resolve the Mac host address from this worker for nested LEAN containers.
+
+    The Compose worker has a host-gateway mapping that reaches native ClickHouse.
+    LEAN containers are launched by the worker through Docker and get a different
+    ``host-gateway`` (usually 172.17.0.1), so passing the hostname would silently
+    point them at the wrong bridge. Pin the worker's resolved IPv4 address for the
+    child container; allow an explicit override for non-Docker-Desktop setups.
+    """
+    explicit = (os.environ.get("CLICKHOUSE_DOCKER_HOST") or "").strip()
+    if explicit:
+        return explicit
+    try:
+        return socket.gethostbyname("host.docker.internal")
+    except OSError:
+        return "host.docker.internal"
+
+
+def _write_lean_clickhouse_config(
+    *,
+    lean_root: Path,
+    project: dict[str, Any],
+    job_id: str,
+    host: str,
+    port: str,
+    database: str,
+    user: str,
+    password: str,
+) -> Path:
+    """Create a short-lived LEAN config overlay with worker-owned CH settings."""
+    source = lean_root / str(project["lean_config_overlay"])
+    original = json.loads(source.read_text())
+    # Keep the overlay minimal: the developer's shared lean-composite.json also
+    # contains brokerage and API credentials that a backtest never needs.
+    safe_keys = (
+        "data-folder",
+        "data-provider",
+        "composite-data-providers",
+        "data-channel-provider",
+        "data-aggregator",
+        "factor-file-provider",
+        "map-file-provider",
+        "cache-timeout-seconds",
+        "initialization-timeout",
+        "clickhouse-timeout-seconds",
+        "clickhouse-data-mode",
+        "clickhouse-materialize",
+        "clickhouse-trace",
+        "clickhouse-history-pad-days",
+        "clickhouse-backtest-start",
+        "clickhouse-backtest-end",
+    )
+    config = {key: original[key] for key in safe_keys if key in original}
+    config.update(
+        {
+            "container-name": _lean_container_name(job_id),
+            "clickhouse-host": host,
+            "clickhouse-http-port": int(port),
+            "clickhouse-database": database,
+            "clickhouse-user": user,
+            "clickhouse-password": password,
+            "environments": {
+                "backtesting": (original.get("environments") or {}).get("backtesting", {})
+            },
+        }
+    )
+    # LEAN requires this config file's parent to contain the staged project and
+    # the local data directory, so keep the ephemeral file at the workspace root.
+    path = lean_root / f".lean-config-{job_id}.json"
+    path.write_text(json.dumps(config, indent=2) + "\n")
+    path.chmod(0o600)
+    return path
+
+
+def _lean_container_name(job_id: str) -> str:
+    """Stable, job-scoped Docker name so cancellation can stop the real engine."""
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", str(job_id)):
+        raise ValueError("job_id contains unsupported Docker name characters")
+    return f"sigmarail-lean-{job_id}"
+
+
+def _stop_lean_container(job_id: str) -> None:
+    """Stop the LEAN engine container owned by a cancelled backtest."""
+    import docker
+    from docker.errors import NotFound
+
+    client = docker.from_env()
+    try:
+        try:
+            container = client.containers.get(_lean_container_name(job_id))
+        except NotFound:
+            return
+        container.reload()
+        if container.status == "running":
+            container.stop(timeout=10)
+            container.reload()
+        if container.status == "running":
+            raise RuntimeError(f"LEAN container did not stop for cancelled job {job_id}")
+    finally:
+        client.close()
+
+
+def _strategy_algorithm_parameters(extra_env: dict[str, str] | None) -> dict[str, Any]:
+    """Read the immutable strategy's runtime knobs for LEAN's GetParameter()."""
+    encoded = str((extra_env or {}).get("SIGMARAIL_STRATEGY_BASE64") or "").strip()
+    if not encoded:
+        return {}
+    try:
+        strategy = json.loads(base64.b64decode(encoded, validate=True).decode("utf-8"))
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("Queued strategy snapshot is not valid base64 JSON") from exc
+    params = strategy.get("AlgorithmParameters", {}) if isinstance(strategy, dict) else {}
+    if not isinstance(params, dict):
+        raise ValueError("Queued strategy AlgorithmParameters must be an object")
+    return params
 
 
 def _can_import_lean(python_exe: str) -> bool:
@@ -186,10 +317,38 @@ def _update_postgres_job(job_id: str, *, status: str, **telemetry: Any) -> bool:
             updates["result_summary"] = telemetry["result_summary"]
         if telemetry.get("run_id") is not None:
             updates["run_id"] = telemetry["run_id"]
-        return WorkspaceBacktestReference.objects.filter(job_id=job_id).update(**updates) == 1
+        allowed_current_statuses = {
+            "pending": ("pending",),
+            "running": ("pending", "running"),
+            "done": ("running",),
+            "failed": ("running",),
+            "cancelled": ("pending", "running", "cancelled"),
+        }.get(status)
+        if not allowed_current_statuses:
+            return False
+        jobs = WorkspaceBacktestReference.objects.filter(job_id=job_id)
+        updated = jobs.filter(status__in=allowed_current_statuses).update(**updates)
+        if updated == 1:
+            return True
+        # Cancellation is idempotent: the user-facing cancel operation may
+        # have committed the terminal state before this runner observes it.
+        return status == "cancelled" and jobs.filter(status="cancelled").exists()
     except Exception:
         logger.exception("Could not update AppTension backtest record %s", job_id)
         return False
+
+
+def _postgres_job_status(job_id: str) -> str | None:
+    """Read the authoritative status before starting or finalizing LEAN."""
+    import django
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    django.setup()
+    from apps.sigmarail_bridge.models import WorkspaceBacktestReference
+
+    return WorkspaceBacktestReference.objects.filter(job_id=job_id).values_list(
+        "status", flat=True
+    ).first()
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +623,7 @@ def tail_log(job_id: str, tail_lines: int = 200) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Post-run: insert results into strategy_runs via insert_strategy_run.py
+# Legacy post-run: insert results into ClickHouse for non-AppTension jobs.
 # ---------------------------------------------------------------------------
 
 def _ir_lineage_from_db(ir_id: str, extra_env: dict[str, str] | None = None) -> tuple[str, str]:
@@ -548,6 +707,11 @@ def _insert_strategy_run(
     start_date: str,
     end_date: str,
     image: str,
+    clickhouse_host: str,
+    clickhouse_port: str,
+    clickhouse_user: str,
+    clickhouse_password: str,
+    clickhouse_database: str,
     extra_env: dict[str, str] | None = None,
 ) -> None:
     """Replicate the 'Record run in ClickHouse' step from backtest.yml."""
@@ -571,11 +735,15 @@ def _insert_strategy_run(
     backtest_json = str(backtest_files[0]) if backtest_files else ""
 
     env = dict(os.environ)
-    env.setdefault("CLICKHOUSE_HOST", "localhost")
-    env.setdefault("CLICKHOUSE_PORT", "8123")
-    env.setdefault("CLICKHOUSE_USER", "testuser")
-    env.setdefault("CLICKHOUSE_PASSWORD", "testanalysis")
-    env.setdefault("CLICKHOUSE_DATABASE", "sigmarail")
+    env.update(
+        {
+            "CLICKHOUSE_HOST": clickhouse_host,
+            "CLICKHOUSE_PORT": str(clickhouse_port),
+            "CLICKHOUSE_USER": clickhouse_user,
+            "CLICKHOUSE_PASSWORD": clickhouse_password,
+            "CLICKHOUSE_DATABASE": clickhouse_database,
+        }
+    )
     ir_schema_version, ir_content_hash = _ir_lineage_from_db(ir_id, extra_env)
     repo_name = str(project.get("id") or lean_cli_name)
     commit_sha, git_branch = _engine_git_info(lean_root)
@@ -612,6 +780,9 @@ def _insert_strategy_run(
     day_snapshots = output_path / "backtest_day_snapshots.json"
     if day_snapshots.is_file():
         cmd += ["--day-snapshots-json", str(day_snapshots)]
+    accounting = output_path / "backtest_accounting.json"
+    if accounting.is_file():
+        cmd += ["--accounting-json", str(accounting)]
     config_json = lean_root / str(project.get("config_json") or f"{lean_cli_name}/config.json")
     if config_json.exists():
         cmd += ["--config-json", str(config_json)]
@@ -621,6 +792,82 @@ def _insert_strategy_run(
         raise RuntimeError(
             f"insert_strategy_run.py failed (rc={result.returncode}): {result.stderr.strip()}"
         )
+
+
+def _read_strategy_run_summary(job_id: str) -> dict[str, int | float | None] | None:
+    """Read the compact result metrics written by the LEAN run recorder."""
+    from sigmarail_studio_mcp.backtest_runner.ch_client import get_client
+
+    columns = (
+        "total_return", "annual_return", "sharpe_ratio", "sortino_ratio",
+        "max_drawdown", "win_rate", "profit_factor", "total_orders",
+        "total_fees", "start_equity", "end_equity", "alpha", "beta",
+        "volatility", "information_ratio",
+    )
+    client = get_client()
+    try:
+        result = client.query(
+            "SELECT " + ", ".join(columns)
+            + " FROM strategy_runs FINAL WHERE run_id = %(run_id)s LIMIT 1",
+            parameters={"run_id": job_id},
+        )
+        if not result.result_rows:
+            return None
+        row = result.result_rows[0]
+        return {
+            key: (float(value) if isinstance(value, (float, int)) else None)
+            for key, value in zip(columns, row)
+        }
+    finally:
+        client.close()
+
+
+def _read_lean_result_summary(output_path: Path) -> dict[str, int | float | None] | None:
+    """Extract compact metrics from LEAN's summary without writing to ClickHouse."""
+    summary_files = sorted(output_path.glob("*-summary.json"))
+    if not summary_files:
+        return None
+    try:
+        payload = json.loads(summary_files[0].read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Could not read LEAN summary: {exc}") from exc
+    statistics = payload.get("statistics")
+    if not isinstance(statistics, dict):
+        raise RuntimeError("LEAN summary is missing its statistics object")
+
+    def number(key: str) -> float | None:
+        raw = statistics.get(key)
+        if raw is None:
+            return None
+        text = str(raw).strip().replace(",", "").replace("$", "")
+        is_percent = text.endswith("%")
+        if is_percent:
+            text = text[:-1].strip()
+        try:
+            value = float(text)
+        except (TypeError, ValueError):
+            return None
+        return value / 100.0 if is_percent else value
+
+    return {
+        "total_return": number("Net Profit"),
+        "annual_return": number("Compounding Annual Return"),
+        "sharpe_ratio": number("Sharpe Ratio"),
+        "sortino_ratio": number("Sortino Ratio"),
+        "max_drawdown": number("Drawdown"),
+        "win_rate": number("Win Rate"),
+        # LEAN's Profit-Loss Ratio is average win / average loss, not the
+        # closed-trade profit factor stored by SigmaRail's backtest report.
+        "profit_factor": None,
+        "total_orders": number("Total Orders"),
+        "total_fees": number("Total Fees"),
+        "start_equity": number("Start Equity"),
+        "end_equity": number("End Equity"),
+        "alpha": number("Alpha"),
+        "beta": number("Beta"),
+        "volatility": number("Annual Standard Deviation"),
+        "information_ratio": number("Information Ratio"),
+    }
 
 
 def _build_lean_cmd(
@@ -637,12 +884,11 @@ def _build_lean_cmd(
     container_ch_host: str,
     container_ch_port: str,
     container_ch_user: str,
-    container_ch_password: str,
     container_ch_database: str,
+    algorithm_parameters: dict[str, Any] | None = None,
     data_mode: str | None = None,
     extra_env: dict[str, str] | None = None,
     sigmarail_api_url: str | None = None,
-    sigmarail_api_key: str | None = None,
 ) -> list[str]:
     """Build argv for lean_backtest_composite.py (matches smoke_backtest_local.sh)."""
     wrapper = lean_root / str(project["composite_wrapper"])
@@ -667,16 +913,28 @@ def _build_lean_cmd(
         "--parameter", "clickhouse-host", container_ch_host,
         "--parameter", "clickhouse-http-port", container_ch_port,
         "--parameter", "clickhouse-user", container_ch_user,
-        "--parameter", "clickhouse-password", container_ch_password,
         "--parameter", "clickhouse-database", container_ch_database,
         "--parameter", "clickhouse-timeout-seconds", "300",
         "--parameter", "initialization-timeout", "1800",
         "--extra-docker-config", extra_docker_config,
     ]
+    # LEAN reads runtime parameters from the CLI's --parameter flags. The
+    # staged project config.json is used for lineage/artifact recording and
+    # does not populate QCAlgorithm.GetParameter() inside the Docker runner.
+    # Forward the immutable strategy snapshot's parameters explicitly.
+    for key, value in (algorithm_parameters or {}).items():
+        if value is None or str(key) in {
+            "start-date", "end-date", "run-id", "sigmarail-strategy-id"
+        }:
+            continue
+        parameter_value = (
+            json.dumps(value, sort_keys=True)
+            if isinstance(value, (dict, list))
+            else str(value)
+        )
+        cmd.extend(["--parameter", str(key), parameter_value])
     if sigmarail_api_url:
         cmd.extend(["--parameter", "sigmarail-api-url", sigmarail_api_url])
-    if sigmarail_api_key:
-        cmd.extend(["--parameter", "sigmarail-api-key", sigmarail_api_key])
     if data_mode:
         cmd.extend(["--parameter", "clickhouse-data-mode", data_mode])
     env = extra_env or {}
@@ -729,6 +987,7 @@ def submit_job(
     return job_id
 
 
+@_cleanup_lean_config_after_job
 def run_job(
     job_id: str,
     ir_id: str,
@@ -752,7 +1011,12 @@ def run_job(
     lean_project = str(project["id"])
 
     lean_root = lean_projects_root()
-    staged = stage_lean_project(lean_root, job_id=job_id, strategy_id=ir_id)
+    staged = stage_lean_project(
+        lean_root,
+        job_id=job_id,
+        strategy_id=ir_id,
+        algorithm_parameters=_strategy_algorithm_parameters(extra_env),
+    )
     project = dict(project)
     project["lean_cli_name"] = staged.project_name
     project["config_json"] = str(staged.root / "config.json")
@@ -766,11 +1030,23 @@ def run_job(
     output_path = lean_root / output_rel
     output_path.mkdir(parents=True, exist_ok=True)
 
-    container_ch_host = os.environ.get("CLICKHOUSE_DOCKER_HOST", "host.docker.internal")
+    container_ch_host = _clickhouse_host_for_lean_container()
     container_ch_port = os.environ.get("CLICKHOUSE_PORT", "8123")
     container_ch_user = os.environ.get("CLICKHOUSE_USER", "testuser")
     container_ch_password = os.environ.get("CLICKHOUSE_PASSWORD", "testanalysis")
     container_ch_database = os.environ.get("CLICKHOUSE_DATABASE", "sigmarail")
+    lean_config_path = _write_lean_clickhouse_config(
+        lean_root=lean_root,
+        project=project,
+        job_id=job_id,
+        host=container_ch_host,
+        port=container_ch_port,
+        database=container_ch_database,
+        user=container_ch_user,
+        password=container_ch_password,
+    )
+    lean_project_config = dict(project)
+    lean_project_config["lean_config_overlay"] = str(lean_config_path)
 
     merged_env = _merge_extra_env(extra_env, lean_project=lean_project)
     docker_env: dict[str, str] = {
@@ -793,7 +1069,7 @@ def run_job(
 
     cmd = _build_lean_cmd(
         lean_root=lean_root,
-        project=project,
+        project=lean_project_config,
         output_rel=output_rel,
         image=image,
         start_date=start_date,
@@ -804,12 +1080,11 @@ def run_job(
         container_ch_host=container_ch_host,
         container_ch_port=container_ch_port,
         container_ch_user=container_ch_user,
-        container_ch_password=container_ch_password,
         container_ch_database=container_ch_database,
+        algorithm_parameters=_strategy_algorithm_parameters(merged_env),
         data_mode=merged_env.get("data_mode") or merged_env.get("data-mode") or merged_env.get("clickhouse-data-mode"),
         extra_env=merged_env,
         sigmarail_api_url=query_url,
-        sigmarail_api_key=query_key or None,
     )
 
     log_path = output_path / "lean-backtest.log"
@@ -844,6 +1119,19 @@ def run_job(
     finally:
         client.close()
 
+    if postgres_control:
+        current_status = _postgres_job_status(job_id)
+        if current_status is None:
+            raise RuntimeError(f"PostgreSQL backtest record disappeared for job {job_id}")
+        if current_status != "running":
+            return {
+                "job_id": job_id,
+                "status": current_status,
+                "lean_project": lean_project,
+                "log_path": str(log_path),
+                "output_path": str(output_path),
+            }
+
     if detach:
         worker_env = os.environ.copy()
         studio_root = str(Path(__file__).resolve().parents[2])
@@ -869,6 +1157,7 @@ def run_job(
                 start_new_session=True,
                 env=worker_env,
             )
+        lean_config_path.unlink(missing_ok=True)
         return {
             "job_id": job_id,
             "status": "running",
@@ -896,6 +1185,7 @@ def run_job(
                     elapsed = int((datetime.utcnow() - started_at).total_seconds())
                     est_rem = max(0, int((elapsed / prog) - elapsed)) if prog > 0.02 else 0
 
+                    cancelled = False
                     try:
                         if postgres_control:
                             from apps.sigmarail_bridge.models import WorkspaceBacktestReference
@@ -910,6 +1200,7 @@ def run_job(
                             ).result_rows
                             cancelled = bool(status_rows and status_rows[0][0] == "cancelled")
                         if cancelled:
+                            _stop_lean_container(job_id)
                             proc.terminate()
                             try:
                                 proc.wait(timeout=5)
@@ -917,7 +1208,13 @@ def run_job(
                                 proc.kill()
                             break
                     except Exception:
-                        pass
+                        if cancelled:
+                            logger.exception(
+                                "Could not stop LEAN Docker container for cancelled job %s",
+                                job_id,
+                            )
+                            continue
+                        logger.exception("Could not check cancellation status for job %s", job_id)
 
                     try:
                         if postgres_control:
@@ -958,6 +1255,7 @@ def run_job(
         telemetry_thread.start()
 
         returncode = proc.wait()
+        lean_config_path.unlink(missing_ok=True)
         stop_telemetry.set()
         telemetry_thread.join(timeout=3.0)
 
@@ -995,22 +1293,60 @@ def run_job(
         final_status = "done" if succeeded else "failed"
         error_msg = "" if succeeded else f"lean exited rc={returncode}"
 
+    result_summary = None
     if succeeded and not is_cancelled:
         try:
-            _insert_strategy_run(
-                lean_root=lean_root,
-                project=project,
-                output_path=output_path,
-                job_id=job_id,
-                ir_id=ir_id,
-                start_date=start_date,
-                end_date=end_date,
-                image=image,
-                extra_env=merged_env,
-            )
+            if postgres_control:
+                # PostgreSQL owns tenant-scoped job state and the compact
+                # summary. ClickHouse remains the analytical store for the
+                # LEAN report, order, trade, accounting, and chart artifacts;
+                # persist those through SigmaRail's existing recorder so the
+                # tenant-checked API/MCP report path can read them.
+                result_summary = _read_lean_result_summary(output_path)
+                if result_summary is None:
+                    raise RuntimeError("LEAN completed without producing a summary JSON")
+                _insert_strategy_run(
+                    lean_root=lean_root,
+                    project=project,
+                    output_path=output_path,
+                    job_id=job_id,
+                    ir_id=ir_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    image=image,
+                    clickhouse_host=container_ch_host,
+                    clickhouse_port=container_ch_port,
+                    clickhouse_user=container_ch_user,
+                    clickhouse_password=container_ch_password,
+                    clickhouse_database=container_ch_database,
+                    extra_env=merged_env,
+                )
+            else:
+                # Retain the ClickHouse recorder for legacy jobs that have no
+                # AppTension-owned Postgres control record.
+                _insert_strategy_run(
+                    lean_root=lean_root,
+                    project=project,
+                    output_path=output_path,
+                    job_id=job_id,
+                    ir_id=ir_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    image=image,
+                    clickhouse_host=container_ch_host,
+                    clickhouse_port=container_ch_port,
+                    clickhouse_user=container_ch_user,
+                    clickhouse_password=container_ch_password,
+                    clickhouse_database=container_ch_database,
+                    extra_env=merged_env,
+                )
+                try:
+                    result_summary = _read_strategy_run_summary(job_id)
+                except Exception:
+                    logger.exception("Could not read result metrics for backtest %s", job_id)
         except Exception as exc:
             final_status = "failed"
-            error_msg = f"insert_strategy_run failed: {exc}"
+            error_msg = f"Backtest result persistence failed: {exc}"
 
     elapsed_final = int((completed_at - started_at).total_seconds())
     if postgres_control:
@@ -1021,9 +1357,15 @@ def run_job(
             progress_pct=1.0 if final_status == "done" else 0.0,
             elapsed_seconds=elapsed_final, estimated_remaining_seconds=0,
             last_heartbeat=completed_at,
+            result_summary=result_summary,
         )
         if not updated:
-            raise RuntimeError(f"Could not persist final PostgreSQL state for job {job_id}")
+            persisted_status = _postgres_job_status(job_id)
+            if persisted_status not in {"done", "failed", "cancelled"}:
+                raise RuntimeError(f"Could not persist final PostgreSQL state for job {job_id}")
+            final_status = persisted_status
+            if final_status == "cancelled":
+                error_msg = "Cancelled by user"
     else:
         client = get_client()
         try:
@@ -1058,6 +1400,7 @@ def run_job(
         "log_path": str(log_path),
         "output_path": str(output_path),
         "error_message": error_msg,
+        "result_summary": result_summary,
     }
 
 

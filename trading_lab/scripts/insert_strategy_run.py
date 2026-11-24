@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from urllib.parse import urlencode
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,8 +28,22 @@ def _require_env(name: str) -> str:
     return os.environ[name].strip()
 
 
-def post_jsoneachrow(host: str, port: str, user: str, password: str, table: str, row: dict) -> None:
-    url = f"http://{host}:{port}/?query=INSERT%20INTO%20{table}%20FORMAT%20JSONEachRow"
+def post_jsoneachrow(
+    host: str,
+    port: str,
+    database: str,
+    user: str,
+    password: str,
+    table: str,
+    row: dict,
+) -> None:
+    query = urlencode(
+        {
+            "database": database,
+            "query": f"INSERT INTO {table} FORMAT JSONEachRow",
+        }
+    )
+    url = f"http://{host}:{port}/?{query}"
     payload = (json.dumps(row, separators=(",", ":")) + "\n").encode("utf-8")
     req = urllib.request.Request(url, data=payload, method="POST")
     req.add_header("Content-Type", "application/json")
@@ -46,6 +61,21 @@ def read_text(path: str, max_bytes: int = 15_000_000) -> str:
     if len(data) > max_bytes:
         raise RuntimeError(f"Artifact too large (> {max_bytes} bytes): {path}")
     return data.decode("utf-8", errors="replace")
+
+
+def read_optional_artifact(path: str, *, artifact_type: str, max_bytes: int = 15_000_000) -> str:
+    """Read an optional artifact, skipping oversized snapshots without losing run metrics."""
+    if not path:
+        return ""
+    size = Path(path).stat().st_size
+    if size > max_bytes:
+        print(
+            f"Omitting optional {artifact_type} artifact ({size} bytes exceeds {max_bytes}); "
+            "the full artifact remains in the run output directory.",
+            file=sys.stderr,
+        )
+        return ""
+    return read_text(path, max_bytes=max_bytes)
 
 
 def build_parameters_blob(
@@ -117,6 +147,7 @@ def main() -> int:
 
     host = _require_env("CLICKHOUSE_HOST")
     port = (os.environ.get("CLICKHOUSE_PORT") or "8123").strip()
+    database = _require_env("CLICKHOUSE_DATABASE")
     user = _require_env("CLICKHOUSE_USER")
     password = _require_env("CLICKHOUSE_PASSWORD")
 
@@ -185,7 +216,9 @@ def main() -> int:
         ir_content_hash=args.ir_content_hash or None,
     )
 
-    post_jsoneachrow(host, port, user, password, "strategy_runs", record.to_clickhouse_row())
+    post_jsoneachrow(
+        host, port, database, user, password, "strategy_runs", record.to_clickhouse_row()
+    )
 
     def insert_artifact(artifact_type: str, content: str) -> None:
         if not content:
@@ -197,12 +230,21 @@ def main() -> int:
             artifact_type=artifact_type,
             artifact_json=content,
         )
-        post_jsoneachrow(host, port, user, password, "strategy_run_artifacts", art.to_clickhouse_row())
+        post_jsoneachrow(
+            host, port, database, user, password,
+            "strategy_run_artifacts", art.to_clickhouse_row(),
+        )
 
     insert_artifact("summary", json.dumps(summary, separators=(",", ":")))
     insert_artifact("backtest_results", backtest_content)
     insert_artifact("order_events", read_text(args.order_events_json))
-    insert_artifact("backtest_day_snapshots", read_text(args.day_snapshots_json))
+    insert_artifact(
+        "backtest_day_snapshots",
+        read_optional_artifact(
+            args.day_snapshots_json,
+            artifact_type="backtest_day_snapshots",
+        ),
+    )
     insert_artifact("accounting_ledger", read_text(args.accounting_json))
 
     print(f"Inserted run_id={args.run_id} run_type={args.run_type} into ClickHouse")

@@ -117,6 +117,12 @@ type Query {
   sigmarailBacktestReport(runId: String!, tenantId: ID!): GenericScalar
   "Compare two tenant-owned backtest reports and their principal performance metrics."
   sigmarailBacktestCompare(runIdA: String!, runIdB: String!, tenantId: ID!): GenericScalar
+  "List live and paper deployments owned by the active tenant, with strategy version, approval run, environment, lifecycle state, and timestamps."
+  sigmarailLiveDeployments(limit: Int, status: String, tenantId: ID!): GenericScalar
+  "Read one tenant-owned deployment and its latest analytical account snapshot. The snapshot may lag the broker/runtime mark; its timestamp is returned separately."
+  sigmarailLiveDeployment(deploymentId: String!, tenantId: ID!): GenericScalar
+  "Read a bounded historical series of daily live account snapshots for one tenant-owned deployment. This is analytical reporting, not a broker control surface."
+  sigmarailLivePerformance(deploymentId: String!, days: Int, tenantId: ID!): GenericScalar
   "Read the market-regime and allocation context for one session date."
   sigmarailMarketRegime(asOfDate: String!, tenantId: ID!): GenericScalar
   "Explain the regime allocation for a ticker and session date, optionally for a named policy."
@@ -1436,6 +1442,8 @@ type ApiMutation {
   sigmarailSubmitBacktest(tenantId: ID!, irId: String!, startDate: String!, endDate: String!, idempotencyKey: String!, costAssumptions: GenericScalar, outOfSamplePeriod: GenericScalar): GenericScalar
   "Record a tenant-owned research verdict for a successfully completed backtest. Allowed decisions are retain, revise, discard, and defer. This records a review decision only; it does not change strategies, launch jobs, or place trades."
   sigmarailRecordExperimentDecision(tenantId: ID!, jobId: String!, decision: String!, rationale: String!, evidence: GenericScalar): GenericScalar
+  "Cancel a pending or running backtest job owned by the active tenant. Does not affect live deployments or broker orders."
+  sigmarailCancelBacktest(jobId: String!, tenantId: ID!): GenericScalar
   "Create or update backup configuration for a tenant."
   updateBackupConfig(input: BackupConfigInput!): UpdateBackupConfigMutation
   "Delete a backup record and its file."

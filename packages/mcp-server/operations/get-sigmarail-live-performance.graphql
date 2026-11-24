@@ -1,0 +1,4 @@
+# Read bounded daily account snapshots for a tenant-owned deployment.
+query GetSigmaRailLivePerformance($tenantId: ID!, $deploymentId: String!, $days: Int) {
+  sigmarailLivePerformance(tenantId: $tenantId, deploymentId: $deploymentId, days: $days)
+}

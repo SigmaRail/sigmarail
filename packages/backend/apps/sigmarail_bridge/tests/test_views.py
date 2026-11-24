@@ -12,6 +12,7 @@ from apps.sigmarail_bridge.models import (
     WorkspaceOptimizerReference,
     WorkspaceStrategyReference,
 )
+from sigmarail_studio_mcp.backtest_runner.worker import _claim_pending_job
 
 pytestmark = pytest.mark.django_db
 
@@ -320,20 +321,15 @@ def test_submitted_backtest_is_assigned_to_the_active_workspace(user, tenant, te
     )
     client = APIClient()
     client.force_authenticate(user=user)
-    upstream_request = httpx.Request("POST", "http://studio-api.internal:8001/api/backtests/jobs")
-
-    def submit(method, url, *, content, **kwargs):
-        payload = json.loads(content)
-        return httpx.Response(
-            202,
-            request=upstream_request,
-            json={"job_id": payload["job_id"], "status": "pending"},
-        )
-
-    with patch("apps.sigmarail_bridge.views.dispatch_api_request", side_effect=submit) as upstream:
+    with patch("apps.sigmarail_bridge.views.dispatch_api_request") as upstream:
         response = client.post(
             "/api/backtests/jobs",
-            {"ir_id": "strategy-a", "start_date": "2025-01-01", "end_date": "2026-01-01"},
+            {
+                "ir_id": "strategy-a",
+                "start_date": "2025-01-01",
+                "end_date": "2026-01-01",
+                "extra_env": {"initial-cash": "250000", "benchmark": "SPY"},
+            },
             format="json",
             HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
         )
@@ -345,11 +341,52 @@ def test_submitted_backtest_is_assigned_to_the_active_workspace(user, tenant, te
     assert reference.ir_id == "strategy-a"
     assert reference.tenant == tenant
     assert reference.created_by == user
-    forwarded_payload = json.loads(upstream.call_args.kwargs["content"])
-    assert forwarded_payload["job_id"] == reference.job_id
+    assert response.json()["status"] == "pending"
+    assert response.json()["run_id"] == reference.run_id
     assert reference.strategy_snapshot == {"SchemaVersion": 2}
     assert reference.strategy_content_hash == "f" * 64
-    assert forwarded_payload["extra_env"]["SIGMARAIL_STRATEGY_BASE64"]
+    assert reference.configuration["evaluation"] == {
+        "initial-cash": "250000",
+        "benchmark": "SPY",
+    }
+    upstream.assert_not_called()
+    claimed = _claim_pending_job()
+    assert claimed["job_id"] == reference.job_id
+    assert claimed["evaluation"] == {"initial-cash": "250000", "benchmark": "SPY"}
+    assert claimed["strategy_content_hash"] == "f" * 64
+    reference.refresh_from_db()
+    assert reference.status == "running"
+
+
+@pytest.mark.parametrize("path", ["/api/backtests/jobs", "/api/backtests/jobs/visible-job"])
+def test_backtest_status_exposes_recorded_result_metrics(path, user, tenant, tenant_membership_factory):
+    tenant_membership_factory(user=user, tenant=tenant)
+    WorkspaceBacktestReference.objects.create(
+        tenant=tenant,
+        created_by=user,
+        ir_id="strategy-a",
+        job_id="visible-job",
+        run_id="visible-job",
+        status="done",
+        configuration={"start_date": "2025-01-01", "end_date": "2025-12-31"},
+        result_summary={"total_return": 0.12, "sharpe_ratio": 1.4, "max_drawdown": 0.08},
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.get(
+        path,
+        HTTP_X_TENANT_ID=to_global_id("TenantType", tenant.id),
+    )
+
+    assert response.status_code == 200
+    if path.endswith("visible-job"):
+        assert response.json()["status"] == "done"
+        assert response.json()["result_summary"]["sharpe_ratio"] == 1.4
+    else:
+        job = response.json()["jobs"][0]
+        assert job["status"] == "done"
+        assert job["result_summary"]["total_return"] == 0.12
 
 
 def test_backtest_catalog_hides_other_workspaces_and_unassigned_legacy_rows(

@@ -247,6 +247,15 @@ def _row_dict(columns: list[str], row: tuple) -> dict[str, Any]:
     return dict(zip(columns, row))
 
 
+def _fixed_string(value: Any) -> str | None:
+    """Normalize ClickHouse FixedString values for JSON APIs."""
+    if value is None:
+        return None
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace").rstrip("\x00")
+    return str(value).strip()
+
+
 def _parse_summary_stats(summary_json: str) -> dict[str, Any]:
     try:
         summary = sanitize_artifact(json.loads(summary_json))
@@ -510,11 +519,15 @@ def _read_accounting_artifacts(client: Any, run_id: str, artifact_types: list[st
 def _strategy_lineage(client: Any, run_id: str, ir_content_hash: Any) -> dict[str, Any]:
     """Resolve only a run-bound snapshot; never substitute today's mutable spec."""
     rows = client.query(
-        "SELECT artifact_json FROM strategy_run_artifacts FINAL"
-        " WHERE run_id = %(run_id)s AND artifact_type = 'strategy_lineage' LIMIT 1",
+        "SELECT CAST(artifact_type AS String) AS artifact_type, artifact_json"
+        " FROM strategy_run_artifacts FINAL WHERE run_id = %(run_id)s",
         parameters={"run_id": run_id},
     )
-    if not rows.result_rows:
+    lineage_payload = next(
+        (row[1] for row in rows.result_rows if str(row[0]) == "strategy_lineage"),
+        None,
+    )
+    if lineage_payload is None:
         return {
             "snapshot_status": "unavailable",
             "content_hash": str(ir_content_hash or "").strip() or None,
@@ -529,7 +542,7 @@ def _strategy_lineage(client: Any, run_id: str, ir_content_hash: Any) -> dict[st
             "exact_reproduction_available": False,
         }
     try:
-        record = json.loads(rows.result_rows[0][0])
+        record = json.loads(lineage_payload)
     except (ValueError, TypeError, RecursionError):
         return {
             "snapshot_status": "unavailable",
@@ -543,7 +556,7 @@ def _strategy_lineage(client: Any, run_id: str, ir_content_hash: Any) -> dict[st
             "exact_reproduction_available": False,
         }
     snapshot = record.get("snapshot_json")
-    expected = str(ir_content_hash or "").strip()
+    expected = _fixed_string(ir_content_hash) or ""
     record_missing = record.get("missing_evidence", [])
     if not isinstance(record_missing, list) or not all(isinstance(item, str) for item in record_missing):
         return {
@@ -620,6 +633,7 @@ def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
         return {"error": f"run not found: {run_id}", "code": "not_found"}
 
     run = _row_dict(run_rows.column_names, run_rows.result_rows[0])
+    run["ir_content_hash"] = _fixed_string(run.get("ir_content_hash"))
     lineage = _strategy_lineage(client, run_id, run.get("ir_content_hash"))
 
     artifact_rows = client.query(

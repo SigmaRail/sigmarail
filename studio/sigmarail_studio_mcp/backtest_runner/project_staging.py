@@ -54,7 +54,13 @@ def _source_digest(source: Path) -> str:
     return digest.hexdigest()
 
 
-def stage_lean_project(lean_root: Path, *, job_id: str, strategy_id: str) -> StagedProject:
+def stage_lean_project(
+    lean_root: Path,
+    *,
+    job_id: str,
+    strategy_id: str,
+    algorithm_parameters: dict[str, Any] | None = None,
+) -> StagedProject:
     """Copy maintained source into a per-run LEAN project and inject run metadata.
 
     No strategy source is generated dynamically. The staged folder is a snapshot
@@ -93,12 +99,21 @@ def stage_lean_project(lean_root: Path, *, job_id: str, strategy_id: str) -> Sta
         config: dict[str, Any] = json.loads(template_path.read_text(encoding="utf-8"))
     else:
         config = {}
+    parameters = {"sigmarail-strategy-id": str(strategy_id)}
+    for key, value in (algorithm_parameters or {}).items():
+        if value is None:
+            continue
+        parameters[str(key)] = (
+            json.dumps(value, sort_keys=True)
+            if isinstance(value, (dict, list))
+            else str(value)
+        )
     config.update(
         {
             "algorithm-language": "Python",
             "algorithm-location": "main.py",
             "algorithm-type-name": "ClickHouseUniverseAlgorithm",
-            "parameters": {"sigmarail-strategy-id": str(strategy_id)},
+            "parameters": parameters,
         }
     )
     (destination / "config.json").write_text(

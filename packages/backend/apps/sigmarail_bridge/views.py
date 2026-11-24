@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import base64
 import hashlib
 import json
 import os
 import re
 import socket
 import uuid
+from datetime import date
 
 from django.db import IntegrityError
 from django.db import transaction
@@ -606,6 +606,7 @@ class DomainAPIRouteView(APIView):
                     "progress": progress,
                     **progress,
                     "error_message": job.error_message,
+                    "result_summary": job.result_summary,
                     "lean_output_path": progress.get("lean_output_path", ""),
                     "is_shared": False,
                 })
@@ -631,6 +632,7 @@ class DomainAPIRouteView(APIView):
                 "progress": progress,
                 "error_message": job.error_message,
                 "strategy_content_hash": job.strategy_content_hash,
+                "result_summary": job.result_summary,
                 "is_shared": False,
             })
 
@@ -940,57 +942,108 @@ class DomainAPIRouteView(APIView):
 
             if path == "backtests/jobs" and isinstance(request_payload, dict):
                 ir_id = str(request_payload.get("ir_id") or "").strip()
-                if ir_id:
-                    strategy = _accessible_strategy(workspace, request.user, ir_id)
-                    if strategy is None:
-                        return Response({"detail": "Strategy spec not found in this workspace."},
-                                        status=status.HTTP_404_NOT_FOUND)
-                    job_id = str(request_payload.get("job_id") or "").strip() or str(uuid.uuid4())
-                    request_payload["job_id"] = job_id
-                    algorithm_json = json.dumps(strategy.spec, separators=(",", ":"), sort_keys=True)
-                    strategy_hash = strategy.content_hash or hashlib.sha256(
-                        algorithm_json.encode("utf-8")
-                    ).hexdigest()
-                    extra_env = request_payload.get("extra_env")
-                    if extra_env is None:
-                        extra_env = {}
-                    if not isinstance(extra_env, dict):
-                        return Response({"detail": "extra_env must be an object"},
-                                        status=status.HTTP_400_BAD_REQUEST)
-                    # The LEAN worker receives the immutable version selected at
-                    # queue time. It does not resolve an editable spec from CH.
-                    extra_env = dict(extra_env)
-                    extra_env["SIGMARAIL_STRATEGY_BASE64"] = base64.b64encode(
-                        algorithm_json.encode("utf-8")
-                    ).decode("ascii")
-                    extra_env["SIGMARAIL_STRATEGY_CONTENT_HASH"] = strategy_hash
-                    extra_env["SIGMARAIL_STRATEGY_SCHEMA_VERSION"] = str(strategy.spec_schema_version or 1)
-                    request_payload["extra_env"] = extra_env
+                if not ir_id:
+                    return Response({"detail": "ir_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+                strategy = _accessible_strategy(workspace, request.user, ir_id)
+                if strategy is None:
+                    return Response({"detail": "Strategy spec not found in this workspace."},
+                                    status=status.HTTP_404_NOT_FOUND)
+                job_id = str(request_payload.get("job_id") or "").strip() or str(uuid.uuid4())
+                request_payload["job_id"] = job_id
+                algorithm_json = json.dumps(strategy.spec, separators=(",", ":"), sort_keys=True)
+                strategy_hash = strategy.content_hash or hashlib.sha256(
+                    algorithm_json.encode("utf-8")
+                ).hexdigest()
+                extra_env = request_payload.get("extra_env")
+                if extra_env is None:
+                    extra_env = {}
+                if not isinstance(extra_env, dict):
+                    return Response({"detail": "extra_env must be an object"},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                start_date = str(request_payload.get("start_date") or "").strip()
+                end_date = str(request_payload.get("end_date") or "").strip()
+                try:
+                    parsed_start = date.fromisoformat(start_date)
+                    parsed_end = date.fromisoformat(end_date)
+                except ValueError:
+                    return Response(
+                        {"detail": "start_date and end_date must use YYYY-MM-DD format."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if parsed_end < parsed_start:
+                    return Response(
+                        {"detail": "end_date must be on or after start_date."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Only persist settings supported by both the UI and the
+                # isolated LEAN runner. Never let a request inject arbitrary
+                # environment variables into the worker/container.
+                evaluation = {}
+                unknown_settings = set(extra_env) - {"initial-cash", "benchmark"}
+                if unknown_settings:
+                    return Response(
+                        {"detail": "Unsupported backtest settings: " + ", ".join(sorted(unknown_settings))},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if "initial-cash" in extra_env:
                     try:
-                        backtest_reference = WorkspaceBacktestReference.objects.create(
-                            tenant=workspace,
-                            created_by=request.user,
-                            ir_id=ir_id,
-                            job_id=job_id,
-                            # SigmaRail's runner uses the job ID as its strategy_runs run ID.
-                            run_id=job_id,
-                            strategy_content_hash=strategy_hash,
-                            strategy_snapshot=strategy.spec,
-                            configuration={
-                                key: value for key, value in request_payload.items()
-                                if key not in {"extra_env", "job_id", "ir_id"}
-                            }
-                            | {
-                                "strategy_title": strategy.title,
-                                "strategy_schema_version": strategy.spec_schema_version or 1,
-                            },
-                        )
-                    except IntegrityError:
-                        return Response(
-                            {"detail": "This backtest job ID is already registered."},
-                            status=status.HTTP_409_CONFLICT,
-                        )
-                    forwarded_content = json.dumps(request_payload, separators=(",", ":")).encode("utf-8")
+                        cash = float(extra_env["initial-cash"])
+                    except (TypeError, ValueError):
+                        return Response({"detail": "initial-cash must be a positive number."},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    if not (0 < cash <= 1_000_000_000_000):
+                        return Response({"detail": "initial-cash must be a positive number."},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    evaluation["initial-cash"] = str(int(cash)) if cash.is_integer() else str(cash)
+                if "benchmark" in extra_env:
+                    benchmark = str(extra_env["benchmark"] or "").strip().upper()
+                    if not re.fullmatch(r"[A-Z0-9.^-]{1,20}", benchmark):
+                        return Response({"detail": "benchmark must be a valid ticker or index symbol."},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                    evaluation["benchmark"] = benchmark
+                try:
+                    backtest_reference = WorkspaceBacktestReference.objects.create(
+                        tenant=workspace,
+                        created_by=request.user,
+                        ir_id=ir_id,
+                        job_id=job_id,
+                        # SigmaRail's runner uses the job ID as its strategy_runs run ID.
+                        run_id=job_id,
+                        strategy_content_hash=strategy_hash,
+                        strategy_snapshot=strategy.spec,
+                        configuration={
+                            key: value for key, value in request_payload.items()
+                            if key not in {"extra_env", "job_id", "ir_id"}
+                        }
+                        | {
+                            "strategy_title": strategy.title,
+                            "strategy_schema_version": strategy.spec_schema_version or 1,
+                            "evaluation": evaluation,
+                        },
+                    )
+                except IntegrityError:
+                    return Response(
+                        {"detail": "This backtest job ID is already registered."},
+                        status=status.HTTP_409_CONFLICT,
+                    )
+                # PostgreSQL is the shared control plane for the API, MCP,
+                # and Linux worker. Queue here and let the worker claim the
+                # pinned strategy; do not fall through to Studio's legacy
+                # in-process runner (which has no Docker/LEAN runtime).
+                return Response(
+                    {
+                        "job_id": job_id,
+                        "run_id": job_id,
+                        "ir_id": ir_id,
+                        "status": backtest_reference.status,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "strategy_content_hash": strategy_hash,
+                        "is_shared": False,
+                    },
+                    status=status.HTTP_202_ACCEPTED,
+                )
 
             if path == "live/deployments" and isinstance(request_payload, dict):
                 ir_id = str(request_payload.get("ir_id") or "").strip()

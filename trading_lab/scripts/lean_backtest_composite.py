@@ -14,6 +14,7 @@ delegates to ``lean backtest``.
 from __future__ import annotations
 
 import sys
+import os
 from typing import Any
 
 COMPOSITE = "QuantConnect.Lean.Engine.DataFeeds.CompositeDataProvider"
@@ -42,6 +43,13 @@ def main(argv: list[str] | None = None) -> int:
     from lean.components.docker.lean_runner import LeanRunner
 
     original = LeanRunner.run_lean
+    from lean.components.docker import docker_manager
+
+    network_name = (os.environ.get("SIGMARAIL_BACKTEST_DOCKER_NETWORK") or "").strip()
+    if network_name:
+        # DockerManager otherwise forces LEAN's isolated ``lean_cli`` bridge.
+        # Use Compose's bridge so the LEAN job can resolve backend/ClickHouse.
+        docker_manager.DOCKER_NETWORK = network_name
 
     def run_lean(self, lean_config, *args, **kwargs):  # type: ignore[no-untyped-def]
         _force_composite(lean_config)

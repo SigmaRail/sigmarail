@@ -947,7 +947,7 @@ function JobsStrip({
   const liveJobs = jobs.filter(
     (j) => j.status === "pending" || j.status === "running",
   );
-  const activeJobs = liveJobs;
+  const visibleJobs = jobs.slice(0, 5);
 
   if (jobsQuery.isLoading && jobs.length === 0) {
     return (
@@ -978,7 +978,7 @@ function JobsStrip({
       </div>
     );
   }
-  if (activeJobs.length === 0) return null;
+  if (visibleJobs.length === 0) return null;
 
   return (
     <div className="border-b border-line bg-surface px-3 py-2">
@@ -992,10 +992,24 @@ function JobsStrip({
         ) : null}
       </div>
       <ul className="mt-1.5 max-h-36 space-y-1.5 overflow-y-auto">
-        {activeJobs.map((j) => {
+        {visibleJobs.map((j) => {
           const isRunning = j.status === "running";
           const pct = Math.min(100, Math.max(0, Math.round((j.progress_pct ?? 0) * 100)));
           const isSelected = j.job_id === selectedRunId;
+          const summary = j.result_summary ?? {};
+          const metrics: string[] = [];
+          if (typeof summary.total_return === "number") {
+            metrics.push(`Return ${(summary.total_return * 100).toFixed(1)}%`);
+          }
+          if (typeof summary.sharpe_ratio === "number") {
+            metrics.push(`Sharpe ${summary.sharpe_ratio.toFixed(2)}`);
+          }
+          if (typeof summary.max_drawdown === "number") {
+            metrics.push(`Drawdown ${(summary.max_drawdown * 100).toFixed(1)}%`);
+          }
+          if (metrics.length === 0 && typeof summary.total_orders === "number") {
+            metrics.push(`${summary.total_orders} orders`);
+          }
           return (
             <li
               key={j.job_id}
@@ -1055,6 +1069,16 @@ function JobsStrip({
                       sim: {j.current_sim_date}
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+              {metrics.length > 0 ? (
+                <div className="mt-1 truncate text-[9px] text-ink-muted" title={metrics.join(" · ")}>
+                  {metrics.join(" · ")}
+                </div>
+              ) : null}
+              {j.status === "failed" && j.error_message ? (
+                <div className="mt-1 truncate text-[9px] text-danger" title={j.error_message}>
+                  {j.error_message}
                 </div>
               ) : null}
             </li>

@@ -770,13 +770,24 @@ class VeraScreenerPortfolioConstructionModel(PortfolioConstructionModel):
             ticker = insight.Symbol.Value if hasattr(insight.Symbol, "Value") else str(insight.Symbol)
             atr_pct = atrs.get(ticker)
             if atr_pct and atr_pct > 0:
-                weight = self._target_atr_risk / atr_pct
+                # ``atr_14_pct`` is stored in percentage points (for example,
+                # 2.5 means 2.5%), while target_atr_risk is a portfolio
+                # fraction (for example, 0.004 means 0.4%). Convert ATR to a
+                # fraction before sizing so the target represents the desired
+                # equity exposure to a one-ATR move.
+                atr_fraction = float(atr_pct) / 100.0
+                weight = self._target_atr_risk / atr_fraction
+                # A minimum position size must not override an explicit ATR
+                # risk budget. Apply only the upper bound to ATR-sized targets.
+                weight = min(self._max_weight, weight) * weight_scale
             else:
                 weight = (1.0 / self._max_positions) if self._max_positions > 0 else self._min_weight
-            weight = max(self._min_weight, min(self._max_weight, weight)) * weight_scale
+                # Preserve the configured min/max bounds for equal-weight
+                # fallback positions when ATR data is unavailable.
+                weight = max(self._min_weight, min(self._max_weight, weight)) * weight_scale
             if total_weight + weight > max_total_exposure:
                 weight = max(0.0, max_total_exposure - total_weight)
-            if weight < self._min_weight * max(weight_scale, 0.01):
+            if weight <= 0:
                 break
             total_weight += weight
             t = PortfolioTarget.Percent(algorithm, insight.Symbol, weight)

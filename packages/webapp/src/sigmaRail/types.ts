@@ -614,6 +614,7 @@ export type BacktestJobListItem = {
   completed_at?: string | null;
   lean_output_path?: string | null;
   error_message?: string | null;
+  result_summary?: Record<string, number | null> | null;
   extra_env?: string | null;
   progress_pct?: number | null;
   current_sim_date?: string | null;

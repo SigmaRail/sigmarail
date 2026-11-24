@@ -37,7 +37,7 @@
       "revision": "bdcd04a2b6ddf5a36427c4b486f48eab57edbc9e"
     },
     "sigmarail": {
-      "content_sha256": "f39320414ef5d1933e6128a239e4a2c56466dc6ac6948a48b45456992ad4a6af",
+      "content_sha256": "33f0602ab2607927b694e159e1e83614bdc5b36eb7ca2a764f762f5bf078d071",
       "hashed_paths": [
         "tools/generate_lineage_manifest.py",
         "src/sigmarail/query.py",
@@ -65,7 +65,7 @@
       "revision": null
     },
     "trading_lab": {
-      "content_sha256": "8b60875038f1f0a8dc7df70797fa9d36276408b57f9ebda1d05b421db884f75c",
+      "content_sha256": "270c214ed5c5fb058bb277ebdbe9ed9610d9f882cfa708bed426f4fdd38c54b6",
       "hashed_paths": [
         "src/sigmarail_lab/ir",
         "src/sigmarail_lab/runtime",

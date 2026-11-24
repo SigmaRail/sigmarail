@@ -5,8 +5,13 @@ import pytest
 from graphql_relay import to_global_id
 from rest_framework.test import APIClient
 
-from apps.sigmarail_bridge.graphql import Mutation
-from apps.sigmarail_bridge.models import WorkspaceBacktestReference, WorkspaceScreen, WorkspaceStrategyReference
+from apps.sigmarail_bridge.graphql import Mutation, Query
+from apps.sigmarail_bridge.models import (
+    WorkspaceBacktestReference,
+    WorkspaceDeploymentReference,
+    WorkspaceScreen,
+    WorkspaceStrategyReference,
+)
 from sigmarail_spec.strategy import get_preset
 
 pytestmark = pytest.mark.django_db
@@ -130,6 +135,79 @@ def test_experiment_decision_is_saved_with_hashes_and_actor(user, tenant):
     assert event["strategy_content_hash"] == "strategy-sha256"
     assert event["request_hash"] == "request-sha256"
     assert event["recorded_by"] == str(user.pk)
+
+
+def test_cancel_backtest_only_cancels_active_job_owned_by_tenant(user, tenant):
+    job = WorkspaceBacktestReference.objects.create(
+        tenant=tenant, created_by=user, job_id="cancel-me", ir_id="strategy-a", status="running"
+    )
+    expected = {"ok": True, "status": 200}
+    info = SimpleNamespace(context=SimpleNamespace(user=user))
+    with (
+        patch("apps.sigmarail_bridge.graphql._authorize_tenant", return_value=tenant),
+        patch("apps.sigmarail_bridge.graphql._workspace_api_call", return_value=expected) as api_call,
+    ):
+        result = Mutation.resolve_sigmarail_cancel_backtest(None, info, "tenant-id", job.job_id)
+
+    job.refresh_from_db()
+    assert result["ok"] is True
+    assert result["status"] == "cancelled"
+    assert api_call.call_args.args[2:5] == (
+        "POST", "/api/backtests/jobs/cancel-me/cancel", {}
+    )
+    assert job.status == "cancelled"
+
+
+def test_cancel_backtest_rejects_job_from_another_tenant(user, tenant, tenant_factory):
+    other_tenant = tenant_factory()
+    job = WorkspaceBacktestReference.objects.create(
+        tenant=other_tenant, created_by=user, job_id="private-job", ir_id="strategy-a", status="running"
+    )
+    with (
+        patch("apps.sigmarail_bridge.graphql._authorize_tenant", return_value=tenant),
+        patch("apps.sigmarail_bridge.graphql._workspace_api_call") as api_call,
+    ):
+        result = Mutation.resolve_sigmarail_cancel_backtest(
+            None, SimpleNamespace(context=SimpleNamespace(user=user)), "tenant-id", job.job_id
+        )
+
+    assert result["ok"] is False
+    assert result["code"] == "BACKTEST_NOT_FOUND"
+    api_call.assert_not_called()
+
+
+def test_live_deployment_list_is_scoped_to_selected_tenant(user, tenant, tenant_factory):
+    other_tenant = tenant_factory()
+    WorkspaceDeploymentReference.objects.create(
+        tenant=tenant, created_by=user, deployment_id="tenant-deployment", ir_id="strategy-a", status="running"
+    )
+    WorkspaceDeploymentReference.objects.create(
+        tenant=other_tenant, created_by=user, deployment_id="other-deployment", ir_id="strategy-b", status="running"
+    )
+    info = SimpleNamespace(context=SimpleNamespace(user=user))
+    with patch("apps.sigmarail_bridge.graphql._authorize_tenant", return_value=tenant):
+        result = Query.resolve_sigmarail_live_deployments(None, info, "tenant-id")
+
+    assert result["count"] == 1
+    assert result["deployments"][0]["deployment_id"] == "tenant-deployment"
+
+
+def test_live_performance_rejects_another_tenants_deployment_before_clickhouse(user, tenant, tenant_factory):
+    other_tenant = tenant_factory()
+    WorkspaceDeploymentReference.objects.create(
+        tenant=other_tenant, created_by=user, deployment_id="private-deployment", ir_id="strategy-a", status="running"
+    )
+    info = SimpleNamespace(context=SimpleNamespace(user=user))
+    with (
+        patch("apps.sigmarail_bridge.graphql._authorize_tenant", return_value=tenant),
+        patch("apps.sigmarail_bridge.graphql._clickhouse_client") as clickhouse_client,
+    ):
+        result = Query.resolve_sigmarail_live_performance(
+            None, info, "private-deployment", "tenant-id"
+        )
+
+    assert result["code"] == "not_found"
+    clickhouse_client.assert_not_called()
 
 
 def test_graphql_screen_mutation_persists_tenant_owned_screen(user, tenant, tenant_membership_factory):

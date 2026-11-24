@@ -1,0 +1,4 @@
+# Inspect one tenant-owned deployment and its most recent analytical snapshot.
+query GetSigmaRailLiveDeployment($tenantId: ID!, $deploymentId: String!) {
+  sigmarailLiveDeployment(tenantId: $tenantId, deploymentId: $deploymentId)
+}
