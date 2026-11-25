@@ -1,47 +1,45 @@
 # SigmaRail — Local Stock Research and Automated Trading
 
-SigmaRail is an open-source platform for researching U.S. stocks, testing trading
-strategies, and running them live. You can run the SigmaRail stack and its ClickHouse
-data warehouse on your own hardware. The warehouse holds the historical market data
-you load and the indicators and metrics SigmaRail calculates from it. As you import
-new data, the warehouse remains available to Studio and the trading engine for
-screening, historical research, and backtesting. For live trading, LEAN uses the
-live data feed and brokerage account you configure.
+SigmaRail is an open-source platform for researching U.S. stocks, testing strategies,
+and trading them automatically. You can run the entire platform on your own hardware.
+Its ClickHouse data warehouse stores the historical market data you load and the
+indicators SigmaRail calculates from it. The warehouse stays local and can be updated
+when you import more data. Studio uses the warehouse to explore stocks and market
+conditions over time and to screen historical data. The trading engine uses it to
+test strategies against historical prices and screening results.
 
-## Research stocks across time
+## Study stocks and market conditions over time
 
-SigmaRail lets you evaluate stock screens on past dates, see which stocks met the
-criteria then, and follow how the qualifying list changed as the market changed.
-For example, screen for stocks trading above rising long-term moving averages and
-showing strong relative strength. Review the results across a market decline and
-recovery to see which stocks continued to qualify and when others joined or left.
+Run a screen on historical dates to see which stocks met your criteria on each date.
+Track when stocks entered or left the list as their prices and indicators changed.
+For example, screen for stocks above rising long-term moving averages with strong
+relative strength, then follow which stocks continued to qualify through a market
+decline and recovery.
 
-The formulas behind SigmaRail's indicators and screening metrics are defined in
-readable SQL views. Traders and researchers can inspect the calculations and their
-inputs, reproduce a formula, or test a screening method they encountered in another
-trading system against their own historical data.
+SigmaRail defines its indicators and screening metrics in readable SQL views. You can
+inspect the formulas and source fields, reproduce a calculation, or recreate a screen
+from another trading system and test it against your own historical data.
 
-## Turn research into a trading strategy
+## Use your screens in trading strategies
 
-SigmaRail uses one expression language to define both stock screens and strategy
-rules. A screen can determine which stocks are eligible on each date of a backtest.
-Strategy rules define when to buy or sell, how much to hold, and when to reduce or
-exit a position. You can backtest the strategy, compare runs, and review simulated
-orders, fills, returns, and drawdowns.
+Use the same expression language to define stock screens and strategy rules. A screen
+sets which stocks are eligible to trade on each date of a backtest. Strategy rules say
+when to buy or sell, how much to hold, and when to reduce or exit a position. Backtest
+the strategy, compare runs, and review simulated orders, fills, returns, and drawdowns.
 
-SigmaRail's customized version of QuantConnect LEAN reads historical stock prices
-and volume from ClickHouse and gets the eligible stock list from SigmaRail's
-screening service. After reviewing a backtest, you can deploy that strategy version
-to a configured paper or live brokerage account. LEAN runs the strategy against the
-configured live data feed and submits orders through the brokerage. Studio shows
-deployment status, holdings, and recent orders.
+SigmaRail's customized version of QuantConnect LEAN runs backtests using historical
+prices and volume from ClickHouse. It also requests the eligible stock list from
+SigmaRail's screening service, so the screen's rules determine which stocks the
+strategy can trade on each date. After reviewing a backtest, deploy that strategy to
+a configured paper or live brokerage account. In live trading, LEAN processes your
+live data feed and submits orders through the brokerage. Studio shows the deployment
+status, holdings, and recent orders.
 
 ## Work with AI agents
 
-SigmaRail includes a self-describing MCP connector for AI agents. It explains the
-platform, its data, expressions, and available tools as an agent works with SigmaRail.
-An agent can use that context to create screening and strategy specifications for
-you to research and backtest.
+SigmaRail's MCP connector describes the platform, its datasets, expressions, and tools
+to AI agents as they work. Agents can use that information to draft screens and
+strategy specifications for you to review and backtest.
 
 ## Get started
 
@@ -62,12 +60,11 @@ python3 -m venv .venv
 ### Connect data and build the screening tables
 
 You need a running ClickHouse server and a data source whose terms permit your
-intended use. SigmaRail does not provide market-data files, provider accounts,
-API credentials, or data licenses. The current core tables follow Sharadar's
-data schema, and the Sharadar importer uses an API key that you obtain directly
-from Sharadar. If you use that importer, it downloads data into the ClickHouse
-instance you configure. Sharadar is one external source option; SigmaRail is not
-affiliated with or endorsed by Sharadar.
+intended use. SigmaRail does not provide market data, provider accounts, API
+credentials, or data licenses. The core database schema currently follows
+Sharadar's data format. If you have a Sharadar subscription, its importer can
+download your data into the ClickHouse instance you configure. Sharadar is one
+external source option; SigmaRail is not affiliated with or endorsed by it.
 
 1. Copy `config.yaml.example` to SigmaRail's user configuration directory and add
    your ClickHouse connection details and, if you choose Sharadar, your own
@@ -98,12 +95,11 @@ and start/update commands.
 ## How SigmaRail is implemented
 
 The research workbench includes screens, charts, watchlists, strategy editing,
-backtest review, and MCP access. The Python package provides data loading, schema
-management, derived screening metrics, and a bounded read-only query API. The
-screening schema currently includes 13 Sharadar source tables and their derived
-outputs. The field inventory is in [`spec/lineage-manifest.json`](spec/lineage-manifest.json);
-see [query API](docs/QUERY_API.md) and [lineage scope](docs/LINEAGE_SCOPE.md) for
-technical details.
+backtest review, and MCP access. The Python package loads data, manages the database
+schema, calculates screening metrics, and provides a read-only query interface. The
+current core schema includes 13 Sharadar source tables and derived data. See the
+[field inventory](spec/lineage-manifest.json), [query API](docs/QUERY_API.md), and
+[lineage scope](docs/LINEAGE_SCOPE.md) for technical details.
 
 ### Data providers and storage
 
@@ -114,7 +110,7 @@ Each provider controls its own access and license terms.
 
 | Source | Role in SigmaRail | Access and integration |
 | --- | --- | --- |
-| [Sharadar](https://sharadar.com/) | Current source for the Sharadar-shaped core tables: EOD stock and fund prices, fundamentals, and reference data. | The optional importer uses a Sharadar API key obtained by the user and writes into the user's configured ClickHouse. The user must obtain a license that permits their use. See [prices](https://sharadar.com/prices), [fundamentals](https://sharadar.com/fundamentals), [API docs](https://sharadar.com/docs/intro), and [Sharadar's terms](https://sharadar.com/terms). SigmaRail supplies no Sharadar account, key, data, or license. |
+| [Sharadar](https://sharadar.com/) | Data used by core tables, including end-of-day stock and fund prices, fundamentals, and securities reference data. | The optional importer uses a Sharadar API key supplied by the user and writes to the user's ClickHouse database. Users must obtain a license that permits their intended use. See [prices](https://sharadar.com/prices), [fundamentals](https://sharadar.com/fundamentals), [API docs](https://sharadar.com/docs/intro), and [Sharadar's terms](https://sharadar.com/terms). SigmaRail provides no Sharadar account, key, data, or license. |
 | [Alpaca Market Data](https://docs.alpaca.markets/us/v1.1/docs/about-market-data-api) | Optional five-minute stock bars. | The optional importer uses credentials and feed entitlements supplied by the user. See [feed notes](docs/ALPACA_INTRADAY.md) and Alpaca's terms. |
 | [AAII Investor Sentiment Survey](https://www.aaii.com/sentimentsurvey) | Weekly investor-sentiment readings. | Access to complete historical data is subject to AAII's terms and membership. |
 | [Dolt earnings dataset](https://www.dolthub.com/repositories/post-no-preference/earnings) | Street EPS consensus and reported actuals. | The public dataset is under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); that does not grant a Zacks or Nasdaq product license. |
