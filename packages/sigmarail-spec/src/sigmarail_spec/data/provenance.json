@@ -65,7 +65,7 @@
       "revision": null
     },
     "trading_lab": {
-      "content_sha256": "270c214ed5c5fb058bb277ebdbe9ed9610d9f882cfa708bed426f4fdd38c54b6",
+      "content_sha256": "59e6cc48ec6b0433cbf155346746e365bee174855e93d5d4ace633410dd602d8",
       "hashed_paths": [
         "src/sigmarail_lab/ir",
         "src/sigmarail_lab/runtime",
