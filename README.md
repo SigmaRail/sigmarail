@@ -1,178 +1,138 @@
-# SigmaRail — Open Securities Analytics Toolkit
+# SigmaRail — Automated Trading with LEAN
 
-SigmaRail is the Sharadar-only ClickHouse data layer for securities analytics. It
-contains the source-table schema, point-in-time transforms, and the dated
-technical, fundamental, rating, stage, and institutional-ownership tables used
-to build a screener.
+SigmaRail helps you develop, test, and run trading rules to make money while
+controlling risk. The rules identify what to trade, when to buy and sell, how
+much to trade, and what limits to follow. You can backtest them on historical
+data, then run them live through your brokerage.
 
-The Python distribution and default ClickHouse database are both named `sigmarail`.
-The package includes `sigmarail-load`, `sigmarail-populate`, and the `sigmarail-schema`
-command. `sigmarail-schema` previews the schema plan without changing the database;
-rerun with `sigmarail-schema --apply` to execute it. Applying creates all declared
-tables first, reconciles their columns and comments against the SQL-derived
-contract, then drops views in reverse dependency order and recreates them in
-manifest order. The SQL package contains schema definitions and transforms
-only; it contains no Sharadar data or credentials.
+SigmaRail is open source so anyone—a person or an automated agent—can trace a
+trade from the math behind it to the code and resulting order. That transparency
+lets people review and test the logic themselves and gives automation a clear
+process to follow.
 
-SigmaRail owns the columns declared for its core tables. Local plugins and other
-extensions must store their data in separate namespaced tables using
-`ext_<extension>_<table>` (for example, `ext_example_signal`); they must not
-add columns to SigmaRail tables. Missing core columns are planned for addition and
-changed comments for update. Undeclared columns appear as blockers by default.
-To explicitly delete them, run `sigmarail-schema --apply --drop-extra-columns`.
-Column type changes are reported and require an explicit migration. Tables
-outside the SigmaRail core contract are not inspected or modified.
+## From a trading idea to live orders
 
-## Core boundary
+Start by defining a screen: the rules that decide which stocks qualify. Backtest
+the screen to see which stocks it would have selected over time. Then build a
+strategy that says what to buy or sell, when to act, how much to trade, and what
+limits to follow. Backtest the complete strategy to simulate its trades and
+portfolio results, then compare runs and review the orders, trades, and performance.
 
-This repository also contains the SigmaRail Studio application. Its Django REST API,
-React/Vite frontend, and consolidated Studio MCP live under `studio/`; the core Python
-package and its SQL remain under `src/sigmarail/` and `sql/`. These are separate code
-areas in one repository and share the same root test harness. The versioned
-`sigmarail-spec` contract is maintained in `packages/sigmarail-spec/` as an
-independently versioned Python distribution. The custom LEAN engine remains a separate repository.
+LEAN organizes a strategy's rules into five parts:
 
-The schema includes the 13 Sharadar source tables and the complete SQL
-dependency closure for these primary screener outputs:
+- **Universe:** which stocks the strategy is allowed to trade.
+- **Alpha:** the conditions that tell it when to buy or sell.
+- **Portfolio Construction:** how much to hold in each stock.
+- **Risk Management:** limits on positions and conditions for reducing or exiting them.
+- **Execution:** how and when orders are sent and handled.
 
-- `screener_price_tech_daily`
-- `screener_fundamentals_daily`
-- `screener_ratings_daily`
-- `screener_stage_weekly_daily`
-- `screener_ownership_daily`
+When you run a strategy live, LEAN uses current market data and sends real orders
+through the connected brokerage. Screens, charts, watchlists, and market views
+support the work of finding and evaluating trading opportunities.
 
-The schema also includes Sharadar-only SQL transforms for asset returns,
-factor residuals and screener factors, forecasts, forward returns, VCP pivots,
-group strength, SATA score, RVAB, market context, canonical regime signals,
-and per-symbol technical features. `daily_prices` is included as a normalized
-OHLCV surface. Each included derived table resolves through its SQL inputs to
-Sharadar source tables.
-The field-level inventory and source closure are in
-[`spec/lineage-manifest.json`](spec/lineage-manifest.json); scope decisions are
-recorded in [`docs/LINEAGE_SCOPE.md`](docs/LINEAGE_SCOPE.md).
-The current inventory contains 70 tables and 1,844 columns, including all 13
-Sharadar source-table schemas.
+## Why use explicit trading rules
 
-KB sentiment, portfolio allocations, and policy-composed regime/backtest views
-remain outside the core. Analyst estimates, AAII sentiment, ETF/index data, and
-macro data are available as separately selected schema modules; they are not
-created or populated by the default install. The excluded fields and tables
-are enumerated in the lineage spec. The external-overlay `gic_*` fields are
-omitted from `ticker_classification_daily`.
+Trading decisions need to be repeatable, reviewable, and under your control.
+SigmaRail expresses a strategy as rules you can backtest, compare, and run through
+LEAN in live markets. You can examine what led to an order and set risk limits
+before capital is exposed. An AI agent can help explore or develop an idea, while
+the trading system follows the strategy you chose instead of improvising decisions
+as it runs.
 
-These optional modules currently provide schema contracts only. They do not
-download or load provider data; see [Optional data modules](docs/OPTIONAL_DATA_MODULES.md)
-for their boundaries and the remaining ingestion work.
+## Get started
 
-The core module also exposes a bounded, read-only query API for schema-declared tables.
-Its dataset and join catalog is generated from the packaged lineage manifest plus reviewed
-grain annotations; it does not modify core tables or load optional provider data. See
-[`docs/QUERY_API.md`](docs/QUERY_API.md) for the query contract and supported joins.
+The commands below install SigmaRail's data and screening tools. They do not start
+Studio's web application.
 
-## Initial setup
+### Install
 
-The PyPI release is not published yet. Until then, install from the GitHub
-repository or clone it locally. To install the latest repository version directly:
-
-```bash
-python -m pip install "git+https://github.com/SigmaRail/sigmarail.git"
-```
-
-For development, clone the repository, create a virtual environment, and install
-it in editable mode:
+Requires Python 3.10 or newer.
 
 ```bash
 git clone https://github.com/SigmaRail/sigmarail.git
 cd sigmarail
-python -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
+python3 -m venv .venv
+.venv/bin/python -m pip install -e 'packages/sigmarail-spec[build,test]' -e '.[dev]' -e './studio[dev]'
 ```
 
-Then:
+### Connect data and build the screening tables
 
-1. Install and start ClickHouse. SigmaRail does not bundle or install the server.
-2. Copy `config.yaml.example` to SigmaRail's user config directory, then enter your
-   ClickHouse and Sharadar credentials locally. The default directory is
+You need a running ClickHouse server. Loading Sharadar data also requires access to
+Sharadar and an API key; SigmaRail does not include market-data files or credentials.
+
+1. Copy `config.yaml.example` to SigmaRail's user configuration directory and add
+   your ClickHouse connection details and Sharadar key. The default directory is
    `~/.config/sigmarail` on Linux, `~/Library/Application Support/sigmarail` on macOS,
-   and `%APPDATA%\sigmarail` on Windows. For an isolated test database, copy
-   `config-test.yaml.example` to `config-test.yaml` in the same directory.
-3. Install Core, Spec, and Studio together from the repository root:
-   `python -m pip install -e 'packages/sigmarail-spec[build,test]' -e ".[dev]" -e "./studio[dev]"`.
-4. Review the schema plan with `sigmarail-schema`. It is read-only and works even
-   when the configured database does not exist yet.
-5. Run `sigmarail-schema --apply` to create the configured database if needed,
-   then create and reconcile the core tables and views from the packaged SQL.
-   Optional schema-only modules can be selected with `--module`; see
-   [Optional data modules](docs/OPTIONAL_DATA_MODULES.md).
-6. Install Studio-owned application tables with `sigmarail-studio-schema`.
-7. Download and load Sharadar sources with `sigmarail-load --download`.
-8. Build the derived screening tables with `sigmarail-populate --metrics all`.
+   or `%APPDATA%\sigmarail` on Windows. Keep credentials private; do not commit them.
+2. Preview the schema plan with `.venv/bin/sigmarail-schema`.
+3. Apply the schema with `.venv/bin/sigmarail-schema --apply`.
+4. Install Studio's database tables with `.venv/bin/sigmarail-studio-schema`.
+5. Download and load Sharadar data with `.venv/bin/sigmarail-load --download`.
+6. Build derived screening tables with `.venv/bin/sigmarail-populate --metrics all`.
 
-Installed settings use the OS-specific user config directory above. Existing
-project-local `config.yaml` files are still honored, and `SIGMARAIL_HOME` can point
-to a custom config/data directory (for example, `~/.sigmarail`). Downloaded data and
-logs remain relative to the current directory or `SIGMARAIL_HOME`. Use `--mode test`
-for the isolated `sigmarail_test` database. The test configuration is rejected if it
-points at the configured production database.
+For isolated testing, pass `--mode test` to the supported commands; SigmaRail
+protects the configured production database from test-mode writes. The schema
+command is read-only unless you pass `--apply`. See [optional data modules](docs/OPTIONAL_DATA_MODULES.md) for modules
+that define schema but do not yet include provider loaders.
 
-## Scope of the commands
+### Run the Studio application
 
-`sigmarail-load` accepts only the Sharadar tables defined in the packaged core
-schema. `sigmarail-populate` defaults to transforms admitted by the core
-contract; optional-module targets require an explicit `--module`. Schema SQL
-remains the source of truth; `sigmarail-schema` defaults to a read-only plan.
-Use `sigmarail-schema --apply` to apply the core schema, or select optional
-modules as described in [Optional data modules](docs/OPTIONAL_DATA_MODULES.md).
-Deleting undeclared columns requires both `--apply` and `--drop-extra-columns`.
+The checked-in Compose setup is currently configured for the SigmaRail development
+Mac. It expects local environment files, existing Postgres and Redis volumes, a
+native ClickHouse service, and a mounted LEAN workspace. It is not yet a portable
+one-command install for a clean machine. See the [local Docker runtime guide](docs/PRIMARY_DOCKER_RUNTIME.md)
+for its requirements and start/update commands.
 
-For the Docker-scheduled load/populate runner and its Keychain-backed secret handoff, see
-[`scripts/README.md`](scripts/README.md). The runner uses SigmaRail's CLIs and
-does not start or modify the ClickHouse service.
+## How SigmaRail is implemented
+
+The research workbench includes screens, charts, watchlists, strategy editing,
+backtest review, and MCP access. The Python package provides data loading, schema
+management, derived screening metrics, and a bounded read-only query API. The
+screening schema currently includes 13 Sharadar source tables and their derived
+outputs. The field inventory is in [`spec/lineage-manifest.json`](spec/lineage-manifest.json);
+see [query API](docs/QUERY_API.md) and [lineage scope](docs/LINEAGE_SCOPE.md) for
+technical details.
+
+### Data providers and storage
+
+SigmaRail stores provider data in ClickHouse; ClickHouse is the data store, not a
+data provider. The application brings together data from several providers.
+
+| Source | Data used by the application | Access | SigmaRail status |
+| --- | --- | --- | --- |
+| [Sharadar](https://sharadar.com/) | End-of-day stock and fund prices, company fundamentals, and securities reference data. SigmaRail derives additional technical measures from the daily prices. | Paid subscription and API key. See [prices](https://sharadar.com/prices), [fundamentals](https://sharadar.com/fundamentals), and [API documentation](https://sharadar.com/docs/intro). | Loaded by SigmaRail. |
+| [Alpaca Market Data](https://docs.alpaca.markets/us/v1.1/docs/about-market-data-api) | Optional five-minute stock bars. The loader defaults to IEX; SIP requires the matching account entitlement. | Basic includes IEX data at no charge; broader real-time U.S. exchange coverage requires a paid plan. See [feed notes](docs/ALPACA_INTRADAY.md). | Optional SigmaRail loader. |
+| [AAII Investor Sentiment Survey](https://www.aaii.com/sentimentsurvey) | Weekly bullish, neutral, and bearish readings from individual investors. | Recent results are public; AAII says the complete historical dataset is available to members. | SigmaRail source integration; loader consolidation is in progress. |
+| [Dolt earnings dataset](https://www.dolthub.com/repositories/post-no-preference/earnings) | Street EPS consensus and reported actuals, based on Zacks data republished on Nasdaq pages. | Public dataset under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). It is not a Zacks or Nasdaq product license. | SigmaRail source integration; loader consolidation is in progress. |
+| [Yahoo Finance](https://finance.yahoo.com/) | ETF top holdings and sector weights, fetched through `yfinance`. | The existing loader uses no paid API subscription; access is subject to [Yahoo's terms](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html) and is not a licensed market-data feed. | SigmaRail source integration; loader consolidation is in progress. |
+| [FRED](https://fred.stlouisfed.org/) | CPI-U inflation and real GDP growth series used to calculate macroeconomic regime measures. | The existing importer reads FRED's public CSV endpoint without an API key. | SigmaRail source integration; loader consolidation is in progress. |
+
+These providers are part of SigmaRail's data pipeline. Their ingestion paths are
+being consolidated into this repository; the optional modules currently define
+their storage schemas, but do not yet run those imports. See
+[optional data modules](docs/OPTIONAL_DATA_MODULES.md) for the current boundaries.
+
+SigmaRail uses the open-source [QuantConnect LEAN engine](https://github.com/QuantConnect/Lean).
+We maintain a [customized SigmaRail version of LEAN](https://github.com/SigmaRail/Lean)
+that integrates ClickHouse as a market-data source, so LEAN can read SigmaRail data
+for historical backtests and universe selection.
+
+The scheduled data updater is an optional Docker service. Its setup and credential
+handling are described in [`scripts/README.md`](scripts/README.md). It is separate
+from the backtest worker and does not start or modify ClickHouse.
 
 ## Tests
 
-The suite covers the Sharadar loader, transform parser and schedule, schema
-lineage, SQL calculation checks, and end-to-end transforms. ClickHouse tests
-generate deterministic, synthetic source rows in a temporary directory. The
-generated values are shaped to exercise the source schema and transforms; they
-are not Sharadar observations and do not claim to represent market statistics.
-No provider test files are needed in the checkout or CI.
+Run database-free checks with `.venv/bin/python -m pytest`. For ClickHouse-backed
+integration tests, run `.venv/bin/python -m pytest --sigmarail-clickhouse`; this
+requires Docker and uses synthetic data in a disposable test database. It does not
+use Sharadar data. See the test configuration and fixtures in `tests/` for details.
 
-Database-free checks run with `python -m pytest`. This single suite collects both
-Core tests under `tests/` and Django API tests under `studio/tests/`. To run the
-complete suite against the shared disposable ClickHouse container, use:
+## License and copyright
 
-```bash
-python -m pytest --sigmarail-clickhouse
-```
-
-The root pytest fixtures use Docker Compose to start the pinned ClickHouse image
-once for the whole Core-and-Studio test session, wait for its health check, create
-`sigmarail_test`, load synthetic source rows, and populate the shared baseline.
-Core and Studio integration tests use that same database and may add test data
-during the run. Pytest then captures the
-container log under `logs/` and removes the test service. The database uses
-ephemeral storage and is discarded at the end of the run; generated CSVs live
-in a temporary directory and are deleted after the session. The first run
-downloads the ClickHouse image. Docker and the Docker Compose plugin must
-already be installed and running; SigmaRail does not install or start Docker itself.
-
-GitHub Actions runs the same `python -m pytest --sigmarail-clickhouse` command on a
-GitHub-hosted Linux runner. It generates the same temporary synthetic profile,
-so private Sharadar fixture files and local database state are not uploaded. After
-that suite passes, a separate self-hosted Apple Silicon job generates the same
-deterministic synthetic profile in its own disposable ClickHouse container and
-runs the full SigmaRail API-to-LEAN smoke against the private platform engine
-image. For private strategy/image access, configure the
-`SIGMARAIL_PLATFORM_READ_TOKEN` repository secret with read access to the strategy
-repository and the GHCR package, or grant the SigmaRail repository access to both.
-Fork pull requests do not run on the self-hosted runner.
-
-If you already have an isolated, populated `sigmarail_test` database, the legacy
-manual path remains available with `SIGMARAIL_RUN_POPULATE_TESTS=1`. Schema-only
-checks against an existing test server can be enabled with
-`SIGMARAIL_RUN_CLICKHOUSE_TESTS=1`. Both paths enforce the `sigmarail_test` database name.
-The VCP pivot transform remains on hold and its empty state is asserted
-explicitly.
-
-The PyPI release and open-source license selection remain pending.
+Original SigmaRail code is Copyright © 2026 Mark Diggory and is licensed under
+the [Apache License, Version 2.0](LICENSE). The license grants permission to use,
+modify, and distribute the code under its terms; it does not transfer copyright
+ownership. Third-party and vendored components retain their own copyright notices
+and license terms; see their individual notices and license files. See [NOTICE](NOTICE)
+for the SigmaRail attribution.

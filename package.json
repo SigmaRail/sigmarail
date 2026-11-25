@@ -1,7 +1,7 @@
 {
   "name": "sigmarail-studio",
   "version": "5.0.0",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
   "packageManager": "pnpm@10.26.2",
   "scripts": {

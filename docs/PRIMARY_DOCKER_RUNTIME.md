@@ -6,6 +6,12 @@ and Redis as separate containers. The frontend is built from this checkout and
 uses a same-origin `/api` proxy to the API container. ClickHouse remains native
 on macOS and is reached from Docker through `host.docker.internal`.
 
+This is the current development-machine setup, not a portable public installer.
+It assumes machine-local environment files, existing Postgres and Redis Docker
+volumes, a native ClickHouse server, and the LEAN workspace path configured in
+the Compose file. A clean-machine setup still needs to be made portable before
+advertising this as a one-command install.
+
 ## Data ownership
 
 - Postgres uses the existing external Docker volume
@@ -23,6 +29,12 @@ email uses Django's console backend. Stripe and S3 are not enabled in this
 runtime. AWS metadata credential discovery is disabled, and the old LocalStack,
 Stripe mock, and Mailcatcher containers are not part of the active stack.
 
+Before starting the full application, confirm that the backend and gateway env
+files exist, `SIGMARAIL_BACKTEST_DB_PASSWORD` is set in the local shell, the
+external Postgres and Redis volumes already exist, ClickHouse is running on the
+host, and the LEAN workspace path in `deploy/compose.primary.yml` matches this
+machine. Do not commit the env files or credentials.
+
 ## Build and update
 
 From the SigmaRail repository root, use the current `main` revision when
@@ -30,19 +42,30 @@ building the backend identity into the image:
 
 ```sh
 SIGMARAIL_BUILD_REVISION="$(git rev-parse HEAD)" \
-  docker compose -f deploy/compose.primary.yml build backend frontend mcp-server
+  docker compose -f deploy/compose.primary.yml build backend backtest-worker frontend mcp-server mcp-gateway
 ```
 
 Then update only the app services:
 
 ```sh
 SIGMARAIL_BUILD_REVISION="$(git rev-parse HEAD)" \
-  docker compose -f deploy/compose.primary.yml up -d backend frontend mcp-server
+  docker compose -f deploy/compose.primary.yml up -d backend backtest-worker frontend mcp-server mcp-gateway
 ```
 
 The Compose project is named `sigmarail`. Its Postgres and Redis services mount
 the existing data volumes. Do not run a second Postgres container against the
 same data directory at the same time.
+
+The optional `data-updater` profile is intentionally excluded from these
+commands. Its `up` and one-off production run procedures are documented in
+[`scripts/README.md`](../scripts/README.md).
+
+Check service status or stop the stack without deleting its data volumes with:
+
+```sh
+docker compose -f deploy/compose.primary.yml ps
+docker compose -f deploy/compose.primary.yml down
+```
 
 ## Ports
 

@@ -14,7 +14,14 @@ columns to core tables.
 
 The module SQL describes storage contracts and views. It contains no provider
 observations, credentials, downloaded files, or curated holdings rows. Core
-tables remain unchanged. The module manifests and table contracts are in
+tables remain unchanged. These schemas correspond to existing SigmaRail source
+integrations: AAII's weekly sentiment survey, a public Dolt dataset of
+Street earnings consensus and actuals, Yahoo Finance ETF holdings and sector
+weights, and FRED CPI-U and real GDP series. Their ingestion paths are being
+consolidated into this repository. The analyst dataset is documented as CC BY-SA
+4.0 and is not a licensed Zacks or Nasdaq feed.
+See the [SigmaRail README](../README.md#data-providers-and-storage) for the
+source list and access notes. The module manifests and table contracts are in
 `src/sigmarail/sql/extensions/`; regenerate contracts after SQL changes with:
 
 ```bash
@@ -39,12 +46,10 @@ sigmarail-populate --module analyst_estimates --metrics all
 ```
 
 Provider ingestion is a separate operation from schema installation. This
-release packages the schema contracts, not provider acquisition commands; the
-source-specific importers must be ported and documented before these modules
-can be described as end-to-end data feeds. Analyst estimates in particular
-must be supplied by the user's licensed source. Nothing is downloaded or
-loaded by `sigmarail-schema` or `sigmarail-populate` unless an explicit data
-load command is invoked.
+SigmaRail release packages the schema contracts; loader consolidation is in progress.
+The existing sources and their access terms still apply during the migration.
+Nothing is downloaded or loaded by `sigmarail-schema` or `sigmarail-populate`
+unless an explicit data load command is invoked.
 
 The leveraged ETF surrogate catalog is intentionally excluded here: it maps
 securities to trading instruments and belongs with a trading/strategy layer,
