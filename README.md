@@ -1,43 +1,47 @@
-# SigmaRail — Automated Trading with LEAN
+# SigmaRail — Local Stock Research and Automated Trading
 
-SigmaRail helps you develop, test, and run trading rules to make money while
-controlling risk. The rules identify what to trade, when to buy and sell, how
-much to trade, and what limits to follow. You can backtest them on historical
-data, then run them live through your brokerage.
+SigmaRail is an open-source platform for researching U.S. stocks, testing trading
+strategies, and running them live. You can run the SigmaRail stack and its ClickHouse
+data warehouse on your own hardware. The warehouse holds the historical market data
+you load and the indicators and metrics SigmaRail calculates from it. As you import
+new data, the warehouse remains available to Studio and the trading engine for
+screening, historical research, and backtesting. For live trading, LEAN uses the
+live data feed and brokerage account you configure.
 
-SigmaRail is open source so anyone—a person or an automated agent—can trace a
-trade from the math behind it to the code and resulting order. That transparency
-lets people review and test the logic themselves and gives automation a clear
-process to follow.
+## Research stocks across time
 
-## From a trading idea to live orders
+SigmaRail lets you evaluate stock screens on past dates, see which stocks met the
+criteria then, and follow how the qualifying list changed as the market changed.
+For example, screen for stocks trading above rising long-term moving averages and
+showing strong relative strength. Review the results across a market decline and
+recovery to see which stocks continued to qualify and when others joined or left.
 
-Start by defining a screen: the rules that decide which stocks qualify. Backtest
-the screen to see which stocks it would have selected over time. Then build a
-strategy that says what to buy or sell, when to act, how much to trade, and what
-limits to follow. Backtest the complete strategy to simulate its trades and
-portfolio results, then compare runs and review the orders, trades, and performance.
+The formulas behind SigmaRail's indicators and screening metrics are defined in
+readable SQL views. Traders and researchers can inspect the calculations and their
+inputs, reproduce a formula, or test a screening method they encountered in another
+trading system against their own historical data.
 
-LEAN organizes a strategy's rules into five parts:
+## Turn research into a trading strategy
 
-- **Universe:** which stocks the strategy is allowed to trade.
-- **Alpha:** the conditions that tell it when to buy or sell.
-- **Portfolio Construction:** how much to hold in each stock.
-- **Risk Management:** limits on positions and conditions for reducing or exiting them.
-- **Execution:** how and when orders are sent and handled.
+SigmaRail uses one expression language to define both stock screens and strategy
+rules. A screen can determine which stocks are eligible on each date of a backtest.
+Strategy rules define when to buy or sell, how much to hold, and when to reduce or
+exit a position. You can backtest the strategy, compare runs, and review simulated
+orders, fills, returns, and drawdowns.
 
-When you run a strategy live, LEAN uses current market data and sends real orders
-through the connected brokerage. Screens, charts, watchlists, and market views
-support the work of finding and evaluating trading opportunities.
+SigmaRail's customized version of QuantConnect LEAN reads historical stock prices
+and volume from ClickHouse and gets the eligible stock list from SigmaRail's
+screening service. After reviewing a backtest, you can deploy that strategy version
+to a configured paper or live brokerage account. LEAN runs the strategy against the
+configured live data feed and submits orders through the brokerage. Studio shows
+deployment status, holdings, and recent orders.
 
-## Why use explicit trading rules
+## Work with AI agents
 
-Trading decisions need to be repeatable, reviewable, and under your control.
-SigmaRail expresses a strategy as rules you can backtest, compare, and run through
-LEAN in live markets. You can examine what led to an order and set risk limits
-before capital is exposed. An AI agent can help explore or develop an idea, while
-the trading system follows the strategy you chose instead of improvising decisions
-as it runs.
+SigmaRail includes a self-describing MCP connector for AI agents. It explains the
+platform, its data, expressions, and available tools as an agent works with SigmaRail.
+An agent can use that context to create screening and strategy specifications for
+you to research and backtest.
 
 ## Get started
 
@@ -57,11 +61,17 @@ python3 -m venv .venv
 
 ### Connect data and build the screening tables
 
-You need a running ClickHouse server. Loading Sharadar data also requires access to
-Sharadar and an API key; SigmaRail does not include market-data files or credentials.
+You need a running ClickHouse server and a data source whose terms permit your
+intended use. SigmaRail does not provide market-data files, provider accounts,
+API credentials, or data licenses. The current core tables follow Sharadar's
+data schema, and the Sharadar importer uses an API key that you obtain directly
+from Sharadar. If you use that importer, it downloads data into the ClickHouse
+instance you configure. Sharadar is one external source option; SigmaRail is not
+affiliated with or endorsed by Sharadar.
 
 1. Copy `config.yaml.example` to SigmaRail's user configuration directory and add
-   your ClickHouse connection details and Sharadar key. The default directory is
+   your ClickHouse connection details and, if you choose Sharadar, your own
+   Sharadar API key. The default directory is
    `~/.config/sigmarail` on Linux, `~/Library/Application Support/sigmarail` on macOS,
    or `%APPDATA%\sigmarail` on Windows. Keep credentials private; do not commit them.
 2. Preview the schema plan with `.venv/bin/sigmarail-schema`.
@@ -95,22 +105,29 @@ technical details.
 
 ### Data providers and storage
 
-SigmaRail stores provider data in ClickHouse; ClickHouse is the data store, not a
-data provider. The application brings together data from several providers.
+SigmaRail can store data in the ClickHouse instance configured by the user;
+ClickHouse is a data store, not a data provider. The provider names below identify
+upstream sources and integrations, not partnerships, recommendations, or endorsements.
+Each provider controls its own access and license terms.
 
-| Source | Data used by the application | Access | SigmaRail status |
-| --- | --- | --- | --- |
-| [Sharadar](https://sharadar.com/) | End-of-day stock and fund prices, company fundamentals, and securities reference data. SigmaRail derives additional technical measures from the daily prices. | Paid subscription and API key. See [prices](https://sharadar.com/prices), [fundamentals](https://sharadar.com/fundamentals), and [API documentation](https://sharadar.com/docs/intro). | Loaded by SigmaRail. |
-| [Alpaca Market Data](https://docs.alpaca.markets/us/v1.1/docs/about-market-data-api) | Optional five-minute stock bars. The loader defaults to IEX; SIP requires the matching account entitlement. | Basic includes IEX data at no charge; broader real-time U.S. exchange coverage requires a paid plan. See [feed notes](docs/ALPACA_INTRADAY.md). | Optional SigmaRail loader. |
-| [AAII Investor Sentiment Survey](https://www.aaii.com/sentimentsurvey) | Weekly bullish, neutral, and bearish readings from individual investors. | Recent results are public; AAII says the complete historical dataset is available to members. | SigmaRail source integration; loader consolidation is in progress. |
-| [Dolt earnings dataset](https://www.dolthub.com/repositories/post-no-preference/earnings) | Street EPS consensus and reported actuals, based on Zacks data republished on Nasdaq pages. | Public dataset under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). It is not a Zacks or Nasdaq product license. | SigmaRail source integration; loader consolidation is in progress. |
-| [Yahoo Finance](https://finance.yahoo.com/) | ETF top holdings and sector weights, fetched through `yfinance`. | The existing loader uses no paid API subscription; access is subject to [Yahoo's terms](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html) and is not a licensed market-data feed. | SigmaRail source integration; loader consolidation is in progress. |
-| [FRED](https://fred.stlouisfed.org/) | CPI-U inflation and real GDP growth series used to calculate macroeconomic regime measures. | The existing importer reads FRED's public CSV endpoint without an API key. | SigmaRail source integration; loader consolidation is in progress. |
+| Source | Role in SigmaRail | Access and integration |
+| --- | --- | --- |
+| [Sharadar](https://sharadar.com/) | Current source for the Sharadar-shaped core tables: EOD stock and fund prices, fundamentals, and reference data. | The optional importer uses a Sharadar API key obtained by the user and writes into the user's configured ClickHouse. The user must obtain a license that permits their use. See [prices](https://sharadar.com/prices), [fundamentals](https://sharadar.com/fundamentals), [API docs](https://sharadar.com/docs/intro), and [Sharadar's terms](https://sharadar.com/terms). SigmaRail supplies no Sharadar account, key, data, or license. |
+| [Alpaca Market Data](https://docs.alpaca.markets/us/v1.1/docs/about-market-data-api) | Optional five-minute stock bars. | The optional importer uses credentials and feed entitlements supplied by the user. See [feed notes](docs/ALPACA_INTRADAY.md) and Alpaca's terms. |
+| [AAII Investor Sentiment Survey](https://www.aaii.com/sentimentsurvey) | Weekly investor-sentiment readings. | Access to complete historical data is subject to AAII's terms and membership. |
+| [Dolt earnings dataset](https://www.dolthub.com/repositories/post-no-preference/earnings) | Street EPS consensus and reported actuals. | The public dataset is under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); that does not grant a Zacks or Nasdaq product license. |
+| [Yahoo Finance](https://finance.yahoo.com/) | ETF holdings and sector weights fetched through `yfinance`. | Access is subject to [Yahoo's terms](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html); this is not a licensed market-data feed. |
+| [FRED](https://fred.stlouisfed.org/) | Public macroeconomic series. | The importer reads FRED's public CSV endpoint; use remains subject to FRED's terms. |
 
-These providers are part of SigmaRail's data pipeline. Their ingestion paths are
-being consolidated into this repository; the optional modules currently define
-their storage schemas, but do not yet run those imports. See
-[optional data modules](docs/OPTIONAL_DATA_MODULES.md) for the current boundaries.
+Integration status varies: a provider listed here or a schema for its data does
+not mean SigmaRail provides access, a subscription, or a data license. Where an
+importer is available, it makes requests using credentials supplied by the user
+and stores the result in the user's configured environment. The user is
+responsible for obtaining required rights and managing downloaded data—including
+storage, retention, access, and deletion—under the provider's terms. Do not
+redistribute provider data through SigmaRail unless the applicable provider
+license expressly permits it. See [optional data modules](docs/OPTIONAL_DATA_MODULES.md)
+for the current schema and integration boundaries.
 
 SigmaRail uses the open-source [QuantConnect LEAN engine](https://github.com/QuantConnect/Lean).
 We maintain a [customized SigmaRail version of LEAN](https://github.com/SigmaRail/Lean)
@@ -135,4 +152,14 @@ the [Apache License, Version 2.0](LICENSE). The license grants permission to use
 modify, and distribute the code under its terms; it does not transfer copyright
 ownership. Third-party and vendored components retain their own copyright notices
 and license terms; see their individual notices and license files. See [NOTICE](NOTICE)
-for the SigmaRail attribution.
+for attribution and the distinction between the code license and third-party data.
+
+The Apache license applies to SigmaRail code only. It does not grant rights to
+third-party datasets, provider APIs, credentials, or trademarks. Provider data
+and services are not included with SigmaRail. Users must obtain any required
+provider subscription and license directly, confirm that it permits their
+intended personal, professional, or organizational use, and follow its
+conditions for storage, retention, display, derived data, and redistribution.
+Listing a provider or including an optional integration does not imply
+affiliation, endorsement, or that a particular provider plan permits a particular
+use of SigmaRail.

@@ -4,3 +4,18 @@ Copyright 2026 Mark Diggory
 This attribution applies to original SigmaRail code written for this project.
 Third-party and vendored components retain their own copyright notices and
 license terms. Refer to their individual notices and license files.
+
+Market data and provider services
+
+The Apache License applies to SigmaRail code; it does not grant rights to any
+third-party market data, data-provider API, account, credential, or trademark.
+No provider datasets, provider accounts, API credentials, or data licenses are
+included with SigmaRail. Provider names identify upstream sources only and do
+not imply affiliation, recommendation, or endorsement.
+
+Some optional SigmaRail integrations can request data from a provider using
+credentials supplied by the user and can write the results to the user's
+configured data store. The user must obtain the applicable rights directly from
+the provider and is responsible for using, storing, retaining, and deleting the
+data in accordance with the provider's terms. A software license for SigmaRail
+does not expand or replace those provider terms.
