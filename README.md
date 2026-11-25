@@ -82,16 +82,18 @@ affiliated with or endorsed by Sharadar.
 
 For isolated testing, pass `--mode test` to the supported commands; SigmaRail
 protects the configured production database from test-mode writes. The schema
-command is read-only unless you pass `--apply`. See [optional data modules](docs/OPTIONAL_DATA_MODULES.md) for modules
-that define schema but do not yet include provider loaders.
+command is read-only unless you pass `--apply`. See the
+[optional data modules](docs/OPTIONAL_DATA_MODULES.md) documentation for
+integrations that define schema but do not yet include provider loaders.
 
 ### Run the Studio application
 
 The checked-in Compose setup is currently configured for the SigmaRail development
 Mac. It expects local environment files, existing Postgres and Redis volumes, a
 native ClickHouse service, and a mounted LEAN workspace. It is not yet a portable
-one-command install for a clean machine. See the [local Docker runtime guide](docs/PRIMARY_DOCKER_RUNTIME.md)
-for its requirements and start/update commands.
+one-command install for a clean machine. See the
+[local Docker runtime guide](docs/PRIMARY_DOCKER_RUNTIME.md) for its requirements
+and start/update commands.
 
 ## How SigmaRail is implemented
 
@@ -129,10 +131,11 @@ redistribute provider data through SigmaRail unless the applicable provider
 license expressly permits it. See [optional data modules](docs/OPTIONAL_DATA_MODULES.md)
 for the current schema and integration boundaries.
 
-SigmaRail uses the open-source [QuantConnect LEAN engine](https://github.com/QuantConnect/Lean).
-We maintain a [customized SigmaRail version of LEAN](https://github.com/SigmaRail/Lean)
-that integrates ClickHouse as a market-data source, so LEAN can read SigmaRail data
-for historical backtests and universe selection.
+Backtesting and live trading in SigmaRail are based on the open-source
+[QuantConnect LEAN engine](https://github.com/QuantConnect/Lean). SigmaRail provides
+a [customized version of LEAN](https://github.com/SigmaRail/Lean) that integrates
+ClickHouse as a live data source, so LEAN can read SigmaRail data directly from the
+database.
 
 The scheduled data updater is an optional Docker service. Its setup and credential
 handling are described in [`scripts/README.md`](scripts/README.md). It is separate
