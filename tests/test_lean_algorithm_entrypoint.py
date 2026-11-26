@@ -55,3 +55,27 @@ def test_qcalgorithm_uses_shared_five_slot_interpreter() -> None:
     assert isinstance(call.args[0], ast.Name) and call.args[0].id == "self"
     assert isinstance(call.args[1], ast.Name) and call.args[1].id == "fb"
     assert any(keyword.arg == "store" for keyword in call.keywords)
+
+
+def test_store_backed_rebalance_uses_compiled_execution_slot_type() -> None:
+    algorithm_path = ROOT / "src" / "sigmarail_lab" / "lean" / "algorithm.py"
+    tree = ast.parse(algorithm_path.read_text(encoding="utf-8"))
+    algorithm = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "ClickHouseUniverseAlgorithm"
+    )
+    assignments = [
+        node
+        for node in ast.walk(algorithm)
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Attribute)
+            and target.attr == "_use_store_manual_rebalance"
+            for target in node.targets
+        )
+    ]
+    assert len(assignments) == 1
+    assert ast.unparse(assignments[0].value) == (
+        "fb.execution.type in STORE_BACKED_EXECUTION_TYPES"
+    )

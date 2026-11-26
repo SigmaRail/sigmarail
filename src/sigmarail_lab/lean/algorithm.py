@@ -240,7 +240,9 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         # SigmaRail's custom execution model uses its scheduled decision loop; stock
         # LEAN execution models keep the framework lifecycle after AST subscriptions
         # are refreshed. No LEAN UniverseSelectionModel is installed.
-        self._use_store_manual_rebalance = exec_type in STORE_BACKED_EXECUTION_TYPES
+        self._use_store_manual_rebalance = (
+            fb.execution.type in STORE_BACKED_EXECUTION_TYPES
+        )
         exec_params = dict(fb.execution.parameters or {})
         self._fill_session = str(exec_params.get("fill_session") or "moo").strip().lower()
 
