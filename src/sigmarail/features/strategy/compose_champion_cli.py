@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compose Champion SEPA + setup recipes and print / optionally write VeraLabV1 JSON.
+"""Compose Champion SEPA + setup recipes and print / optionally write SigmaRailStrategyV1 JSON.
 
 Usage:
   python -m sigmarail.features.strategy.compose_champion_cli
@@ -27,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
         default="champion_setup_or",
         help="setup_recipes id (default champion_setup_or)",
     )
-    p.add_argument("-o", "--output", help="Write VeraLabV1 JSON to path")
+    p.add_argument("-o", "--output", help="Write SigmaRailStrategyV1 JSON to path")
     p.add_argument(
         "--list-recipes",
         action="store_true",

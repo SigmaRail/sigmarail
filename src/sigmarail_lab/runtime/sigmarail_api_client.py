@@ -1,4 +1,4 @@
-"""HTTP client for the Vera query service — **fail-closed**.
+"""HTTP client for the SigmaRail query service — **fail-closed**.
 
 Every transport/HTTP/JSON failure raises :class:`SigmaRailApiError` instead of returning
 ``None``. That matters: a swallowed failure used to look like an ordinary empty
@@ -27,12 +27,12 @@ from urllib.request import Request, urlopen
 
 DebugLog = Callable[[str], None] | None
 
-#: The expression dialect the runtime was built against (SigmaRail Spec, `C-VERA-EXPR-V1`).
-EXPECTED_DIALECT_ID = "C-VERA-EXPR-V1"
+#: The expression dialect the runtime was built against (SigmaRail Spec, `C-SIGMARAIL-EXPR-V1`).
+EXPECTED_DIALECT_ID = "C-SIGMARAIL-EXPR-V1"
 
 
 class SigmaRailApiError(RuntimeError):
-    """A Vera query service call failed and was not retried."""
+    """A SigmaRail query service call failed and was not retried."""
 
     def __init__(self, operation: str, detail: str, status: int | None = None):
         self.operation = operation
@@ -43,7 +43,7 @@ class SigmaRailApiError(RuntimeError):
 
 
 class SigmaRailApiClient:
-    """POST/GET JSON against the Vera query service; raise on failure."""
+    """POST/GET JSON against the SigmaRail query service; raise on failure."""
 
     def __init__(self, base_url: str, api_key: str | None = None, debug_log: DebugLog = None):
         self._base = base_url.rstrip("/")

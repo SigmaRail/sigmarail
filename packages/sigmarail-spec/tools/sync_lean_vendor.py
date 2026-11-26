@@ -11,7 +11,13 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parents[1]
-RUNTIME_FILES = ("expr.py", "evaluate.py", "entry_trigger_ast.py", "universe_query.py")
+RUNTIME_FILES = (
+    "expr.py",
+    "evaluate.py",
+    "entry_trigger_ast.py",
+    "universe_query.py",
+    "lean_framework_parameters.py",
+)
 
 
 def _json_bytes(value: Any) -> bytes:

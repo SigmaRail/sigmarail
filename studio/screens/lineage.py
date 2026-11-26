@@ -1,4 +1,4 @@
-"""Strategy lineage helpers (screen hash + VeraLab AlgorithmParameters stamps)."""
+"""Strategy lineage helpers (screen hash + SigmaRailLab AlgorithmParameters stamps)."""
 
 from __future__ import annotations
 

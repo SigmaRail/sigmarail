@@ -2,7 +2,7 @@
 
 * `col` may carry `offset`, but be careful: the **row evaluators ignore it** — they look
   the column up in the row as-is, so `offset=5` and `offset=0` give the same value. It is
-  honoured by the SQL compiler in VeraBase. Do not rely on it in a row-evaluated slot.
+  honoured by the SQL compiler in SigmaRail. Do not rely on it in a row-evaluated slot.
 * `lit` holds a number or a string; a bare Python number/string also works in an operand slot.
 * `formula` is strictly binary (`+ - * /`) and nests through `args`. Division by zero yields
   `None` rather than infinity, so the comparison fails closed.

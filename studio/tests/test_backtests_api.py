@@ -13,17 +13,16 @@ from screens.backtest import get_run_report, list_backtest_runs
 from screens.backtest_jobs import get_job_status, get_spec_by_ir_id, list_specs
 
 _COMPOSE_FRAMEWORK = {
-    "UniverseSelection": {"Type": "VeraScreenerUniverseSelectionModel", "Parameters": {}},
-    "Alpha": {"Type": "RsiAlphaModel", "Parameters": {"period": 14, "resolution": "Daily"}},
+    "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": {}},
     "PortfolioConstruction": {
-        "Type": "VeraScreenerPortfolioConstructionModel",
+        "Type": "SigmaRailScreenerPortfolioConstructionModel",
         "Parameters": {"min_weight": 0.05, "max_weight": 0.25, "max_positions": 10},
     },
     "RiskManagement": {
-        "Type": "MaximumDrawdownPercentPerSecurity",
-        "Parameters": {"maximum_drawdown_percent": 0.05},
+        "Type": "SigmaRailRiskManagementModel",
+        "Parameters": {},
     },
-    "Execution": {"Type": "ImmediateExecutionModel", "Parameters": {}},
+    "Execution": {"Type": "SigmaRailScreenerExecutionModel", "Parameters": {}},
 }
 
 
@@ -57,7 +56,6 @@ def _sample_run_row() -> tuple:
         json.dumps({
             "Framework": {
                 "Alpha": {"Type": "RsiAlphaModel"},
-                "UniverseSelection": {"Type": "ManualUniverseSelectionModel"},
                 "RiskManagement": {"Type": "MaximumDrawdownPercentPerSecurity"},
             }
         }),
@@ -266,22 +264,30 @@ def _specs_query_result(rows: list[tuple] | None = None) -> MagicMock:
         (
             "studio-test-abc123",
             "Test Strategy",
-            2,
+            3,
             "Custom test notes",
             "2026-08-20 12:00:00",
             json.dumps({
                 "Framework": {
-                    "Alpha": {"Type": "RsiAlphaModel"},
-                    "UniverseSelection": {"Type": "ManualUniverseSelectionModel", "Parameters": {"symbols": ["AAPL"]}},
-                    "RiskManagement": {"Type": "MaximumDrawdownPercentPerSecurity"},
+                    "UniverseSelection": {
+                        "Type": "SigmaRailClickHouseUniverseSelection",
+                        "Parameters": {
+                            "query": {
+                                "version": 1,
+                                "from": "daily_screener",
+                                "select": ["ticker", "rs_rating"],
+                                "where": {
+                                    "type": "eq",
+                                    "left": {"type": "col", "name": "ticker"},
+                                    "right": {"type": "lit", "value": "AAPL"},
+                                },
+                                "order_by": [{"field": "rs_rating", "direction": "desc"}],
+                            }
+                        },
+                    },
+                    "Alpha": {"Type": "SigmaRailScreenerAlphaModel"},
                 },
-                "VeraBase": {
-                    "Universe": {
-                        "from": "daily_screener",
-                        "where": {"items": [{"field": "rs_rating", "op": ">=", "value": 70}]},
-                        "order_by": [{"field": "rs_rating", "direction": "desc"}],
-                    }
-                }
+                "SigmaRail": {},
             }),
         ),
     ]
@@ -336,7 +342,7 @@ def test_list_specs_happy() -> None:
     # Check that built-in templates or db spec exist
     found_db = next((s for s in out["specs"] if s["ir_id"] == "studio-test-abc123"), None)
     assert found_db is not None
-    assert found_db["alpha_type"] == "RsiAlphaModel"
+    assert found_db["alpha_type"] == "SigmaRailScreenerAlphaModel"
     assert found_db["symbols"] == ["AAPL"]
     assert found_db["screener_summary"]["has_screener"] is True
 
@@ -355,8 +361,8 @@ def test_get_spec_by_ir_id_db() -> None:
     out = get_spec_by_ir_id(client, "studio-test-abc123")
     assert out is not None
     assert out["ir_id"] == "studio-test-abc123"
-    assert out["alpha_type"] == "RsiAlphaModel"
-    assert out["spec"]["Framework"]["Alpha"]["Type"] == "RsiAlphaModel"
+    assert out["alpha_type"] == "SigmaRailScreenerAlphaModel"
+    assert out["spec"]["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
 
 
 def test_get_job_status_happy() -> None:
@@ -395,7 +401,7 @@ def test_compose_endpoint_inline_universe() -> None:
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["spec"]["Kind"] == "VeraLabV1"
+    assert body["spec"]["Kind"] == "SigmaRailStrategyV1"
     assert body["ir_id_suggested"].startswith("studio-rsi-leaders-")
     assert body["validation"]["ok"] is True
 
@@ -415,7 +421,10 @@ def test_compose_endpoint_inline_spec_alias() -> None:
         content_type="application/json",
     )
     assert resp.status_code == 200
-    assert resp.json()["spec"]["VeraBase"]["Universe"] == _sample_universe()
+    assert (
+        resp.json()["spec"]["Framework"]["UniverseSelection"]["Parameters"]["query"]
+        == _sample_universe()
+    )
 
 
 @pytest.mark.django_db
@@ -433,7 +442,10 @@ def test_compose_endpoint_saved_screen() -> None:
         content_type="application/json",
     )
     assert resp.status_code == 200
-    assert resp.json()["spec"]["VeraBase"]["Universe"] == _sample_universe()
+    assert (
+        resp.json()["spec"]["Framework"]["UniverseSelection"]["Parameters"]["query"]
+        == _sample_universe()
+    )
 
 
 @pytest.mark.django_db
@@ -450,17 +462,16 @@ def test_compose_endpoint_screener_overrides(tmp_path, monkeypatch) -> None:
     (tmp_path / f"{tid}.json").write_text(
         json.dumps(
             {
-                "SchemaVersion": 2,
-                "Kind": "VeraLabV1",
-                "VeraBase": {},
+                "SchemaVersion": 3,
+                "Kind": "SigmaRailStrategyV1",
+                "SigmaRail": {},
                 "Framework": {
-                    "UniverseSelection": {"Type": "VeraScreenerUniverseSelectionModel", "Parameters": {}},
                     "Alpha": {
-                        "Type": "VeraScreenerAlphaModel",
+                        "Type": "SigmaRailScreenerAlphaModel",
                         "Parameters": {"max_positions": 10, "stop_loss_pct": 0.08, "min_hold_days": 5},
                     },
                     "PortfolioConstruction": {
-                        "Type": "EqualWeightingPortfolioConstructionModel",
+                        "Type": "SigmaRailScreenerPortfolioConstructionModel",
                         "Parameters": {
                             "max_positions": 10,
                             "max_weight": 0.25,
@@ -468,8 +479,8 @@ def test_compose_endpoint_screener_overrides(tmp_path, monkeypatch) -> None:
                             "target_atr_risk": 0.01,
                         },
                     },
-                    "RiskManagement": {"Type": "MaximumDrawdownPercentPerSecurity", "Parameters": {}},
-                    "Execution": {"Type": "ImmediateExecutionModel", "Parameters": {}},
+                    "RiskManagement": {"Type": "SigmaRailRiskManagementModel", "Parameters": {}},
+                    "Execution": {"Type": "SigmaRailScreenerExecutionModel", "Parameters": {}},
                 },
                 "AlgorithmParameters": {"regime-source": "screener"},
             }
@@ -523,9 +534,9 @@ def test_compose_endpoint_rejects_flat_overrides(tmp_path, monkeypatch) -> None:
     (tmp_path / f"{tid}.json").write_text(
         json.dumps(
             {
-                "SchemaVersion": 2,
-                "Kind": "VeraLabV1",
-                "VeraBase": {},
+                "SchemaVersion": 3,
+                "Kind": "SigmaRailStrategyV1",
+                "SigmaRail": {},
                 "Framework": _COMPOSE_FRAMEWORK,
                 "AlgorithmParameters": {},
             }
@@ -575,7 +586,7 @@ def test_specs_post_runner_missing_503() -> None:
                 {
                     "ir_id": "studio-x",
                     "title": "X",
-                    "spec": {"Kind": "VeraLabV1"},
+                    "spec": {"Kind": "SigmaRailStrategyV1"},
                 }
             ),
             content_type="application/json",
@@ -596,7 +607,7 @@ def test_specs_post_happy() -> None:
         mock_save.return_value = {
             "ir_id": "studio-x",
             "inserted": True,
-            "spec_schema_version": 2,
+            "spec_schema_version": 3,
             "ir_content_hash": "abc",
         }
         c = Client()
@@ -606,7 +617,7 @@ def test_specs_post_happy() -> None:
                 {
                     "ir_id": "studio-x",
                     "title": "X",
-                    "spec": {"Kind": "VeraLabV1", "SchemaVersion": 2},
+                    "spec": {"Kind": "SigmaRailStrategyV1", "SchemaVersion": 3},
                 }
             ),
             content_type="application/json",

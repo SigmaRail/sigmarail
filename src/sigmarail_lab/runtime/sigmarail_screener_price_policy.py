@@ -39,7 +39,7 @@ def warn_missing_lean_prices(
         sec = algorithm.Securities[symbol]
         if float(sec.Price) <= 0:
             algorithm.Debug(
-                f"VeraScreenerExecutionModel: {ticker} Price=0 "
+                f"SigmaRailScreenerExecutionModel: {ticker} Price=0 "
                 f"(expect Lean feed / composite equity data)"
             )
 

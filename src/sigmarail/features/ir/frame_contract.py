@@ -3,7 +3,7 @@
 A Universe query is not just "rows" — the runtime evaluates the Alpha, PCM and
 Risk expressions *off the returned columns*, so the frame is an interface:
 
-* VeraBase compiles and executes the screen (``executor.run_universe_range``).
+* SigmaRail compiles and executes the screen (``executor.run_universe_range``).
 * The runtime reads ``select`` / ``computed`` aliases per row, in SQL ``ORDER BY``
   order (pyramid adds walk that order).
 

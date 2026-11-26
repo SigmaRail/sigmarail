@@ -20,11 +20,11 @@ Move the existing Studio application into the SigmaRail project family while ret
 | Django API shell, React/Vite application, charts, shared UI state | Studio-owned code | `studio/` in SigmaRail | Moved as the application baseline; continue renaming UI and package identity here |
 | Consolidated MCP server and domain organization | `sigmarail_studio_mcp/` after package rename | `studio/sigmarail_studio_mcp/` | Keep one server, split by functional domain, and expose the versioned SigmaRail Spec as Resources |
 | Sharadar schema, transforms, and derived metrics | Existing SQL/query integration | SigmaRail core | Use SigmaRail SQL and generated spec as contract truth; do not copy SQL into Studio |
-| Field catalogs, schema/lineage discovery | Vera query modules today | SigmaRail Spec + Studio query adapter | First backend slice: serve spec resources and implement schema-bound, read-only queries against declared SigmaRail tables/fields |
+| Field catalogs, schema/lineage discovery | SigmaRail query modules today | SigmaRail Spec + Studio query adapter | First backend slice: serve spec resources and implement schema-bound, read-only queries against declared SigmaRail tables/fields |
 | Screener execution and saved queries | Existing `screen_stocks`, universe-query compiler, presets, and persistence | SigmaRail core/query service + Spec + Studio | Adapt query AST and supported fields to current SigmaRail schema; keep compatibility only while the replacement is incomplete |
 | Expression AST and evaluator | Shared expression contract | SigmaRail Spec | Consume the published package; expose its supported forms in Studio, without copying a second evaluator |
-| Five-slot strategy authoring | Existing Studio models and renderer | SigmaRail Spec + Studio | Preserve current authoring behavior where supported; version any wire-format change separately |
-| Backtest, optimization, portfolio, LEAN runtime, deployment | Existing Vera Trading Lab and database integrations | SigmaRail Lean + Studio | Preserve interface concepts; migrate only when the SigmaRail runtime APIs and execution contracts exist |
+| Five-slot strategy authoring | Existing Studio models and renderer | SigmaRail Spec + Studio | Use the canonical SigmaRail strategy format and migrate stored strategy documents directly |
+| Backtest, optimization, portfolio, LEAN runtime, deployment | Existing SigmaRail Trading Lab and database integrations | SigmaRail Lean + Studio | Preserve interface concepts; migrate only when the SigmaRail runtime APIs and execution contracts exist |
 | Knowledge base and external-source research | KnowledgeBase and non-core providers | Optional Studio integrations | Keep separate from the SigmaRail core data product and expose only as explicitly enabled modules |
 | Local database purge/maintenance scripts | Includes source-specific destructive operations | None by default | Exclude from migration unless each operation is redesigned with explicit target selection and safety checks |
 
@@ -33,7 +33,7 @@ Move the existing Studio application into the SigmaRail project family while ret
 - The source Studio imports `sigmarail.features` across 27 Python files for screen execution, field/column registries, query compilation, templates, ClickHouse configuration, strategy validation, and runtime reports.
 - SigmaRail Core owns SQL schema, transforms, loading/population, configuration, and low-level ClickHouse access. The query/screener runtime is being added alongside Studio in this repository.
 - SigmaRail Spec publishes machine-readable data/field/lineage documents and expression/strategy contracts. It describes capabilities; it does not execute ClickHouse queries or run strategies.
-- The current strategy payload includes a `VeraBase` section and the versioned `VeraLabV1` executable shape. Keep these wire keys accepted during the first migration. Rename or replace them only through a separately versioned compatibility change.
+- The current strategy payload uses a `SigmaRail` section and the versioned `SigmaRailStrategyV1` executable shape. Convert stored strategy documents to this format as part of the cutover; the runtime accepts only this canonical format.
 - Knowledge-base tools depend on external-source acquisition and must remain an optional integration. They are outside the SigmaRail core data contract.
 - The source database environment utility includes destructive operations against the old production database. It is not carried as a Studio migration target.
 
@@ -43,7 +43,7 @@ Move the existing Studio application into the SigmaRail project family while ret
   `describe_dataset`, and bounded `query_dataset` service. Its query fields, joins, and
   lineage come from the SigmaRail SQL-generated module manifest.
 - Studio MCP Resources load from the installed `sigmarail-spec` package.
-- The default MCP module set is `core,studio`. Vera-backed screening, strategy, backtest,
+- The default MCP module set is `core,studio`. SigmaRail-backed screening, strategy, backtest,
   portfolio, deployment, and knowledge tool groups require explicit selection through
   `SIGMARAIL_STUDIO_MODULES`. The server refuses to start those groups without local
   `sigmarail.features`.
@@ -53,14 +53,14 @@ Move the existing Studio application into the SigmaRail project family while ret
 
 ## Recommended implementation order
 
-1. Complete application identity, packaging, and documentation renames in this repository while preserving saved-screen and strategy compatibility.
+1. Complete application identity, packaging, and documentation renames in this repository; migrate saved strategies directly to the canonical SigmaRail format.
 2. Add the canonical SigmaRail Spec dependency and MCP Resources for its compact index and focused data/field/transform/expression/strategy slices.
 3. Add a SigmaRail read-only query adapter. Validate table, field, grain, sort, and filter references against Spec; generate bounded parameterized queries; use separate read-only credentials and make no schema changes from Studio.
 4. Port saved universe-query validation/compilation and screener execution to that adapter. Reconcile current screener/table names with the SigmaRail catalog instead of retaining legacy `screener_*` assumptions.
-5. Reconnect the Studio authoring UI to the SigmaRail Spec expression and five-slot schemas, and preserve the previous format through explicit compatibility adapters.
+5. Reconnect the Studio authoring UI to the SigmaRail Spec expression and five-slot schemas, and remove readers for retired strategy formats.
 6. Migrate LEAN/backtest/deploy features only after SigmaRail Lean exposes the corresponding runtime contracts. Keep current backend integrations isolated behind adapters until then.
 7. Move KB and other provider integrations into optional modules with independent settings and availability reporting.
-8. Recreate the Turnip HTTPS/Tailscale and MCP hosting route for SigmaRail Studio after the new MCP endpoint is ready. Keep the existing Vera route running during cutover; switch only after read/write parity checks and explicit acceptance.
+8. Recreate the Turnip HTTPS/Tailscale and MCP hosting route for SigmaRail Studio after the new MCP endpoint is ready. Keep the existing SigmaRail route running during cutover; switch only after read/write parity checks and explicit acceptance.
 
 ## Hosting boundary
 

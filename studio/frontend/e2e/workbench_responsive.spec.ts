@@ -48,7 +48,7 @@ async function installApplicationMocks(
     localStorage.setItem('LOCALES_LANGUAGE', 'en');
     if (watchlists) {
       localStorage.setItem(
-        'vera_screening_studio_watchlists_v1',
+        'sigmarail_screening_studio_watchlists_v1',
         JSON.stringify(watchlists),
       );
     }
@@ -1569,7 +1569,7 @@ for (const viewport of viewports) {
     );
     await page.addInitScript(() => {
       localStorage.setItem(
-        'vera_custom_benchmarks',
+        'sigmarail_custom_benchmarks',
         JSON.stringify(['XLI', 'NVDA']),
       );
     });
@@ -1593,7 +1593,7 @@ for (const viewport of viewports) {
       ),
     ).toBe(JSON.stringify(['XLI', 'NVDA']));
     expect(
-      await page.evaluate(() => localStorage.getItem('vera_custom_benchmarks')),
+      await page.evaluate(() => localStorage.getItem('sigmarail_custom_benchmarks')),
     ).toBeNull();
     const benchmarkSelect = page.getByRole('combobox', { name: 'Benchmark' });
     await benchmarkSelect.click();
@@ -2373,7 +2373,7 @@ test('legacy browser watchlists migrate into the signed-in application profile',
   ).toMatchObject(legacyLists);
   expect(
     await page.evaluate(() =>
-      localStorage.getItem('vera_screening_studio_watchlists_v1'),
+      localStorage.getItem('sigmarail_screening_studio_watchlists_v1'),
     ),
   ).toBeNull();
 });

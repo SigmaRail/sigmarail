@@ -79,7 +79,7 @@ def list_columns() -> dict[str, Any]:
 def pipeline_schema() -> dict[str, Any]:
     """JSON schema for a staged PipelineDocument.
 
-    Authoring boundary (canonical: VeraProjects/docs/EXPRESSION_SURFACE.md
+    Authoring boundary (canonical: SigmaRailProjects/docs/EXPRESSION_SURFACE.md
     §11): predicates/scorings belong in AST sites (`when`, `*_expr`, rule
     operands); effects belong in the bounded `then` action vocabulary with
     operand args; engine mechanics (fill_session, surrogates, uses[],
@@ -109,7 +109,7 @@ def validate_pipeline(pipeline_json: str) -> dict[str, Any]:
 
 
 def compile_preset(preset_id: str) -> dict[str, Any]:
-    """Compile a named strategy preset into a VeraLabV1 spec dict."""
+    """Compile a named strategy preset into a SigmaRailStrategyV1 spec dict."""
     from sigmarail_spec.strategy import compile_pipeline as _compile
     from sigmarail_spec.strategy.presets import get_preset
 
@@ -123,7 +123,7 @@ def compile_preset(preset_id: str) -> dict[str, Any]:
 
 
 def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
-    """Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict."""
+    """Compile a staged PipelineDocument JSON into a SigmaRailStrategyV1 spec dict."""
     from sigmarail_spec.strategy import PipelineDocument, compile_pipeline as _compile
 
     try:
@@ -138,7 +138,7 @@ def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
 
 
 def fork(spec_json: str) -> dict[str, Any]:
-    """Decompile a VeraLabV1 spec JSON back into a PipelineDocument (for editing)."""
+    """Decompile a SigmaRailStrategyV1 spec JSON back into a PipelineDocument (for editing)."""
     from sigmarail_spec.strategy import decompile_pipeline
 
     try:
@@ -153,7 +153,7 @@ def fork(spec_json: str) -> dict[str, Any]:
 
 
 def compile_portfolio(portfolio_json: str) -> dict[str, Any]:
-    """Compile a PortfolioDocument JSON (legs + allocation) into a VeraLabV1 spec."""
+    """Compile a PortfolioDocument JSON (legs + allocation) into a SigmaRailStrategyV1 spec."""
     from sigmarail_spec.strategy import PortfolioDocument, compile_portfolio as _compile
 
     try:
@@ -168,7 +168,7 @@ def compile_portfolio(portfolio_json: str) -> dict[str, Any]:
 
 
 def fork_portfolio(spec_json: str) -> dict[str, Any]:
-    """Decompile a VeraLabV1 spec JSON back into a PortfolioDocument (for editing)."""
+    """Decompile a SigmaRailStrategyV1 spec JSON back into a PortfolioDocument (for editing)."""
     from sigmarail_spec.strategy import decompile_portfolio
 
     try:
@@ -230,7 +230,7 @@ def save_pipeline(
     """Validate + compile an authored PipelineDocument and save it (forks if runs exist).
 
     The missing middle exit: turns a ``PipelineDocument`` (from ``compose_document`` or
-    ``strategy_fork``) straight into a stored, runnable spec — no raw VeraLabV1 JSON to build.
+    ``strategy_fork``) straight into a stored, runnable spec — no raw SigmaRailStrategyV1 JSON to build.
     """
     from sigmarail_spec.strategy import PipelineDocument, compile_pipeline as _compile
     from screens.spec_save import save_spec_guarded
@@ -292,10 +292,10 @@ def patch_pipeline(
 
 
 def strategy_diff(spec_a_json: str, spec_b_json: str) -> dict[str, Any]:
-    """Semantic structural diff between two specs (PipelineDocument or VeraLabV1).
+    """Semantic structural diff between two specs (PipelineDocument or SigmaRailStrategyV1).
 
     Accepts either authored ``PipelineDocument`` JSON (top-level ``stages`` /
-    ``bindings``) or compiled VeraLabV1 (``Framework`` slots); the latter is
+    ``bindings``) or compiled SigmaRailStrategyV1 (``Framework`` slots); the latter is
     decompiled first so both inputs compare in the same document space.
     """
     from sigmarail_spec.strategy import PipelineDocument, decompile_pipeline

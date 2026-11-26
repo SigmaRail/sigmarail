@@ -190,7 +190,7 @@ function nearestCandle(
 }
 
 const CHART_HEIGHT_STORAGE_KEY = "sigmarail.chart.canvas-height.v1";
-const LEGACY_CHART_HEIGHT_STORAGE_KEY = "vera_chart_canvas_height";
+const LEGACY_CHART_HEIGHT_STORAGE_KEY = "sigmarail_chart_canvas_height";
 function loadSavedChartHeight(): number {
   try {
     let val = localStorage.getItem(CHART_HEIGHT_STORAGE_KEY);

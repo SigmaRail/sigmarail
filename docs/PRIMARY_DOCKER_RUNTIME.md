@@ -8,9 +8,8 @@ on macOS and is reached from Docker through `host.docker.internal`.
 
 This is the current development-machine setup, not a portable public installer.
 It assumes machine-local environment files, existing Postgres and Redis Docker
-volumes, a native ClickHouse server, and the LEAN workspace path configured in
-the Compose file. A clean-machine setup still needs to be made portable before
-advertising this as a one-command install.
+volumes, native ClickHouse, and a host checkout path. LEAN projects, temporary
+files, and results live under the SigmaRail checkout at `.sigmarail/lean/`.
 
 ## Data ownership
 
@@ -31,9 +30,9 @@ Stripe mock, and Mailcatcher containers are not part of the active stack.
 
 Before starting the full application, confirm that the backend and gateway env
 files exist, `SIGMARAIL_BACKTEST_DB_PASSWORD` is set in the local shell, the
-external Postgres and Redis volumes already exist, ClickHouse is running on the
-host, and the LEAN workspace path in `deploy/compose.primary.yml` matches this
-machine. Do not commit the env files or credentials.
+external Postgres and Redis volumes already exist, and ClickHouse is running on
+the host. Set `SIGMARAIL_HOST_REPO_ROOT` when the SigmaRail checkout is not at
+`/Users/mdiggory/FinanceProjects/sigmarail`. Do not commit the env files or credentials.
 
 ## Build and update
 

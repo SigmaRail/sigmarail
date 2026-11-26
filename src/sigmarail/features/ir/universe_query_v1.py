@@ -2,7 +2,7 @@
 
 ``from: screener`` is the canonical logical source id (alias ``daily_screener`` is
 deprecated); compiled SQL joins ``screener_*``.
-Validated and compiled only in VeraBase (opaque dict on VeraTradingLab REST path).
+Validated and compiled only in SigmaRail (opaque dict on SigmaRailTradingLab REST path).
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ class LitVal(BaseModel):
 
 
 class FormulaExpr(BaseModel):
-    """Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR)."""
+    """Binary arithmetic formula operand; nests via ``args`` (C-SIGMARAIL-EXPR)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -557,7 +557,7 @@ def _emit_offset_column(
 
 
 def _compile_where(expr: WhereExpr, params: dict[str, object], pfx: str) -> str:
-    from sigmarail.features.ir.vera_bool_expr import compile_bool_expr_sql, parse_bool_expr
+    from sigmarail.features.ir.sigmarail_bool_expr import compile_bool_expr_sql, parse_bool_expr
 
     return compile_bool_expr_sql(parse_bool_expr(expr.model_dump()), params, pfx)
 
@@ -658,7 +658,7 @@ def _compile_where_with_aliases(
     prior_aliases: set[str],
 ) -> str:
     """Compile WHERE; ColRefs that name prior computed aliases emit bare identifiers."""
-    from sigmarail.features.ir.vera_bool_expr import compile_bool_expr_sql, parse_bool_expr
+    from sigmarail.features.ir.sigmarail_bool_expr import compile_bool_expr_sql, parse_bool_expr
 
     physical_only = True
     for name in _where_column_names(expr):

@@ -145,7 +145,7 @@ def _validate_expr_ops(node: Any, *, where: str) -> None:
         "left",
         "right",
         "args",
-        # C-VERA-EXPR-V2 operand fields: cond(when/then/otherwise),
+        # C-SIGMARAIL-EXPR-V2 operand fields: cond(when/then/otherwise),
         # clamp(value/min/max), abs(arg). lit.value is a scalar — the
         # dict guard above makes recursing into it a no-op.
         "when",
@@ -248,7 +248,7 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
         # Ordered rule-driven control flow (Phase 1 AST). When provided, exit_rules
         # is normalised into this form so new specs carry `rules` directly.
         rules: list | None = None,
-        # Position-init stop as an Operand AST (C-VERA-EXPR-V2). Evaluated once at
+        # Position-init stop as an Operand AST (C-SIGMARAIL-EXPR-V2). Evaluated once at
         # fill against __position.{entry,atr,leverage}; when omitted the default
         # is materialized from the ATR/max-stop knobs so the runtime still executes
         # an expression — the knobs are generation inputs, not live config.
@@ -436,9 +436,9 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
         procedural decision code in ``ManageRisk`` underneath this.
 
         The generator lives in ``sigmarail_lab.ir.risk_ladder`` (single source of
-        truth) so ``vera_query_core`` can materialize the identical table into
+        truth) so ``sigmarail_query_core`` can materialize the identical table into
         ``Parameters.rules`` at compile time — the LEAN container carries
-        ``sigmarail_lab`` but never ``vera_query_core``.
+        ``sigmarail_lab`` but never ``sigmarail_query_core``.
 
         ``overrides`` carries resolved ``policy_overrides`` values (generated
         mode only); authored ``rules`` specs are authoritative and never
@@ -860,10 +860,10 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
             target.Tag = str(tag)
         except Exception:
             pass
-        tags = getattr(algorithm, "_vera_order_tags", None)
+        tags = getattr(algorithm, "_sigmarail_order_tags", None)
         if not isinstance(tags, dict):
             tags = {}
-            algorithm._vera_order_tags = tags
+            algorithm._sigmarail_order_tags = tags
         ticker = str(getattr(symbol, "Value", symbol))
         tags[ticker] = str(tag)
         return target
@@ -937,7 +937,7 @@ class SwingProgressiveRiskManagementModel(RiskManagementModel):
                             atr_mult = float(ov["atr_stop_multiplier"])
                     except Exception:
                         pass
-                # Initial stop is an AST eval (C-VERA-EXPR-V2): authored
+                # Initial stop is an AST eval (C-SIGMARAIL-EXPR-V2): authored
                 # Parameters.init_stop wins; absent → the ctor materialized the
                 # default from knobs. In generated mode, a policy_overrides
                 # atr_stop_multiplier re-materializes the expr so the override

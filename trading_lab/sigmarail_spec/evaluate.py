@@ -1,6 +1,6 @@
 """Row-level evaluators for the canonical dialect.
 
-Moved from VeraTradingLab's `vera_lab/runtime/signal_evaluation.py` on consolidation,
+Moved from SigmaRailTradingLab's `sigmarail_lab/runtime/signal_evaluation.py` on consolidation,
 because the evaluator must handle every node the dialect declares and the two had to
 stop living in different repos. Imports only `typing` (+ stdlib) — pure by construction.
 """

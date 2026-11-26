@@ -22,7 +22,7 @@ from sigmarail_lab.ir.graph_policy_runtime import is_policy_graph, parse_graph
 from sigmarail_lab.ir.graph_runtime import graph_subscription_tickers
 from sigmarail_lab.ir.evaluation_coalesce import coalesce_research_evaluation
 from sigmarail_lab.ir.resolver import resolve_sigmarail_lab
-from sigmarail_lab.ir.sigmarail_lab_v1_bind import VeraLabV1BindingProxy
+from sigmarail_lab.ir.sigmarail_lab_v1_bind import SigmaRailStrategyV1BindingProxy
 from sigmarail_lab.ir.sigmarail_screener_framework_types import STORE_BACKED_EXECUTION_TYPES
 from sigmarail_lab.runtime.lean_framework_interpreter import wire_framework_bundle_v1
 from sigmarail_lab.runtime.bar_requirements import (
@@ -40,6 +40,7 @@ from sigmarail_lab.runtime.store_backed_loop import (
     fill_session_time_rule_kind,
     run_store_backed_rebalance,
 )
+from sigmarail_lab.runtime.ast_universe_alpha import SigmaRailQueryUniverseAlphaModel
 
 
 def _backtest_security_initializer(sec):
@@ -71,7 +72,7 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         uspec = _spec.effective_universe()
         if uspec is None:
             self.Quit(
-                "VeraLab graph mode: unsupported graph shape "
+                "SigmaRailLab graph mode: unsupported graph shape "
                 "(need select→filter on daily_screener with preset or criteria)."
             )
             return
@@ -84,7 +85,7 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         param_map = {}
         if hasattr(lf, "lean_set_parameter_map"):
             param_map = lf.lean_set_parameter_map() or {}
-        vb = getattr(_spec, "vera_base", None)
+        vb = getattr(_spec, "sigmarail_base", None)
         evaluation = getattr(vb, "evaluation", None) if vb is not None else None
         start_date, end_date, initial_cash, benchmark = coalesce_research_evaluation(
             get_parameter=self.GetParameter,
@@ -148,11 +149,11 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         self._store.set_benchmark_ticker(benchmark)
         if _attach_policy_graph:
             self._store.attach_policy_graph(root)
-        # Attach VeraBase facet for data_sources (graph policy + store-backed catalog)
-        if hasattr(_spec, "vera_base") and getattr(_spec, "vera_base", None):
-            self._store.attach_vera_base(_spec.vera_base)
+        # Attach SigmaRail facet for data_sources (graph policy + store-backed catalog)
+        if hasattr(_spec, "sigmarail_base") and getattr(_spec, "sigmarail_base", None):
+            self._store.attach_sigmarail_base(_spec.sigmarail_base)
             # C-REGIME-POLICY-V1: attach score evaluator from DataSources.regime.score
-            vb = _spec.vera_base
+            vb = _spec.sigmarail_base
             for ds in getattr(vb, "data_sources", None) or []:
                 name = getattr(ds, "name", None) or (ds.get("name") if isinstance(ds, dict) else None)
                 if name != "regime":
@@ -161,8 +162,8 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
                 if score:
                     self._store.attach_regime_gate(score)
                 break
-        elif hasattr(_spec, "_bound") and getattr(_spec._bound, "_vera_base", None):
-            self._store.attach_vera_base(_spec._bound._vera_base)
+        elif hasattr(_spec, "_bound") and getattr(_spec._bound, "_sigmarail_base", None):
+            self._store.attach_sigmarail_base(_spec._bound._sigmarail_base)
         self._store.bind(self, regime_source=getattr(lf.regime, "source", None))
         self._deployment_id = (
             (self.GetParameter("deployment-id") or os.environ.get("DEPLOYMENT_ID") or "")
@@ -175,12 +176,18 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
 
         if self.LiveMode:
             today = date_cls.today()
-            self._store.load(today, today)
+            self._store.load(today - timedelta(days=14), today)
         else:
             start = date_cls(self.StartDate.year, self.StartDate.month, self.StartDate.day)
             end = date_cls(self.EndDate.year, self.EndDate.month, self.EndDate.day)
             # Pad so calendar D-1 / prior-session as-of on week 1 has regime rows.
             self._store.load(start - timedelta(days=14), end)
+
+        if self.LiveMode:
+            initial_as_of = (date_cls.today() - timedelta(days=1)).isoformat()
+        else:
+            initial_as_of = (date_cls(self.StartDate.year, self.StartDate.month, self.StartDate.day) - timedelta(days=1)).isoformat()
+        self._decision_universe_rows = self._store.get_universe_rows(initial_as_of)
 
         _bar_req = collect_bar_requirements(fb)
         self._bar_req = _bar_req
@@ -210,18 +217,18 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
 
         wired = wire_framework_bundle_v1(self, fb, store=self._store)
         self.Debug(f"INIT: wired alpha={type(wired.alpha).__name__}")
-        self._universe_model = wired.universe_selection
-        self._alpha_model = wired.alpha
+        self._alpha_model = SigmaRailQueryUniverseAlphaModel(wired.alpha)
+        set_alpha = getattr(self, "SetAlpha", None) or getattr(self, "set_alpha", None)
+        if not callable(set_alpha):
+            raise RuntimeError("LEAN algorithm does not expose SetAlpha for the SigmaRail query gate")
+        set_alpha(self._alpha_model)
         self._pcm = wired.portfolio_construction
         self._exec_model = wired.execution
         self._risk_model = wired.risk_management
 
-        self.UniverseSettings.Resolution = Resolution.Daily
-        self.UniverseSettings.DataNormalizationMode = DataNormalizationMode.Raw
-
         # Keep SPY as the schedule anchor. Other benchmark equity subscriptions
         # may support framework references, but the benchmark callback below is
-        # sourced from Vera's fully adjusted series (or explicit constant cash).
+        # sourced from SigmaRail's fully adjusted series (or explicit constant cash).
         self._anchor = self.AddEquity("SPY", Resolution.Daily).Symbol
         bench_sym = self._anchor
         if benchmark not in ("SPY", "CASH"):
@@ -229,35 +236,35 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
             bench_eq.SetDataNormalizationMode(DataNormalizationMode.Raw)
             bench_sym = bench_eq.Symbol
 
-        exec_type = (fb.execution.type or "").strip()
+        # Every strategy's dated SigmaRail query result is the sole universe source.
+        # SigmaRail's custom execution model uses its scheduled decision loop; stock
+        # LEAN execution models keep the framework lifecycle after AST subscriptions
+        # are refreshed. No LEAN UniverseSelectionModel is installed.
         self._use_store_manual_rebalance = exec_type in STORE_BACKED_EXECUTION_TYPES
         exec_params = dict(fb.execution.parameters or {})
         self._fill_session = str(exec_params.get("fill_session") or "moo").strip().lower()
 
-        if self._use_store_manual_rebalance:
-            self._symbols_added = {"SPY", benchmark} - {"CASH"}
-            self.SetBenchmark(lambda dt: self._store.get_benchmark_price(dt.date().isoformat()))
-            self._preload_equity_subscriptions(_spec)
-            rule_kind = fill_session_time_rule_kind(self._fill_session)
-            minutes = fill_session_minutes_before(self._fill_session)
-            if rule_kind == "before_market_close":
-                time_rule = self.TimeRules.BeforeMarketClose(self._anchor, minutes)
-            else:
-                time_rule = self.TimeRules.BeforeMarketOpen(self._anchor, minutes)
+        self._symbols_added = {"SPY", benchmark} - {"CASH"}
+        self.SetBenchmark(lambda dt: self._store.get_benchmark_price(dt.date().isoformat()))
+        self._preload_equity_subscriptions(_spec)
+        rule_kind = fill_session_time_rule_kind(self._fill_session)
+        minutes = fill_session_minutes_before(self._fill_session)
+        if rule_kind == "before_market_close":
+            time_rule = self.TimeRules.BeforeMarketClose(self._anchor, minutes)
+        else:
+            time_rule = self.TimeRules.BeforeMarketOpen(self._anchor, minutes)
+        self.Schedule.On(
+            self.DateRules.EveryDay(self._anchor),
+            time_rule,
+            self._daily_rebalance,
+        )
+        if not self.LiveMode:
+            self._day_snapshots = []
             self.Schedule.On(
                 self.DateRules.EveryDay(self._anchor),
-                time_rule,
-                self._daily_rebalance,
+                self.TimeRules.AfterMarketClose(self._anchor, 5),
+                self._record_backtest_day_snapshot,
             )
-            if not self.LiveMode:
-                self._day_snapshots = []
-                self.Schedule.On(
-                    self.DateRules.EveryDay(self._anchor),
-                    self.TimeRules.AfterMarketClose(self._anchor, 5),
-                    self._record_backtest_day_snapshot,
-                )
-        else:
-            self.SetBenchmark(lambda dt: self._store.get_benchmark_price(dt.date().isoformat()))
 
         if self.LiveMode:
             self.Schedule.On(
@@ -301,7 +308,9 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         if callable(is_graph) and is_graph() and root is not None:
             tickers |= graph_subscription_tickers(root)
         if self._store is not None:
-            tickers |= set(self._store.dates_by_ticker().keys())
+            start = date_cls(self.StartDate.year, self.StartDate.month, self.StartDate.day)
+            as_of = (start - timedelta(days=1)).isoformat()
+            tickers |= set(self._store.get_universe_rows(as_of).keys())
         enable_surr = False
         pcm = getattr(self, "_pcm", None)
         if pcm is not None:
@@ -355,32 +364,44 @@ class ClickHouseUniverseAlgorithm(QCAlgorithm):
         as_of_date = self.Time.date()
         as_of = (as_of_date - timedelta(days=1)).isoformat()
 
-        universe = self._store.get_universe(as_of)
-        self._decision_universe_rows = universe if isinstance(universe, dict) else {}
-        for ticker in list(universe) + [t for t in self._always_include_tickers if t not in universe]:
+        universe_rows = self._store.get_universe_rows(as_of)
+        self._decision_universe_rows = universe_rows if isinstance(universe_rows, dict) else {}
+        for ticker in list(self._decision_universe_rows) + [t for t in self._always_include_tickers if t not in self._decision_universe_rows]:
             if ticker not in self._symbols_added:
                 equity = self.AddEquity(ticker, Resolution.Daily)
                 equity.SetDataNormalizationMode(DataNormalizationMode.Raw)
                 self._symbols_added.add(ticker)
 
-        all_tickers = set(universe.keys()) | {kv.Key.Value for kv in self.Portfolio if kv.Value.Invested}
+        retained = set(self._decision_universe_rows) | self._always_include_tickers | {
+            "SPY", self._benchmark_ticker
+        }
+        held = {kv.Key.Value for kv in self.Portfolio if kv.Value.Invested}
+        for ticker in sorted(self._symbols_added - retained - held):
+            try:
+                self.RemoveSecurity(Symbol.Create(ticker, SecurityType.Equity, Market.USA))
+                self._symbols_added.discard(ticker)
+            except Exception as exc:
+                self.Debug(f"AST universe: could not remove stale subscription {ticker}: {exc}")
+
+        all_tickers = set(self._decision_universe_rows.keys()) | {kv.Key.Value for kv in self.Portfolio if kv.Value.Invested}
         warn_missing_lean_prices(
             self,
             all_tickers,
             resolve_symbol=lambda t: Symbol.Create(t, SecurityType.Equity, Market.USA),
         )
 
-        run_store_backed_rebalance(
-            self,
-            self._alpha_model,
-            self._pcm,
-            getattr(self, "_risk_model", None),
-            self._exec_model,
-        )
+        if self._use_store_manual_rebalance:
+            run_store_backed_rebalance(
+                self,
+                self._alpha_model,
+                self._pcm,
+                getattr(self, "_risk_model", None),
+                self._exec_model,
+            )
 
     def _record_backtest_day_snapshot(self):
         as_of = (self.Time.date() - timedelta(days=1)).isoformat()
-        universe = self._store.get_universe(as_of)
+        universe = self._store.get_universe_rows(as_of)
         candidates = []
         for ticker, row in list(universe.items())[:100]:
             item = {"ticker": ticker}

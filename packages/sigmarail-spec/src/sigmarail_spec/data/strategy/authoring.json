@@ -1,11 +1,33 @@
 {
   "authoring_flow": [
     "PipelineDocument",
-    "VeraLabV1",
-    "LEAN Framework"
+    "SigmaRailStrategyV1 with five fixed SigmaRail slots"
   ],
   "pipeline_document_schema": {
     "$defs": {
+      "AlphaConfig": {
+        "additionalProperties": false,
+        "description": "SigmaRail-owned signal behavior; no raw LEAN model class selection.",
+        "properties": {
+          "insight_period_days": {
+            "default": 5,
+            "minimum": 1,
+            "title": "Insight Period Days",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "screen",
+            "enum": [
+              "screen",
+              "always_long"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "AlphaConfig",
+        "type": "object"
+      },
       "EntryTrigger": {
         "additionalProperties": false,
         "description": "A specific entry signal condition.",
@@ -210,17 +232,6 @@
             ],
             "title": "Fill Session",
             "type": "string"
-          },
-          "model": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/ModelRef"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
           },
           "type": {
             "default": "market_order",
@@ -519,29 +530,9 @@
         "title": "HedgeInstrument",
         "type": "object"
       },
-      "ModelRef": {
-        "additionalProperties": false,
-        "description": "An explicit LEAN model reference — the flexible-slot primitive.\n\nAny slot (Universe / Alpha / PortfolioConstruction / RiskManagement /\nExecution) can be filled either by a *named concept* (compiled to a known\nLEAN class) or by a raw ``ModelRef`` naming *any* LEAN class — including new\nones we author — with its ``parameters`` passed through verbatim.",
-        "properties": {
-          "parameters": {
-            "additionalProperties": true,
-            "title": "Parameters",
-            "type": "object"
-          },
-          "type": {
-            "title": "Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "title": "ModelRef",
-        "type": "object"
-      },
       "PipelineBindings": {
         "additionalProperties": false,
-        "description": "Named slot expressions compiled onto Alpha / PCM / Risk Parameters.\n\nAuthored here (with stages); never persisted as a whole-strategy\n``VeraBase.Pipeline`` blob (C-STRATEGY-PIPELINE-SSOT).",
+        "description": "Named slot expressions compiled onto Alpha / PCM / Risk Parameters.\n\nAuthored here (with stages); never persisted as a whole-strategy\n``SigmaRail.Pipeline`` blob (C-STRATEGY-PIPELINE-SSOT).",
         "properties": {
           "alpha_confidence": {
             "anyOf": [
@@ -1034,17 +1025,6 @@
             "default": null,
             "title": "Max Sector Exposure"
           },
-          "model": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/ModelRef"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
-          },
           "regime_gate": {
             "anyOf": [
               {
@@ -1367,6 +1347,18 @@
             "default": null,
             "title": "Enable Surrogates"
           },
+          "exit_when_no_bars": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Exit When No Bars"
+          },
           "honor_insight_confidence": {
             "anyOf": [
               {
@@ -1391,6 +1383,20 @@
             ],
             "default": null,
             "title": "Max Positions"
+          },
+          "max_total_exposure": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Total Exposure"
           },
           "max_weight": {
             "anyOf": [
@@ -1445,17 +1451,6 @@
             ],
             "default": null,
             "title": "Min Weight"
-          },
-          "model": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/ModelRef"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
           },
           "order_expr": {
             "anyOf": [
@@ -1629,6 +1624,20 @@
             "default": null,
             "title": "Target Atr Risk"
           },
+          "target_exposure": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target Exposure"
+          },
           "use_regime_scaling": {
             "anyOf": [
               {
@@ -1658,7 +1667,7 @@
       },
       "SlotExpr": {
         "additionalProperties": false,
-        "description": "Bool or number expression over the Alpha computed + L7 column bag.\n\nBool slots use the same ``vera_bool_expr`` / where AST as stage filters.\nNumber slots use Operand / formula AST (``col`` / ``lit`` / ``formula``).\n``__position.*`` cols are runtime-only (Risk); not probeable.",
+        "description": "Bool or number expression over the Alpha computed + L7 column bag.\n\nBool slots use the same ``sigmarail_bool_expr`` / where AST as stage filters.\nNumber slots use Operand / formula AST (``col`` / ``lit`` / ``formula``).\n``__position.*`` cols are runtime-only (Risk); not probeable.",
         "properties": {
           "expr": {
             "anyOf": [
@@ -1852,7 +1861,7 @@
               }
             ],
             "default": null,
-            "description": "Initial-stop Operand AST (C-VERA-EXPR-V2): exit-stage value compiles to RiskManagement.Parameters.init_stop.",
+            "description": "Initial-stop Operand AST (C-SIGMARAIL-EXPR-V2): exit-stage value compiles to RiskManagement.Parameters.init_stop.",
             "title": "Init Stop"
           },
           "instruments": {
@@ -2263,17 +2272,6 @@
             "default": null,
             "title": "Limit Per Day"
           },
-          "model": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/ModelRef"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null
-          },
           "screen": {
             "items": {
               "anyOf": [
@@ -2324,8 +2322,7 @@
       "UniverseSource": {
         "enum": [
           "screener",
-          "manual",
-          "composite"
+          "manual"
         ],
         "title": "UniverseSource",
         "type": "string"
@@ -2335,15 +2332,7 @@
     "description": "Top-level staged strategy document (a single leg of a portfolio).",
     "properties": {
       "alpha": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/ModelRef"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "default": null
+        "$ref": "#/$defs/AlphaConfig"
       },
       "bindings": {
         "anyOf": [
@@ -2456,7 +2445,7 @@
           }
         ],
         "default": null,
-        "description": "Cross-slot regime policy → VeraBase.DataSources.regime + uses[] routed to PCM/Alpha. Preferred home; risk.regime_gate is the deprecated pre-migration location.",
+        "description": "Cross-slot regime policy → SigmaRail.DataSources.regime + uses[] routed to PCM/Alpha. Preferred home; risk.regime_gate is the deprecated pre-migration location.",
         "title": "Regime Gate"
       },
       "risk": {
@@ -3008,7 +2997,7 @@
       },
       "FormulaExpr": {
         "additionalProperties": false,
-        "description": "Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR).",
+        "description": "Binary arithmetic formula operand; nests via ``args`` (C-SIGMARAIL-EXPR).",
         "properties": {
           "args": {
             "items": {

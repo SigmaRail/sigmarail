@@ -1,6 +1,6 @@
 """Alpha-performance endpoint tests (mocked — no ClickHouse required).
 
-Covers VeraProjects#74: GET /api/screens/fields/<name>/alpha-performance
+Covers SigmaRailProjects#74: GET /api/screens/fields/<name>/alpha-performance
 delegates to sigmarail.features.alpha_evaluation.evaluate_factor_performance.
 """
 

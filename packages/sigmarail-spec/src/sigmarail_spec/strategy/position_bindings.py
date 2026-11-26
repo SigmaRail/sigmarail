@@ -4,7 +4,7 @@
 position context the runtime supplies to the slot evaluators — see
 ``SwingProgressiveRiskManagementModel._evaluate_rules`` (live context) and the
 ``init_stop`` evaluation at position open (init context) in
-``vera_lab/runtime/qc_swing_risk.py``. That context is defined by this tree, so the
+``sigmarail_lab/runtime/qc_swing_risk.py``. That context is defined by this tree, so the
 catalog of names, labels, docs, and valid contexts lives here too. Studio serves it
 read-only; it must not be re-authored in the frontend.
 

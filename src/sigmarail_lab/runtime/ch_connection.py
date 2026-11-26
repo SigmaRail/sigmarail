@@ -14,7 +14,7 @@ from .ch_http import ChHttpSettings
 # Defaults when neither env nor LEAN params provide a value (matches historical main.py).
 _DEFAULT_HOST = "brooklawn.atmire.us"
 _DEFAULT_PORT = "8123"
-_DEFAULT_DATABASE = "vera"
+_DEFAULT_DATABASE = "sigmarail"
 _DEFAULT_USER = "testuser"
 _DEFAULT_PASSWORD = "testanalysis"
 
@@ -46,36 +46,36 @@ def resolve_clickhouse_settings(algorithm=None) -> ChHttpSettings:
     Env: CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_DATABASE, CLICKHOUSE_USER,
     CLICKHOUSE_PASSWORD.
 
-    Parameter aliases (when algorithm is set): clickhouse-host / vera-host, etc.
+    LEAN parameters use the same CLICKHOUSE_* names as the worker environment.
     """
     host = _env_or_param(
         algorithm,
         "CLICKHOUSE_HOST",
-        ("clickhouse-host", "vera-host"),
+        ("clickhouse-host",),
         _DEFAULT_HOST,
     )
     port = _env_or_param(
         algorithm,
         "CLICKHOUSE_PORT",
-        ("clickhouse-http-port", "vera-port"),
+        ("clickhouse-http-port",),
         _DEFAULT_PORT,
     )
     database = _env_or_param(
         algorithm,
         "CLICKHOUSE_DATABASE",
-        ("clickhouse-database", "vera-database"),
+        ("clickhouse-database",),
         _DEFAULT_DATABASE,
     )
     user = _env_or_param(
         algorithm,
         "CLICKHOUSE_USER",
-        ("clickhouse-user", "vera-user"),
+        ("clickhouse-user",),
         _DEFAULT_USER,
     )
     password = _env_or_param(
         algorithm,
         "CLICKHOUSE_PASSWORD",
-        ("clickhouse-password", "vera-password"),
+        ("clickhouse-password",),
         _DEFAULT_PASSWORD,
         allow_empty=True,
     )

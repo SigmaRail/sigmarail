@@ -1,46 +1,74 @@
 {
-  "SchemaVersion": 2,
-  "Kind": "VeraLabV1",
+  "SchemaVersion": 3,
+  "Kind": "SigmaRailStrategyV1",
+  "title": "Minimal SigmaRail strategy",
   "Framework": {
     "UniverseSelection": {
-      "Type": "VeraScreenerUniverseSelectionModel",
-      "Parameters": {}
+      "Type": "SigmaRailClickHouseUniverseSelection",
+      "Parameters": {
+        "query": {
+          "version": 1,
+          "select": [
+            "ticker",
+            "close",
+            "overall_score",
+            "minervini_tt_all_conditions_full"
+          ],
+          "where": {
+            "type": "eq",
+            "left": {
+              "type": "col",
+              "name": "minervini_tt_all_conditions_full"
+            },
+            "right": {
+              "type": "lit",
+              "value": 1
+            }
+          },
+          "order_by": [
+            {
+              "field": "overall_score",
+              "direction": "desc"
+            }
+          ],
+          "limit_per_day": 101
+        }
+      }
     },
     "Alpha": {
-      "Type": "RsiAlphaModel",
+      "Type": "SigmaRailScreenerAlphaModel",
       "Parameters": {
-        "period": 14,
-        "resolution": "Daily"
+        "signal_mode": "screen",
+        "max_positions": 10
       }
     },
     "PortfolioConstruction": {
-      "Type": "EqualWeightingPortfolioConstructionModel",
-      "Parameters": {}
+      "Type": "SigmaRailScreenerPortfolioConstructionModel",
+      "Parameters": {
+        "allocation_policy": "equal_weight",
+        "max_positions": 10
+      }
     },
     "Execution": {
-      "Type": "ImmediateExecutionModel",
-      "Parameters": {}
+      "Type": "SigmaRailScreenerExecutionModel",
+      "Parameters": {
+        "fill_session": "moo"
+      }
     },
     "RiskManagement": {
-      "Type": "MaximumDrawdownPercentPerSecurity",
+      "Type": "SigmaRailRiskManagementModel",
       "Parameters": {
-        "maximum_drawdown_percent": 0.1
+        "rules": [
+          {
+            "kind": "max_drawdown_per_security",
+            "parameters": {
+              "maximum_drawdown_percent": 0.1
+            }
+          }
+        ]
       }
     }
   },
   "AlgorithmParameters": {},
-  "VeraBase": {
-    "Universe": {
-      "version": 1,
-      "from": "daily_screener",
-      "select": ["ticker", "overall_score", "minervini_tt_all_conditions_full"],
-      "where": {
-        "type": "eq",
-        "left": { "type": "col", "name": "minervini_tt_all_conditions_full" },
-        "right": { "type": "lit", "value": 1 }
-      },
-      "order_by": [{ "field": "overall_score", "direction": "desc" }],
-      "limit_per_day": 101
-    }
-  }
+  "SigmaRail": {}
 }

@@ -340,7 +340,7 @@ def _source_models(workspace: Path, lean_root: Path) -> dict[str, Any]:
     import sigmarail_spec.expr as expr
     from sigmarail_spec.expr import BoolExprItem, SpecExpr
     from sigmarail_lab.ir.lean_framework_json import LeanFrameworkV1Document
-    from sigmarail_lab.ir.sigmarail_lab_v1_json import VeraLabV1Document
+    from sigmarail_lab.ir.sigmarail_lab_v1_json import SigmaRailStrategyV1Document
     from sigmarail_lab.ir.runtime_param_table import payload as runtime_payload
     from sigmarail_lab.ir import sigmarail_screener_framework_types as screener_types
     from sigmarail_lab.ir.lean_framework_discovery import _scan_py, discover_lean_framework_types
@@ -355,7 +355,7 @@ def _source_models(workspace: Path, lean_root: Path) -> dict[str, Any]:
         if isinstance(name, str):
             classes[name] = value
     expressions = {
-        "version": "C-VERA-EXPR-V1",
+        "version": "C-SIGMARAIL-EXPR-V1",
         "boolean_schema": TypeAdapter(BoolExprItem).json_schema(),
         "spec_schema": TypeAdapter(SpecExpr).json_schema(),
         "nodes": [
@@ -379,24 +379,23 @@ def _source_models(workspace: Path, lean_root: Path) -> dict[str, Any]:
         if path.name.startswith("_"):
             continue
         trading_lab_types.extend(_scan_py(path, trading_lab_root))
-    slot_type_ids: dict[str, set[str]] = {
-        "UniverseSelection": set(screener_types.ALLOWED_UNIVERSE_SELECTION_TYPES),
-        "Alpha": set(screener_types.ALLOWED_ALPHA_TYPES),
-        "PortfolioConstruction": set(screener_types.ALLOWED_PORTFOLIO_CONSTRUCTION_TYPES),
-        "RiskManagement": set(screener_types.ALLOWED_RISK_MANAGEMENT_TYPES),
-        "Execution": set(screener_types.ALLOWED_EXECUTION_TYPES),
-    }
-    discovered_types = [
-        (item["slot"], item["type_id"]) for item in lean_types
-    ] + [
-        (item.slot, item.type_id) for item in trading_lab_types
-    ]
-    for slot, type_id in discovered_types:
-        if slot in slot_type_ids:
-            slot_type_ids[slot].add(type_id)
     runtime_types = runtime["types"]
+    fixed_slot_types = {
+        "UniverseSelection": {"SigmaRailClickHouseUniverseSelection"},
+        "Alpha": {"SigmaRailScreenerAlphaModel"},
+        "PortfolioConstruction": {"SigmaRailScreenerPortfolioConstructionModel"},
+        "RiskManagement": {"SigmaRailRiskManagementModel"},
+        "Execution": {"SigmaRailScreenerExecutionModel"},
+    }
+    missing_fixed_types = {
+        slot: sorted(type_ids - runtime_types.keys())
+        for slot, type_ids in fixed_slot_types.items()
+        if type_ids - runtime_types.keys()
+    }
+    if missing_fixed_types:
+        raise ValueError(f"Fixed SigmaRail framework types missing runtime capabilities: {missing_fixed_types}")
     slot_type_ids = {
-        slot: ids & runtime_types.keys() for slot, ids in slot_type_ids.items()
+        slot: set(type_ids) for slot, type_ids in fixed_slot_types.items()
     }
     classified_type_ids = set().union(*slot_type_ids.values())
     return {
@@ -404,7 +403,7 @@ def _source_models(workspace: Path, lean_root: Path) -> dict[str, Any]:
         "strategy": {
             "studio_authoring_schema": PipelineDocument.model_json_schema(),
             "lean_framework_schema": LeanFrameworkV1Document.model_json_schema(),
-            "executable_strategy_schema": VeraLabV1Document.model_json_schema(),
+            "executable_strategy_schema": SigmaRailStrategyV1Document.model_json_schema(),
             "universe_query_schema": UniverseQueryV1.model_json_schema(),
             "data_query_schema": DataQueryV1.model_json_schema(),
         },
@@ -448,7 +447,7 @@ FIELD_DOMAINS = {
 
 
 STRATEGY_SLOTS = {
-    "universe-selection": {"slot": "UniverseSelection", "purpose": "Select dated candidates through universe queries."},
+    "universe-selection": {"slot": "UniverseSelection", "purpose": "Select securities from the ClickHouse query AST."},
     "alpha": {"slot": "Alpha", "purpose": "Emit insights from selected securities and measures."},
     "portfolio-construction": {"slot": "PortfolioConstruction", "purpose": "Convert insights and holdings into portfolio targets."},
     "risk-management": {"slot": "RiskManagement", "purpose": "Apply position exits, stops, and risk actions."},
@@ -499,7 +498,7 @@ def _render_documents(workspace: Path, lean_root: Path, lock: dict[str, Any]) ->
         "executable_strategy_schema": models["strategy"]["executable_strategy_schema"],
         "universe_query_schema": models["strategy"]["universe_query_schema"],
         "slots": slots,
-        "wire_format": {"kind": "VeraLabV1", "schema_version": 2},
+        "wire_format": {"kind": "SigmaRailStrategyV1", "schema_version": 3},
         "capability_types": {name: runtime_types[name] for name in sorted(runtime_types)},
         "runtime_type_ids_by_slot": models["runtime_types_by_slot"],
         "unclassified_runtime_type_ids": models["unclassified_runtime_type_ids"],
@@ -532,7 +531,7 @@ def _render_documents(workspace: Path, lean_root: Path, lock: dict[str, Any]) ->
             "version": 1,
             "pipeline_document_schema": strategy["studio_authoring_schema"],
             "universe_query_schema": strategy["universe_query_schema"],
-            "authoring_flow": ["PipelineDocument", "VeraLabV1", "LEAN Framework"],
+            "authoring_flow": ["PipelineDocument", "SigmaRailStrategyV1 with five fixed SigmaRail slots"],
         },
         "strategy/execution.json": {
             "version": 1,
@@ -605,7 +604,7 @@ def _render_documents(workspace: Path, lean_root: Path, lock: dict[str, Any]) ->
         *((f"expressions.{domain}", f"sigmarail-spec://v1/expressions/{domain}", f"Expression contract for {domain.replace('_', ' ')}", f"expressions/{domain}.json") for domain in FIELD_DOMAINS),
         ("strategy.authoring", "sigmarail-spec://v1/strategy/authoring", "Studio authoring contract", "strategy/authoring.json"),
         ("strategy.execution", "sigmarail-spec://v1/strategy/execution", "LEAN execution contract", "strategy/execution.json"),
-        ("strategy.universe-query", "sigmarail-spec://v1/strategy/universe-query", "VeraBase universe query schema", "strategy/universe-query.json"),
+        ("strategy.universe-query", "sigmarail-spec://v1/strategy/universe-query", "SigmaRail universe query schema", "strategy/universe-query.json"),
         ("strategy.runtime-capabilities", "sigmarail-spec://v1/strategy/runtime-capabilities", "LEAN model parameters and actions", "runtime-capabilities.json"),
         *((f"strategy.slot.{name}", f"sigmarail-spec://v1/strategy/slots/{name}", f"Strategy slot: {details['slot']}", f"strategy/slots/{name}.json") for name, details in STRATEGY_SLOTS.items()),
         ("mcp.index", "sigmarail-spec://v1/mcp", "MCP tool catalog", "mcp/index.json"),
@@ -622,7 +621,7 @@ def _render_documents(workspace: Path, lean_root: Path, lock: dict[str, Any]) ->
         "modules.schema": "JSON Schema for installing and describing SigmaRail core and optional modules.",
         "expressions.core": "Canonical expression AST, JSON schemas, evaluation semantics, and limits.",
         "strategy.authoring": "Studio PipelineDocument and universe-query authoring schemas.",
-        "strategy.execution": "VeraLabV1 and LEAN framework execution schemas and slot index.",
+        "strategy.execution": "SigmaRailStrategyV1 and LEAN framework execution schemas and slot index.",
         "strategy.universe-query": "SigmaRail universe query JSON schema.",
         "strategy.runtime-capabilities": "Generated runtime type parameters, actions, and behavior flags.",
         "mcp.index": "Compact catalog of the SigmaRail-aligned MCP tool operations and their resource URIs.",

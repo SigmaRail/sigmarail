@@ -22,22 +22,40 @@ def _parse_framework_slots(algo_json: str | None) -> dict[str, Any]:
         data = json.loads(algo_json)
         framework = data.get("Framework") or data.get("framework") or {}
         alpha_info = framework.get("Alpha") or framework.get("alpha") or {}
-        universe_info = framework.get("UniverseSelection") or framework.get("universe") or {}
         risk_info = framework.get("RiskManagement") or framework.get("risk") or {}
         port_info = framework.get("PortfolioConstruction") or framework.get("portfolio_construction") or {}
         exec_info = framework.get("Execution") or framework.get("execution") or {}
 
         alpha_type = alpha_info.get("Type") or alpha_info.get("type_id")
-        universe_type = universe_info.get("Type") or universe_info.get("type_id")
+        universe_slot = framework.get("UniverseSelection") or framework.get("universe_selection") or {}
+        universe_params = universe_slot.get("Parameters") or universe_slot.get("parameters") or {}
+        universe_ast = universe_params.get("query") or {}
+        universe_type = universe_slot.get("Type") or universe_slot.get("type_id")
         risk_type = risk_info.get("Type") or risk_info.get("type_id")
         portfolio_type = port_info.get("Type") or port_info.get("type_id")
         execution_type = exec_info.get("Type") or exec_info.get("type_id")
 
         symbols: list[str] = []
-        if isinstance(universe_info.get("Parameters"), dict):
-            symbols = universe_info["Parameters"].get("symbols") or []
-        elif isinstance(universe_info.get("spec"), dict):
-            symbols = universe_info["spec"].get("symbols") or []
+        if isinstance(universe_ast, dict):
+            def _ticker_equalities(node: Any) -> list[str]:
+                if not isinstance(node, dict):
+                    return []
+                if (
+                    node.get("type") == "eq"
+                    and (node.get("left") or {}).get("name") == "ticker"
+                    and isinstance(node.get("right"), dict)
+                    and node["right"].get("type") == "lit"
+                ):
+                    return [str(node["right"].get("value"))]
+                if node.get("type") in {"all", "any"}:
+                    return [
+                        symbol
+                        for item in node.get("items", [])
+                        for symbol in _ticker_equalities(item)
+                    ]
+                return []
+
+            symbols = list(dict.fromkeys(_ticker_equalities(universe_ast.get("where"))))
 
         return {
             "alpha_type": alpha_type,
@@ -334,14 +352,14 @@ def get_run_report(client: Any, run_id: str) -> dict[str, Any]:
 
 
 def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
-    """Compatibility report adapter; requires the optional Vera runtime."""
+    """Compatibility report adapter; requires the optional SigmaRail runtime."""
     from sigmarail.features.backtest_report import get_backtest_report
 
     return get_backtest_report(client, run_id)
 
 
 def list_runs_by_ir_id(ir_id: str, *, limit: int = 50) -> dict[str, Any]:
-    """List compatibility backtest runs; requires the optional Vera runtime."""
+    """List compatibility backtest runs; requires the optional SigmaRail runtime."""
     from sigmarail.features.backtest_report import list_runs_by_ir_id as _list_runs
 
     return _list_runs(ir_id, limit=limit)

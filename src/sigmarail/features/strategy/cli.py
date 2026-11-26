@@ -3,8 +3,8 @@
 Subcommands:
     factors                      List semantic factors and L7 column mappings.
     presets                      List named strategy presets.
-    compile   --preset | --file  Compile a PipelineDocument to VeraLabV1 JSON.
-    decompile --file             Decompile a VeraLabV1 spec to a PipelineDocument.
+    compile   --preset | --file  Compile a PipelineDocument to SigmaRailStrategyV1 JSON.
+    decompile --file             Decompile a SigmaRailStrategyV1 spec to a PipelineDocument.
     validate  --preset | --file  Validate a PipelineDocument (exit 1 on error).
 """
 
@@ -30,20 +30,20 @@ def _load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Vera strategy pipeline CLI")
+    parser = argparse.ArgumentParser(description="SigmaRail strategy pipeline CLI")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("factors", help="List semantic factors")
 
     sub.add_parser("presets", help="List named presets")
 
-    comp = sub.add_parser("compile", help="Compile a PipelineDocument to VeraLabV1")
+    comp = sub.add_parser("compile", help="Compile a PipelineDocument to SigmaRailStrategyV1")
     comp.add_argument("--preset", default=None, help="Named preset id")
     comp.add_argument("--file", default=None, help="Path to a PipelineDocument JSON file")
     comp.add_argument("--pretty", action="store_true", help="Pretty-print output JSON")
 
-    dec = sub.add_parser("decompile", help="Decompile a VeraLabV1 spec to a PipelineDocument")
-    dec.add_argument("--file", required=True, help="Path to a VeraLabV1 JSON file")
+    dec = sub.add_parser("decompile", help="Decompile a SigmaRailStrategyV1 spec to a PipelineDocument")
+    dec.add_argument("--file", required=True, help="Path to a SigmaRailStrategyV1 JSON file")
     dec.add_argument("--pretty", action="store_true", help="Pretty-print output JSON")
 
     val = sub.add_parser("validate", help="Validate a PipelineDocument")

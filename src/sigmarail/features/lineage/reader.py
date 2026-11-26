@@ -10,7 +10,7 @@ _IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _repo_root() -> Path:
-    # .../VeraBase/src/sigmarail.features/lineage/reader.py -> VeraBase/
+    # .../SigmaRail/src/sigmarail.features/lineage/reader.py -> SigmaRail/
     return Path(__file__).resolve().parents[3]
 
 

@@ -1,5 +1,5 @@
 """
-Sector allocation + regime exposure VeraLab spec builder.
+Sector allocation + regime exposure SigmaRailLab spec builder.
 
 Use ``build_spec(...)`` to produce a JSON string suitable for ``save_spec`` in
 ``vera-mcp-backtest``.  Defaults match ``tests/fixtures/ir/sector_regime_v1.json``.
@@ -64,15 +64,11 @@ def build_spec(
         Maximum rows from daily_screener per date (controls memory).
     """
     doc: dict[str, Any] = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
-            "UniverseSelection": {
-                "Type": "VeraScreenerUniverseSelectionModel",
-                "Parameters": {},
-            },
             "Alpha": {
-                "Type": "VeraSectorAlphaModel",
+                "Type": "SigmaRailSectorAlphaModel",
                 "Parameters": {
                     "sector_top_n": sector_top_n,
                     "stocks_per_sector": stocks_per_sector,
@@ -84,7 +80,7 @@ def build_spec(
                 },
             },
             "PortfolioConstruction": {
-                "Type": "VeraSectorPortfolioConstructionModel",
+                "Type": "SigmaRailSectorPortfolioConstructionModel",
                 "Parameters": {
                     "sector_top_n": sector_top_n,
                     "stocks_per_sector": stocks_per_sector,
@@ -95,7 +91,7 @@ def build_spec(
                 },
             },
             "Execution": {
-                "Type": "VeraScreenerExecutionModel",
+                "Type": "SigmaRailScreenerExecutionModel",
                 "Parameters": {},
             },
             "RiskManagement": {
@@ -104,7 +100,7 @@ def build_spec(
             },
         },
         "AlgorithmParameters": {},
-        "VeraBase": {
+        "SigmaRail": {
             "Universe": {
                 "source": "daily_screener",
                 "criteria": {

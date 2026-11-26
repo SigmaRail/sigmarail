@@ -327,7 +327,7 @@ export function patchPcmBookExpr(
   return { ...doc, sizing: { ...(doc.sizing ?? {}), [key]: expr } };
 }
 
-/** Position-init stop Operand AST (C-VERA-EXPR-V2) on the exit stage → Risk slot. */
+/** Position-init stop Operand AST (C-SIGMARAIL-EXPR-V2) on the exit stage → Risk slot. */
 export function initStopFromDoc(
   doc: PipelineDocument,
 ): Record<string, unknown> | null {

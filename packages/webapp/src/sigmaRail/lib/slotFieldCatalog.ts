@@ -13,8 +13,8 @@ const L7_SLOT_COLS: { name: string; label: string }[] = [
 ];
 
 /**
- * One runtime position binding — served from VeraLab
- * (`vera_lab/ir/position_bindings.py`, via `GET /api/strategy/position-fields`).
+ * One runtime position binding — served from SigmaRailLab
+ * (`sigmarail_lab/ir/position_bindings.py`, via `GET /api/strategy/position-fields`).
  * These populate `pos` operands; they are **not** screener `col` names, so they
  * never appear in the FieldPicker catalog below.
  */
@@ -55,8 +55,8 @@ export function usePositionBindings(): PositionBinding[] {
 }
 
 /**
- * One PCM runtime binding — served from VeraLab
- * (`vera_lab/ir/pcm_bindings.py`, via `GET /api/strategy/pcm-fields`).
+ * One PCM runtime binding — served from SigmaRailLab
+ * (`sigmarail_lab/ir/pcm_bindings.py`, via `GET /api/strategy/pcm-fields`).
  * These populate `ref` operands inside PCM rules / size_expr — the
  * decision-unit namespaces (cand/hold/acct/pyr/regime).
  */

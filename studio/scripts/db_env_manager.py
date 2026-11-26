@@ -2,7 +2,7 @@
 """Database environment management and synthetic run cleanup utility.
 
 Maintains strict separation between the production ClickHouse database ('vera')
-and the test/simulation environment ('vera_test').
+and the test/simulation environment ('sigmarail_test').
 """
 
 from __future__ import annotations
@@ -30,11 +30,11 @@ def get_status(client: Any) -> None:
     print(f"  • Synthetic / Mock test runs: {prod_synthetic}")
 
     try:
-        test_runs = client.query("SELECT count() FROM vera_test.strategy_runs FINAL").result_rows[0][0]
-        print(f"\nTest database (vera_test):")
+        test_runs = client.query("SELECT count() FROM sigmarail_test.strategy_runs FINAL").result_rows[0][0]
+        print(f"\nTest database (sigmarail_test):")
         print(f"  • Total strategy_runs: {test_runs}")
     except Exception:
-        print("\nTest database (vera_test): Ready (empty / isolated)")
+        print("\nTest database (sigmarail_test): Ready (empty / isolated)")
 
 
 def clean_synthetic_runs(client: Any, dry_run: bool = False) -> None:

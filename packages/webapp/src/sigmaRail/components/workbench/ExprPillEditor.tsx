@@ -10,7 +10,7 @@ import { Input } from "@sb/webapp-core/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sb/webapp-core/components/ui/select";
 
 /**
- * Pill-based AST editors for C-VERA-EXPR operands and BoolExpr conditions.
+ * Pill-based AST editors for C-SIGMARAIL-EXPR operands and BoolExpr conditions.
  * The AST stays authoritative — pills render it, buttons/selects mutate it,
  * unknown/domain nodes degrade to read-only chips instead of silently
  * disappearing (edit those via the parent JSON view).

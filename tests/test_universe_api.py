@@ -214,7 +214,7 @@ def test_lean_compatibility_routes_publish_registry_and_reject_unsafe_sql(monkey
     unsafe["spec"]["where_sql"] = "close > 0"
 
     assert meta.status_code == 200
-    assert meta.json()["dialect"]["id"] == "C-VERA-EXPR-V1"
+    assert meta.json()["dialect"]["id"] == "C-SIGMARAIL-EXPR-V1"
     assert meta.json()["registry_digest"].startswith("sha256:")
     assert sources.status_code == 200
     assert {row["prefix"] for row in sources.json()["sources"]} >= {"px", "fd", "rt", "st", "ow"}
@@ -244,7 +244,7 @@ def test_lean_api_accepts_docker_host_header() -> None:
     response = Client(HTTP_HOST="host.docker.internal").get("/v1/meta")
 
     assert response.status_code == 200
-    assert response.json()["dialect"]["id"] == "C-VERA-EXPR-V1"
+    assert response.json()["dialect"]["id"] == "C-SIGMARAIL-EXPR-V1"
 
 
 @pytest.mark.integration

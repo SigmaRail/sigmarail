@@ -16,7 +16,7 @@ import {
   type RuleSpec,
 } from "./rulesAst";
 
-/** Canonical generated-ladder row — shape produced by vera_lab/ir/pcm_ladder.py. */
+/** Canonical generated-ladder row — shape produced by sigmarail_lab/ir/pcm_ladder.py. */
 const ENTER_RULE = {
   name: "new_entry",
   priority: 90,

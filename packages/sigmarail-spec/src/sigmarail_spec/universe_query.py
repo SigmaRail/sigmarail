@@ -39,7 +39,7 @@ class LitVal(BaseModel):
 
 
 class FormulaExpr(BaseModel):
-    """Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR)."""
+    """Binary arithmetic formula operand; nests via ``args`` (C-SIGMARAIL-EXPR)."""
 
     model_config = ConfigDict(extra="forbid")
 

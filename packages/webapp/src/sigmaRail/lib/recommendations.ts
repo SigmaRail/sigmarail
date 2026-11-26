@@ -118,7 +118,7 @@ export function buildBacktestRecommendations(
   }
 
   // The stored `profit_factor` field is populated from LEAN's "Profit-Loss Ratio"
-  // (avg win / avg loss), not gross profit / gross loss (see VeraTradingLab
+  // (avg win / avg loss), not gross profit / gross loss (see SigmaRailTradingLab
   // strategy_runs model). A value below 1.0 alongside a strongly positive return
   // is arithmetically impossible for a true profit factor, so treat it as a data
   // artifact and say so instead of emitting a false "poor profit factor" warning.

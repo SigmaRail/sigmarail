@@ -25,12 +25,13 @@ try:
     from QuantConnect.Algorithm.Framework.Alphas import AlphaModel, Insight, InsightDirection
     from QuantConnect.Algorithm.Framework.Execution import ExecutionModel
     from QuantConnect.Algorithm.Framework.Portfolio import PortfolioConstructionModel, PortfolioTarget
+    from QuantConnect.Algorithm.Framework.Risk import RiskManagementModel
 except ImportError:
     _sys.path[:] = _lean_path  # undo the QuantConnect stub's sys.path strip on a failed import
-    class UniverseSelectionModel: pass
     class AlphaModel: pass
     class PortfolioConstructionModel: pass
     class ExecutionModel: pass
+    class RiskManagementModel: pass
     class InsightDirection:
         Up = 1
         Down = 2
@@ -77,6 +78,21 @@ from sigmarail_lab.runtime.sigmarail_screener_price_policy import mtm_price_for_
 from sigmarail_lab.runtime.signal_evaluation import evaluate_entry_triggers
 
 
+class SigmaRailRiskManagementModel(RiskManagementModel):
+    """Fixed SigmaRail risk slot that applies its configured risk rules in order."""
+
+    def __init__(self, models=None):
+        self._models = list(models or [])
+        self.Name = "SigmaRailRiskManagementModel"
+
+    def ManageRisk(self, algorithm, targets):
+        merged = {}
+        for model in self._models:
+            for target in model.ManageRisk(algorithm, targets) or []:
+                merged[getattr(target, "Symbol", id(target))] = target
+        return list(merged.values())
+
+
 def _z_scores(values: dict[str, float | None]) -> dict[str, float]:
     """Compute z-scores across a dict of {key: value}. Returns 0.0 for missing/single item."""
     nums = {k: v for k, v in values.items() if v is not None}
@@ -89,46 +105,6 @@ def _z_scores(values: dict[str, float | None]) -> dict[str, float]:
     if std < 1e-12:
         return {k: 0.0 for k in values}
     return {k: (nums.get(k, mean) - mean) / std for k in values}
-
-
-class VeraScreenerUniverseSelectionModel(UniverseSelectionModel):
-    """
-    Universe from preloaded screener data — no coarse CSV subscriptions.
-    """
-
-    def __init__(self, store):
-        super().__init__()
-        self._store = store
-        self._algorithm = None
-        self._snapshot_date = None
-        self._snapshot_symbols = []
-
-    def CreateUniverses(self, algorithm):
-        self._algorithm = algorithm
-        return [
-            ScheduledUniverse(
-                algorithm.TimeZone,
-                algorithm.DateRules.EveryDay(),
-                algorithm.TimeRules.At(0, 0),
-                self.SelectSymbols,
-                algorithm.UniverseSettings,
-            )
-        ]
-
-    def SelectSymbols(self, date_time):
-        as_of = (date_time.date() - timedelta(days=1)).isoformat()
-        if self._snapshot_date == as_of:
-            return self._snapshot_symbols
-        universe = self._store.get_universe(as_of)
-        self._snapshot_date = as_of
-        self._snapshot_symbols = [
-            Symbol.Create(t, SecurityType.Equity, Market.USA) for t in universe
-        ]
-        if not universe:
-            self._algorithm.Debug(f"No screener rows for {as_of}")
-        else:
-            self._algorithm.Debug(f"Universe {as_of}: {len(self._snapshot_symbols)} symbols")
-        return self._snapshot_symbols
 
 
 def _portfolio_items(algorithm) -> list[tuple[Any, Any]]:
@@ -176,7 +152,7 @@ def _security_price(algorithm, symbol) -> float:
     return 0.0
 
 
-class VeraScreenerAlphaModel(AlphaModel):
+class SigmaRailScreenerAlphaModel(AlphaModel):
     def __init__(
         self,
         store,
@@ -189,6 +165,8 @@ class VeraScreenerAlphaModel(AlphaModel):
         hold_buffer_rank=30,
         entry_triggers=None,
         stop_loss=None,
+        signal_mode="screen",
+        signal_duration_days=5,
         **kwargs,
     ):
         self._store = store
@@ -206,6 +184,8 @@ class VeraScreenerAlphaModel(AlphaModel):
         self._stop_cooldown_days = stop_cooldown_days
         self._hold_buffer_rank = hold_buffer_rank
         self._entry_triggers = entry_triggers or []
+        self._signal_mode = str(signal_mode or "screen").strip().lower()
+        self._signal_duration_days = max(1, int(signal_duration_days or 5))
         self._stop_loss = stop_loss
         self._entry_prices = {}
         self._entry_dates = {}
@@ -216,7 +196,7 @@ class VeraScreenerAlphaModel(AlphaModel):
         self._circuit_breaker_until = None
         self._circuit_drawdown_threshold = circuit_drawdown_threshold
         self._circuit_pause_days = circuit_pause_days
-        self.Name = "VeraScreenerAlphaModel"
+        self.Name = "SigmaRailScreenerAlphaModel"
 
     def _is_bull_market(self, algorithm):
         as_of = (algorithm.Time.date() - timedelta(days=1)).isoformat()
@@ -281,6 +261,20 @@ class VeraScreenerAlphaModel(AlphaModel):
         scores = self._store.get_universe(as_of)
         if not scores:
             return []
+
+        # Fixed SigmaRail alpha implementation supports a declarative buy-and-hold
+        # configuration. It emits a long insight for every AST member and never
+        # applies screen ranking, regime gates, or stop exits.
+        if self._signal_mode == "always_long":
+            period = timedelta(days=self._signal_duration_days)
+            insights = []
+            for ticker in scores:
+                symbol = Symbol.Create(ticker, SecurityType.Equity, Market.USA)
+                if _securities_has(algorithm, symbol):
+                    insights.append(Insight.Price(symbol, period, InsightDirection.Up))
+            return insights
+        if self._signal_mode not in ("screen", "composite_score", "pyramid"):
+            raise ValueError(f"Unsupported SigmaRail alpha signal_mode: {self._signal_mode!r}")
 
         self._stopped_out = {t: d for t, d in self._stopped_out.items() if d > today}
 
@@ -431,10 +425,10 @@ class VeraScreenerAlphaModel(AlphaModel):
         return insights
 
 
-class VeraCompositeAlphaModel(AlphaModel):
+class SigmaRailCompositeAlphaModel(AlphaModel):
     """Multi-factor composite alpha: blends z-scores from weighted field columns.
 
-    The ``VeraBase.Universe`` ``select`` must include all columns named in
+    The ``SigmaRail.Universe`` ``select`` must include all columns named in
     ``field_weights``. At each daily Update, the model:
     1. Loads every row from the store.
     2. Computes z-scores for each numeric field across the universe.
@@ -488,7 +482,7 @@ class VeraCompositeAlphaModel(AlphaModel):
             "mrt_roe": 0.20,
             "perf_1y": 0.20,
         }
-        self.Name = "VeraCompositeAlphaModel"
+        self.Name = "SigmaRailCompositeAlphaModel"
 
     def _is_bull_market(self, algorithm):
         as_of = (algorithm.Time.date() - timedelta(days=1)).isoformat()
@@ -662,7 +656,7 @@ class VeraCompositeAlphaModel(AlphaModel):
         return insights
 
 
-class VeraScreenerPortfolioConstructionModel(PortfolioConstructionModel):
+class SigmaRailScreenerPortfolioConstructionModel(PortfolioConstructionModel):
     def __init__(
         self,
         store,
@@ -674,6 +668,8 @@ class VeraScreenerPortfolioConstructionModel(PortfolioConstructionModel):
         hold_policy="retain_if_invested",
         max_total_exposure=0.95,
         exit_when_no_bars=False,
+        allocation_policy="atr_risk",
+        target_exposure=1.0,
         **kwargs,
     ):
         self._store = store
@@ -685,6 +681,8 @@ class VeraScreenerPortfolioConstructionModel(PortfolioConstructionModel):
         self._hold_policy = hold_policy or "retain_if_invested"
         self._max_total_exposure = float(max_total_exposure)
         self._exit_when_no_bars = bool(exit_when_no_bars)
+        self._allocation_policy = str(allocation_policy or "atr_risk").strip().lower()
+        self._target_exposure = max(0.0, min(1.0, float(target_exposure)))
 
     def _scale_fraction(self, as_of: str) -> float:
         """Allocation scale from regime (thermostat). Never forces skip-all alone."""
@@ -769,7 +767,10 @@ class VeraScreenerPortfolioConstructionModel(PortfolioConstructionModel):
                 break
             ticker = insight.Symbol.Value if hasattr(insight.Symbol, "Value") else str(insight.Symbol)
             atr_pct = atrs.get(ticker)
-            if atr_pct and atr_pct > 0:
+            if self._allocation_policy in ("target_exposure", "equal_weight"):
+                weight = self._target_exposure / max(1, self._max_positions)
+                weight = min(self._max_weight, weight) * weight_scale
+            elif atr_pct and atr_pct > 0:
                 # ``atr_14_pct`` is stored in percentage points (for example,
                 # 2.5 means 2.5%), while target_atr_risk is a portfolio
                 # fraction (for example, 0.004 means 0.4%). Convert ATR to a
@@ -860,7 +861,7 @@ def submit_session_order(
     raise AttributeError(f"algorithm has none of {names}")
 
 
-class VeraScreenerExecutionModel(ExecutionModel):
+class SigmaRailScreenerExecutionModel(ExecutionModel):
     def __init__(self, store, fill_session: str = "moo", **_extra):
         self._store = store
         self._fill_session = str(fill_session or "moo").strip().lower()
@@ -877,7 +878,7 @@ class VeraScreenerExecutionModel(ExecutionModel):
         tag = str(getattr(target, "Tag", None) or "")
         if tag:
             return tag
-        tags = getattr(algorithm, "_vera_order_tags", None) or {}
+        tags = getattr(algorithm, "_sigmarail_order_tags", None) or {}
         return str(tags.get(str(getattr(sym, "Value", sym)), "") or "")
 
     def _submit(self, algorithm, sym, delta: int, tag: str = "") -> None:
@@ -904,7 +905,7 @@ class VeraScreenerExecutionModel(ExecutionModel):
             )
         except Exception as exc:
             algorithm.Debug(
-                f"VeraScreenerExecutionModel: submit failed {ticker} delta={delta}: {exc}"
+                f"SigmaRailScreenerExecutionModel: submit failed {ticker} delta={delta}: {exc}"
             )
 
     def Execute(self, algorithm, targets):
@@ -942,5 +943,5 @@ class VeraScreenerExecutionModel(ExecutionModel):
                 self._submitted_targets[key] = target_qty
 
         # Clear one-shot tags after the session submit pass.
-        if hasattr(algorithm, "_vera_order_tags"):
-            algorithm._vera_order_tags = {}
+        if hasattr(algorithm, "_sigmarail_order_tags"):
+            algorithm._sigmarail_order_tags = {}

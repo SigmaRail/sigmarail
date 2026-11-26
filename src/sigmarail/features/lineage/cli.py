@@ -11,7 +11,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--repo-root",
         default=str(Path.cwd()),
-        help="Path to VeraBase repo root (default: cwd)",
+        help="Path to SigmaRail repo root (default: cwd)",
     )
     p.add_argument(
         "--check",

@@ -25,6 +25,9 @@ def _run_daily_update(tmp_path: Path, *, fail_load: bool = False) -> subprocess.
     env.update(
         {
             "PATH": f"{fake_bin}:{env['PATH']}",
+            # Keep daily-update.sh from switching PATH back to the real repo venv.
+            # That would resolve the actual load/populate entry points and can write production.
+            "SIGMARAIL_VENV": str(tmp_path / "no-venv"),
             "SIGMARAIL_LOG_DIR": str(tmp_path / "logs"),
             "SIGMARAIL_UPDATE_CALL_LOG": str(calls),
             "FAIL_LOAD": "1" if fail_load else "0",

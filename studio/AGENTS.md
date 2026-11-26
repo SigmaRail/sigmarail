@@ -1,21 +1,17 @@
-# SigmaRail research and authoring interface contributor notes
+# SigmaRail Studio contributor notes
 
 ## Project boundary
 
-This directory contains the research and strategy-authoring interface within the SigmaRail implementation. Read the [three-project architecture](https://github.com/SigmaRail/sigmarail-spec/blob/main/docs/ARCHITECTURE.md) before changing behavior.
-
-- SigmaRail Spec defines the product model and versioned contracts.
-- The SigmaRail implementation owns this UI, API/MCP services, ClickHouse schema, transforms, loading, and query execution.
-- SigmaRail Lean owns the customized LEAN runtime and strategy execution.
+SigmaRail Studio owns the research and strategy-authoring application, its UI, consolidated MCP, and adapters to the SigmaRail data and strategy services. SigmaRail core owns database schema, transforms, load/populate, and data semantics. SigmaRail Spec owns versioned machine-readable contracts. SigmaRail Lean owns strategy execution when migrated.
 
 ## Migration rules
 
 - Keep work specific to capabilities implemented in the SigmaRail project family. Do not advertise unported features as working SigmaRail capabilities.
 - Keep SQL as SigmaRail core's executable truth. Studio may consume generated schema/lineage contracts and issue validated read-only queries through its data adapter.
-- Preserve versioned saved-screen and strategy payload compatibility. Do not rename wire keys or reinterpret stored documents without a contract version and migration plan.
+- Keep one current SigmaRail wire format. When replacing old SigmaRail identifiers, migrate the owned saved strategy corpus and its fixtures as part of the contract change; do not add dual-format readers or legacy aliases.
 - Keep knowledge-base and non-core provider integrations optional and separate from core SigmaRail data.
 - Do not carry source-specific destructive database maintenance into this application.
-- Treat hosted-service and routing changes as a separate deployment task with a completed endpoint and explicit cutover plan.
+- Keep the existing local SigmaRail services untouched during migration. Hosting changes require a completed endpoint and explicit cutover plan.
 - Never commit credentials, production data, or generated local user data.
 
 ## Validation

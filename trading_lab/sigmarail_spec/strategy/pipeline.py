@@ -2,7 +2,7 @@
 
 A ``PipelineDocument`` is a directed sequence of stages. Each stage is one of
 ``filter`` / ``screener`` / ``score`` / ``signal`` / ``watch`` / ``pyramid`` /
-``hedge`` / ``exit`` and compiles into the VeraLabV1 framework slots (see
+``hedge`` / ``exit`` and compiles into the SigmaRailStrategyV1 framework slots (see
 ``compiler.py``).
 
 The document is JSON-serialized Pydantic — no YAML, no intermediary format.
@@ -32,13 +32,7 @@ class StageType(str, Enum):
 
 
 class ModelRef(BaseModel):
-    """An explicit LEAN model reference — the flexible-slot primitive.
-
-    Any slot (Universe / Alpha / PortfolioConstruction / RiskManagement /
-    Execution) can be filled either by a *named concept* (compiled to a known
-    LEAN class) or by a raw ``ModelRef`` naming *any* LEAN class — including new
-    ones we author — with its ``parameters`` passed through verbatim.
-    """
+    """Explicit LEAN model reference for Alpha, Portfolio, Risk, or Execution."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -253,7 +247,6 @@ class RiskConfig(BaseModel):
     max_positions: int | None = Field(default=None, ge=1)
     max_sector_exposure: float | None = Field(default=None, gt=0, le=1.0)
     rules: list[RiskRule] = Field(default_factory=list)
-    model: ModelRef | None = None  # raw LEAN risk class passthrough (overrides rules)
     time_stop_skip_if: dict | None = Field(
         default=None,
         description="Risk binding: skip breakeven time-stop when e.g. above_entry and named bools.",
@@ -267,7 +260,15 @@ class ExecutionConfig(BaseModel):
 
     type: Literal["market_order", "vwap", "std_dev", "immediate"] = "market_order"
     fill_session: Literal["moo", "moc"] = "moo"
-    model: ModelRef | None = None  # raw LEAN execution class passthrough
+
+
+class AlphaConfig(BaseModel):
+    """SigmaRail-owned signal behavior; no raw LEAN model class selection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["screen", "always_long"] = "screen"
+    insight_period_days: int = Field(default=5, ge=1)
 
 
 class StageDocumentation(BaseModel):
@@ -355,7 +356,7 @@ class Stage(BaseModel):
     init_stop: dict | None = Field(
         default=None,
         description=(
-            "Initial-stop Operand AST (C-VERA-EXPR-V2): exit-stage value "
+            "Initial-stop Operand AST (C-SIGMARAIL-EXPR-V2): exit-stage value "
             "compiles to RiskManagement.Parameters.init_stop."
         ),
     )
@@ -389,7 +390,7 @@ class PipelineDocumentation(BaseModel):
 class SlotExpr(BaseModel):
     """Bool or number expression over the Alpha computed + L7 column bag.
 
-    Bool slots use the same ``vera_bool_expr`` / where AST as stage filters.
+    Bool slots use the same ``sigmarail_bool_expr`` / where AST as stage filters.
     Number slots use Operand / formula AST (``col`` / ``lit`` / ``formula``).
     ``__position.*`` cols are runtime-only (Risk); not probeable.
     """
@@ -491,7 +492,7 @@ class PipelineBindings(BaseModel):
     """Named slot expressions compiled onto Alpha / PCM / Risk Parameters.
 
     Authored here (with stages); never persisted as a whole-strategy
-    ``VeraBase.Pipeline`` blob (C-STRATEGY-PIPELINE-SSOT).
+    ``SigmaRail.Pipeline`` blob (C-STRATEGY-PIPELINE-SSOT).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -519,7 +520,7 @@ class PipelineBindings(BaseModel):
 
 
 def _merge_bool_wheres(wheres: list[dict]) -> dict | None:
-    """AND-merge vera_bool_expr where ASTs (``all`` / ``items``)."""
+    """AND-merge sigmarail_bool_expr where ASTs (``all`` / ``items``)."""
     items = [w for w in wheres if w]
     if not items:
         return None
@@ -783,7 +784,7 @@ class PipelineDocument(BaseModel):
     max_entry_atr_pct: float | None = Field(default=None, ge=0.0, le=100.0)
     universe: UniverseConfig = Field(default_factory=lambda: UniverseConfig())
     sizing: SizingConfig = Field(default_factory=lambda: SizingConfig())
-    alpha: ModelRef | None = None  # raw LEAN alpha class passthrough (overrides stages)
+    alpha: AlphaConfig = Field(default_factory=AlphaConfig)
     hedge: HedgeConfig | None = None
     risk: RiskConfig = Field(default_factory=RiskConfig)
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
@@ -794,7 +795,7 @@ class PipelineDocument(BaseModel):
     regime_gate: dict | None = Field(
         default=None,
         description=(
-            "Cross-slot regime policy → VeraBase.DataSources.regime + uses[] "
+            "Cross-slot regime policy → SigmaRail.DataSources.regime + uses[] "
             "routed to PCM/Alpha. Preferred home; risk.regime_gate is the "
             "deprecated pre-migration location."
         ),
@@ -823,7 +824,6 @@ class PipelineDocument(BaseModel):
 class UniverseSource(str, Enum):
     SCREENER = "screener"
     MANUAL = "manual"
-    COMPOSITE = "composite"
 
 
 class UniverseConfig(BaseModel):
@@ -836,7 +836,6 @@ class UniverseConfig(BaseModel):
     select: list[str] | None = None  # explicit select columns (must satisfy required columns)
     screen: list[FilterNode] = Field(default_factory=list)
     limit_per_day: int | None = Field(default=None, ge=1)
-    model: ModelRef | None = None  # raw LEAN universe class passthrough
 
 
 class SizingPolicy(str, Enum):
@@ -855,6 +854,9 @@ class SizingConfig(BaseModel):
     policy: SizingPolicy = SizingPolicy.ATR_RISK
     max_positions: int | None = Field(default=None, ge=1)
     max_weight: float | None = Field(default=None, gt=0, le=1.0)
+    target_exposure: float | None = Field(default=None, ge=0, le=1.0)
+    max_total_exposure: float | None = Field(default=None, ge=0, le=1.0)
+    exit_when_no_bars: bool | None = None
     min_weight: float | None = Field(default=None, gt=0, le=1.0)
     target_atr_risk: float | None = Field(default=None, gt=0)
     risk_per_trade_pct: float | None = Field(default=None, gt=0)
@@ -900,7 +902,6 @@ class SizingConfig(BaseModel):
         default=None,
         description="Unit ordering-key AST → PCM Parameters.order_expr.",
     )
-    model: ModelRef | None = None  # raw LEAN PCM class passthrough
 
 
 class RegimeOverlay(BaseModel):

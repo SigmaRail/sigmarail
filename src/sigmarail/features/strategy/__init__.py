@@ -1,8 +1,8 @@
-"""Vera strategy pipeline: staged strategy document model + compiler.
+"""SigmaRail strategy pipeline: staged strategy document model + compiler.
 
 The pipeline compiler maps a user-facing ``PipelineDocument`` (sequential
 stages: filter -> score -> signal -> pyramid -> hedge -> exit) into the
-VeraLabV1 JSON that ``main.py`` in VeraTradingLab executes. No YAML, no
+SigmaRailStrategyV1 JSON that ``main.py`` in SigmaRailTradingLab executes. No YAML, no
 intermediary format: JSON Pydantic model -> JSON Pydantic model.
 """
 

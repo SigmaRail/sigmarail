@@ -12,8 +12,8 @@ from screens.optimizer import (
 def test_deep_inject_param():
     spec = {
         "Framework": {
-            "Alpha": {"Type": "VeraScreenerAlphaModel", "Parameters": {}},
-            "PortfolioConstruction": {"Type": "VeraScreenerPortfolioConstructionModel", "Parameters": {}},
+            "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": {}},
+            "PortfolioConstruction": {"Type": "SigmaRailScreenerPortfolioConstructionModel", "Parameters": {}},
             "RiskManagement": {"Type": "TrailingStopRiskManagementModel", "Parameters": {}},
         }
     }
@@ -61,7 +61,7 @@ def test_generate_grid_combinations_2d():
 def test_create_and_launch_optimization_session():
     mock_client = MagicMock()
     mock_client.query.return_value.result_rows = [(
-        '{"Framework": {}, "AlgorithmParameters": {"initial-cash": "50000", "benchmark": "QQQ"}, "VeraBase": {"Evaluation": {"initial_cash": 50000, "benchmark": "QQQ"}}}',
+        '{"Framework": {}, "AlgorithmParameters": {"initial-cash": "50000", "benchmark": "QQQ"}, "SigmaRail": {"Evaluation": {"initial_cash": 50000, "benchmark": "QQQ"}}}',
         "Test Strategy",
     )]
 
@@ -96,7 +96,7 @@ def test_get_optimizer_session_heatmap_and_pareto():
     mock_client.query.side_effect = [
         # Session query
         MagicMock(result_rows=[(
-            "opt-123", "VeraTradingLab", "studio-test-spec", "Test Opt", "sharpe_ratio",
+            "opt-123", "SigmaRailTradingLab", "studio-test-spec", "Test Opt", "sharpe_ratio",
             "stop_loss_pct", [0.05, 0.08], "target_atr_risk", [0.002, 0.004],
             4, "running", None, None, None, "2026-01-01T00:00:00", "2026-01-01T00:00:00"
         )]),

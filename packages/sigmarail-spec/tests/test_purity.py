@@ -1,4 +1,4 @@
-"""VeraSpec must be importable with pydantic alone.
+"""SigmaRailSpec must be importable with pydantic alone.
 
 This package ships into the LEAN container, where pandas, clickhouse-connect, fastapi and
 QuantConnect are not installed. One careless import breaks *every* backtest, and the
@@ -32,7 +32,7 @@ def test_imports_without_any_heavy_dependency() -> None:
     names = ", ".join(sorted(HEAVY))
     proc = _run(
         "import sys, json\n"
-        "import sigmarail_spec, vera_spec\n"
+        "import sigmarail_spec\n"
         f"bad = sorted(m for m in sys.modules if m.split('.')[0] in {HEAVY!r})\n"
         "print(json.dumps(bad))\n"
     )

@@ -1,17 +1,17 @@
-"""Compile VeraLab universe specs to ClickHouse SQL (L7 screener joins).
+"""Compile SigmaRailLab universe specs to ClickHouse SQL (L7 screener joins).
 
 ``source: daily_screener`` is the logical IR id; generated SQL joins ``screener_*``.
 
 
-Deprecation / policy: new universe authoring should target **VeraBase**
+Deprecation / policy: new universe authoring should target **SigmaRail**
 ``universe_query_v1`` JSON (validated and executed via ``POST /v1/universe/run``).
 This module remains the **legacy** compile path for:
 
-- **Direct ClickHouse** HTTP from LEAN when the Vera query service URL is unset, and
+- **Direct ClickHouse** HTTP from LEAN when the SigmaRail query service URL is unset, and
 - **``reload_today``** when the store holds a ``UniverseSpec`` (not an opaque v1 dict).
 
 Do not extend this surface for new ChartMill-style features — add them in
-``vera_query_core`` instead.
+``sigmarail_query_core`` instead.
 """
 
 from __future__ import annotations

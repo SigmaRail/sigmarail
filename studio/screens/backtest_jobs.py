@@ -39,8 +39,10 @@ def _extract_screener_summary(algo_json: str | None) -> dict[str, Any]:
         return {"has_screener": False, "source": None, "rules_count": 0, "order_by": None}
     try:
         data = json.loads(algo_json)
-        vb = data.get("VeraBase") or data.get("vera_base") or {}
-        uni = vb.get("Universe") or vb.get("universe") or {}
+        framework = data.get("Framework") or data.get("framework") or {}
+        universe_slot = framework.get("UniverseSelection") or framework.get("universe_selection") or {}
+        params = universe_slot.get("Parameters") or universe_slot.get("parameters") or {}
+        uni = params.get("query") or {}
         if uni and isinstance(uni, dict):
             where_clause = uni.get("where") or {}
             items = where_clause.get("items") if isinstance(where_clause, dict) else []

@@ -1,0 +1,28 @@
+{
+  "data-folder": "data",
+  "data-provider": "QuantConnect.Lean.Engine.DataFeeds.CompositeDataProvider",
+  "composite-data-providers": "[\"QuantConnect.Lean.Engine.DataFeeds.ClickHouseDataProvider\",\"QuantConnect.Lean.Engine.DataFeeds.DefaultDataProvider\"]",
+  "data-channel-provider": "DataChannelProvider",
+  "data-aggregator": "QuantConnect.Lean.Engine.DataFeeds.AggregationManager",
+  "factor-file-provider": "QuantConnect.Data.Auxiliary.LocalDiskFactorFileProvider",
+  "map-file-provider": "QuantConnect.Data.Auxiliary.LocalDiskMapFileProvider",
+  "cache-timeout-seconds": 900,
+  "initialization-timeout": 1800,
+  "clickhouse-timeout-seconds": 300,
+  "clickhouse-data-mode": "in_memory",
+  "clickhouse-materialize": false,
+  "clickhouse-trace": true,
+  "clickhouse-history-pad-days": 365,
+  "environments": {
+    "backtesting": {
+      "live-mode": false,
+      "setup-handler": "QuantConnect.Lean.Engine.Setup.BacktestingSetupHandler",
+      "result-handler": "QuantConnect.Lean.Engine.Results.BacktestingResultHandler",
+      "data-feed-handler": "QuantConnect.Lean.Engine.DataFeeds.FileSystemDataFeed",
+      "real-time-handler": "QuantConnect.Lean.Engine.RealTime.BacktestingRealTimeHandler",
+      "history-provider": ["QuantConnect.Lean.Engine.HistoricalData.SubscriptionDataReaderHistoryProvider"],
+      "transaction-handler": "QuantConnect.Lean.Engine.TransactionHandlers.BacktestingTransactionHandler",
+      "data-provider": "QuantConnect.Lean.Engine.DataFeeds.CompositeDataProvider"
+    }
+  }
+}

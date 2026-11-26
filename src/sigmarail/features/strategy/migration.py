@@ -2,7 +2,7 @@
 
 The persisted model is the two-column split from the plan (§7, §9):
 
-- ``algorithm_json``  — the compiled VeraLabV1 (run artifact, cached).
+- ``algorithm_json``  — the compiled SigmaRailStrategyV1 (run artifact, cached).
 - ``portfolio_json``  — the ``PortfolioDocument`` (authoring source of truth).
 
 ``decompile_specs`` is the pure, DB-free transform; ``import_from_db`` reads
@@ -23,7 +23,7 @@ COMPILER_VERSION = "portfolio-v1"
 
 
 def decompile_specs(specs: list[tuple[str, str]]) -> list[dict[str, Any]]:
-    """Decompile legacy VeraLabV1 specs into PortfolioDocuments.
+    """Decompile legacy SigmaRailStrategyV1 specs into PortfolioDocuments.
 
     ``specs`` is a list of ``(ir_id, algorithm_json)``. Returns one result per
     spec: ``{ir_id, ok, portfolio_json, error}``.

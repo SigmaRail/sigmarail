@@ -1,7 +1,7 @@
 import type { IrOperand } from "../../types";
 import type { RuleSpec } from "../../lib/rulesAst";
 
-/** Staged pipeline strategy document types (mirror of vera_query_core.strategy.pipeline). */
+/** Staged pipeline strategy document types (mirror of sigmarail_query_core.strategy.pipeline). */
 
 export type StageMode =
   | "filter"
@@ -330,7 +330,7 @@ export type Stage = {
   require_flag?: string;
   /** Ordered rule-driven control flow (Phase 1, C-FW-RULES): compiles to Framework.<Slot>.Parameters.rules. */
   rules?: RuleSpec[];
-  /** Initial-stop Operand AST (C-VERA-EXPR-V2): compiles to Framework.RiskManagement.Parameters.init_stop. */
+  /** Initial-stop Operand AST (C-SIGMARAIL-EXPR-V2): compiles to Framework.RiskManagement.Parameters.init_stop. */
   init_stop?: Record<string, unknown> | null;
   documentation?: StageDocumentation;
 };

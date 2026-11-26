@@ -43,7 +43,7 @@ def list_presets() -> dict[str, Any]:
 
 
 def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
-    """Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict.
+    """Compile a staged PipelineDocument JSON into a SigmaRailStrategyV1 spec dict.
 
     ``pipeline_json`` must be a valid JSON PipelineDocument (strategy_name +
     stages[]).
@@ -61,7 +61,7 @@ def compile_pipeline(pipeline_json: str) -> dict[str, Any]:
 
 
 def compile_preset(preset_id: str) -> dict[str, Any]:
-    """Compile a named preset into a VeraLabV1 spec dict."""
+    """Compile a named preset into a SigmaRailStrategyV1 spec dict."""
     mod = _strategy_module()
     try:
         doc = mod["get_preset"](preset_id)
@@ -73,7 +73,7 @@ def compile_preset(preset_id: str) -> dict[str, Any]:
 
 
 def decompile_spec(spec_json: str) -> dict[str, Any]:
-    """Decompile a VeraLabV1 spec JSON back into a PipelineDocument."""
+    """Decompile a SigmaRailStrategyV1 spec JSON back into a PipelineDocument."""
     mod = _strategy_module()
     try:
         data = json.loads(spec_json)
@@ -143,7 +143,7 @@ def create_spec_from_strategy_template(
     title: str | None = None,
     notes: str = "",
 ) -> dict[str, Any]:
-    """Compile a strategy template and save it as a VeraLab spec."""
+    """Compile a strategy template and save it as a SigmaRailLab spec."""
     from sigmarail_studio_mcp.backtest_runner.runner import save_spec
 
     compiled = compile_preset(template_id)

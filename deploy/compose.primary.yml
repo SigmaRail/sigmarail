@@ -33,14 +33,13 @@ services:
   backend:
     image: sigmarail/backend:main
     build:
-      context: ../..
-      dockerfile: sigmarail/packages/backend/Dockerfile
+      context: ..
+      dockerfile: packages/backend/Dockerfile
       target: backend
       args:
-        SIGMARAIL_SOURCE_DIR: sigmarail
         SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
         SIGMARAIL_BUILD_BRANCH: main
-        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+        SIGMARAIL_BUILD_TREE: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
     env_file:
       - ${SIGMARAIL_WORKSPACE_ROOT:-../..}/.sigmarail/backend.env
     environment:
@@ -57,8 +56,9 @@ services:
       SIGMARAIL_RUNTIME_TAILSCALE_HOST: turnip.tail850cb1.ts.net
       SIGMARAIL_RUNTIME_TAILSCALE_PORT: "8445"
       SIGMARAIL_RUNTIME_TAILSCALE_TARGET: http://localhost:4300
+      SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
       SIGMARAIL_BUILD_BRANCH: main
-      SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+      SIGMARAIL_BUILD_TREE: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
       SIGMARAIL_IMAGE_ID: ${SIGMARAIL_IMAGE_ID:-unknown}
     ports:
       - "127.0.0.1:5001:80"
@@ -73,25 +73,23 @@ services:
     labels:
       org.sigmarail.source.branch: main
       org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
-      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+      org.sigmarail.source.tree: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
 
   backtest-worker:
     image: sigmarail/backtest-worker:main
     build:
-      context: ../..
-      dockerfile: sigmarail/packages/backend/Dockerfile
-      target: backtest_worker
+      context: ..
+      dockerfile: packages/backtest-worker/Dockerfile
       args:
-        SIGMARAIL_SOURCE_DIR: sigmarail
         SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
         SIGMARAIL_BUILD_BRANCH: main
-        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+        SIGMARAIL_BUILD_TREE: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
     env_file:
       - ${SIGMARAIL_WORKSPACE_ROOT:-../..}/.sigmarail/backend.env
     environment:
       DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"${SIGMARAIL_BACKTEST_DB_PASSWORD:?Set SIGMARAIL_BACKTEST_DB_PASSWORD}","host":"db","port":5432}'
       REDIS_CONNECTION: redis://redis:6379
-      LEAN_PROJECTS_ROOT: ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}
+      SIGMARAIL_LEAN_WORKSPACE_ROOT: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}/.sigmarail/lean
       SIGMARAIL_REPO_ROOT: /workspace
       SIGMARAIL_TRADING_LAB_SOURCE: /workspace/trading_lab
       SIGMARAIL_CLICKHOUSE_HOST: host.docker.internal
@@ -102,7 +100,7 @@ services:
       # LEAN's CLI creates temporary files that Docker bind-mounts into each
       # execution container. Keep those files under the host-shared workspace
       # so the Docker Desktop daemon can resolve the source path.
-      TMPDIR: ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}/.sigmarail/docker-tmp
+      TMPDIR: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}/.sigmarail/lean/docker-tmp
       RUNNER_ID: sigmarail-compose-backtest-worker
       AWS_EC2_METADATA_DISABLED: "true"
     volumes:
@@ -111,7 +109,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Keep the path identical inside the worker so Docker Desktop can mount
       # each staged LEAN project into its per-job execution container.
-      - ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}:${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}
+      - ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}/.sigmarail/lean:${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}/.sigmarail/lean
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -126,7 +124,7 @@ services:
     labels:
       org.sigmarail.source.branch: main
       org.sigmarail.source.revision: ${SIGMARAIL_BUILD_REVISION:-unknown}
-      org.sigmarail.source.tree: /Users/mdiggory/FinanceProjects/sigmarail
+      org.sigmarail.source.tree: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
   # One sequential scheduler for all SigmaRail source loads and derived-data
   # population. It deliberately has no Docker socket and is independent of the
   # LEAN backtest worker.
@@ -222,7 +220,7 @@ services:
         VITE_ENVIRONMENT_NAME: production
         SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
         SIGMARAIL_BUILD_BRANCH: main
-        SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
+        SIGMARAIL_BUILD_TREE: ${SIGMARAIL_HOST_REPO_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail}
         SIGMARAIL_FRONTEND_HOST_PORT: "4300"
         SIGMARAIL_TAILSCALE_HOST: turnip.tail850cb1.ts.net
         SIGMARAIL_TAILSCALE_PORT: "8445"

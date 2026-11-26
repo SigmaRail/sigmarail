@@ -2,9 +2,9 @@
 Allowlisted interpreter: LeanFrameworkV1Document / FrameworkBundleV1 -> QCAlgorithm set_* wiring.
 
 - **Lean-only** (`store is None`): standard QC `AlgorithmImports` models, ctor `Type(**params)`.
-- **Vera / ClickHouse extension** (`store` set): default registry pairs **store-backed** universe
+- **SigmaRail / ClickHouse extension** (`store` set): default registry pairs **store-backed** universe
   (and optional full store alpha/PCM/execution) with **standard QC** types where JSON uses
-  LeanFrameworkV1 class names (hybrid ``VeraLabV1``). Custom ``registry=`` keeps the older
+  LeanFrameworkV1 class names (hybrid ``SigmaRailStrategyV1``). Custom ``registry=`` keeps the older
   behavior (every Type maps to ``(store, params) -> instance``).
 
 Uses QuantConnect Lean Python types at runtime. For unit tests, pass `registry=` stubs.
@@ -26,7 +26,6 @@ class LeanFrameworkInterpreterError(RuntimeError):
 class WiredFrameworkV1:
     """Concrete framework instances after wiring (for custom schedules / debugging)."""
 
-    universe_selection: Any
     alpha: Any
     portfolio_construction: Any
     execution: Any
@@ -50,22 +49,6 @@ def _normalize_parameters(
     resolution_cls: Any,
 ) -> dict[str, Any]:
     """Map JSON-friendly parameters to Lean Python ctor kwargs."""
-    if type_id == "ManualUniverseSelectionModel":
-        raw = params.get("symbols") or []
-        if not isinstance(raw, list):
-            raise LeanFrameworkInterpreterError(
-                "ManualUniverseSelectionModel.Parameters.symbols must be a list"
-            )
-        symbols = []
-        for item in raw:
-            if isinstance(item, str):
-                symbols.append(
-                    symbol_cls.create(item, security_type_cls.EQUITY, market_cls.USA)
-                )
-            else:
-                symbols.append(item)
-        return {"symbols": symbols}
-
     if type_id in ("RsiAlphaModel", "MacdAlphaModel", "EmaCrossAlphaModel"):
         out = dict(params)
         if "resolution" in out and isinstance(out["resolution"], str):
@@ -160,7 +143,6 @@ def _default_lean_registry() -> dict[str, type]:
         from AlgorithmImports import (  # type: ignore[import-not-found]
             CompositeAlphaModel,
             CompositeRiskManagementModel,
-            CompositeUniverseSelectionModel,
             ConfidenceWeightedPortfolioConstructionModel,
             ConstantAlphaModel,
             EmaCrossAlphaModel,
@@ -168,7 +150,6 @@ def _default_lean_registry() -> dict[str, type]:
             ImmediateExecutionModel,
             InsightWeightingPortfolioConstructionModel,
             MacdAlphaModel,
-            ManualUniverseSelectionModel,
             MaximumDrawdownPercentPerSecurity,
             MaximumSectorExposureRiskManagementModel,
             MaximumUnrealizedProfitPercentPerSecurity,
@@ -192,8 +173,6 @@ def _default_lean_registry() -> dict[str, type]:
     return {
         "CompositeAlphaModel": CompositeAlphaModel,
         "CompositeRiskManagementModel": CompositeRiskManagementModel,
-        "CompositeUniverseSelectionModel": CompositeUniverseSelectionModel,
-        "ManualUniverseSelectionModel": ManualUniverseSelectionModel,
         "RsiAlphaModel": RsiAlphaModel,
         "MacdAlphaModel": MacdAlphaModel,
         "EmaCrossAlphaModel": EmaCrossAlphaModel,
@@ -223,8 +202,6 @@ _DEFAULT_STOCK_LEAN_WIRED_TYPE_IDS: frozenset[str] = frozenset(
     {
         "CompositeAlphaModel",
         "CompositeRiskManagementModel",
-        "CompositeUniverseSelectionModel",
-        "ManualUniverseSelectionModel",
         "RsiAlphaModel",
         "MacdAlphaModel",
         "EmaCrossAlphaModel",
@@ -252,7 +229,7 @@ _DEFAULT_STOCK_LEAN_WIRED_TYPE_IDS: frozenset[str] = frozenset(
 
 def default_stock_lean_wired_type_ids() -> frozenset[str]:
     """
-    `Type` ids constructible via the stock Lean class registry (no Vera store in ctor).
+    `Type` ids constructible via the stock Lean class registry (no SigmaRail store in ctor).
     When ``AlgorithmImports`` is unavailable, falls back to a static frozenset.
     """
 
@@ -264,22 +241,25 @@ def default_stock_lean_wired_type_ids() -> frozenset[str]:
 
 def all_default_wirable_type_ids() -> frozenset[str]:
     """
-    `Type` ids the default `wire_framework_bundle_v1` registries accept (stock Lean + Vera store
+    `Type` ids the default `wire_framework_bundle_v1` registries accept (stock Lean + SigmaRail store
     plugin ids + hybrid risk). Used for discovery / ``sigmarail_lab_wired``; does not require Lean import.
     """
 
     from ..ir import sigmarail_screener_framework_types as t
 
     out: set[str] = set(default_stock_lean_wired_type_ids())
-    out |= t.ALLOWED_UNIVERSE_SELECTION_TYPES
     out |= t.ALLOWED_ALPHA_TYPES
     out |= t.ALLOWED_PORTFOLIO_CONSTRUCTION_TYPES
     out |= t.ALLOWED_EXECUTION_TYPES
-    out |= {"NullRiskManagementModel", "MaximumDrawdownPercentPerSecurity"}
+    out |= {
+        "NullRiskManagementModel",
+        "MaximumDrawdownPercentPerSecurity",
+        "SigmaRailRiskManagementModel",
+    }
     return frozenset(out)
 
 
-def _default_vera_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], Any]]:
+def _default_sigmarail_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], Any]]:
     """(store, parameters_dict) -> model instance."""
     try:
         from AlgorithmImports import (  # type: ignore[import-not-found]
@@ -292,30 +272,29 @@ def _default_vera_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], 
         ) from e
 
     from .qc_sigmarail_screener_framework import (
-        VeraCompositeAlphaModel,
-        VeraScreenerAlphaModel,
-        VeraScreenerExecutionModel,
-        VeraScreenerPortfolioConstructionModel,
-        VeraScreenerUniverseSelectionModel,
+        SigmaRailCompositeAlphaModel,
+        SigmaRailRiskManagementModel,
+        SigmaRailScreenerAlphaModel,
+        SigmaRailScreenerExecutionModel,
+        SigmaRailScreenerPortfolioConstructionModel,
     )
-    from .qc_pyramid_alpha import VeraPyramidAlphaModel
-    from .qc_hedge_model import VeraHedgeModel
-    from .qc_high_roe_framework import HighRoeQualityUniverseSelectionModel
+    from .qc_pyramid_alpha import SigmaRailPyramidAlphaModel
+    from .qc_hedge_model import SigmaRailHedgeModel
     from .qc_sector_allocation import (
-        VeraSectorAlphaModel,
-        VeraSectorPortfolioConstructionModel,
+        SigmaRailSectorAlphaModel,
+        SigmaRailSectorPortfolioConstructionModel,
     )
     from .qc_sector_etf import (
-        VeraSectorEtfAlphaModel,
-        VeraSectorEtfPortfolioConstructionModel,
+        SigmaRailSectorEtfAlphaModel,
+        SigmaRailSectorEtfPortfolioConstructionModel,
     )
     from .qc_graph_policy import (
-        VeraGraphPolicyAlphaModel,
-        VeraGraphPolicyPortfolioConstructionModel,
+        SigmaRailGraphPolicyAlphaModel,
+        SigmaRailGraphPolicyPortfolioConstructionModel,
     )
     from .qc_tqqq_tactical import (
-        VeraTqqqTacticalAlphaModel,
-        VeraTqqqTacticalPortfolioConstructionModel,
+        SigmaRailTqqqTacticalAlphaModel,
+        SigmaRailTqqqTacticalPortfolioConstructionModel,
     )
     from .qc_swing_alpha import (
         SwingBreakoutAlphaModel,
@@ -334,17 +313,8 @@ def _default_vera_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], 
         ALPHA,
         COMPOSITE_ALPHA,
         EXECUTION,
-        HIGH_ROE_UNIVERSE_SELECTION,
         HEDGE_RISK,
         PYRAMID_ALPHA,
-        LEGACY_ALPHA_CLICKHOUSE,
-        LEGACY_ALPHA_SCREENER_STORE,
-        LEGACY_EXECUTION_CLICKHOUSE,
-        LEGACY_EXECUTION_SCREENER_STORE,
-        LEGACY_PORTFOLIO_CLICKHOUSE,
-        LEGACY_PORTFOLIO_SCREENER_STORE,
-        LEGACY_UNIVERSE_CLICKHOUSE,
-        LEGACY_UNIVERSE_SCREENER_STORE,
         PORTFOLIO_CONSTRUCTION,
         PERFORMANCE_PORTFOLIO_CONSTRUCTION,
         VOL_TARGET_PORTFOLIO_CONSTRUCTION,
@@ -357,50 +327,33 @@ def _default_vera_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], 
         GRAPH_POLICY_PORTFOLIO_CONSTRUCTION,
         TQQQ_TACTICAL_ALPHA,
         TQQQ_TACTICAL_PORTFOLIO_CONSTRUCTION,
-        UNIVERSE_SELECTION,
     )
 
-    def _uni(s: Any, _p: dict[str, Any]) -> Any:
-        return VeraScreenerUniverseSelectionModel(s)
-
-    def _high_roe(s: Any, p: dict[str, Any]) -> Any:
-        return HighRoeQualityUniverseSelectionModel(s, **p)
-
     def _alpha(s: Any, p: dict[str, Any]) -> Any:
-        return VeraScreenerAlphaModel(s, **p)
+        return SigmaRailScreenerAlphaModel(s, **p)
 
     def _pcm(s: Any, p: dict[str, Any]) -> Any:
-        return VeraScreenerPortfolioConstructionModel(s, **p)
+        return SigmaRailScreenerPortfolioConstructionModel(s, **p)
 
     def _exe(s: Any, p: dict[str, Any]) -> Any:
-        return VeraScreenerExecutionModel(s, **(p or {}))
+        return SigmaRailScreenerExecutionModel(s, **(p or {}))
 
     return {
-        UNIVERSE_SELECTION: _uni,
-        LEGACY_UNIVERSE_SCREENER_STORE: _uni,
-        LEGACY_UNIVERSE_CLICKHOUSE: _uni,
-        HIGH_ROE_UNIVERSE_SELECTION: _high_roe,
         ALPHA: _alpha,
-        COMPOSITE_ALPHA: lambda s, p: VeraCompositeAlphaModel(s, **p),
-        PYRAMID_ALPHA: lambda s, p: VeraPyramidAlphaModel(s, **p),
-        LEGACY_ALPHA_SCREENER_STORE: _alpha,
-        LEGACY_ALPHA_CLICKHOUSE: _alpha,
+        COMPOSITE_ALPHA: lambda s, p: SigmaRailCompositeAlphaModel(s, **p),
+        PYRAMID_ALPHA: lambda s, p: SigmaRailPyramidAlphaModel(s, **p),
         PORTFOLIO_CONSTRUCTION: _pcm,
-        LEGACY_PORTFOLIO_SCREENER_STORE: _pcm,
-        LEGACY_PORTFOLIO_CLICKHOUSE: _pcm,
         EXECUTION: _exe,
-        LEGACY_EXECUTION_SCREENER_STORE: _exe,
-        LEGACY_EXECUTION_CLICKHOUSE: _exe,
-        SECTOR_ALPHA: lambda s, p: VeraSectorAlphaModel(s, **p),
-        SECTOR_PORTFOLIO_CONSTRUCTION: lambda s, p: VeraSectorPortfolioConstructionModel(s, **p),
-        SECTOR_ETF_ALPHA: lambda s, p: VeraSectorEtfAlphaModel(s, **p),
-        SECTOR_ETF_PORTFOLIO_CONSTRUCTION: lambda s, p: VeraSectorEtfPortfolioConstructionModel(s, **p),
-        GRAPH_POLICY_ALPHA: lambda s, p: VeraGraphPolicyAlphaModel(s, **p),
-        GRAPH_POLICY_PORTFOLIO_CONSTRUCTION: lambda s, p: VeraGraphPolicyPortfolioConstructionModel(
+        SECTOR_ALPHA: lambda s, p: SigmaRailSectorAlphaModel(s, **p),
+        SECTOR_PORTFOLIO_CONSTRUCTION: lambda s, p: SigmaRailSectorPortfolioConstructionModel(s, **p),
+        SECTOR_ETF_ALPHA: lambda s, p: SigmaRailSectorEtfAlphaModel(s, **p),
+        SECTOR_ETF_PORTFOLIO_CONSTRUCTION: lambda s, p: SigmaRailSectorEtfPortfolioConstructionModel(s, **p),
+        GRAPH_POLICY_ALPHA: lambda s, p: SigmaRailGraphPolicyAlphaModel(s, **p),
+        GRAPH_POLICY_PORTFOLIO_CONSTRUCTION: lambda s, p: SigmaRailGraphPolicyPortfolioConstructionModel(
             s, **p
         ),
-        TQQQ_TACTICAL_ALPHA: lambda s, p: VeraTqqqTacticalAlphaModel(s, **p),
-        TQQQ_TACTICAL_PORTFOLIO_CONSTRUCTION: lambda s, p: VeraTqqqTacticalPortfolioConstructionModel(
+        TQQQ_TACTICAL_ALPHA: lambda s, p: SigmaRailTqqqTacticalAlphaModel(s, **p),
+        TQQQ_TACTICAL_PORTFOLIO_CONSTRUCTION: lambda s, p: SigmaRailTqqqTacticalPortfolioConstructionModel(
             s, **p
         ),
         "SwingBreakoutAlphaModel": lambda s, p: SwingBreakoutAlphaModel(store=s, **p) if "store" not in p else SwingBreakoutAlphaModel(**p),
@@ -410,10 +363,57 @@ def _default_vera_store_builders() -> dict[str, Callable[[Any, dict[str, Any]], 
         "VolatilityTargetingPortfolioConstructionModel": lambda s, p: VolatilityTargetingPortfolioConstructionModel(store=s, **p) if "store" not in p else VolatilityTargetingPortfolioConstructionModel(**p),
         "RegimeWeightedPortfolioConstructionModel": lambda s, p: RegimeWeightedPortfolioConstructionModel(store=s, **p) if "store" not in p else RegimeWeightedPortfolioConstructionModel(**p),
         "SwingProgressiveRiskManagementModel": lambda s, p: SwingProgressiveRiskManagementModel(store=s, **p) if "store" not in p else SwingProgressiveRiskManagementModel(**p),
-        HEDGE_RISK: lambda s, p: VeraHedgeModel(s, **p),
+        HEDGE_RISK: lambda s, p: SigmaRailHedgeModel(s, **p),
         "NullRiskManagementModel": lambda s, p: NullRiskManagementModel(),
+        # Strategy authors always name the fixed SigmaRail risk slot. An empty
+        # rule set has the explicit no-risk behavior; rules remain slot data.
+        "SigmaRailRiskManagementModel": lambda s, p: _build_sigmarail_risk_model(p, s),
         "MaximumDrawdownPercentPerSecurity": lambda s, p: MaximumDrawdownPercentPerSecurity(**p),
     }
+
+
+def _build_sigmarail_risk_model(parameters: dict[str, Any], store: Any) -> Any:
+    """Translate declarative SigmaRail risk rules to the fixed internal risk adapter."""
+    rules = parameters.get("rules")
+    if not isinstance(rules, list):
+        raise LeanFrameworkInterpreterError(
+            "SigmaRailRiskManagementModel.Parameters.rules must be a list"
+        )
+    from AlgorithmImports import (  # type: ignore[import-not-found]
+        MaximumSectorExposureRiskManagementModel,
+        MaximumUnrealizedProfitPercentPerSecurity,
+        RiskManagementModel,
+        TrailingStopRiskManagementModel,
+        MaximumDrawdownPercentPerSecurity,
+    )
+
+    from .qc_swing_risk import SwingProgressiveRiskManagementModel
+    from .qc_hedge_model import SigmaRailHedgeModel
+
+    factories = {
+        "trailing_stop": TrailingStopRiskManagementModel,
+        "max_drawdown_per_security": MaximumDrawdownPercentPerSecurity,
+        "max_sector_exposure": MaximumSectorExposureRiskManagementModel,
+        "max_unrealized_profit_per_security": MaximumUnrealizedProfitPercentPerSecurity,
+    }
+    models = []
+    for rule in rules:
+        if not isinstance(rule, dict):
+            raise LeanFrameworkInterpreterError("risk rule entries must be objects")
+        kind = str(rule.get("kind") or "")
+        rule_params = dict(rule.get("parameters") or {})
+        if kind == "progressive":
+            models.append(SwingProgressiveRiskManagementModel(store=store, **rule_params))
+        elif kind == "hedge":
+            models.append(SigmaRailHedgeModel(store, **rule_params))
+        elif kind in factories:
+            models.append(factories[kind](**rule_params))
+        else:
+            raise LeanFrameworkInterpreterError(f"unsupported SigmaRail risk rule: {kind!r}")
+
+    from .qc_sigmarail_screener_framework import SigmaRailRiskManagementModel
+
+    return SigmaRailRiskManagementModel(models)
 
 
 def _build_framework_model_instance(
@@ -428,7 +428,7 @@ def _build_framework_model_instance(
     type_id = (type_id or "").strip()
 
     # Check for Composite Model Types
-    if type_id in ("CompositeAlphaModel", "CompositeRiskManagementModel", "CompositeUniverseSelectionModel"):
+    if type_id in ("CompositeAlphaModel", "CompositeRiskManagementModel"):
         cls = lean_reg[type_id]
         sub_specs = params.get("models") or params.get("sub_models") or []
         sub_instances = []
@@ -484,7 +484,7 @@ def _build_framework_model_instance(
 
     raise LeanFrameworkInterpreterError(
         f"Unknown framework Type {type_id!r} for store-backed wiring. "
-        "Expected VeraScreener* (or legacy ScreenerStore* / ClickHouse*) plugins, standard "
+        "Expected SigmaRailScreener* plugins, standard "
         "LeanFrameworkV1 Types (RsiAlphaModel, …), Composite models, or risk models."
     )
 
@@ -497,14 +497,12 @@ def _wire_store_hybrid_default(
     normalize: bool,
 ) -> WiredFrameworkV1:
     """Default registry: store-backed plugins + standard QC types (no store in ctor)."""
-    store_builders = _default_vera_store_builders()
+    store_builders = _default_sigmarail_store_builders()
     lean_reg = _default_lean_registry()
     instances: list[Any] = []
     for spec, setter in _slot_setters(algorithm, bundle):
         type_id = (spec.type or "").strip()
-        params = _params_with_universe_screen(
-            bundle, type_id, dict(spec.parameters or {})
-        )
+        params = dict(spec.parameters or {})
         instance = _build_framework_model_instance(
             type_id, params, store, store_builders, lean_reg, normalize=normalize
         )
@@ -513,35 +511,8 @@ def _wire_store_hybrid_default(
     return WiredFrameworkV1(*instances)
 
 
-_SCREEN_OWNING_ALPHA_TYPES = frozenset(
-    {
-        "VeraPyramidAlphaModel",
-        "VeraCompositeAlphaModel",
-        "VeraScreenerAlphaModel",
-        "ScreenerStoreAlphaModel",
-        "ClickHouseAlphaModel",
-    }
-)
-
-
-def _params_with_universe_screen(
-    bundle: FrameworkBundleV1, type_id: str, params: dict[str, Any]
-) -> dict[str, Any]:
-    """Copy Universe screen ASTs onto Alpha kwargs when Alpha omitted them."""
-    if type_id not in _SCREEN_OWNING_ALPHA_TYPES:
-        return params
-    uni = dict(bundle.universe_selection.parameters or {})
-    out = dict(params)
-    if out.get("membership") is None and uni.get("membership") is not None:
-        out["membership"] = uni["membership"]
-    if not out.get("named_groups") and uni.get("named_groups"):
-        out["named_groups"] = uni["named_groups"]
-    return out
-
-
 def _slot_setters(algorithm: Any, fb: FrameworkBundleV1) -> list[tuple[FrameworkSlotSpec, Any]]:
     return [
-        (fb.universe_selection, algorithm.set_universe_selection),
         (fb.alpha, algorithm.set_alpha),
         (fb.portfolio_construction, algorithm.set_portfolio_construction),
         (fb.execution, algorithm.set_execution),
@@ -558,12 +529,15 @@ def wire_framework_bundle_v1(
     normalize: bool = True,
 ) -> WiredFrameworkV1:
     """
-    Wire five framework slots. Pass **store** for Vera/ClickHouse screener-backed models.
+    Wire the four framework models consumed by ``ClickHouseUniverseAlgorithm``. For
+    ``SigmaRailStrategyV1``, the five slot class names are fixed by the strategy schema;
+    the ClickHouse query AST in ``Framework.UniverseSelection`` supplies its universe.
+    Pass **store** for SigmaRail framework model configuration.
 
     ``registry``:
       - Lean path: ``Type`` -> class (``cls(**params)``).
       - Store path: ``Type`` -> ``lambda store, params: instance`` (or pass ``registry=None``
-        for the default Vera store + Lean risk builders).
+        for the default SigmaRail store + Lean risk builders).
     """
     if store is not None:
         if registry is not None:
@@ -574,12 +548,10 @@ def wire_framework_bundle_v1(
                 if type_id not in builders:
                     raise LeanFrameworkInterpreterError(
                         f"Unknown framework Type {type_id!r} for store-backed wiring. "
-                        "Expected VeraScreener* (or legacy ScreenerStore* / ClickHouse*) plugin Types, or "
+                        "Expected SigmaRailScreener* plugin Types, or "
                         "NullRiskManagementModel / MaximumDrawdownPercentPerSecurity."
                     )
-                params = _params_with_universe_screen(
-                    bundle, type_id, dict(spec.parameters or {})
-                )
+                params = dict(spec.parameters or {})
                 try:
                     instance = builders[type_id](store, params)
                 except TypeError as e:
@@ -640,7 +612,7 @@ def wire_lean_framework_v1(
     """
     Same as ``wire_framework_bundle_v1(algorithm, doc.framework, ...)``.
 
-    Pass **store** to use the ClickHouse/Vera extension (screener store + CH framework Types).
+    Pass **store** to use the ClickHouse/SigmaRail extension (screener store + CH framework Types).
     """
     return wire_framework_bundle_v1(
         algorithm,

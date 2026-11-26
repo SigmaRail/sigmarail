@@ -1,30 +1,31 @@
-"""Pipeline compiler: ``PipelineDocument`` -> VeraLabV1 JSON document.
+"""Pipeline compiler: ``PipelineDocument`` -> SigmaRailStrategyV1 JSON document.
 
 The compiler is a pure data transform (no SQL, no codegen). It walks the
-stages and produces the VeraLabV1 five-slot shape that ``main.py`` consumes:
+stages and produces a SigmaRailStrategyV1 document with five fixed SigmaRail slots.
+Universe membership and query behavior live in the first slot's AST configuration:
 
     {
-      "SchemaVersion": 2,
-      "Kind": "VeraLabV1",
+      "SchemaVersion": 3,
+      "Kind": "SigmaRailStrategyV1",
       "Framework": {UniverseSelection, Alpha, PortfolioConstruction,
-                    Execution, RiskManagement},
+                    RiskManagement, Execution},
       "AlgorithmParameters": {...},  # only knobs still read at runtime
-      "VeraBase": {
-        "Universe": {...},           # pushdown where = universe.screen tree
+      "SigmaRail": {
         "DataSources": [...],
         "Regime": {...},             # optional score config
       },
     }
 
-Universe slot owns screen (boolean tree) plus derived membership / named_groups
-for Alpha flags. Alpha Parameters hold stages / gates / setup_where / pyramid only.
-``VeraBase.Pipeline`` is not persisted (C-STRATEGY-PIPELINE-SSOT amend).
+Each slot Type is fixed to its SigmaRail implementation. Parameters carry the slot's
+expressions, rules, and runtime settings. Alpha Parameters hold stages / gates / setup_where.
+``SigmaRail.Pipeline`` is not persisted (C-STRATEGY-PIPELINE-SSOT amend).
 """
 
 from __future__ import annotations
 
 import json
 import re
+import copy
 
 from .field_registry import resolve_factor
 from ..universe_query import universe_v1_allowed_columns
@@ -35,7 +36,6 @@ from .pipeline import (
     FilterGroup,
     FilterNot,
     FilterNode,
-    ModelRef,
     PipelineBindings,
     PipelineDocument,
     PortfolioDocument,
@@ -723,7 +723,7 @@ def compile_pipeline_prefix(
 ) -> dict:
     """Universe spec with ``computed[]`` only through stage k (inclusive).
 
-    Prefer ``through_binding_id``. Returns a probe payload (not a full VeraLabV1):
+    Prefer ``through_binding_id``. Returns a probe payload (not a full SigmaRailStrategyV1):
 
     - ``universe``: UniverseQueryV1-shaped dict (hygiene WHERE + prefix computed)
     - ``through``: resolved cut ``{binding_id, stage_index, stage_name}``
@@ -1010,7 +1010,7 @@ def _selection_params(selection: SelectionRule | None, default_n: int) -> dict:
 
 
 _SIZING_MODELS = {
-    SizingPolicy.ATR_RISK: "VeraScreenerPortfolioConstructionModel",
+    SizingPolicy.ATR_RISK: "SigmaRailScreenerPortfolioConstructionModel",
     SizingPolicy.RISK_BUDGETED: "RiskBudgetedPortfolioConstructionModel",
     SizingPolicy.RISK_PARITY: "RiskParityPortfolioConstructionModel",
     SizingPolicy.CONFIDENCE_WEIGHTED: "ConfidenceWeightedPortfolioConstructionModel",
@@ -1018,23 +1018,14 @@ _SIZING_MODELS = {
 }
 
 _EXECUTION_MODELS = {
-    "market_order": "VeraScreenerExecutionModel",
+    "market_order": "SigmaRailScreenerExecutionModel",
     "vwap": "VolumeWeightedAveragePriceExecutionModel",
     "std_dev": "StandardDeviationExecutionModel",
     "immediate": "ImmediateExecutionModel",
 }
 
-_UNIVERSE_MODELS = {
-    UniverseSource.SCREENER: "VeraScreenerUniverseSelectionModel",
-    UniverseSource.MANUAL: "ManualUniverseSelectionModel",
-    UniverseSource.COMPOSITE: "CompositeUniverseSelectionModel",
-}
-
-
 def _sizing_model(sizing: SizingConfig, max_positions: int) -> tuple[str, dict]:
-    """Sizing policy → (LEAN PCM class, params); ``model`` passthrough wins."""
-    if sizing.model is not None:
-        return sizing.model.type, sizing.model.parameters
+    """Sizing policy → internal semantic policy and configuration."""
     if sizing.policy == SizingPolicy.RISK_PARITY:
         params: dict = {"max_positions": sizing.max_positions or max_positions}
         if sizing.max_weight is not None:
@@ -1127,9 +1118,7 @@ def _risk_rule_model(rule: RiskRule) -> tuple[str, dict]:
 
 
 def _risk_model(doc: PipelineDocument, exit_stage: Stage | None) -> tuple[str, dict]:
-    """Risk stack → (LEAN risk class, params); ``model`` passthrough wins."""
-    if doc.risk.model is not None:
-        return doc.risk.model.type, doc.risk.model.parameters
+    """Compile risk rules to a semantic policy before the fixed SigmaRail risk slot."""
     rules = doc.risk.rules
     if not rules and exit_stage is not None:
         params: dict = {"take_profit_r": 2.5, "trailing_stop_pct": 0.15}
@@ -1173,6 +1162,36 @@ def _risk_model(doc: PipelineDocument, exit_stage: Stage | None) -> tuple[str, d
             "time_stop_skip_if": dict(doc.risk.time_stop_skip_if),
         }
     return "NullRiskManagementModel", {}
+
+
+def _risk_slot_parameters(type_id: str, parameters: dict) -> dict:
+    """Represent risk behavior as semantic rules, never framework class names."""
+    kind_by_type = {
+        "SwingProgressiveRiskManagementModel": "progressive",
+        "TrailingStopRiskManagementModel": "trailing_stop",
+        "MaximumDrawdownPercentPerSecurity": "max_drawdown_per_security",
+        "MaximumSectorExposureRiskManagementModel": "max_sector_exposure",
+        "MaximumUnrealizedProfitPercentPerSecurity": "max_unrealized_profit_per_security",
+        "SigmaRailHedgeModel": "hedge",
+    }
+    if type_id == "NullRiskManagementModel":
+        return {"rules": []}
+    if type_id == "CompositeRiskManagementModel":
+        rules = []
+        for model in parameters.get("models", []):
+            model_type = str(model.get("Type") or model.get("type") or "")
+            kind = kind_by_type.get(model_type)
+            if kind is None:
+                raise ValueError(f"unsupported risk policy {model_type!r}")
+            rules.append({
+                "kind": kind,
+                "parameters": dict(model.get("Parameters") or model.get("parameters") or {}),
+            })
+        return {"rules": rules}
+    kind = kind_by_type.get(type_id)
+    if kind is None:
+        raise ValueError(f"unsupported risk policy {type_id!r}")
+    return {"rules": [{"kind": kind, "parameters": dict(parameters or {})}]}
 
 
 def _leaf_col_names(node: FilterNode | dict) -> set[str]:
@@ -1317,11 +1336,11 @@ def _or_where_nodes(*nodes: dict | None) -> dict:
 
 
 def _risk_stack_has_hedge(risk_type: str, risk_params: dict) -> bool:
-    if risk_type == "VeraHedgeModel":
+    if risk_type == "SigmaRailHedgeModel":
         return True
     if risk_type == "CompositeRiskManagementModel":
         for m in risk_params.get("models") or []:
-            if isinstance(m, dict) and m.get("Type") == "VeraHedgeModel":
+            if isinstance(m, dict) and m.get("Type") == "SigmaRailHedgeModel":
                 return True
     return False
 
@@ -1351,11 +1370,11 @@ def _build_data_sources(
     select_cols: list[str],
     regime_gate_payload: dict | None,
 ) -> list[dict]:
-    """Emit VeraBase.DataSources catalog (equity + optional regime + bars)."""
+    """Emit SigmaRail.DataSources catalog (equity + optional regime + bars)."""
     sources: list[dict] = [
         {
             "name": "equity",
-            "Type": "VeraDailyScreener",
+            "Type": "SigmaRailDailyScreener",
             "table": "screener_price_tech_daily",
             "grain": "ticker_date",
             "as_of": "T-1",
@@ -1394,7 +1413,7 @@ def _build_data_sources(
             1,
             {
                 "name": "regime",
-                "Type": "VeraMarketRegimeSignalsDaily",
+                "Type": "SigmaRailMarketRegimeSignalsDaily",
                 "table": str(
                     regime_gate_payload.get("source") or "regime_signals_canonical"
                 ),
@@ -1408,40 +1427,30 @@ def _build_data_sources(
     return sources
 
 
-def _universe_model(doc: PipelineDocument) -> tuple[str, dict]:
-    """Universe source → (LEAN universe class, params); ``model`` passthrough wins."""
-    if doc.universe.model is not None:
-        return doc.universe.model.type, doc.universe.model.parameters
-    if doc.universe.source == UniverseSource.MANUAL:
-        return "ManualUniverseSelectionModel", {"symbols": doc.universe.symbols}
-    return _UNIVERSE_MODELS[doc.universe.source], {}
-
-
 def _execution_model(execution: ExecutionConfig) -> tuple[str, dict]:
-    """Execution mode → (LEAN execution class, params); ``model`` passthrough wins."""
-    if execution.model is not None:
-        return execution.model.type, execution.model.parameters
-    type_id = _EXECUTION_MODELS.get(execution.type, "VeraScreenerExecutionModel")
+    """Execution mode → internal policy and configuration."""
+    type_id = _EXECUTION_MODELS.get(execution.type, "SigmaRailScreenerExecutionModel")
     params: dict = {}
-    if type_id == "VeraScreenerExecutionModel":
+    if type_id == "SigmaRailScreenerExecutionModel":
         params["fill_session"] = execution.fill_session or "moo"
     return type_id, params
 
 
 def _bound_manual_store_spec(spec: dict, symbols: list[str]) -> dict:
-    """Bound the ``VeraBase.Universe`` store query to a fixed symbol list.
+    """Bound the fixed ClickHouse universe slot query to a symbol list.
 
     A fixed-symbol (manual) book still needs its bars pre-hydrated and its
-    regime/metrics loaded through the store, so the store universe query is
-    filtered to exactly those symbols. Unlike the old ``_lower_manual_to_store``
-    this does **not** rewrite the framework slots: a manual book keeps
-    ``ManualUniverseSelectionModel`` + non-store-backed execution so LEAN runs
-    the normal framework path (alpha → PCM → execution) and rebalances to target
-    weights — which is what lets fixed sleeves coexist with dynamic screens.
+    regime/metrics loaded through the store, so the AST query in the first
+    strategy slot is filtered to exactly those symbols.
     """
     if not symbols:
         raise ValueError("manual universe requires at least one symbol")
-    uni = spec.setdefault("VeraBase", {}).setdefault("Universe", {})
+    uni = (
+        spec.setdefault("Framework", {})
+        .setdefault("UniverseSelection", {})
+        .setdefault("Parameters", {})
+        .setdefault("query", {})
+    )
     uni["where"] = {
         "type": "any",
         "items": [
@@ -1460,13 +1469,13 @@ def _bound_manual_store_spec(spec: dict, symbols: list[str]) -> dict:
 
 
 def compile_pipeline(doc: PipelineDocument) -> dict:
-    """Compile a PipelineDocument into a VeraLabV1 JSON dict.
+    """Compile a PipelineDocument into a SigmaRailStrategyV1 JSON dict.
 
     Five-slot honesty (C-STRATEGY-PIPELINE-SSOT amend):
     - Universe owns the screen tree; membership / named_groups are derived flags
     - Pushdown WHERE is that tree (no hygiene AND)
     - Alpha Parameters hold stages / gates / setup_where only
-    - Regime lives on DataSources (+ optional VeraBase.Regime score); no regime-gate blob
+    - Regime lives on DataSources (+ optional SigmaRail.Regime score); no regime-gate blob
     """
     stages = doc.stages
 
@@ -1560,7 +1569,7 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
     pyramid_stage = next((s for s in stages if s.mode == StageType.PYRAMID), None)
     exit_stage = next((s for s in stages if s.mode == StageType.EXIT), None)
 
-    max_positions = doc.risk.max_positions
+    max_positions = doc.sizing.max_positions or doc.risk.max_positions
     for s in signal_stages:
         if s.max_positions:
             max_positions = s.max_positions
@@ -1568,11 +1577,11 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
         max_positions = 10
 
     if pyramid_stage is not None or gates or doc.gate_combine or doc.min_screens:
-        alpha_type = "VeraPyramidAlphaModel"
+        alpha_type = "SigmaRailPyramidAlphaModel"
     elif len(factors) > 1:
-        alpha_type = "VeraCompositeAlphaModel"
+        alpha_type = "SigmaRailCompositeAlphaModel"
     else:
-        alpha_type = "VeraScreenerAlphaModel"
+        alpha_type = "SigmaRailScreenerAlphaModel"
 
     cb_drawdown = 0.10
     cb_pause = 20
@@ -1670,10 +1679,10 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
         if "setup_pass" in computed_aliases:
             alpha_params["setup_col"] = "setup_pass"
         alpha_params["row_scale_denom"] = 5
-    if alpha_type == "VeraScreenerAlphaModel":
+    if alpha_type == "SigmaRailScreenerAlphaModel":
         alpha_params["circuit_drawdown_threshold"] = cb_drawdown
         alpha_params["circuit_pause_days"] = cb_pause
-    elif alpha_type == "VeraCompositeAlphaModel":
+    elif alpha_type == "SigmaRailCompositeAlphaModel":
         alpha_params["circuit_drawdown_threshold"] = cb_drawdown
         alpha_params["circuit_pause_days"] = cb_pause
         alpha_params["field_weights"] = _resolve_factor_weights(factors)
@@ -1682,33 +1691,38 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
         alpha_params["selection"] = _selection_params(selection, max_positions)
         # phases / add_trigger_pct → PCM (not Alpha)
 
-    if alpha_type == "VeraPyramidAlphaModel":
+    if alpha_type == "SigmaRailPyramidAlphaModel":
         alpha_params.pop("membership", None)
         alpha_params.pop("named_groups", None)
 
-    if doc.alpha is not None:
-        alpha_type = doc.alpha.type
-        alpha_params = dict(doc.alpha.parameters)
-        alpha_params.pop("membership", None)
-        alpha_params.pop("named_groups", None)
-        alpha_params.setdefault("stages", _alpha_card_stages(stages))
-        alpha_params.setdefault("gates", _gates_from_stages(stages))
-        if setup_where:
-            alpha_params.setdefault("setup_where", setup_where)
-        alpha_params.setdefault(
-            "uses",
-            [u for u in regime_uses if u == "block_new_longs"],
-        )
-        if doc.gate_combine is not None:
-            alpha_params.setdefault("gate_combine", doc.gate_combine)
-        if doc.min_screens is not None:
-            alpha_params.setdefault("min_screens", doc.min_screens)
+    alpha_params["signal_mode"] = {
+        "SigmaRailScreenerAlphaModel": "screen",
+        "SigmaRailCompositeAlphaModel": "composite_score",
+        "SigmaRailPyramidAlphaModel": "pyramid",
+    }.get(alpha_type, "screen")
+    if doc.alpha.mode == "always_long":
+        if stages or factors or gates:
+            raise ValueError(
+                "Alpha.mode='always_long' cannot be combined with screening, scoring, or signal stages"
+            )
+        alpha_params["signal_mode"] = "always_long"
+    alpha_params["signal_duration_days"] = int(doc.alpha.insight_period_days)
 
     if doc.max_entry_atr_pct is not None:
+        if alpha_type != "SigmaRailPyramidAlphaModel":
+            raise ValueError(
+                "Alpha.max_entry_atr_pct is only consumed by SigmaRailPyramidAlphaModel"
+            )
         alpha_params["max_entry_atr_pct"] = float(doc.max_entry_atr_pct)
 
     pcm_type, pcm_params = _sizing_model(doc.sizing, max_positions)
     pcm_params = dict(pcm_params)
+    pcm_params["allocation_policy"] = {
+        "EqualWeightingPortfolioConstructionModel": "equal_weight",
+        "RiskParityPortfolioConstructionModel": "risk_parity",
+        "RiskBudgetedPortfolioConstructionModel": "risk_budgeted",
+        "SigmaRailScreenerPortfolioConstructionModel": "atr_risk",
+    }.get(pcm_type, "atr_risk")
     # Pyramid scale-in requires RiskBudgeted PCM (phases / add_trigger live there).
     if pyramid_stage is not None and pcm_type != "RiskBudgetedPortfolioConstructionModel":
         pcm_type = "RiskBudgetedPortfolioConstructionModel"
@@ -1728,7 +1742,19 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
                 else True
             ),
         }
-    if pcm_type != "RiskBudgetedPortfolioConstructionModel":
+    if pcm_type == "EqualWeightingPortfolioConstructionModel":
+        # The fixed SigmaRail PCM consumes these values directly. In particular,
+        # a one-symbol positive control must be able to request full exposure.
+        pcm_params["max_positions"] = int(doc.sizing.max_positions or max_positions)
+        if doc.sizing.max_weight is not None:
+            pcm_params["max_weight"] = float(doc.sizing.max_weight)
+        if doc.sizing.target_exposure is not None:
+            pcm_params["target_exposure"] = float(doc.sizing.target_exposure)
+        if doc.sizing.max_total_exposure is not None:
+            pcm_params["max_total_exposure"] = float(doc.sizing.max_total_exposure)
+        if doc.sizing.exit_when_no_bars is not None:
+            pcm_params["exit_when_no_bars"] = bool(doc.sizing.exit_when_no_bars)
+    elif pcm_type != "RiskBudgetedPortfolioConstructionModel":
         pcm_params.setdefault("hold_policy", "retain_if_invested")
         pcm_params.setdefault("max_total_exposure", 0.95)
         pcm_params.setdefault("exit_when_no_bars", True)
@@ -1831,24 +1857,21 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
         ]
         pcm_params["policy_overrides"] = ov_payload
         risk_params["policy_overrides"] = ov_payload
-    universe_type, universe_params = _universe_model(doc)
-    universe_params = dict(universe_params)
-    universe_params["screen"] = screen_where or {"type": "all", "items": []}
-    universe_params["membership"] = membership_where or {"type": "all", "items": []}
-    universe_params["named_groups"] = named_groups
     exec_type, exec_params = _execution_model(doc.execution)
-
-    if doc.universe.source == UniverseSource.MANUAL and exec_type == "VeraScreenerExecutionModel":
-        exec_type = "ImmediateExecutionModel"
-        exec_params = {}
+    if doc.execution.type in ("vwap", "std_dev"):
+        raise ValueError(
+            f"execution.type={doc.execution.type!r} is not implemented by the fixed SigmaRail execution slot"
+        )
+    exec_params = {"fill_session": exec_params.get("fill_session", doc.execution.fill_session)}
+    risk_slot_params = _risk_slot_parameters(risk_type, risk_params)
 
     if "hedge" in regime_uses and not _risk_stack_has_hedge(risk_type, risk_params):
         raise ValueError(
-            "hedge use requires VeraHedgeModel in RiskManagement "
-            "(CompositeRiskManagementModel with VeraHedgeModel, or Type=VeraHedgeModel)"
+            "hedge use requires SigmaRailHedgeModel in RiskManagement "
+            "(CompositeRiskManagementModel with SigmaRailHedgeModel, or Type=SigmaRailHedgeModel)"
         )
 
-    # When hedge instruments are authored, put VeraHedgeModel in the Risk stack
+    # When hedge instruments are authored, put SigmaRailHedgeModel in the Risk stack
     # (honesty) instead of a dead AlgorithmParameters hedge-instruments string.
     if (
         doc.hedge is not None
@@ -1862,14 +1885,14 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
             ]
         }
         if risk_type in ("NullRiskManagementModel",):
-            risk_type, risk_params = "VeraHedgeModel", hedge_params
+            risk_type, risk_params = "SigmaRailHedgeModel", hedge_params
         else:
             primary_type, primary_params = risk_type, dict(risk_params)
             risk_type = "CompositeRiskManagementModel"
             risk_params = {
                 "models": [
                     {"Type": primary_type, "Parameters": primary_params},
-                    {"Type": "VeraHedgeModel", "Parameters": hedge_params},
+                    {"Type": "SigmaRailHedgeModel", "Parameters": hedge_params},
                 ]
             }
 
@@ -1939,22 +1962,33 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
         universe_spec["post_where"] = post_where
 
     framework = {
-        "UniverseSelection": {"Type": universe_type, "Parameters": universe_params},
-        "Alpha": {"Type": alpha_type, "Parameters": alpha_params},
-        "PortfolioConstruction": {"Type": pcm_type, "Parameters": pcm_params},
-        "Execution": {"Type": exec_type, "Parameters": exec_params},
-        "RiskManagement": {"Type": risk_type, "Parameters": risk_params},
+        "UniverseSelection": {
+            "Type": "SigmaRailClickHouseUniverseSelection",
+            "Parameters": {"query": universe_spec},
+        },
+        "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": alpha_params},
+        "PortfolioConstruction": {
+            "Type": "SigmaRailScreenerPortfolioConstructionModel",
+            "Parameters": pcm_params,
+        },
+        "Execution": {
+            "Type": "SigmaRailScreenerExecutionModel",
+            "Parameters": exec_params,
+        },
+        "RiskManagement": {
+            "Type": "SigmaRailRiskManagementModel",
+            "Parameters": risk_slot_params,
+        },
     }
 
     out: dict = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "title": doc.strategy_name,
         "Framework": framework,
         "AlgorithmParameters": algo_params,
     }
-    vera_base: dict = {
-        "Universe": universe_spec,
+    sigmarail_base: dict = {
         "DataSources": _build_data_sources(
             select_cols=select_cols,
             regime_gate_payload=regime_gate_payload,
@@ -1962,12 +1996,12 @@ def compile_pipeline(doc: PipelineDocument) -> dict:
     }
     # Score document only (not a second strategy copy). Pipeline not persisted as SSOT.
     if regime_gate_payload:
-        vera_base["Regime"] = {
+        sigmarail_base["Regime"] = {
             k: v
             for k, v in regime_gate_payload.items()
             if k != "uses"  # uses live on DataSources.regime
         }
-    out["VeraBase"] = vera_base
+    out["SigmaRail"] = sigmarail_base
     if doc.universe.source == UniverseSource.MANUAL:
         _bound_manual_store_spec(out, doc.universe.symbols or [])
     return out
@@ -1989,7 +2023,7 @@ def _rebalance_days(cadence: str) -> int:
 
 
 def compile_portfolio(portfolio: PortfolioDocument) -> dict:
-    """Compile a PortfolioDocument into a VeraLabV1 JSON dict.
+    """Compile a PortfolioDocument into a SigmaRailStrategyV1 JSON dict.
 
     - A single-leg portfolio with default allocation compiles exactly like
       ``compile_pipeline`` on that leg (preserving the single-strategy shape).
@@ -2006,20 +2040,12 @@ def compile_portfolio(portfolio: PortfolioDocument) -> dict:
         return compile_pipeline(legs[0])
 
     compiled = [compile_pipeline(leg) for leg in legs]
-    alphas = [
-        {"Type": c["Framework"]["Alpha"]["Type"], "Parameters": c["Framework"]["Alpha"]["Parameters"]}
+    alphas = [c["Framework"]["Alpha"]["Parameters"] for c in compiled]
+    risk_rules = [
+        rule
         for c in compiled
+        for rule in c["Framework"]["RiskManagement"]["Parameters"].get("rules", [])
     ]
-    risks = [
-        {"Type": c["Framework"]["RiskManagement"]["Type"], "Parameters": c["Framework"]["RiskManagement"]["Parameters"]}
-        for c in compiled
-        if c["Framework"]["RiskManagement"]["Type"] != "NullRiskManagementModel"
-    ]
-    risk_type, risk_params = "NullRiskManagementModel", {}
-    if len(risks) == 1:
-        risk_type, risk_params = risks[0]["Type"], risks[0]["Parameters"]
-    elif len(risks) > 1:
-        risk_type, risk_params = "CompositeRiskManagementModel", {"models": risks}
 
     # Symbol -> leg mapping, to flatten the regime map (leg-name keys -> symbols).
     symbol_to_leg: dict[str, str] = {}
@@ -2068,36 +2094,46 @@ def compile_portfolio(portfolio: PortfolioDocument) -> dict:
 
     # Combined universe: a multi-leg portfolio trades the union of its sleeves'
     # universes, not just the first leg's.
-    universes = [c["Framework"]["UniverseSelection"] for c in compiled]
-    if universes and all(u.get("Type") == "ManualUniverseSelectionModel" for u in universes):
+    if legs and all(leg.universe.source == UniverseSource.MANUAL for leg in legs):
         symbols: list[str] = []
-        for u in universes:
-            symbols.extend(u.get("Parameters", {}).get("symbols", []))
-        universe_selection = {
-            "Type": "ManualUniverseSelectionModel",
-            "Parameters": {"symbols": list(dict.fromkeys(symbols))},
-        }
+        for leg in legs:
+            symbols.extend(leg.universe.symbols)
+        fixed_symbols = list(dict.fromkeys(symbols))
+        universe_spec = copy.deepcopy(compiled[0]["Framework"]["UniverseSelection"]["Parameters"]["query"])
+        universe_spec = _bound_manual_store_spec({"Framework": {"UniverseSelection": {"Parameters": {"query": universe_spec}}}}, fixed_symbols)["Framework"]["UniverseSelection"]["Parameters"]["query"]
     else:
-        universe_selection = compiled[0]["Framework"]["UniverseSelection"]
+        universe_specs = [c["Framework"]["UniverseSelection"]["Parameters"]["query"] for c in compiled]
+        canonical = json.dumps(universe_specs[0], sort_keys=True, separators=(",", ":"))
+        if any(json.dumps(spec, sort_keys=True, separators=(",", ":")) != canonical for spec in universe_specs[1:]):
+            raise ValueError("portfolio legs must share one SigmaRail Universe AST")
+        universe_spec = copy.deepcopy(universe_specs[0])
 
     out = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
-            "UniverseSelection": universe_selection,
-            "Alpha": {"Type": "CompositeAlphaModel", "Parameters": {"models": alphas}},
-            "PortfolioConstruction": {"Type": pcm_type, "Parameters": pcm_params},
-            "Execution": compiled[0]["Framework"]["Execution"],
-            "RiskManagement": {"Type": risk_type, "Parameters": risk_params},
+            "UniverseSelection": {
+                "Type": "SigmaRailClickHouseUniverseSelection",
+                "Parameters": {"query": universe_spec},
+            },
+            "Alpha": {
+                "Type": "SigmaRailScreenerAlphaModel",
+                "Parameters": {"signal_mode": "composite_score", "signals": alphas},
+            },
+            "PortfolioConstruction": {
+                "Type": "SigmaRailScreenerPortfolioConstructionModel",
+                "Parameters": {**pcm_params, "allocation_policy": "equal_weight"},
+            },
+            "Execution": {
+                "Type": "SigmaRailScreenerExecutionModel",
+                "Parameters": compiled[0]["Framework"]["Execution"]["Parameters"],
+            },
+            "RiskManagement": {
+                "Type": "SigmaRailRiskManagementModel",
+                "Parameters": {"rules": risk_rules},
+            },
         },
         "AlgorithmParameters": algo_params,
-        "VeraBase": compiled[0].get("VeraBase", {}),
+        "SigmaRail": compiled[0].get("SigmaRail", {}),
     }
-    # Fixed-symbol portfolio (all legs manual): bound ONE store universe query to
-    # the union of sleeve symbols so the store pre-hydrates exactly those ETFs.
-    # The framework slots stay ManualUniverse + immediate execution (framework
-    # path), which rebalances the fixed sleeves to target weights.
-    if legs and all(leg.universe.source == UniverseSource.MANUAL for leg in legs):
-        symbols = [s for leg in legs for s in (leg.universe.symbols or [])]
-        _bound_manual_store_spec(out, sorted(set(symbols)))
     return out

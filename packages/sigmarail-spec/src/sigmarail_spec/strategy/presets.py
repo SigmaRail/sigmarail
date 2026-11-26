@@ -1,6 +1,6 @@
 """Named strategy presets, expressed as PipelineDocument JSON.
 
-Presets are data, not code — the compiler turns each into a VeraLabV1 spec.
+Presets are data, not code — the compiler turns each into a SigmaRailStrategyV1 spec.
 """
 
 from __future__ import annotations

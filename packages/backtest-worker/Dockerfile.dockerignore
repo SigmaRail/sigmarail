@@ -1,0 +1,12 @@
+**/.git
+**/.worktrees
+**/.venv
+**/venv
+**/node_modules
+**/.pytest_cache
+**/.ruff_cache
+**/__pycache__
+**/.sigmarail
+**/db.sqlite3
+**/.env
+**/.env.*

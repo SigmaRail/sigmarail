@@ -65,7 +65,7 @@ def test_compile_endpoint() -> None:
         content_type="application/json",
     )
     assert r.status_code == 200
-    assert r.json()["Kind"] == "VeraLabV1"
+    assert r.json()["Kind"] == "SigmaRailStrategyV1"
 
 
 def test_compile_decompile_preserves_recursive_filter_group() -> None:
@@ -132,7 +132,7 @@ def test_compile_passes_unknown_factor_as_raw_column() -> None:
     )
     assert r.status_code == 200
     body = r.json()
-    assert body["Kind"] == "VeraLabV1"
+    assert body["Kind"] == "SigmaRailStrategyV1"
 
 
 def test_compile_portfolio_endpoint() -> None:
@@ -140,8 +140,8 @@ def test_compile_portfolio_endpoint() -> None:
     portfolio = {
         "name": "all_weather",
         "legs": [
-            {"strategy_name": "equity", "stages": [{"name": "r", "mode": "score", "factors": [{"name": "momentum", "weight": 1.0}], "selection": {"method": "top_n", "n": 5}}]},
-            {"strategy_name": "bonds", "stages": [{"name": "r", "mode": "score", "factors": [{"name": "value", "weight": 1.0}], "selection": {"method": "top_n", "n": 5}}]},
+            {"strategy_name": "equity", "universe": {"source": "manual", "symbols": ["SPY"]}, "stages": [{"name": "r", "mode": "score", "factors": [{"name": "momentum", "weight": 1.0}], "selection": {"method": "top_n", "n": 5}}]},
+            {"strategy_name": "bonds", "universe": {"source": "manual", "symbols": ["SPY"]}, "stages": [{"name": "r", "mode": "score", "factors": [{"name": "value", "weight": 1.0}], "selection": {"method": "top_n", "n": 5}}]},
         ],
         "allocation": {"base": "risk_parity"},
     }
@@ -151,7 +151,7 @@ def test_compile_portfolio_endpoint() -> None:
         content_type="application/json",
     )
     assert r.status_code == 200
-    assert r.json()["Framework"]["Alpha"]["Type"] == "CompositeAlphaModel"
+    assert r.json()["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
 
 
 def test_decompile_portfolio_endpoint() -> None:
@@ -187,11 +187,11 @@ def test_golden_minervini_round_trip() -> None:
     )
     assert compile_resp.status_code == 200
     spec = compile_resp.json()
-    assert "DataSources" in spec["VeraBase"]
-    assert "Pipeline" not in spec["VeraBase"] or spec["VeraBase"].get("Pipeline") is None
+    assert "DataSources" in spec["SigmaRail"]
+    assert "Pipeline" not in spec["SigmaRail"] or spec["SigmaRail"].get("Pipeline") is None
     assert "regime-gate" not in (spec.get("AlgorithmParameters") or {})
     assert "entry_triggers" in spec["Framework"]["Alpha"]["Parameters"]
-    assert spec["Framework"]["Alpha"]["Type"] == "VeraPyramidAlphaModel"
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
 
     decompile_resp = c.post(
         "/api/strategy/pipelines/decompile",

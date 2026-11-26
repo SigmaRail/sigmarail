@@ -1,4 +1,4 @@
-"""Qualify VeraLab screener columns onto L7 tables.
+"""Qualify SigmaRailLab screener columns onto L7 tables.
 
 ``source: daily_screener`` stays the logical IR id. Generated SQL joins only
 the L7 tables that own the referenced columns (compact map — not the full

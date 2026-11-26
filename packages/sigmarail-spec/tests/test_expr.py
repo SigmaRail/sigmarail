@@ -56,7 +56,7 @@ def test_regime_node_with_source_is_accepted() -> None:
 
 
 def test_regime_allows_entries_is_accepted() -> None:
-    """VeraTradingLab-only node until consolidation."""
+    """SigmaRailTradingLab-only node until consolidation."""
     assert parse_bool_expr({"type": "regime_allows_entries", "eq": 1}).type == \
         "regime_allows_entries"
 

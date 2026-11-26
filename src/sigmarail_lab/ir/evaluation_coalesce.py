@@ -44,7 +44,7 @@ def coalesce_research_evaluation(
     parameter_map: dict[str, str] | None = None,
     evaluation: Any = None,
 ) -> tuple[str, str, int, str]:
-    """CLI GetParameter wins, then AlgorithmParameters, then VeraBase.Evaluation.
+    """CLI GetParameter wins, then AlgorithmParameters, then SigmaRail.Evaluation.
 
     Live trading (future) uses cash + benchmark from the same sources; job dates
     still come from the backtest/optimizer submit window.

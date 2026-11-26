@@ -2,7 +2,7 @@
   "domain": "studio",
   "tools": [
     {
-      "description": "Vera daily OHLCV Chart.js embed (from screener_price_tech_daily).",
+      "description": "SigmaRail daily OHLCV Chart.js embed (from screener_price_tech_daily).",
       "id": "studio.mcp.tool.chart_price_embed",
       "input_schema": {
         "properties": {

@@ -520,7 +520,7 @@
     },
     "FormulaExpr": {
       "additionalProperties": false,
-      "description": "Binary arithmetic formula operand; nests via ``args`` (C-VERA-EXPR).",
+      "description": "Binary arithmetic formula operand; nests via ``args`` (C-SIGMARAIL-EXPR).",
       "properties": {
         "args": {
           "items": {

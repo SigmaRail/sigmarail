@@ -34,7 +34,7 @@ def test_startup_modules_defer_legacy_imports_until_feature_calls() -> None:
             and node.module
             and (node.module == "sigmarail.features" or node.module.startswith("sigmarail.features."))
         ]
-        assert not eager, f"{path.name} has eager Vera imports: {eager}"
+        assert not eager, f"{path.name} has eager SigmaRail imports: {eager}"
 
 
 def test_existing_capability_modules_remain_registered_during_migration() -> None:
@@ -57,7 +57,7 @@ def test_existing_capability_modules_remain_registered_during_migration() -> Non
     assert by_name["strategy"]["target_requires"] == ["sigmarail-spec", "sigmarail-lean"]
 
 
-def test_application_and_mcp_have_no_vera_package_imports() -> None:
+def test_application_and_mcp_have_no_retired_vera_package_imports() -> None:
     roots = [
         STUDIO.parent / "src" / "sigmarail",
         STUDIO.parent / "src" / "sigmarail_lab",

@@ -89,11 +89,10 @@ def test_compose_includes_lineage_stamps() -> None:
         data=json.dumps(
             {
                 "framework": {
-                    "UniverseSelection": {"Type": "VeraScreenerUniverseSelectionModel", "Parameters": {}},
-                    "Alpha": {"Type": "RsiAlphaModel", "Parameters": {"period": 14, "resolution": "Daily"}},
-                    "PortfolioConstruction": {"Type": "EqualWeightingPortfolioConstructionModel", "Parameters": {}},
-                    "RiskManagement": {"Type": "MaximumDrawdownPercentPerSecurity", "Parameters": {}},
-                    "Execution": {"Type": "ImmediateExecutionModel", "Parameters": {}},
+                    "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": {}},
+                    "PortfolioConstruction": {"Type": "SigmaRailScreenerPortfolioConstructionModel", "Parameters": {}},
+                    "RiskManagement": {"Type": "SigmaRailRiskManagementModel", "Parameters": {}},
+                    "Execution": {"Type": "SigmaRailScreenerExecutionModel", "Parameters": {}},
                 },
                 "title": "Lineage test",
                 "universe": {"source": "inline", "inline_spec": _sample_spec()},

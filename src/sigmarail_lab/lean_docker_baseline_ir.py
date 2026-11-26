@@ -1,4 +1,4 @@
-"""CI baseline VeraLabV1 JSON duplicated for LEAN Docker local runs.
+"""CI baseline SigmaRailStrategyV1 JSON duplicated for LEAN Docker local runs.
 
 QuantConnect Lean CLI only copies ``.py``, ``.cs``, ``.ipynb``, ``.css``, and ``.html``
 into the engine container, so ``tests/fixtures/ir/baseline.json`` is never mounted at

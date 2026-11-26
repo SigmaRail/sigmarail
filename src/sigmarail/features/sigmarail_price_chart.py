@@ -245,7 +245,7 @@ def chartjs_price_chart_html(
 """
 
 
-def vera_price_mcp_app_resource_meta() -> dict[str, Any]:
+def sigmarail_price_mcp_app_resource_meta() -> dict[str, Any]:
     return {
         "ui": {
             "csp": {
@@ -256,8 +256,8 @@ def vera_price_mcp_app_resource_meta() -> dict[str, Any]:
     }
 
 
-def vera_price_mcp_app_html() -> str:
-    """MCP App shell: applies ``structuredContent.html`` from vera_price_chart_embed."""
+def sigmarail_price_mcp_app_html() -> str:
+    """MCP App shell: applies ``structuredContent.html`` from sigmarail_price_chart_embed."""
     return """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8" />
 <style>html,body{margin:0;background:#131722;color:#d1d4dc;font:13px system-ui,sans-serif}#status{padding:8px 12px}.err{color:#f23645}</style>
@@ -293,7 +293,7 @@ def vera_price_mcp_app_html() -> str:
 </script></body></html>"""
 
 
-def vera_price_chart_embed_payload(
+def sigmarail_price_chart_embed_payload(
     client: Any,
     ticker: str,
     *,
@@ -317,7 +317,7 @@ def vera_price_chart_embed_payload(
         "date_to": date_to,
         "bar_count": len(rows),
         "data_source": "vera_clickhouse_screener_price_tech_daily",
-        "attribution": "OHLCV and SMA from Vera ClickHouse screener_price_tech_daily; RSI14 computed in vera_price_chart.",
+        "attribution": "OHLCV and SMA from Vera ClickHouse screener_price_tech_daily; RSI14 computed in sigmarail_price_chart.",
         "mcp_app_uri": SIGMARAIL_PRICE_CHART_MCP_APP_URI,
         "visualizer_note": (
             "MCP App: ui://vera/price-chart-v1.html. Chart.js on cdn.jsdelivr.net only (no candlestick plugin)."

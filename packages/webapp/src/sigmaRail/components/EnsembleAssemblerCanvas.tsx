@@ -11,23 +11,23 @@ import type { StrategyFrameworkTemplate } from "../types";
 
 export interface AssembledFrameworkSpec {
   UniverseSelection: {
-    Type: string;
+    Type: "SigmaRailClickHouseUniverseSelection";
     Parameters: Record<string, unknown>;
   };
   Alpha: {
-    Type: string;
+    Type: "SigmaRailScreenerAlphaModel";
     Parameters: Record<string, unknown>;
   };
   PortfolioConstruction: {
-    Type: string;
+    Type: "SigmaRailScreenerPortfolioConstructionModel";
     Parameters: Record<string, unknown>;
   };
   RiskManagement: {
-    Type: string;
+    Type: "SigmaRailRiskManagementModel";
     Parameters: Record<string, unknown>;
   };
   Execution: {
-    Type: string;
+    Type: "SigmaRailScreenerExecutionModel";
     Parameters: Record<string, unknown>;
   };
 }
@@ -277,36 +277,30 @@ export function EnsembleAssemblerCanvas({
 
   // Synthesize Framework Spec
   const frameworkSpec = useMemo<AssembledFrameworkSpec>(() => {
-    // 1. Universe
-    const uni = {
-      Type: "VeraScreenerUniverseSelectionModel",
-      Parameters: {},
-    };
-
-    // 2. Alpha
-    const alphaSubmodels: Array<{ Type: string; Parameters: Record<string, unknown> }> = [];
+    // 1. Alpha
+    const signals: Array<{ kind: string; parameters: Record<string, unknown> }> = [];
     if (alphaScreener) {
-      alphaSubmodels.push({
-        Type: "VeraScreenerAlphaModel",
-        Parameters: {
+      signals.push({
+        kind: "screener",
+        parameters: {
           max_positions: screenerMaxPositions,
           stop_loss_pct: screenerStopLoss,
         },
       });
     }
     if (alphaRsi) {
-      alphaSubmodels.push({
-        Type: "RsiAlphaModel",
-        Parameters: {
+      signals.push({
+        kind: "rsi",
+        parameters: {
           period: rsiPeriod,
           resolution: rsiResolution,
         },
       });
     }
     if (alphaMacd) {
-      alphaSubmodels.push({
-        Type: "MacdAlphaModel",
-        Parameters: {
+      signals.push({
+        kind: "macd",
+        parameters: {
           fast_period: macdFast,
           slow_period: macdSlow,
           signal_period: macdSignal,
@@ -314,102 +308,85 @@ export function EnsembleAssemblerCanvas({
       });
     }
     if (alphaEmaCross) {
-      alphaSubmodels.push({
-        Type: "EmaCrossAlphaModel",
-        Parameters: {
+      signals.push({
+        kind: "ema_cross",
+        parameters: {
           fast_period: emaFast,
           slow_period: emaSlow,
         },
       });
     }
 
-    let alphaSlot: { Type: string; Parameters: Record<string, unknown> };
-    if (alphaSubmodels.length > 1) {
-      alphaSlot = {
-        Type: "CompositeAlphaModel",
-        Parameters: { models: alphaSubmodels },
-      };
-    } else if (alphaSubmodels.length === 1) {
-      alphaSlot = alphaSubmodels[0];
-    } else {
-      alphaSlot = {
-        Type: "VeraScreenerAlphaModel",
-        Parameters: { max_positions: 10, stop_loss_pct: 0.08 },
-      };
-    }
+    const alphaSlot = {
+      Type: "SigmaRailScreenerAlphaModel" as const,
+      Parameters: { signals, max_positions: screenerMaxPositions, stop_loss_pct: screenerStopLoss },
+    };
 
     // 3. PCM
     const pcmParams: Record<string, unknown> = {
       max_positions: screenerMaxPositions,
       max_weight: pcmMaxWeight,
     };
-    if (pcmType === "VeraScreenerPortfolioConstructionModel") {
+    const allocationPolicy = pcmType === "EqualWeightingPortfolioConstructionModel"
+      ? "equal_weight"
+      : pcmType === "RiskParityPortfolioConstructionModel"
+        ? "risk_parity"
+        : "atr_risk";
+    if (allocationPolicy === "atr_risk") {
       pcmParams.target_atr_risk = pcmAtrRisk;
       pcmParams.min_weight = 0.02;
     }
     if (
-      pcmType.includes("Rebalance") ||
-      pcmType === "EqualWeightingPortfolioConstructionModel" ||
-      pcmType === "RiskParityPortfolioConstructionModel"
+      pcmType.includes("Rebalance") || allocationPolicy !== "atr_risk"
     ) {
       pcmParams.rebalance = pcmRebalance;
     }
 
     const pcmSlot = {
-      Type: pcmType,
-      Parameters: pcmParams,
+      Type: "SigmaRailScreenerPortfolioConstructionModel" as const,
+      Parameters: { ...pcmParams, allocation_policy: allocationPolicy },
     };
 
     // 4. Risk Management
-    const riskSubmodels: Array<{ Type: string; Parameters: Record<string, unknown> }> = [];
+    const rules: Array<{ kind: string; parameters: Record<string, unknown> }> = [];
     if (riskTrailing) {
-      riskSubmodels.push({
-        Type: "TrailingStopRiskManagementModel",
-        Parameters: { maximum_drawdown_percent: trailingStopPct },
+      rules.push({
+        kind: "trailing_stop",
+        parameters: { maximum_drawdown_percent: trailingStopPct },
       });
     }
     if (riskSectorCap) {
-      riskSubmodels.push({
-        Type: "MaximumSectorExposureRiskManagementModel",
-        Parameters: { maximum_sector_exposure: maxSectorExposure },
+      rules.push({
+        kind: "maximum_sector_exposure",
+        parameters: { maximum_sector_exposure: maxSectorExposure },
       });
     }
     if (riskMaxDrawdown) {
-      riskSubmodels.push({
-        Type: "MaximumDrawdownPercentPerSecurity",
-        Parameters: { maximum_drawdown_percent: maxDrawdownPct },
+      rules.push({
+        kind: "maximum_drawdown_per_security",
+        parameters: { maximum_drawdown_percent: maxDrawdownPct },
       });
     }
     if (riskTakeProfit) {
-      riskSubmodels.push({
-        Type: "MaximumUnrealizedProfitPercentPerSecurity",
-        Parameters: { maximum_unrealized_profit_percent: takeProfitPct },
+      rules.push({
+        kind: "maximum_unrealized_profit_per_security",
+        parameters: { maximum_unrealized_profit_percent: takeProfitPct },
       });
     }
 
-    let riskSlot: { Type: string; Parameters: Record<string, unknown> };
-    if (riskSubmodels.length > 1) {
-      riskSlot = {
-        Type: "CompositeRiskManagementModel",
-        Parameters: { models: riskSubmodels },
-      };
-    } else if (riskSubmodels.length === 1) {
-      riskSlot = riskSubmodels[0];
-    } else {
-      riskSlot = {
-        Type: "NullRiskManagementModel",
-        Parameters: {},
-      };
-    }
+    const riskSlot = {
+      Type: "SigmaRailRiskManagementModel" as const,
+      Parameters: { rules },
+    };
 
     // 5. Execution
     const exeSlot = {
-      Type: executionType,
-      Parameters: {},
+      Type: "SigmaRailScreenerExecutionModel" as const,
+      Parameters: { fill_session: executionType.toLowerCase().includes("close") ? "moc" : "moo" },
     };
 
     return {
-      UniverseSelection: uni,
+      UniverseSelection: { Type: "SigmaRailClickHouseUniverseSelection", Parameters: {} },
       Alpha: alphaSlot,
       PortfolioConstruction: pcmSlot,
       RiskManagement: riskSlot,
@@ -615,7 +592,7 @@ export function EnsembleAssemblerCanvas({
           <div className="mt-0.5 font-bold text-ink truncate">
             {pcmType === "ConfidenceWeightedPortfolioConstructionModel"
               ? "Confidence Weighted"
-              : pcmType === "VeraScreenerPortfolioConstructionModel"
+              : pcmType === "SigmaRailScreenerPortfolioConstructionModel"
                 ? "ATR Volatility Risk"
                 : pcmType === "RiskParityPortfolioConstructionModel"
                   ? "Risk Parity (Inv-Vol)"
@@ -674,7 +651,7 @@ export function EnsembleAssemblerCanvas({
                 />
                 SigmaRail Breakout Alpha
               </label>
-              <span className="font-mono text-[9px] text-ink-faint">VeraScreenerAlphaModel</span>
+              <span className="font-mono text-[9px] text-ink-faint">SigmaRailScreenerAlphaModel</span>
             </div>
             <p className="mt-1 text-[10.5px] text-ink-muted leading-tight">
               Emits directional long insights for universe candidates meeting relative strength criteria.
@@ -892,7 +869,7 @@ export function EnsembleAssemblerCanvas({
                 <option value="ConfidenceWeightedPortfolioConstructionModel">
                   Confidence-Weighted PCM (Native Multi-Alpha Blend)
                 </option>
-                <option value="VeraScreenerPortfolioConstructionModel">
+                <option value="SigmaRailScreenerPortfolioConstructionModel">
                   SigmaRail Screener PCM (ATR volatility risk sizing)
                 </option>
                 <option value="RiskParityPortfolioConstructionModel">
@@ -1227,7 +1204,7 @@ export function EnsembleAssemblerCanvas({
         >
           <span className="flex items-center gap-2 font-mono">
             <span>{isJsonDrawerOpen ? "▼" : "▶"}</span>
-            <span>Live Canonical Spec: VeraLabV1 (LeanFrameworkV1)</span>
+            <span>Live Canonical Spec: SigmaRailStrategyV1 (LeanFrameworkV1)</span>
           </span>
           <span className="text-[10px] font-normal text-ink-faint">
             {isJsonDrawerOpen ? "Click to collapse" : "Click to view synthesized JSON"}
@@ -1240,7 +1217,7 @@ export function EnsembleAssemblerCanvas({
               {JSON.stringify(
                 {
                   SchemaVersion: 2,
-                  Kind: "VeraLabV1",
+                  Kind: "SigmaRailStrategyV1",
                   Framework: frameworkSpec,
                 },
                 null,

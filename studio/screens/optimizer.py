@@ -19,7 +19,7 @@ from screens.execution import (
 
 
 def _deep_inject_param(spec: dict[str, Any], param_name: str, value: Any) -> None:
-    """Inject a parameter into the appropriate slot or sub-model of a VeraLab spec."""
+    """Inject a parameter into the appropriate slot or sub-model of a SigmaRailLab spec."""
     param_key = param_name.strip()
     fw = spec.setdefault("Framework", {})
 

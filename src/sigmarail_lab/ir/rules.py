@@ -1,4 +1,4 @@
-"""Rule/Action AST for Vera framework slots.
+"""Rule/Action AST for SigmaRail framework slots.
 
 Risk action set (Phase 1 — position lifecycle):
 - Exit(fraction: float) — terminal
@@ -282,7 +282,7 @@ class Phase(BaseModel):
     size_pct: float = Field(gt=0.0, le=1.0)
     trigger: BoolExprItem | None = None
     # Generation-side field declared by the canonical PyramidPhase schema
-    # (vera_query_core.strategy.pipeline): the phase's share of the risk
+    # (sigmarail_query_core.strategy.pipeline): the phase's share of the risk
     # budget. Emitted as null across the stored corpus and not yet consumed
     # by the runtime — declared here so stored specs still parse while
     # extra="forbid" keeps catching real typos.

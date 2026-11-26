@@ -1,8 +1,8 @@
 """
-Universe bulk load via Vera query service only (``POST /v1/universe/run``).
+Universe bulk load via SigmaRail query service only (``POST /v1/universe/run``).
 
-``VeraBase.Universe`` must be an opaque ``universe_query_v1`` dict; validation and SQL
-compilation live in VeraBase (``vera_query_core``). This module is a row cache + REST client.
+``SigmaRail.Universe`` must be an opaque ``universe_query_v1`` dict; validation and SQL
+compilation live in SigmaRail (``sigmarail_query_core``). This module is a row cache + REST client.
 """
 
 from __future__ import annotations
@@ -23,34 +23,6 @@ from .sigmarail_api_client import (
 
 def _is_universe_query_v1(spec: dict[str, Any]) -> bool:
     return spec.get("version") in (1, 2) and isinstance(spec.get("select"), list)
-
-
-def _extract_fixed_tickers(spec: dict[str, Any]) -> list[str] | None:
-    """Extract fixed tickers from a universe_query_v1 with an 'any' of 'eq' on ticker."""
-    where = spec.get("where")
-    if not isinstance(where, dict):
-        return None
-    if where.get("type") != "any":
-        return None
-    items = where.get("items")
-    if not isinstance(items, list):
-        return None
-    tickers = []
-    for item in items:
-        if not isinstance(item, dict):
-            return None
-        if item.get("type") != "eq":
-            return None
-        left = item.get("left")
-        right = item.get("right")
-        if not isinstance(left, dict) or left.get("type") != "col" or left.get("name") != "ticker":
-            return None
-        if not isinstance(right, dict) or right.get("type") != "lit":
-            return None
-        tickers.append(str(right.get("value", "")).strip().upper())
-    if tickers:
-        return tickers
-    return None
 
 
 def _rank_field(spec: dict[str, Any]) -> str:
@@ -93,6 +65,15 @@ def date_range_chunks(start_date: str, end_date: str, *, months: int = 6) -> lis
     return out
 
 
+class SigmaRailClickHouseUniverseSelection:
+    """Fixed strategy universe implementation configured only by a query AST."""
+
+    def __init__(self, query: dict[str, Any]) -> None:
+        if not _is_universe_query_v1(query):
+            raise ValueError("query must be universe_query_v1 or v2")
+        self.query = dict(query)
+
+
 class SigmaRailDailyScreener:
     """In-memory cache: date_str -> ticker -> row dict (screener columns from REST or CH)."""
 
@@ -104,17 +85,14 @@ class SigmaRailDailyScreener:
             )
         if not _is_universe_query_v1(universe_spec):
             raise ValueError(
-                "VeraBase.Universe must be universe_query_v1 or v2 (version in (1, 2), select[])"
+                "SigmaRail.Universe must be universe_query_v1 or v2 (version in (1, 2), select[])"
             )
         self._universe_spec = universe_spec
         self._api: SigmaRailApiClient | None = None
         self._algorithm = None
         self._data: dict[str, dict[str, dict[str, Any]]] = {}
-        # Fixed universe support (for manual/backtest universes without REST API)
-        self._fixed_tickers = _extract_fixed_tickers(universe_spec)
         # C-API-SURFACE-V1: what this run compiled/validated against.
         self.registry_digest: str = ""
-        self._fabricated_rows_warned = False
 
     def set_http_client(self, client: ChHttpClient) -> None:
         """Wire REST client when ``sigmarail-api-url`` / ``SIGMARAIL_API_URL`` is set."""
@@ -165,11 +143,6 @@ class SigmaRailDailyScreener:
     def load(self, start_date, end_date) -> None:
         """Bulk-load universe metrics for the full date range."""
         self._verify_service_compatibility()
-        # If we have a fixed universe (manual tickers), synthesize rows without REST API
-        if self._fixed_tickers:
-            self._load_fixed_universe(start_date, end_date)
-            return
-
         rows = self._query_range(start_date.isoformat(), end_date.isoformat(), max_rows=500_000)
         self._data = {}
         for row in rows:
@@ -188,7 +161,7 @@ class SigmaRailDailyScreener:
         """Check dialect identity and record the registry digest before loading.
 
         ``C-API-SURFACE-V1``: the spec is only meaningful against a dialect + a field
-        registry. A mismatch means this tree would validate one dialect while VeraBase
+        registry. A mismatch means this tree would validate one dialect while SigmaRail
         compiles another — the failure mode that used to surface as an HTTP 422 (or,
         worse, a silently empty universe) mid-backtest.
         """
@@ -198,7 +171,7 @@ class SigmaRailDailyScreener:
             meta = self._api.require_dialect()
         except SigmaRailApiError as exc:
             raise RuntimeError(
-                f"SigmaRailDailyScreener: VeraBase compatibility check failed ({exc}); "
+                f"SigmaRailDailyScreener: SigmaRail compatibility check failed ({exc}); "
                 "refusing to run against a mismatched service"
             ) from exc
         self.registry_digest = str(meta.get("registry_digest") or "")
@@ -209,67 +182,9 @@ class SigmaRailDailyScreener:
                 f"registry_digest={self.registry_digest}"
             )
 
-    def _fabricated_rows_warning(self, count: int, *, dates: int) -> None:
-        """Say once, loudly, that fixed-universe rows carry placeholder metrics."""
-        if self._fabricated_rows_warned:
-            return
-        self._fabricated_rows_warned = True
-        if self._algorithm:
-            self._algorithm.Debug(
-                "SigmaRailDailyScreener: FIXED UNIVERSE — "
-                f"{count} rows across {dates} dates synthesized locally with placeholder "
-                "metrics (overall_score=1.0, atr_14_pct=2.0); these are NOT warehouse "
-                "values and no /v1/universe/run call was made. "
-                f"tickers={self._fixed_tickers}"
-            )
-
-    def _load_fixed_universe(self, start_date, end_date) -> None:
-        """Synthesize minimal rows for fixed tickers using ClickHouse for price data."""
-        if not self._fixed_tickers:
-            return
-        # For fixed universe, we don't need screener scores - just return the tickers
-        # with minimal data so get_universe() returns them
-        self._data = {}
-        # We'll populate minimal rows; the actual price/ATR data comes from other loaders
-        # This is just so get_universe() returns the fixed tickers
-        from datetime import timedelta
-        current = start_date
-        while current <= end_date:
-            d = current.isoformat()
-            day_data = {}
-            for ticker in self._fixed_tickers:
-                day_data[ticker] = {
-                    "ticker": ticker,
-                    "date": d,
-                    "overall_score": 1.0,  # Default score for fixed universe
-                    "atr_14_pct": 2.0,   # Default ATR
-                }
-            self._data[d] = day_data
-            current += timedelta(days=1)
-        total = sum(len(v) for v in self._data.values())
-        if self._algorithm:
-            self._algorithm.Debug(
-                f"daily_screener fixed universe: {total} rows across {len(self._data)} dates "
-                f"({start_date} to {end_date}) tickers={self._fixed_tickers}"
-            )
-        self._fabricated_rows_warning(total, dates=len(self._data))
-
     def reload_today(self, today) -> None:
         """Live: refresh today's slice only (overwrites that date key)."""
         iso = today.isoformat() if hasattr(today, "isoformat") else str(today)
-        if self._fixed_tickers:
-            day_data = {}
-            for ticker in self._fixed_tickers:
-                day_data[ticker] = {
-                    "ticker": ticker,
-                    "date": iso,
-                    "overall_score": 1.0,
-                    "atr_14_pct": 2.0,
-                }
-            self._data[iso] = day_data
-            self._fabricated_rows_warning(len(day_data), dates=1)
-            return
-
         rows = self._query_range(iso, iso, max_rows=50_000)
         day: dict[str, dict[str, Any]] = {}
         for row in rows:
@@ -308,17 +223,23 @@ class SigmaRailDailyScreener:
             out.update(tickers)
         return sorted(out)
 
+    def get_universe_rows(self, date_str: str) -> dict[str, dict[str, Any]]:
+        """Raw rows returned by the compiled query for the latest date at/before date_str."""
+        return {
+            ticker: dict(row)
+            for ticker, row in self._data.get(self._floor_date(date_str) or "", {}).items()
+        }
+
     def get_universe(self, date_str: str) -> dict[str, float]:
-        """{ticker: rank_score} for tradeable symbols (excludes SPY)."""
+        """{ticker: rank_score}; membership is exactly the query result, including SPY."""
         rank_field = _rank_field(self._universe_spec)
         out: dict[str, float] = {}
         for t, r in self._data.get(self._floor_date(date_str) or "", {}).items():
-            if t == "SPY":
-                continue
             score = r.get(rank_field)
             if score is None and rank_field != "overall_score":
                 score = r.get("overall_score")
             if score is None:
+                out[t] = 0.0
                 continue
             try:
                 out[t] = float(score)
@@ -330,7 +251,7 @@ class SigmaRailDailyScreener:
         return {
             t: float(r.get("atr_14_pct") or 0)
             for t, r in self._data.get(self._floor_date(date_str) or "", {}).items()
-            if t != "SPY" and r.get("atr_14_pct") is not None
+            if r.get("atr_14_pct") is not None
         }
 
     def get_pivots(self, date_str: str, field: str = "vcp_pivot_line") -> dict[str, float]:
@@ -341,25 +262,23 @@ class SigmaRailDailyScreener:
         return {
             t: float(r[field])
             for t, r in self._data.get(self._floor_date(date_str) or "", {}).items()
-            if t != "SPY" and r.get(field) is not None
+            if r.get(field) is not None
         }
 
     def get_all_rows(self, date_str: str) -> dict[str, dict[str, Any]]:
-        """All rows for a date keyed by ticker (excludes SPY).
+        """All rows for a date keyed by ticker.
 
         Includes every column from the select clause. Key insertion order matches
         the SQL ``ORDER BY`` order from ``universe_run`` (Python 3.7+ dict order).
         Pyramid Alpha walks this order when hit columns are present.
         """
         rows = self._data.get(self._floor_date(date_str) or "", {})
-        return {t: dict(r) for t, r in rows.items() if t != "SPY"}
+        return {t: dict(r) for t, r in rows.items()}
 
     def get_sector_rows(self, date_str: str) -> dict[str, dict[str, dict]]:
-        """{sector: {ticker: row}} for the given date, excluding SPY and empty sectors."""
+        """{sector: {ticker: row}} for the given date, excluding empty sectors."""
         out: dict[str, dict[str, dict]] = {}
         for ticker, row in self._data.get(self._floor_date(date_str) or "", {}).items():
-            if ticker == "SPY":
-                continue
             sector = str(row.get("sector") or "").strip()
             if not sector:
                 continue
@@ -370,8 +289,6 @@ class SigmaRailDailyScreener:
         """{sector: avg_rs_rating} from screener rows for the given date."""
         buckets: dict[str, list[float]] = {}
         for ticker, row in self._data.get(self._floor_date(date_str) or "", {}).items():
-            if ticker == "SPY":
-                continue
             sector = str(row.get("sector") or "").strip()
             rs = row.get("rs_rating")
             if not sector or rs is None:

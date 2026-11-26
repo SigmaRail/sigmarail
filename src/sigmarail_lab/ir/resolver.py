@@ -1,4 +1,4 @@
-"""Resolve VeraLab JSON from env: file path, ClickHouse ir_id, or base64."""
+"""Resolve SigmaRailLab JSON from env: file path, ClickHouse ir_id, or base64."""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ import re
 from dataclasses import dataclass
 from typing import Literal, Union
 
-from .models import VeraLab
-from .sigmarail_lab_v1_bind import VeraLabV1BindingProxy, bind_sigmarail_lab_v1, bind_sigmarail_lab_v1_with_graph
-from .sigmarail_lab_v1_json import VeraLabV1Document
+from .models import SigmaRailLab
+from .sigmarail_lab_v1_bind import SigmaRailStrategyV1BindingProxy, bind_sigmarail_lab_v1, bind_sigmarail_lab_v1_with_graph
+from .sigmarail_lab_v1_json import SigmaRailStrategyV1Document
 from ..runtime.sigmarail_api_client import (
     SigmaRailApiClient,
     SigmaRailApiError,
@@ -21,58 +21,58 @@ from ..runtime.sigmarail_api_client import (
 )
 
 
-class VeraLabResolutionError(RuntimeError):
+class SigmaRailLabResolutionError(RuntimeError):
     pass
 
 
 SourceKind = Literal["file", "api", "base64", "bundled"]
 
-MainRunnerSpec = Union[VeraLab, VeraLabV1BindingProxy]
+MainRunnerSpec = Union[SigmaRailLab, SigmaRailStrategyV1BindingProxy]
 
 
 def parse_algorithm_spec_for_main_py(raw: str) -> MainRunnerSpec:
     """
     Branch on agent JSON Kind for main.py (ClickHouseUniverseAlgorithm).
 
-    - VeraLabV1: explicit Framework + VeraBase facet (preferred).
+    - SigmaRailStrategyV1: explicit Framework + SigmaRail facet (preferred).
     - schema_version 1 with ``root``: graph Policy B (lowers to universe_query_v1).
-    - Pipeline schema_version 1 (flat universe/alpha/…): removed — use VeraLabV1.
+    - Pipeline schema_version 1 (flat universe/alpha/…): removed — use SigmaRailStrategyV1.
     - LeanFrameworkV1: wrong entrypoint — use LEAN_FRAMEWORK_V1_*.
     """
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as e:
-        raise VeraLabResolutionError(f"Invalid algorithm JSON: {e}") from e
+        raise SigmaRailLabResolutionError(f"Invalid algorithm JSON: {e}") from e
     kind = data.get("Kind")
     if kind == "LeanFrameworkV1":
-        raise VeraLabResolutionError(
+        raise SigmaRailLabResolutionError(
             "Kind LeanFrameworkV1 uses LEAN_FRAMEWORK_V1_* (see tests/test_lean_framework_v1.py), "
             "not SIGMARAIL_LAB_* with main.py"
         )
-    if kind == "VeraLabV1":
+    if kind == "SigmaRailStrategyV1":
         try:
-            doc = VeraLabV1Document.model_validate(data)
+            doc = SigmaRailStrategyV1Document.model_validate(data)
         except Exception as e:
-            raise VeraLabResolutionError(f"VeraLabV1 validation failed: {e}") from e
+            raise SigmaRailLabResolutionError(f"SigmaRailStrategyV1 validation failed: {e}") from e
         try:
             bound, policy_graph = bind_sigmarail_lab_v1_with_graph(doc)
         except Exception as e:
-            raise VeraLabResolutionError(f"VeraLabV1 bind failed: {e}") from e
-        return VeraLabV1BindingProxy(bound, policy_graph)
+            raise SigmaRailLabResolutionError(f"SigmaRailStrategyV1 bind failed: {e}") from e
+        return SigmaRailStrategyV1BindingProxy(bound, policy_graph)
     try:
-        spec = VeraLab.model_validate(data)
+        spec = SigmaRailLab.model_validate(data)
     except Exception as e:
-        raise VeraLabResolutionError(f"algorithm JSON validation failed: {e}") from e
+        raise SigmaRailLabResolutionError(f"algorithm JSON validation failed: {e}") from e
     if spec.root is None:
-        raise VeraLabResolutionError(
-            "Pipeline VeraLab (schema_version 1 without Kind VeraLabV1) was removed; "
-            "use Kind VeraLabV1 with VeraBase.Universe universe_query_v1"
+        raise SigmaRailLabResolutionError(
+            "Pipeline SigmaRailLab (schema_version 1 without Kind SigmaRailStrategyV1) was removed; "
+            "use Kind SigmaRailStrategyV1 with the ClickHouse UniverseSelection query AST"
         )
     return spec
 
 
 @dataclass(frozen=True)
-class ResolvedVeraLab:
+class ResolvedSigmaRailLab:
     spec: MainRunnerSpec
     raw_json: str
     source: SourceKind
@@ -129,10 +129,10 @@ def _should_use_bundled_baseline_ir(path: str, resolved: str) -> bool:
 
 def _fetch_from_sigmarail(ir_id: str, algorithm=None) -> str:
     if not re.fullmatch(r"[a-zA-Z0-9_.-]+", ir_id):
-        raise VeraLabResolutionError("ir_id must match [a-zA-Z0-9_.-]+")
+        raise SigmaRailLabResolutionError("ir_id must match [a-zA-Z0-9_.-]+")
     base_url = resolve_sigmarail_api_service_url(algorithm)
     if not base_url:
-        raise VeraLabResolutionError(
+        raise SigmaRailLabResolutionError(
             "SIGMARAIL_STRATEGY_ID requires SIGMARAIL_API_URL so Lean can fetch the saved spec from SigmaRail"
         )
     client = SigmaRailApiClient(
@@ -142,14 +142,14 @@ def _fetch_from_sigmarail(ir_id: str, algorithm=None) -> str:
     try:
         result = client.strategy_spec(ir_id)
     except SigmaRailApiError as exc:
-        raise VeraLabResolutionError(f"SigmaRail strategy fetch failed for {ir_id!r}: {exc}") from exc
+        raise SigmaRailLabResolutionError(f"SigmaRail strategy fetch failed for {ir_id!r}: {exc}") from exc
     raw = result.get("algorithm_json")
     if not raw or not isinstance(raw, str):
-        raise VeraLabResolutionError(f"SigmaRail returned no algorithm_json for ir_id={ir_id!r}")
+        raise SigmaRailLabResolutionError(f"SigmaRail returned no algorithm_json for ir_id={ir_id!r}")
     return raw
 
 
-def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
+def resolve_sigmarail_lab(algorithm=None) -> ResolvedSigmaRailLab:
     """
     Precedence:
       1. SIGMARAIL_STRATEGY_PATH — read file when present; if missing but path is the CI
@@ -158,7 +158,7 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
       2. SIGMARAIL_STRATEGY_BASE64 — immutable inline JSON pinned by the submitting service
          (optional; capped).
       3. SIGMARAIL_STRATEGY_ID — fetch algorithm_json through SigmaRail's API
-    If none resolve, raise VeraLabResolutionError.
+    If none resolve, raise SigmaRailLabResolutionError.
     """
     path = (os.environ.get("SIGMARAIL_STRATEGY_PATH") or "").strip()
     project_root = (os.environ.get("SIGMARAIL_STRATEGY_ROOT") or "").strip()
@@ -186,15 +186,15 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
             raw = importlib.import_module(mod).RAW_JSON
             source = "bundled"
         else:
-            raise VeraLabResolutionError(f"SIGMARAIL_STRATEGY_PATH is not a file: {path!r} (resolved {p!r})")
+            raise SigmaRailLabResolutionError(f"SIGMARAIL_STRATEGY_PATH is not a file: {path!r} (resolved {p!r})")
     elif b64:
         max_b64 = int(os.environ.get("SIGMARAIL_STRATEGY_BASE64_MAX", "1048576"))
         if len(b64) > max_b64:
-            raise VeraLabResolutionError("SIGMARAIL_STRATEGY_BASE64 exceeds size cap")
+            raise SigmaRailLabResolutionError("SIGMARAIL_STRATEGY_BASE64 exceeds size cap")
         try:
             raw = base64.standard_b64decode(b64).decode("utf-8")
         except Exception as e:
-            raise VeraLabResolutionError(f"Invalid SIGMARAIL_STRATEGY_BASE64: {e}") from e
+            raise SigmaRailLabResolutionError(f"Invalid SIGMARAIL_STRATEGY_BASE64: {e}") from e
         source = "base64"
         ir_id = ir_id_env or None
     elif ir_id_env:
@@ -202,7 +202,7 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
         source = "api"
         ir_id = ir_id_env
     else:
-        raise VeraLabResolutionError(
+        raise SigmaRailLabResolutionError(
             "No algorithm JSON: set SIGMARAIL_STRATEGY_PATH, SIGMARAIL_STRATEGY_ID, or SIGMARAIL_STRATEGY_BASE64"
         )
 
@@ -210,7 +210,7 @@ def resolve_sigmarail_lab(algorithm=None) -> ResolvedVeraLab:
     h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
     spec = parse_algorithm_spec_for_main_py(raw)
 
-    return ResolvedVeraLab(
+    return ResolvedSigmaRailLab(
         spec=spec,
         raw_json=raw,
         source=source,

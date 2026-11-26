@@ -16,7 +16,7 @@ describe("authenticatedFetch", () => {
   });
 
   it("uses the AppTension client while preserving SigmaRail wire-case JSON", async () => {
-    const payload = '{"VeraBase":{"DataSources":[{"overall_score":1}]}}';
+    const payload = '{"SigmaRail":{"DataSources":[{"overall_score":1}]}}';
     requestMock.mockResolvedValue({
       data: payload,
       status: 200,

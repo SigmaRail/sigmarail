@@ -86,7 +86,7 @@ export type FieldEvaluationResult = {
 export type CatalogTemplateKind = "screener" | "strategy";
 export type CatalogTemplateStatus = "active" | "deprecated" | "draft";
 
-/** vera_query_core.alpha_evaluation.evaluate_factor_performance response (VeraProjects#70). */
+/** sigmarail_query_core.alpha_evaluation.evaluate_factor_performance response (SigmaRailProjects#70). */
 export type AlphaPerformanceQuantile = {
   bucket: number;
   n_obs: number;
@@ -673,7 +673,6 @@ export type HybridRsiFrameworkOverrides = {
 };
 
 export type FrameworkSlotType =
-  | "UniverseSelection"
   | "Alpha"
   | "PortfolioConstruction"
   | "RiskManagement"

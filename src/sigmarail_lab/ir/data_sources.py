@@ -26,7 +26,7 @@ class DataSourceWhere(BaseModel):
 
 
 class DataSourceSpec(BaseModel):
-    """Specification for a data source — graph policy and store-backed VeraLabV1.
+    """Specification for a data source — graph policy and store-backed SigmaRailStrategyV1.
 
     Store-backed specs set ``Type`` (loader class), ``grain`` (session | ticker_date |
     daily), optional ``uses`` / ``score`` for regime policy (C-REGIME-POLICY-V1).
@@ -42,7 +42,7 @@ class DataSourceSpec(BaseModel):
     where: DataSourceWhere | None = None
     joins: list[DataSourceJoin] | None = None
 
-    # Store-backed catalog (C-VERALAB-V1 DataSources)
+    # Store-backed catalog (C-SIGMARAIL-LAB-V1 DataSources)
     loader_type: str | None = Field(default=None, alias="Type")
     as_of: str | None = None
     uses: list[str] = Field(default_factory=list)

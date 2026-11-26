@@ -20,7 +20,7 @@ from sqlglot import exp
 
 from sigmarail.features.sql_script import split_sql_statements
 
-# Logical name → (prefix, physical column). Spine keys + zipper-computed + VeraLab aliases.
+# Logical name → (prefix, physical column). Spine keys + zipper-computed + SigmaRailLab aliases.
 _EXTRAS: dict[str, tuple[str, str]] = {
     "ticker": ("px", "ticker"),
     "date": ("px", "date"),

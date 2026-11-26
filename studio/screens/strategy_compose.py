@@ -2,8 +2,8 @@
 
 Studio Browse seeds from the git catalog (``minervini_sepa``) only.
 Legacy built-in framework JSON templates under ``strategy_templates/`` were removed.
-``compose_strategy_v1`` accepts an explicit ``framework`` assembly, or a
-``template_id`` when a test/fixture registers meta + a JSON file.
+Every framework slot uses its fixed SigmaRail implementation. Callers provide
+configuration under ``Parameters`` and cannot select a LEAN model class.
 """
 
 from __future__ import annotations
@@ -27,6 +27,14 @@ _FRAMEWORK_SLOTS: tuple[str, ...] = (
     "Execution",
     "RiskManagement",
 )
+
+_SIGMARAIL_SLOT_TYPES = {
+    "UniverseSelection": "SigmaRailClickHouseUniverseSelection",
+    "Alpha": "SigmaRailScreenerAlphaModel",
+    "PortfolioConstruction": "SigmaRailScreenerPortfolioConstructionModel",
+    "RiskManagement": "SigmaRailRiskManagementModel",
+    "Execution": "SigmaRailScreenerExecutionModel",
+}
 
 # Empty on purpose — Studio catalog seed is ``minervini_sepa`` (Pipeline AST), not these.
 _STRATEGY_TEMPLATE_META: dict[str, dict[str, str]] = {}
@@ -109,13 +117,27 @@ def compose_assembled_ensemble_v1(
     if not isinstance(framework, dict):
         raise ValueError("framework must be an object")
 
+    slots = {}
+    for slot, fixed_type in _SIGMARAIL_SLOT_TYPES.items():
+        supplied = framework.get(slot) or {}
+        if not isinstance(supplied, dict):
+            raise ValueError(f"framework slot {slot!r} must be an object")
+        supplied_type = supplied.get("Type") or supplied.get("type")
+        if supplied_type is not None and supplied_type != fixed_type:
+            raise ValueError(f"framework slot {slot!r} has a fixed SigmaRail implementation")
+        params = supplied.get("Parameters") or {}
+        if not isinstance(params, dict):
+            raise ValueError(f"framework slot {slot!r} Parameters must be an object")
+        slots[slot] = {
+            "Type": fixed_type,
+            "Parameters": ({"query": copy.deepcopy(universe_spec)} if slot == "UniverseSelection" else copy.deepcopy(params)),
+        }
+
     spec = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
-        "VeraBase": {
-            "Universe": copy.deepcopy(universe_spec),
-        },
-        "Framework": copy.deepcopy(framework),
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
+        "SigmaRail": {},
+        "Framework": slots,
         "AlgorithmParameters": copy.deepcopy(algorithm_parameters or {"regime-source": "screener"}),
     }
     return spec
@@ -148,15 +170,29 @@ def compose_strategy_v1(
     if tid == "custom_assembled":
         raise ValueError(
             "custom_assembled requires an assembled framework object "
-            "(or a precompiled VeraLabV1 spec); load a catalog strategy such as minervini_sepa"
+            "(or a precompiled SigmaRailStrategyV1 spec); load a catalog strategy such as minervini_sepa"
         )
 
     spec = copy.deepcopy(_load_template_json(template_id))
 
-    vera_base = spec.setdefault("VeraBase", {})
-    if not isinstance(vera_base, dict):
-        raise ValueError("template VeraBase must be an object")
-    vera_base["Universe"] = copy.deepcopy(universe_spec)
+    framework_obj = spec.setdefault("Framework", {})
+    if not isinstance(framework_obj, dict):
+        raise ValueError("template Framework must be an object")
+    for slot, fixed_type in _SIGMARAIL_SLOT_TYPES.items():
+        slot_obj = framework_obj.get(slot) or {}
+        if not isinstance(slot_obj, dict):
+            raise ValueError(f"template Framework.{slot} must be an object")
+        params = slot_obj.get("Parameters") or {}
+        if not isinstance(params, dict):
+            raise ValueError(f"template Framework.{slot}.Parameters must be an object")
+        framework_obj[slot] = {
+            "Type": fixed_type,
+            "Parameters": (
+                {"query": copy.deepcopy(universe_spec)}
+                if slot == "UniverseSelection"
+                else copy.deepcopy(params)
+            ),
+        }
 
     if framework_overrides:
         fw = spec.setdefault("Framework", {})
@@ -167,10 +203,14 @@ def compose_strategy_v1(
                 raise ValueError(f"unknown framework slot {slot!r}")
             if not isinstance(override, dict):
                 raise ValueError(f"framework override for {slot!r} must be an object")
-            slot_obj = fw.setdefault(slot, {})
+            override_type = override.get("Type") or override.get("type")
+            if override_type is not None and override_type != _SIGMARAIL_SLOT_TYPES[slot]:
+                raise ValueError(f"framework slot {slot!r} has a fixed SigmaRail implementation")
+            slot_obj = fw.setdefault(slot, {"Type": _SIGMARAIL_SLOT_TYPES[slot], "Parameters": {}})
             if not isinstance(slot_obj, dict):
                 raise ValueError(f"template Framework.{slot} must be an object")
             _merge_framework_slot(slot_obj, override)
+            slot_obj["Type"] = _SIGMARAIL_SLOT_TYPES[slot]
 
     if algorithm_parameters is not None:
         if not isinstance(algorithm_parameters, dict):

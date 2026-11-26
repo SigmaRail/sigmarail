@@ -542,7 +542,7 @@ export function registerStudioPrompts(mcp: WebMCPInstance): void {
             role: "user",
             content: {
               type: "text",
-              text: `Please audit this Vera strategy draft against the platform design guidelines:\n\n` +
+              text: `Please audit this SigmaRail strategy draft against the platform design guidelines:\n\n` +
                 `- 5 Framework Slots: Universe, Alpha, PCM, Risk, Execution\n` +
                 `- Alpha rules: Measures for math/ranking; Insights for property lookup only; no stock QC type pickers\n` +
                 `- PCM rules: RiskBudgeted sizing, scale-in, regime thermostat\n` +

@@ -1,4 +1,4 @@
-"""Stamp research Evaluation (dates, cash, benchmark) onto a VeraLabV1 spec."""
+"""Stamp research Evaluation (dates, cash, benchmark) onto a SigmaRailStrategyV1 spec."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def stamp_evaluation(
     initial_cash: float | int,
     benchmark: str,
 ) -> dict[str, Any]:
-    """Write VeraBase.Evaluation and string AlgorithmParameters for LEAN GetParameter.
+    """Write SigmaRail.Evaluation and string AlgorithmParameters for LEAN GetParameter.
 
     Live trading (future) reads cash + benchmark from the same block; dates are the
     research window used by backtest/optimizer jobs.
@@ -25,10 +25,10 @@ def stamp_evaluation(
     start = str(start_date or "").strip()
     end = str(end_date or "").strip()
 
-    vera_base = out.setdefault("VeraBase", {})
-    if not isinstance(vera_base, dict):
-        raise ValueError("VeraBase must be an object")
-    vera_base["Evaluation"] = {
+    sigmarail_base = out.setdefault("SigmaRail", {})
+    if not isinstance(sigmarail_base, dict):
+        raise ValueError("SigmaRail must be an object")
+    sigmarail_base["Evaluation"] = {
         "start_date": start,
         "end_date": end,
         "initial_cash": cash,

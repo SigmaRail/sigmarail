@@ -88,7 +88,7 @@ def test_lean_config_overlay_records_container_for_cancel(tmp_path):
     source.write_text('{"data-folder":"data","environments":{"backtesting":{}}}')
     path = _write_lean_clickhouse_config(
         lean_root=tmp_path,
-        project={"lean_config_overlay": "source.json"},
+        project={"lean_config_template": str(source)},
         job_id="job-2",
         host="127.0.0.1",
         port="8123",

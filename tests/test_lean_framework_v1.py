@@ -8,10 +8,12 @@ from pydantic import ValidationError
 
 from sigmarail_lab.runtime.lean_framework_interpreter import (
     LeanFrameworkInterpreterError,
+    _normalize_parameters,
     apply_lean_framework_v1_algorithm_hints,
     wire_lean_framework_v1,
 )
 from sigmarail_lab.ir.lean_framework_json import LeanFrameworkV1Document
+from sigmarail_lab.ir.sigmarail_lab_v1_json import SigmaRailStrategyV1Document
 from sigmarail_lab.ir.lean_framework_presets import list_lean_framework_preset_ids
 from sigmarail_lab.ir.lean_framework_resolve import (
     LeanFrameworkJsonResolutionError,
@@ -19,6 +21,9 @@ from sigmarail_lab.ir.lean_framework_resolve import (
 )
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "ir"
+STRATEGY_FIXTURE = (
+    Path(__file__).resolve().parents[1] / "trading_lab" / "fixtures" / "ir" / "minimal_hybrid.json"
+)
 
 
 def test_rsi_parameters_reject_extra_keys() -> None:
@@ -44,9 +49,42 @@ def test_lean_framework_v1_fixture_validates() -> None:
 
 def test_lean_framework_v1_rejects_wrong_kind() -> None:
     d = json.loads((FIXTURES / "lean_framework_v1_minimal.json").read_text(encoding="utf-8"))
-    d["Kind"] = "VeraLabV1"
+    d["Kind"] = "SigmaRailStrategyV1"
     with pytest.raises(ValueError):
         LeanFrameworkV1Document.model_validate(d)
+
+
+def test_strategy_document_rejects_retired_vera_kind() -> None:
+    d = json.loads(STRATEGY_FIXTURE.read_text(encoding="utf-8"))
+    d["Kind"] = "VeraLabV1"
+    with pytest.raises(ValidationError):
+        SigmaRailStrategyV1Document.model_validate(d)
+
+
+def test_strategy_document_rejects_retired_vera_facet() -> None:
+    d = json.loads(STRATEGY_FIXTURE.read_text(encoding="utf-8"))
+    d["VeraBase"] = d.pop("SigmaRail")
+    with pytest.raises(ValidationError):
+        SigmaRailStrategyV1Document.model_validate(d)
+
+
+def test_strategy_alpha_slot_uses_fixed_sigmarail_class_and_config() -> None:
+    d = json.loads(STRATEGY_FIXTURE.read_text(encoding="utf-8"))
+    d["Framework"]["Alpha"] = {
+        "Type": "SigmaRailScreenerAlphaModel",
+        "Parameters": {"signal_mode": "always_long", "signal_duration_days": 730},
+    }
+    doc = SigmaRailStrategyV1Document.model_validate(d)
+    assert doc.framework.alpha.type == "SigmaRailScreenerAlphaModel"
+    assert doc.framework.alpha.parameters["signal_mode"] == "always_long"
+    assert doc.framework.alpha.parameters["signal_duration_days"] == 730
+
+
+def test_strategy_document_rejects_lean_class_in_sigma_rail_slot() -> None:
+    d = json.loads(STRATEGY_FIXTURE.read_text(encoding="utf-8"))
+    d["Framework"]["Alpha"]["Type"] = "ConstantAlphaModel"
+    with pytest.raises(ValidationError):
+        SigmaRailStrategyV1Document.model_validate(d)
 
 
 def test_resolve_lean_framework_missing_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -82,7 +120,6 @@ def test_wire_lean_framework_with_stub_registry() -> None:
         return M
 
     types = [
-        "ManualUniverseSelectionModel",
         "RsiAlphaModel",
         "EqualWeightingPortfolioConstructionModel",
         "ImmediateExecutionModel",
@@ -93,9 +130,6 @@ def test_wire_lean_framework_with_stub_registry() -> None:
     class MockAlgo:
         def __init__(self) -> None:
             self.calls: list[tuple[str, object]] = []
-
-        def set_universe_selection(self, m):
-            self.calls.append(("universe", m))
 
         def set_alpha(self, m):
             self.calls.append(("alpha", m))
@@ -118,12 +152,11 @@ def test_wire_lean_framework_with_stub_registry() -> None:
     algo = MockAlgo()
     wire_lean_framework_v1(algo, doc, registry=registry, normalize=False)
 
-    assert len(built) == 5
-    assert built[0][0] == "ManualUniverseSelectionModel"
-    assert built[0][1]["symbols"] == ["SPY", "QQQ"]
-    assert built[1][1]["period"] == 14
-    assert built[1][1]["resolution"] == "Daily"
-    assert len(algo.calls) == 5
+    assert len(built) == 4
+    assert built[0][0] == "RsiAlphaModel"
+    assert built[0][1]["period"] == 14
+    assert built[0][1]["resolution"] == "Daily"
+    assert len(algo.calls) == 4
 
 
 def test_wire_unknown_type_raises() -> None:
@@ -133,9 +166,6 @@ def test_wire_unknown_type_raises() -> None:
     doc = LeanFrameworkV1Document.model_validate(d)
 
     class MockAlgo:
-        def set_universe_selection(self, m):
-            pass
-
         def set_alpha(self, m):
             pass
 
@@ -158,7 +188,6 @@ def test_wire_unknown_type_raises() -> None:
 
     # Registry covers every slot except the unknown alpha type — fail at alpha.
     registry = {
-        "ManualUniverseSelectionModel": _stub("ManualUniverseSelectionModel"),
         "EqualWeightingPortfolioConstructionModel": _stub("EqualWeightingPortfolioConstructionModel"),
         "ImmediateExecutionModel": _stub("ImmediateExecutionModel"),
         "MaximumDrawdownPercentPerSecurity": _stub("MaximumDrawdownPercentPerSecurity"),
@@ -234,7 +263,6 @@ def test_wire_lean_framework_v1_with_preset_only_json() -> None:
         return M
 
     types = [
-        "ManualUniverseSelectionModel",
         "RsiAlphaModel",
         "EqualWeightingPortfolioConstructionModel",
         "ImmediateExecutionModel",
@@ -245,9 +273,6 @@ def test_wire_lean_framework_v1_with_preset_only_json() -> None:
     class MockAlgo:
         def __init__(self) -> None:
             self.calls: list[tuple[str, object]] = []
-
-        def set_universe_selection(self, m):
-            self.calls.append(("universe", m))
 
         def set_alpha(self, m):
             self.calls.append(("alpha", m))
@@ -263,8 +288,7 @@ def test_wire_lean_framework_v1_with_preset_only_json() -> None:
 
     algo = MockAlgo()
     wire_lean_framework_v1(algo, doc, registry=registry, normalize=False)
-    assert len(built) == 5
-    assert built[0][0] == "ManualUniverseSelectionModel"
+    assert len(built) == 4
 
 
 def test_apply_algorithm_hints() -> None:
@@ -303,9 +327,6 @@ def test_lean_only_runner_sequence_former_main_lean_py(
     raw = resolve_lean_framework_v1_raw()
     doc = LeanFrameworkV1Document.model_validate_json(raw)
 
-    class _US:
-        resolution = None
-
     built: list[tuple[str, dict]] = []
 
     def make_model(type_id: str):
@@ -317,7 +338,6 @@ def test_lean_only_runner_sequence_former_main_lean_py(
         return M
 
     types = [
-        "ManualUniverseSelectionModel",
         "RsiAlphaModel",
         "EqualWeightingPortfolioConstructionModel",
         "ImmediateExecutionModel",
@@ -329,7 +349,6 @@ def test_lean_only_runner_sequence_former_main_lean_py(
         def __init__(self) -> None:
             self.slot_calls: list[tuple[str, object]] = []
             self.cash: int | float | None = None
-            self.universe_settings = _US()
             self._dates: list[tuple[str, tuple[int, int, int]]] = []
 
         def get_parameter(self, key: str) -> str | None:
@@ -353,9 +372,6 @@ def test_lean_only_runner_sequence_former_main_lean_py(
         def set_benchmark(self, v: object) -> None:
             self.slot_calls.append(("benchmark_hint", v))
 
-        def set_universe_selection(self, m: object) -> None:
-            self.slot_calls.append(("universe", m))
-
         def set_alpha(self, m: object) -> None:
             self.slot_calls.append(("alpha", m))
 
@@ -376,7 +392,6 @@ def test_lean_only_runner_sequence_former_main_lean_py(
     e = [int(x) for x in end_date.split("-")]
     algo.set_start_date(s[0], s[1], s[2])
     algo.set_end_date(e[0], e[1], e[2])
-    algo.universe_settings.resolution = "Daily"
 
     apply_lean_framework_v1_algorithm_hints(algo, doc)
     algo.set_cash(initial_cash)
@@ -385,10 +400,9 @@ def test_lean_only_runner_sequence_former_main_lean_py(
     assert algo._dates == [("start", (2022, 1, 1)), ("end", (2022, 12, 31))]
     assert algo.cash == 100_000
     assert any(t == "benchmark_hint" and v == "SPY" for t, v in algo.slot_calls)
-    assert len(built) == 5
-    assert built[0][0] == "ManualUniverseSelectionModel"
+    assert len(built) == 4
     framework_calls = [c for c in algo.slot_calls if c[0] != "benchmark_hint"]
-    assert len(framework_calls) == 5
+    assert len(framework_calls) == 4
 
 
 def test_expanded_lean_framework_models_normalization() -> None:
@@ -445,7 +459,7 @@ def test_composite_framework_models_wiring() -> None:
     type_ids = default_stock_lean_wired_type_ids()
     assert "CompositeAlphaModel" in type_ids
     assert "CompositeRiskManagementModel" in type_ids
-    assert "CompositeUniverseSelectionModel" in type_ids
+    assert "CompositeUniverseSelectionModel" not in type_ids
 
     # Stub registry
     class SubAlpha:
@@ -483,15 +497,15 @@ def test_composite_framework_models_wiring() -> None:
     assert instance.models[1].kwargs == {"period": 28}
 
 
-def test_vera_screener_alpha_and_pcm_holding_retention() -> None:
+def test_sigmarail_screener_alpha_and_pcm_holding_retention() -> None:
     from datetime import date, datetime, timedelta
     from sigmarail_lab.runtime.qc_sigmarail_screener_framework import (
         InsightDirection,
         Market,
         SecurityType,
         Symbol,
-        VeraScreenerAlphaModel,
-        VeraScreenerPortfolioConstructionModel,
+        SigmaRailScreenerAlphaModel,
+        SigmaRailScreenerPortfolioConstructionModel,
     )
 
     class StubStore:
@@ -547,7 +561,7 @@ def test_vera_screener_alpha_and_pcm_holding_retention() -> None:
     scores_day2 = {"NVDA": 98.0, "GOOGL": 96.0, "AAPL": 88.0, "MSFT": 80.0}
     store = StubStore({"2026-01-04": scores_day1, "2026-01-05": scores_day2})
 
-    alpha = VeraScreenerAlphaModel(store, max_positions=2, min_hold_days=3, hold_buffer_rank=5)
+    alpha = SigmaRailScreenerAlphaModel(store, max_positions=2, min_hold_days=3, hold_buffer_rank=5)
     algo = StubAlgorithm()
 
     # Day 1: AAPL and MSFT are top 2 -> Up insights
@@ -566,7 +580,7 @@ def test_vera_screener_alpha_and_pcm_holding_retention() -> None:
     assert "AAPL" not in flat_tickers_day2  # AAPL is protected by buffer rank!
 
     # Test 2: PCM does not liquidate invested positions when new candidates arrive
-    pcm = VeraScreenerPortfolioConstructionModel(store, max_positions=5, max_weight=0.10)
+    pcm = SigmaRailScreenerPortfolioConstructionModel(store, max_positions=5, max_weight=0.10)
     targets = pcm.CreateTargets(algo, insights_day2)
 
     # AAPL was invested, so PCM should NOT emit a target with 0 quantity for AAPL
@@ -582,7 +596,7 @@ def test_screener_pcm_honors_atr_risk_target_below_minimum_weight() -> None:
         Market,
         SecurityType,
         Symbol,
-        VeraScreenerPortfolioConstructionModel,
+        SigmaRailScreenerPortfolioConstructionModel,
     )
 
     class Store:
@@ -600,7 +614,7 @@ def test_screener_pcm_honors_atr_risk_target_below_minimum_weight() -> None:
 
     symbol = Symbol.Create("DKI", SecurityType.Equity, Market.USA)
     insight = Insight.Price(symbol, None, InsightDirection.Up, confidence=1.0)
-    pcm = VeraScreenerPortfolioConstructionModel(
+    pcm = SigmaRailScreenerPortfolioConstructionModel(
         Store(),
         max_positions=10,
         max_weight=0.10,

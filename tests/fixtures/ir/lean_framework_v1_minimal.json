@@ -6,12 +6,6 @@
     "BenchmarkSymbol": "SPY"
   },
   "Framework": {
-    "UniverseSelection": {
-      "Type": "ManualUniverseSelectionModel",
-      "Parameters": {
-        "symbols": ["SPY", "QQQ"]
-      }
-    },
     "Alpha": {
       "Type": "RsiAlphaModel",
       "Parameters": {

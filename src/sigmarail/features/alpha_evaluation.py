@@ -65,7 +65,7 @@ _SPEC_JOIN_TYPES = {"left_any": "LEFT ANY", "left": "LEFT", "inner": "INNER", "a
 
 
 def _table_to_prefix() -> dict[str, str]:
-    from sigmarail.features.ir.vera_bool_expr import _PREFIX_TO_TABLE
+    from sigmarail.features.ir.sigmarail_bool_expr import _PREFIX_TO_TABLE
 
     return {v: k for k, v in _PREFIX_TO_TABLE.items()}
 
@@ -158,7 +158,7 @@ def _merge_emitted(sql: str, emitted: dict[str, object], params: dict[str, objec
 
 def _compile_spec_where(node: dict, params: dict[str, object], pfx: str) -> str:
     from sigmarail_spec.expr import parse_bool_expr
-    from sigmarail.features.ir.vera_bool_expr import compile_bool_expr_sql
+    from sigmarail.features.ir.sigmarail_bool_expr import compile_bool_expr_sql
 
     emitted: dict[str, object] = {}
     sql = compile_bool_expr_sql(parse_bool_expr(node), emitted, pfx)
@@ -184,7 +184,7 @@ def _spec_operand(op: object, aliases: dict[str, str], params: dict[str, object]
         name = str(op.get("name") or "")
         if name in aliases:
             return f"({aliases[name]})"
-        from sigmarail.features.ir.vera_bool_expr import _col_sql
+        from sigmarail.features.ir.sigmarail_bool_expr import _col_sql
 
         return _col_sql(name)[0]
     if t == "lit":
@@ -339,7 +339,7 @@ def evaluate_factor_performance(
         population: "all" (whole factor table), "universe" (spec base WHERE),
             or "eligible" (base WHERE + alpha post_where). The latter two
             require ``universe_spec``.
-        universe_spec: compiled ``/VeraBase/Universe`` fragment
+        universe_spec: compiled ``/SigmaRail/Universe`` fragment
             (``spine``/``joins``/``where``/``computed``/``post_where``). The
             factor table is joined in automatically when it is not the spine
             or a declared join.

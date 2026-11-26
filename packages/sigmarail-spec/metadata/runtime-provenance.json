@@ -1,5 +1,5 @@
 {
-  "runtime": "C-VERA-EXPR-V1 and its row evaluator/entry-trigger lowering",
+  "runtime": "C-SIGMARAIL-EXPR-V1 and its row evaluator/entry-trigger lowering",
   "bootstrapped_from": {
     "repository": "mdiggory/VeraSpec",
     "revision": "a747830b20934e1438a85996da6e471b06b34166",

@@ -168,7 +168,7 @@ def test_legacy_credentials_are_scrubbed_only_after_vault_save(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(credential_vault, "lean_projects_root", lambda: tmp_path)
+    monkeypatch.setattr(credential_vault, "lean_workspace_root", lambda: tmp_path)
     monkeypatch.setattr(credential_vault, "_keyring_module", lambda: keyring)
 
     assert credential_vault.migrate_legacy_lean_credentials(_profile()) is True
@@ -198,7 +198,7 @@ def test_legacy_credentials_remain_when_vault_save_fails(
         "alpaca-api-secret": "legacy-secret",
     }
     config_path.write_text(json.dumps(original), encoding="utf-8")
-    monkeypatch.setattr(credential_vault, "lean_projects_root", lambda: tmp_path)
+    monkeypatch.setattr(credential_vault, "lean_workspace_root", lambda: tmp_path)
     monkeypatch.setattr(credential_vault, "_keyring_module", BrokenKeyring)
 
     with pytest.raises(credential_vault.CredentialVaultError):
@@ -359,7 +359,7 @@ def test_account_profile_delete_fails_closed_when_running_container_cannot_be_in
 def test_runtime_status_detects_unmanaged_running_container(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    project = tmp_path / "VeraTradingLab"
+    project = tmp_path / "SigmaRailTradingLab"
     output_dir = project / "live" / "external-run"
     monkeypatch.setattr(live_runtime, "_read_state", lambda: None)
     monkeypatch.setattr(live_runtime, "_project", lambda: project)
@@ -490,7 +490,7 @@ def test_live_start_requires_typed_confirmation_before_docker(monkeypatch: pytes
     monkeypatch.setattr(live_runtime, "_assert_control_allowed", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(live_runtime, "_read_state", lambda: None)
     monkeypatch.setattr(live_runtime, "_root", lambda: tmp_path)
-    monkeypatch.setattr(live_runtime, "_project", lambda: tmp_path / "VeraTradingLab")
+    monkeypatch.setattr(live_runtime, "_project", lambda: tmp_path / "SigmaRailTradingLab")
     profile = SimpleNamespace(provider="alpaca", data_provider="alpaca", environment="live", display_name="Real profile", account_identifier="")
     monkeypatch.setattr(live_runtime, "_active_account", lambda _profile_id: (profile, {"alpaca-api-key": "k", "alpaca-api-secret": "s"}))
     lean_binary = MagicMock()
@@ -547,7 +547,7 @@ def test_brokerage_catalog_validates_credentials_and_environment_values() -> Non
 def test_start_passes_secrets_only_in_temporary_config_and_registers_after_container_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    project = tmp_path / "VeraTradingLab"
+    project = tmp_path / "SigmaRailTradingLab"
     project.mkdir()
     (project / "main.py").write_text("# test project\n", encoding="utf-8")
     (project / "config.json").write_text(json.dumps({
@@ -645,7 +645,7 @@ def test_start_passes_secrets_only_in_temporary_config_and_registers_after_conta
 def test_start_does_not_register_when_container_is_not_running(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    project = tmp_path / "VeraTradingLab"
+    project = tmp_path / "SigmaRailTradingLab"
     project.mkdir()
     (project / "main.py").write_text("# test project\n", encoding="utf-8")
     (tmp_path / "lean.json").write_text("{}\n", encoding="utf-8")
@@ -722,7 +722,7 @@ def test_failed_promotion_preflight_never_invokes_lean_or_docker(monkeypatch: py
 def test_stop_closes_container_removes_runtime_config_and_updates_registry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    output_dir = tmp_path / "VeraTradingLab" / "live" / "latest"
+    output_dir = tmp_path / "SigmaRailTradingLab" / "live" / "latest"
     runtime_config = tmp_path / "lean-cli-studio" / "config.json"
     runtime_config.parent.mkdir()
     runtime_config.write_text("private config", encoding="utf-8")
@@ -788,7 +788,7 @@ def test_stop_closes_container_removes_runtime_config_and_updates_registry(
 def test_liquidate_submits_orders_without_stopping_or_updating_registry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    output_dir = tmp_path / "VeraTradingLab" / "live" / "latest"
+    output_dir = tmp_path / "SigmaRailTradingLab" / "live" / "latest"
     state = {
         "deployment_id": "deployment-id",
         "status": "running",

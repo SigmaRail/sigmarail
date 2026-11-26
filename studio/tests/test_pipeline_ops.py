@@ -83,7 +83,7 @@ def test_add_condition_annotates_and_compiles() -> None:
     assert conds[1]["annotation"]["rationale"].startswith("probe sparse")
     assert changelog[0]["op"] == "add_condition"
     spec, h = compile_and_hash(patched)
-    assert spec["Kind"] == "VeraLabV1"
+    assert spec["Kind"] == "SigmaRailStrategyV1"
     assert len(h) == 64
 
 

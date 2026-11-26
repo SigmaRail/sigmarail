@@ -1,36 +1,39 @@
-# SigmaRail implementation guidance
+# SigmaRail repository guidance
 
-This repository implements SigmaRail. Before changing product behavior, read the
-[SigmaRail architecture and contract guide](../sigmarail-spec/docs/ARCHITECTURE.md)
-and this repository's [README](README.md). Use [SigmaRail Spec](https://github.com/SigmaRail/sigmarail-spec)
-for the normative product model, contract definitions, and agent retrieval catalog.
+This repository contains the SigmaRail implementation. The canonical data and strategy contract
+is the `sigmarail-spec` Python package at `packages/sigmarail-spec/`; do not use a separate checkout
+as a second source of Spec behavior.
 
 ## Ownership
 
-- **SigmaRail Spec** defines what data, query, expression, authoring, strategy, and slot documents mean.
-- **This SigmaRail repository** owns ClickHouse schema and transforms, data loading and population,
-  query validation and execution, the research and strategy-authoring UI, and API/MCP adapters.
-- **SigmaRail Lean** owns the customized LEAN engine integration and execution of supported strategy
-  documents, including ClickHouse data access.
-- The UI and MCP are components of this repository. They consume Spec contracts and do not define
-  separate strategy semantics.
+- `packages/sigmarail-spec/` owns versioned schemas, expression and strategy ASTs, compiler and
+  decompiler contracts, generated capability documents, and package tests.
+- `src/sigmarail/` owns ClickHouse schema, transforms, loading, population, and data/query services.
+- `src/sigmarail_lab/` owns SigmaRail's LEAN integration and runtime adapters.
+- `studio/` owns Studio UI, API, MCP adapter, and authoring experience. It consumes Spec and does
+  not define independent strategy semantics.
+- `trading_lab/` owns LEAN project templates and runners. Its `sigmarail_spec/` subset is generated
+  from `packages/sigmarail-spec/` and must not be edited by hand.
+- `packages/` contains deployable services and frontend packages. Services in this repository
+  should consume the local Spec package; downstream projects use a published, pinned PyPI version.
 
-## Contract-first implementation
+## Contract-first changes
 
-Before implementing behavior, record the applicable contract version, AST path or strategy slot,
-owning module, and runtime consumer. If the behavior cannot be expressed in Spec, update the Spec
-contract and examples first. Then update this implementation and SigmaRail Lean as required. Do not
-add UI-only strategy state, undocumented JSON fields, extra slots, or consumer-specific meanings.
+Strategies have exactly five fixed slots: universe selection, alpha, portfolio construction, risk
+management, and execution. User-authored documents express SigmaRail semantics; the compiler maps
+them to the supported runtime. Do not add arbitrary LEAN class selection, undocumented fields,
+extra slots, or UI-only strategy behavior. If a capability cannot be expressed in the Spec contract,
+update the Spec, examples, generated documents, and tests before wiring consumers.
 
-Keep the layers distinct: universe queries select dated data; expression trees classify or calculate
-values at declared use sites; the strategy document configures exactly five LEAN slots. SQL and code
-remain executable truth for data operations and runtime behavior. Published capability claims must
-match the code that currently runs.
+The root `spec/` contains SigmaRail implementation manifests. The package's
+`packages/sigmarail-spec/spec/` contains Spec package inputs and schemas; keep those roles distinct.
 
-## Local safety and validation
+## Working and validation rules
 
-- Follow the nearest component `AGENTS.md` and its documented checks.
-- Use synthetic data for tests. ClickHouse-backed checks must use the dedicated test database.
-- Keep production ClickHouse read-only unless the user explicitly authorizes a production operation.
-- Review generated artifacts and source locks; do not hand-edit generated contracts to hide drift.
-- Do not commit credentials, production data, or generated local user data.
+- Work in the primary checkout on `main`. Do not create Git worktrees. Preserve existing changes
+  and inspect status before editing or committing.
+- Follow the nearest component guidance and existing focused validation commands. Use synthetic
+  data for tests; do not write to production ClickHouse or perform live broker actions.
+- Regenerate Spec artifacts with `packages/sigmarail-spec/tools/build.py` and the LEAN subset with
+  `packages/sigmarail-spec/tools/sync_lean_vendor.py`; review generated diffs.
+- Do not commit credentials, local runtime output, or user data.

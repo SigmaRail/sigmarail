@@ -3,7 +3,6 @@ import { cn } from "../../lib/utils";
 interface FiveSlotPipelineStripProps {
   universeTitle: string;
   universeCount?: number;
-  universeType?: string;
   activeAlphaCount: number;
   alphaSummary: string;
   alphaType?: string;
@@ -19,31 +18,20 @@ interface FiveSlotPipelineStripProps {
 export function FiveSlotPipelineStrip({
   universeTitle,
   universeCount,
-  universeType = "VeraScreenerUniverseSelectionModel",
   activeAlphaCount,
   alphaSummary,
-  alphaType,
-  pcmType,
   activeRiskCount,
   riskSummary,
-  riskType = "NullRiskManagementModel",
-  executionType,
   activeSlotIndex,
   onSelectSlot,
 }: FiveSlotPipelineStripProps) {
-  const resolvedAlphaType =
-    alphaType ??
-    (activeAlphaCount > 1
-      ? "CompositeAlphaModel"
-      : activeAlphaCount === 1
-        ? alphaSummary
-        : "None");
+  const resolvedAlphaType = "SigmaRailScreenerAlphaModel";
 
   const slots = [
     {
       idx: 0,
       title: "1. UniverseSelection",
-      main: universeType,
+      main: "SigmaRailClickHouseUniverseSelection",
       sub:
         universeCount != null
           ? `${universeTitle} · ${universeCount} candidates`
@@ -63,14 +51,14 @@ export function FiveSlotPipelineStrip({
     {
       idx: 2,
       title: "3. PortfolioConstruction",
-      main: pcmType,
+      main: "SigmaRailScreenerPortfolioConstructionModel",
       sub: "Insight sizing / exposure",
       accent: "border-line/80 bg-surface-sunk text-ink",
     },
     {
       idx: 3,
       title: "4. RiskManagement",
-      main: riskType,
+      main: "SigmaRailRiskManagementModel",
       sub:
         activeRiskCount > 1
           ? `Stacked (${activeRiskCount}) · ${riskSummary}`
@@ -83,7 +71,7 @@ export function FiveSlotPipelineStrip({
     {
       idx: 4,
       title: "5. Execution",
-      main: executionType,
+      main: "SigmaRailScreenerExecutionModel",
       sub: "Order slicer",
       accent: "border-line/80 bg-surface-sunk text-ink",
     },

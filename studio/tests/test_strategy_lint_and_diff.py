@@ -11,7 +11,7 @@ import pytest
 
 pytest.importorskip(
     "sigmarail.features",
-    reason="strategy compatibility tests require the optional Vera runtime",
+    reason="strategy compatibility tests require the optional SigmaRail runtime",
 )
 
 from sigmarail_studio_mcp.domains.strategy import strategy_diff, strategy_lint

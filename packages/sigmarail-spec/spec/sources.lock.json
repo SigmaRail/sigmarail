@@ -2,7 +2,7 @@
   "lock_version": 1,
   "sources": {
     "lean": {
-      "content_sha256": "a8af273dc07dc5373bae35c4d671930cee9490b05e76d25d9bd02d1a72365968",
+      "content_sha256": "df4369c0cd415db4f2695867cc7496819c55fe93fc286eaf61cc28b2ed5c05a1",
       "hashed_paths": [
         "Algorithm.Framework/Alphas",
         "Algorithm.Framework/Portfolio",
@@ -16,10 +16,10 @@
         "Algorithm/Portfolio"
       ],
       "path": "Lean",
-      "revision": "bdcd04a2b6ddf5a36427c4b486f48eab57edbc9e"
+      "revision": "affc63475717f5c9906a37618f2032c5ec428400"
     },
     "sigmarail": {
-      "content_sha256": "33f0602ab2607927b694e159e1e83614bdc5b36eb7ca2a764f762f5bf078d071",
+      "content_sha256": "be0ea36dad24dc750806d6f8f4bebd797443bb0caca36636e57e1042126e4144",
       "hashed_paths": [
         "tools/generate_lineage_manifest.py",
         "src/sigmarail/query.py",
@@ -33,7 +33,7 @@
       "revision": null
     },
     "studio": {
-      "content_sha256": "429e77d0c4c9462cdb50bd80e42e8e0fd39018774751bf364b31e92f39eb085f",
+      "content_sha256": "499f39c0846b70ad36170472cac98b0dd5c3338ee5df5a40fb69cac4b213ab89",
       "hashed_paths": [
         "studio/api/lean_universe.py",
         "studio/config/urls.py",
@@ -47,7 +47,7 @@
       "revision": null
     },
     "trading_lab": {
-      "content_sha256": "59e6cc48ec6b0433cbf155346746e365bee174855e93d5d4ace633410dd602d8",
+      "content_sha256": "51402fb98320fcd0b0b90ce7d220f75a330ee7a033222eac039fa514a4ea3f15",
       "hashed_paths": [
         "src/sigmarail_lab/ir",
         "src/sigmarail_lab/runtime",

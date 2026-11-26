@@ -103,7 +103,7 @@ def _z_scores(values: dict[str, float | None]) -> dict[str, float]:
 from sigmarail_lab.runtime.pyramid_position_state import PyramidPositionState  # noqa: E402
 
 
-class VeraPyramidAlphaModel(AlphaModel):
+class SigmaRailPyramidAlphaModel(AlphaModel):
     """Store-backed shortlist Alpha: score → select → emit Up when criteria met."""
 
     def __init__(
@@ -158,7 +158,7 @@ class VeraPyramidAlphaModel(AlphaModel):
         self._field_weights = field_weights or {"rs_rating": 1.0}
         self._selection = selection or {"method": "top_n", "n": int(max_positions)}
         self._entry_triggers = entry_triggers or []
-        # Legacy Vera Parameters — not Lean. Prefer bool measures / post_where for timing.
+        # Legacy SigmaRail Parameters — not Lean. Prefer bool measures / post_where for timing.
         # Empty list = emit for every shortlisted name that passes setup.
         self._stop_loss = stop_loss
         self._uses = {str(u) for u in (uses or [])}
@@ -187,7 +187,7 @@ class VeraPyramidAlphaModel(AlphaModel):
         self._entry_dates: dict[str, Any] = {}
         self._stopped_out: dict[str, Any] = {}
         self._last_run_date = None
-        self.Name = "VeraPyramidAlphaModel"
+        self.Name = "SigmaRailPyramidAlphaModel"
 
     def _regime_score_on(self, algorithm) -> bool:
         """True when regime score allows 'on' behavior (hysteresis evaluator / clamp)."""

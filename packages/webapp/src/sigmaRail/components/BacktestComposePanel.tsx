@@ -281,17 +281,13 @@ export function BacktestComposePanel({
       }
     }
     if (!specData) return;
-    const fw = (specData.Framework || specData.framework || {}) as Record<string, unknown>;
-    const uni = (fw.UniverseSelection || fw.universe || {}) as Record<string, unknown>;
-    const uniType = String(uni.Type || uni.type_id || "");
-
-    const vb = (specData.VeraBase || specData.vera_base || {}) as Record<string, unknown>;
-    if (uniType !== "ManualUniverseSelectionModel" && uniType !== "CoarseFundamentalUniverseSelectionModel") {
-      if (vb.Universe && typeof vb.Universe === "object") {
-        const uAst = vb.Universe as UniverseQueryV1;
-        setCustomInlineSpec(uAst);
-        setUniverseChoice({ kind: "inline" });
-      }
+    const framework = (specData.Framework || {}) as Record<string, unknown>;
+    const universeSlot = (framework.UniverseSelection || {}) as Record<string, unknown>;
+    const universeParams = (universeSlot.Parameters || {}) as Record<string, unknown>;
+    if (universeParams.query && typeof universeParams.query === "object") {
+      const uAst = universeParams.query as UniverseQueryV1;
+      setCustomInlineSpec(uAst);
+      setUniverseChoice({ kind: "inline" });
     }
   }, [loadedSpec]);
 
@@ -798,11 +794,11 @@ export function BacktestComposePanel({
         onClose={() => setSaveTemplateOpen(false)}
         compiledSpec={pipelineSpec}
         assembledSpec={activeFrameworkSpec || assembledFramework || {
-          UniverseSelection: { Type: "VeraScreenerUniverseSelectionModel", Parameters: {} },
-          Alpha: { Type: "VeraPyramidAlphaModel", Parameters: {} },
-          PortfolioConstruction: { Type: "RiskBudgetedPortfolioConstructionModel", Parameters: {} },
-          RiskManagement: { Type: "SwingProgressiveRiskManagementModel", Parameters: {} },
-          Execution: { Type: "VeraScreenerExecutionModel", Parameters: {} },
+          UniverseSelection: { Type: "SigmaRailClickHouseUniverseSelection", Parameters: {} },
+          Alpha: { Type: "SigmaRailScreenerAlphaModel", Parameters: {} },
+          PortfolioConstruction: { Type: "SigmaRailScreenerPortfolioConstructionModel", Parameters: {} },
+          RiskManagement: { Type: "SigmaRailRiskManagementModel", Parameters: {} },
+          Execution: { Type: "SigmaRailScreenerExecutionModel", Parameters: {} },
         }}
         currentTitle={title || loadedSpec?.title || "Custom Strategy Template"}
         pipelineDocument={authoredPipeline}

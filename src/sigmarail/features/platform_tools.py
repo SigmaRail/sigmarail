@@ -815,7 +815,7 @@ def evaluate_alpha_performance(
     table's columns. ``population`` selects the evaluation set — ``all``
     (whole table), ``universe`` (spec base WHERE), or ``eligible`` (plus the
     alpha ``post_where``) — the latter two take the compiled
-    ``/VeraBase/Universe`` fragment via ``universe_spec``.
+    ``/SigmaRail/Universe`` fragment via ``universe_spec``.
 
     Reads ``screener_forward_returns_daily`` (transform 132) joined to the factor
     table and ``market_regime_signals_daily``. Read-only; returns quantile

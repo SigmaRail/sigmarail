@@ -48,10 +48,10 @@ def _leaf_count(nodes: list) -> int:
 def test_compile_momentum_single_factor() -> None:
     doc = _momentum_doc()
     spec = compile_pipeline(doc)
-    assert spec["Kind"] == "VeraLabV1"
-    assert spec["SchemaVersion"] == 2
-    assert spec["Framework"]["Alpha"]["Type"] == "VeraScreenerAlphaModel"
-    universe = spec["VeraBase"]["Universe"]
+    assert spec["Kind"] == "SigmaRailStrategyV1"
+    assert spec["SchemaVersion"] == 3
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
+    universe = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]
     assert "rs_rating" in universe["select"]
     assert universe["where"]["type"] == "all"
     assert len(universe["where"]["items"]) == 2
@@ -82,13 +82,13 @@ def test_compile_composite_multi_factor() -> None:
     )
     spec = compile_pipeline(doc)
     alpha = spec["Framework"]["Alpha"]
-    assert alpha["Type"] == "VeraCompositeAlphaModel"
+    assert alpha["Type"] == "SigmaRailScreenerAlphaModel"
     # field_weights keys are physical L7 columns, not semantic factor names
     assert alpha["Parameters"]["field_weights"] == {
         "rs_rating": 0.50,
         "valuation_rating": 0.50,
     }
-    universe = spec["VeraBase"]["Universe"]
+    universe = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]
     assert "rs_rating" in universe["select"]
     assert "valuation_rating" in universe["select"]
 
@@ -150,7 +150,7 @@ def test_compile_passes_unknown_factor_as_raw_column() -> None:
     )
     spec = compile_pipeline(doc)
     # Unknown factor passes through as a raw physical column (flexible slots).
-    assert spec["VeraBase"]["Universe"]["order_by"][0]["field"] == "not_a_real_factor"
+    assert spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["order_by"][0]["field"] == "not_a_real_factor"
 def test_compile_pyramid_uses_pyramid_alpha() -> None:
     doc = PipelineDocument.model_validate(
         {
@@ -180,7 +180,7 @@ def test_compile_pyramid_uses_pyramid_alpha() -> None:
         }
     )
     spec = compile_pipeline(doc)
-    assert spec["Framework"]["Alpha"]["Type"] == "VeraPyramidAlphaModel"
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
     pcm = spec["Framework"]["PortfolioConstruction"]["Parameters"]
     assert len(pcm["phases"]) == 2
 
@@ -208,9 +208,10 @@ def test_compile_exit_maps_to_progressive_risk() -> None:
     )
     spec = compile_pipeline(doc)
     risk = spec["Framework"]["RiskManagement"]
-    assert risk["Type"] == "SwingProgressiveRiskManagementModel"
-    assert risk["Parameters"]["take_profit_r"] == 2.5
-    assert risk["Parameters"]["max_holding_days"] == 25
+    assert risk["Type"] == "SigmaRailRiskManagementModel"
+    assert risk["Parameters"]["rules"][0]["kind"] == "progressive"
+    assert risk["Parameters"]["rules"][0]["parameters"]["take_profit_r"] == 2.5
+    assert risk["Parameters"]["rules"][0]["parameters"]["max_holding_days"] == 25
 
 
 def test_compile_hedge_alone_does_not_write_dead_algorithm_param() -> None:
@@ -237,8 +238,8 @@ def test_presets_compile() -> None:
     for preset in list_presets():
         doc = get_preset(preset["id"])
         spec = compile_pipeline(doc)
-        assert spec["Kind"] == "VeraLabV1"
-        assert spec["VeraBase"]["Universe"]["select"]
+        assert spec["Kind"] == "SigmaRailStrategyV1"
+        assert spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["select"]
 
 
 def test_minervini_preset_full_pipeline() -> None:
@@ -246,7 +247,7 @@ def test_minervini_preset_full_pipeline() -> None:
 
     doc = compose_minervini_sepa_with_setup()
     spec = compile_pipeline(doc)
-    universe = spec["VeraBase"]["Universe"]
+    universe = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]
     assert universe["where"]["type"] == "all"
     where_blob = json.dumps(universe["where"])
     assert "vcp_atr_compression_5d_90d" not in where_blob
@@ -262,23 +263,18 @@ def test_minervini_preset_full_pipeline() -> None:
     assert "screen_1" in gate_ids
     assert "code_33" in gate_ids
     assert "screens_hit" in {c["alias"] for c in (universe.get("computed") or [])}
-    assert spec["Framework"]["Alpha"]["Type"] == "VeraPyramidAlphaModel"
-    risk_type = spec["Framework"]["RiskManagement"]["Type"]
-    assert risk_type in (
-        "SwingProgressiveRiskManagementModel",
-        "CompositeRiskManagementModel",
-    )
-    if risk_type == "CompositeRiskManagementModel":
-        models = spec["Framework"]["RiskManagement"]["Parameters"]["models"]
-        assert any(m["Type"] == "VeraHedgeModel" for m in models)
-        swing = next(m for m in models if m["Type"] == "SwingProgressiveRiskManagementModel")
-        assert len(swing["Parameters"]["tranches"]) == 3
-    else:
-        assert len(spec["Framework"]["RiskManagement"]["Parameters"]["tranches"]) == 3
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
+    risk = spec["Framework"]["RiskManagement"]
+    assert risk["Type"] == "SigmaRailRiskManagementModel"
+    rules = risk["Parameters"]["rules"]
+    assert not any(rule["kind"] == "hedge" for rule in rules)
+    progressive = next(rule for rule in rules if rule["kind"] == "progressive")
+    assert len(progressive["parameters"]["tranches"]) == 3
     assert "hedge-instruments" not in (spec.get("AlgorithmParameters") or {})
     assert "regime-gate" not in (spec.get("AlgorithmParameters") or {})
-    assert any(s.get("name") == "regime" for s in spec["VeraBase"]["DataSources"])
-    assert "membership" in spec["Framework"]["UniverseSelection"]["Parameters"]
+    assert any(s.get("name") == "regime" for s in spec["SigmaRail"]["DataSources"])
+    assert spec["Framework"]["UniverseSelection"]["Type"] == "SigmaRailClickHouseUniverseSelection"
+    assert spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]["type"] == "all"
     assert "membership" not in spec["Framework"]["Alpha"]["Parameters"]
 
 
@@ -325,7 +321,7 @@ def test_compile_nested_group_lowers_to_all_and_any() -> None:
         }
     )
     spec = compile_pipeline(doc)
-    universe = spec["VeraBase"]["Universe"]
+    universe = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]
     where = universe["where"]
     assert where["type"] == "all"
     assert [item["type"] for item in where["items"]] == ["gte", "any"]
@@ -383,7 +379,7 @@ def test_signal_trigger_and_atr_columns_walked_into_select() -> None:
         }
     )
     spec = compile_pipeline(doc)
-    select = spec["VeraBase"]["Universe"]["select"]
+    select = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["select"]
     for expected in ("high", "high_90d", "volume", "avg_vol_50d", "breakout_signal", "atr_14_pct"):
         assert expected in select, f"{expected} missing from select"
 
@@ -409,7 +405,7 @@ def test_compile_merges_trigger_columns_into_skinny_select() -> None:
         }
     )
     spec = compile_pipeline(doc)
-    select = spec["VeraBase"]["Universe"]["select"]
+    select = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["select"]
     assert "high_90d" in select
     assert "ticker" in select
     assert "close" in select
@@ -440,7 +436,7 @@ def test_neq_lowers_to_not_eq() -> None:
         }
     )
     spec = compile_pipeline(doc)
-    where = spec["VeraBase"]["Universe"]["where"]
+    where = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
     assert where == {
         "type": "not",
         "item": {
@@ -449,6 +445,54 @@ def test_neq_lowers_to_not_eq() -> None:
             "right": {"type": "lit", "value": "Biotechnology"},
         },
     }
-    assert "industry" in spec["VeraBase"]["Universe"]["select"]
+    assert "industry" in spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["select"]
+
+
+def test_spy_buy_and_hold_uses_clickhouse_ast_and_full_exposure() -> None:
+    doc = PipelineDocument.model_validate(
+        {
+            "strategy_name": "C01 SPY buy and hold",
+            "stages": [],
+            "universe": {
+                "source": "screener",
+                "screen": [{"op": "eq", "left": "ticker", "right": "SPY"}],
+                "select": ["ticker", "close", "closeadj", "atr_14_pct"],
+                "limit_per_day": 1,
+            },
+            "alpha": {"mode": "always_long", "insight_period_days": 730},
+            "sizing": {
+                "policy": "equal_weight",
+                "max_positions": 1,
+                "max_weight": 1.0,
+                "target_exposure": 1.0,
+                "max_total_exposure": 1.0,
+                "exit_when_no_bars": False,
+            },
+            "execution": {"type": "market_order", "fill_session": "moo"},
+        }
+    )
+
+    spec = compile_pipeline(doc)
+    universe_slot = spec["Framework"]["UniverseSelection"]
+    query = universe_slot["Parameters"]["query"]
+    alpha = spec["Framework"]["Alpha"]
+    pcm = spec["Framework"]["PortfolioConstruction"]["Parameters"]
+
+    assert universe_slot["Type"] == "SigmaRailClickHouseUniverseSelection"
+    assert query["spine"] == "screener_price_tech_daily"
+    assert query["where"] == {
+        "type": "eq",
+        "left": {"type": "col", "name": "ticker"},
+        "right": {"type": "lit", "value": "SPY"},
+    }
+    assert alpha["Type"] == "SigmaRailScreenerAlphaModel"
+    assert alpha["Parameters"]["signal_mode"] == "always_long"
+    assert alpha["Parameters"]["signal_duration_days"] == 730
+    assert pcm["allocation_policy"] == "equal_weight"
+    assert pcm["max_positions"] == 1
+    assert pcm["max_weight"] == 1.0
+    assert pcm["target_exposure"] == 1.0
+    assert pcm["max_total_exposure"] == 1.0
+    assert pcm["exit_when_no_bars"] is False
 
 

@@ -1,21 +1,21 @@
-"""Bind Kind VeraLabV1 documents to ClickHouse runner inputs (Phase 2 / OOD plan §8.2)."""
+"""Bind Kind SigmaRailStrategyV1 documents to ClickHouse runner inputs (Phase 2 / OOD plan §8.2)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from .lean_framework_json import FrameworkBundleV1
-from .sigmarail_lab_v1_ch_parameters import validate_sigmarail_lab_v1_framework_bundle
-from .sigmarail_lab_v1_json import VeraLabV1Document
+from .lean_framework_json import FrameworkBundleV1, FrameworkSlotSpec
+from .sigmarail_lab_v1_json import SigmaRailStrategyV1Document
+from ..runtime.sigmarail_daily_screener import SigmaRailClickHouseUniverseSelection
 
 
-class VeraLabV1ComposeError(RuntimeError):
+class SigmaRailStrategyV1ComposeError(RuntimeError):
     """Invalid framework Type for CH stack or bad Parameters (defense in depth)."""
 
 
 @dataclass(frozen=True)
-class BoundVeraLabV1:
+class BoundSigmaRailStrategyV1:
     """Pure data needed to wire ClickHouseUniverseAlgorithm (store + framework kwargs + parameters)."""
 
     universe: UniverseLike
@@ -23,7 +23,7 @@ class BoundVeraLabV1:
     _alpha_kwargs: dict[str, Any]
     _portfolio_kwargs: dict[str, Any]
     _parameter_map: dict[str, str]
-    _vera_base: Any = None
+    _sigmarail_base: Any = None
 
     def alpha_model_kwargs(self) -> dict[str, Any]:
         return dict(self._alpha_kwargs)
@@ -36,8 +36,8 @@ class BoundVeraLabV1:
 
 
 @dataclass
-class _VeraBaseShim:
-    """Shim to expose VeraBase data_sources and Evaluation to store / Initialize."""
+class _SigmaRailShim:
+    """Shim to expose SigmaRail data_sources and Evaluation to store / Initialize."""
     data_sources: list
     evaluation: Any = None
 
@@ -59,7 +59,7 @@ class _RegimeShim:
 class _BoundLeanFrameworkShim:
     """Mimics LeanFrameworkSpec API used by main.py (three methods + regime)."""
 
-    _bound: BoundVeraLabV1
+    _bound: BoundSigmaRailStrategyV1
 
     def lean_set_parameter_map(self) -> dict[str, str]:
         return self._bound.lean_set_parameter_map()
@@ -73,7 +73,7 @@ class _BoundLeanFrameworkShim:
     @property
     def regime(self) -> _RegimeShim:
         # Prefer DataSources catalog; never default to mart ``daily``.
-        vb = self._bound._vera_base
+        vb = self._bound._sigmarail_base
         if vb is not None and getattr(vb, "data_sources", None):
             for spec in vb.data_sources:
                 name = getattr(spec, "name", None) or (
@@ -120,10 +120,10 @@ class _BoundLeanFrameworkShim:
         return _ExitsShim()
 
 
-class VeraLabV1BindingProxy:
-    """Drop-in alongside VeraLab for Initialize: effective_universe + effective_lean_framework."""
+class SigmaRailStrategyV1BindingProxy:
+    """Drop-in alongside SigmaRailLab for Initialize: effective_universe + effective_lean_framework."""
 
-    def __init__(self, bound: BoundVeraLabV1, policy_graph: Optional[dict] = None) -> None:
+    def __init__(self, bound: BoundSigmaRailStrategyV1, policy_graph: Optional[dict] = None) -> None:
         self._bound = bound
         self._policy_graph = policy_graph
 
@@ -144,57 +144,74 @@ class VeraLabV1BindingProxy:
         return self._policy_graph
 
     @property
-    def vera_base(self):
-        return self._bound._vera_base
+    def sigmarail_base(self):
+        return self._bound._sigmarail_base
 
 
-def bind_sigmarail_lab_v1(doc: VeraLabV1Document) -> BoundVeraLabV1:
-    fb = doc.framework
-    try:
-        validate_sigmarail_lab_v1_framework_bundle(fb)
-    except ValueError as e:
-        raise VeraLabV1ComposeError(str(e)) from e
+def bind_sigmarail_lab_v1(doc: SigmaRailStrategyV1Document) -> BoundSigmaRailStrategyV1:
+    fb = _runtime_framework_bundle(doc)
 
     alpha_kw = dict(fb.alpha.parameters or {})
     pcm_kw = dict(fb.portfolio_construction.parameters or {})
-    vera_base_shim = _VeraBaseShim(
-        doc.vera_base.data_sources,
-        evaluation=doc.vera_base.evaluation,
+    sigmarail_base_shim = _SigmaRailShim(
+        doc.sigmarail_base.data_sources,
+        evaluation=doc.sigmarail_base.evaluation,
     )
 
-    return BoundVeraLabV1(
-        universe=doc.vera_base.universe,
+    return BoundSigmaRailStrategyV1(
+        universe=SigmaRailClickHouseUniverseSelection(
+            doc.framework.universe_selection.parameters["query"]
+        ).query,
         framework=fb,
         _alpha_kwargs=alpha_kw,
         _portfolio_kwargs=pcm_kw,
         _parameter_map=dict(doc.algorithm_parameters),
-        _vera_base=vera_base_shim,
+        _sigmarail_base=sigmarail_base_shim,
     )
 
 
-def bind_sigmarail_lab_v1_with_graph(doc: VeraLabV1Document) -> tuple[BoundVeraLabV1, Optional[dict]]:
+def bind_sigmarail_lab_v1_with_graph(doc: SigmaRailStrategyV1Document) -> tuple[BoundSigmaRailStrategyV1, Optional[dict]]:
     """Bind and also extract PolicyGraph for graph mode."""
-    fb = doc.framework
-    try:
-        validate_sigmarail_lab_v1_framework_bundle(fb)
-    except ValueError as e:
-        raise VeraLabV1ComposeError(str(e)) from e
+    fb = _runtime_framework_bundle(doc)
 
     alpha_kw = dict(fb.alpha.parameters or {})
     pcm_kw = dict(fb.portfolio_construction.parameters or {})
 
-    vera_base_shim = _VeraBaseShim(
-        doc.vera_base.data_sources,
-        evaluation=doc.vera_base.evaluation,
+    sigmarail_base_shim = _SigmaRailShim(
+        doc.sigmarail_base.data_sources,
+        evaluation=doc.sigmarail_base.evaluation,
     )
 
-    bound = BoundVeraLabV1(
-        universe=doc.vera_base.universe,
+    bound = BoundSigmaRailStrategyV1(
+        universe=SigmaRailClickHouseUniverseSelection(
+            doc.framework.universe_selection.parameters["query"]
+        ).query,
         framework=fb,
         _alpha_kwargs=alpha_kw,
         _portfolio_kwargs=pcm_kw,
         _parameter_map=dict(doc.algorithm_parameters),
-        _vera_base=vera_base_shim,
+        _sigmarail_base=sigmarail_base_shim,
     )
-    policy_graph = doc.vera_base.policy_graph
+    policy_graph = doc.sigmarail_base.policy_graph
     return bound, policy_graph
+
+
+def _runtime_framework_bundle(doc: SigmaRailStrategyV1Document) -> FrameworkBundleV1:
+    """Build the fixed runtime bundle from the five-slot SigmaRail strategy contract."""
+    slots = doc.framework
+    return FrameworkBundleV1.model_construct(
+        alpha=FrameworkSlotSpec.model_construct(
+            type=slots.alpha.type, parameters=dict(slots.alpha.parameters or {})
+        ),
+        portfolio_construction=FrameworkSlotSpec.model_construct(
+            type=slots.portfolio_construction.type,
+            parameters=dict(slots.portfolio_construction.parameters or {}),
+        ),
+        execution=FrameworkSlotSpec.model_construct(
+            type=slots.execution.type, parameters=dict(slots.execution.parameters or {})
+        ),
+        risk_management=FrameworkSlotSpec.model_construct(
+            type=slots.risk_management.type,
+            parameters=dict(slots.risk_management.parameters or {}),
+        ),
+    )

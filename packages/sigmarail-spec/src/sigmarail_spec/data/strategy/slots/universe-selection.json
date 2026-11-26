@@ -1,13 +1,7 @@
 {
   "capability_types": {
-    "ClickHouseUniverseSelectionModel": null,
-    "CoarseFundamentalUniverseSelectionModel": null,
-    "CompositeUniverseSelectionModel": null,
-    "HighRoeQualityUniverseSelectionModel": null,
-    "ManualUniverseSelectionModel": null,
-    "ScreenerStoreUniverseSelectionModel": null,
-    "VeraScreenerUniverseSelectionModel": [
-      "store"
+    "SigmaRailClickHouseUniverseSelection": [
+      "query"
     ]
   },
   "contract_refs": {
@@ -16,16 +10,10 @@
     "expression_core": "sigmarail-spec://v1/expressions/core",
     "runtime_capabilities": "sigmarail-spec://v1/strategy/runtime-capabilities"
   },
-  "purpose": "Select dated candidates through universe queries.",
+  "purpose": "Select securities from the ClickHouse query AST.",
   "slot": "UniverseSelection",
   "type_ids": [
-    "ClickHouseUniverseSelectionModel",
-    "CoarseFundamentalUniverseSelectionModel",
-    "CompositeUniverseSelectionModel",
-    "HighRoeQualityUniverseSelectionModel",
-    "ManualUniverseSelectionModel",
-    "ScreenerStoreUniverseSelectionModel",
-    "VeraScreenerUniverseSelectionModel"
+    "SigmaRailClickHouseUniverseSelection"
   ],
   "version": 1
 }

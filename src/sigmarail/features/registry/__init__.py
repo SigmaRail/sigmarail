@@ -3,7 +3,7 @@
 Semantics for warehouse columns, metrics, ADM entities, and instruments are
 authored in ``*.entities.yaml`` sidecars that live **next to** the source that
 defines the thing (locality). ``vera-registry compile`` walks the tree and emits
-a single generated aggregate ``VeraBase/registry/compiled.json``; the MCP layer
+a single generated aggregate ``SigmaRail/registry/compiled.json``; the MCP layer
 reads only that aggregate (git-pure, no ClickHouse).
 
 Public helpers used by the MCP server and platform gate:

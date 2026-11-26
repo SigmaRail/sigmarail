@@ -49,7 +49,7 @@ def _pick_inverse_etf(entry: dict[str, str | None]) -> str | None:
 # Alpha model
 # ---------------------------------------------------------------------------
 
-class VeraSectorEtfAlphaModel(AlphaModel):
+class SigmaRailSectorEtfAlphaModel(AlphaModel):
     """
     Selects sector ETFs based on regime tier × sector RS ranking.
 
@@ -84,7 +84,7 @@ class VeraSectorEtfAlphaModel(AlphaModel):
         ) | frozenset([self._broad_inverse])
         self._current_selections: set[str] = set()  # currently targeted long/inverse ETFs
         self._last_run_date = None
-        self.Name = "VeraSectorEtfAlphaModel"
+        self.Name = "SigmaRailSectorEtfAlphaModel"
 
     def Update(self, algorithm, data):
         today = algorithm.Time.date()
@@ -158,7 +158,7 @@ class VeraSectorEtfAlphaModel(AlphaModel):
 # Portfolio construction model
 # ---------------------------------------------------------------------------
 
-class VeraSectorEtfPortfolioConstructionModel(PortfolioConstructionModel):
+class SigmaRailSectorEtfPortfolioConstructionModel(PortfolioConstructionModel):
     """
     Regime-scaled equal-weight allocation across selected ETFs.
 

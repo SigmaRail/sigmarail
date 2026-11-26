@@ -126,7 +126,7 @@ class SymbolRollingData:
 
 class SwingBreakoutAlphaModel(AlphaModel):
     """
-    Evaluates tactical breakout entries for stocks delivered by UniverseSelection.
+    Evaluates tactical breakout entries for securities returned by SigmaRail.Universe.
     Waits for volatility contraction and fires when price breaches the pivot high with volume pace.
     """
 
@@ -274,7 +274,7 @@ class SwingBreakoutAlphaModel(AlphaModel):
 class SwingPullbackAlphaModel(AlphaModel):
     """
     Evaluates tactical pullback entries (Pocket Pivots / 10-20 EMA support reclaims)
-    in leading stocks delivered by UniverseSelection.
+    in leading securities returned by SigmaRail.Universe.
     """
 
     def __init__(

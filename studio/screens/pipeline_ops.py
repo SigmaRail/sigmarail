@@ -169,7 +169,7 @@ def compile_and_hash(pipeline: dict[str, Any]) -> tuple[dict[str, Any], str]:
     spec = compile_pipeline(doc)
     # Keep previews spec-truthful: materialize the generated Swing ladder and
     # PCM allocation table so the hash/preview match what save will persist
-    # (no-op without vera_lab).
+    # (no-op without sigmarail_lab).
     try:
         from screens.pcm_rules import materialize_pcm_rules
         from screens.risk_rules import materialize_swing_risk_rules

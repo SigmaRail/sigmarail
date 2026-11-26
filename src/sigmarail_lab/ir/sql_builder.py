@@ -1,6 +1,6 @@
 """Build ClickHouse SQL strings for ``daily_screener`` universe loads (legacy).
 
-Prefer **VeraBase** ``/v1/universe/run`` with ``universe_query_v1`` JSON when
+Prefer **SigmaRail** ``/v1/universe/run`` with ``universe_query_v1`` JSON when
 ``sigmarail-api-url`` is configured (see ``sigmarail_lab.runtime.sigmarail_daily_screener``).
 These helpers are retained for **offline / fallback** execution and for
 ``reload_today`` with ``UniverseSpec`` without the query service.

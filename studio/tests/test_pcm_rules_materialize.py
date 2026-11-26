@@ -1,7 +1,7 @@
 """Save-time PCM-ladder materialization (C-FW-RULES Phase 2 spec-truth contract).
 
 ``screens/pcm_rules`` uses the SigmaRail Spec-owned generated allocation table
-and remains fully testable without a LEAN or VeraBase checkout.
+and remains fully testable without a LEAN or SigmaRail checkout.
 """
 
 from __future__ import annotations

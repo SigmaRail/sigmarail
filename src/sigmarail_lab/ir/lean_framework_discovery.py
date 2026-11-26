@@ -24,7 +24,6 @@ _BASE_ID_TO_SLOT: dict[str, str] = {
     "PortfolioConstructionModel": "PortfolioConstruction",
     "ExecutionModel": "Execution",
     "RiskManagementModel": "RiskManagement",
-    "UniverseSelectionModel": "UniverseSelection",
 }
 
 
@@ -199,14 +198,14 @@ def _resolve_lean_root(lean_root: Path | str | None) -> Path | None:
     return None
 
 
-def _vera_screener_extension_entries() -> list[dict[str, Any]]:
+def _sigmarail_screener_extension_entries() -> list[dict[str, Any]]:
     from . import sigmarail_screener_framework_types as t
 
     def row(type_id: str, slot: str, desc: str) -> dict[str, Any]:
         return {
             "type_id": type_id,
             "slot": slot,
-            "source": "vera_screener",
+            "source": "sigmarail_screener",
             "relpath": "sigmarail_lab/ir/sigmarail_screener_framework_types.py",
             "description": desc,
             "init_parameters": [],
@@ -218,32 +217,15 @@ def _vera_screener_extension_entries() -> list[dict[str, Any]]:
         }
 
     rows: list[dict[str, Any]] = [
-        (
-            t.UNIVERSE_SELECTION,
-            "UniverseSelection",
-            "Screener-backed universe (Vera/ClickHouse store; see SigmaRailFrameworkStore).",
-        ),
-        (t.ALPHA, "Alpha", "Screener-backed alpha; parameters forwarded to the Vera plugin model."),
+        (t.ALPHA, "Alpha", "Screener-backed alpha; parameters forwarded to the SigmaRail plugin model."),
         (
             t.PORTFOLIO_CONSTRUCTION,
             "PortfolioConstruction",
-            "Screener-backed portfolio construction; parameters for the Vera plugin.",
+            "Screener-backed portfolio construction; parameters for the SigmaRail plugin.",
         ),
         (t.EXECUTION, "Execution", "Screener-backed execution model; often paired with manual rebalance OHLC injection."),
     ]
     ext: list[dict[str, Any]] = [row(sid, sl, d) for sid, sl, d in rows]
-    for legacy, slot, d in [
-        (t.LEGACY_UNIVERSE_SCREENER_STORE, "UniverseSelection", "Legacy ScreenerStore* id; prefer VeraScreener*."),
-        (t.LEGACY_UNIVERSE_CLICKHOUSE, "UniverseSelection", "Legacy ClickHouse* id; prefer VeraScreener*."),
-        (t.LEGACY_ALPHA_SCREENER_STORE, "Alpha", "Legacy ScreenerStore* id."),
-        (t.LEGACY_ALPHA_CLICKHOUSE, "Alpha", "Legacy ClickHouse* id."),
-        (t.LEGACY_PORTFOLIO_SCREENER_STORE, "PortfolioConstruction", "Legacy ScreenerStore* id."),
-        (t.LEGACY_PORTFOLIO_CLICKHOUSE, "PortfolioConstruction", "Legacy ClickHouse* id."),
-        (t.LEGACY_EXECUTION_SCREENER_STORE, "Execution", "Legacy ScreenerStore* id."),
-        (t.LEGACY_EXECUTION_CLICKHOUSE, "Execution", "Legacy ClickHouse* id."),
-    ]:
-        r = row(legacy, slot, d)
-        ext.append(r)
     return ext
 
 
@@ -252,10 +234,10 @@ def discover_lean_framework_types(
     lean_root: Path | str | None = None,
     slot: str | None = None,
     include_unwired: bool = True,
-    include_vera_screener_ids: bool = True,
+    include_sigmarail_screener_ids: bool = True,
 ) -> dict[str, Any]:
     """
-    Return JSON-serializable dict of Lean framework class types + Vera extension type ids.
+    Return JSON-serializable dict of Lean framework class types + SigmaRail extension type ids.
 
     * ``pydantic_validated``: in :func:`lean_framework_v1_pydantic_type_ids`
     * ``sigmarail_lab_wired``: in :func:`sigmarail_lab.runtime.lean_framework_interpreter.all_default_wirable_type_ids`
@@ -289,11 +271,11 @@ def discover_lean_framework_types(
     else:
         warnings.append(
             "Lean source tree not found (set LEAN_ROOT or run from a workspace with sibling "
-            "``Lean/Algorithm.Framework``). Only Vera screener extension types are listed for Lean rows."
+            "``Lean/Algorithm.Framework``). Only SigmaRail screener extension types are listed for Lean rows."
         )
 
-    if include_vera_screener_ids:
-        for ex in _vera_screener_extension_entries():
+    if include_sigmarail_screener_ids:
+        for ex in _sigmarail_screener_extension_entries():
             tid = ex["type_id"]
             ex2 = {**ex, "pydantic_validated": tid in pydantic_ids, "sigmarail_lab_wired": tid in wired}
             entries.append(ex2)

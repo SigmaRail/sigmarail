@@ -1,4 +1,4 @@
-"""Honesty tests for five-slot ownership (C-STRATEGY-PIPELINE-SSOT / C-REGIME-POLICY-V1).
+"""Honesty tests for query-AST universe ownership and runtime framework slots.
 
 These encode Done when for slice strategy-runtime-honesty. They must fail on the
 pre-honesty compiler (membership in Universe.where, regime-gate blob, missing
@@ -23,48 +23,44 @@ def _where_mentions(where: dict | None, needle: str) -> bool:
 
 
 def test_sepa_has_no_hygiene_where() -> None:
-    """Screen tree is the WHERE; hygiene_where is gone."""
+    """Screen tree is the query WHERE; no universe model slot is compiled."""
     spec = compile_pipeline(get_preset("minervini_sepa"))
-    uni = spec["Framework"]["UniverseSelection"]["Parameters"]
-    assert "hygiene_where" not in uni
-    assert uni["screen"]["type"] == "all"
-    assert uni["screen"].get("name") == "hygiene"
-    items = uni["screen"].get("items") or []
+    assert spec["Framework"]["UniverseSelection"]["Type"] == "SigmaRailClickHouseUniverseSelection"
+    where = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
+    assert where["type"] == "all"
+    assert where.get("name") == "hygiene"
+    items = where.get("items") or []
     assert any(
         item.get("type") == "any"
         for item in items
         if isinstance(item, dict)
     )
-    blob = json.dumps(uni["screen"])
+    blob = json.dumps(where)
     assert "avg_vol_50d" in blob
     assert "exchange" in blob
     assert "NYSE" in blob
     assert "NASDAQ" in blob
     assert "industry" in blob
     assert "Biotechnology" in blob
-    assert "membership" in blob
     assert "code_33" not in blob
-    assert spec["VeraBase"]["Universe"]["where"] == uni["screen"]
-    assert not _where_mentions(uni["screen"], "vcp_atr_compression")
+    assert not _where_mentions(where, "vcp_atr_compression")
 
 
 def test_sepa_universe_owns_membership_and_pushdown_keeps_smas() -> None:
-    """UniverseSelection.Parameters.membership holds MMT; executed VeraBase.Universe.where still predicates SMAs."""
+    """The query AST owns membership and its predicate; alpha owns setup conditions."""
     from sigmarail_spec.strategy.setup_recipes import compose_minervini_sepa_with_setup
 
     spec = compile_pipeline(compose_minervini_sepa_with_setup())
-    uni = spec["Framework"]["UniverseSelection"]["Parameters"]
     alpha = spec["Framework"]["Alpha"]["Parameters"]
-    membership = uni.get("membership")
+    membership = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
     assert membership is not None
     assert "membership" not in alpha
     assert "named_groups" not in alpha
-    assert "code_33" not in (uni.get("named_groups") or {})
     assert _where_mentions(membership, "sma50d")
     assert not _where_mentions(membership, "sma200d_rising_30d")
     assert not _where_mentions(membership, "minervini_tt")
 
-    pushdown = spec["VeraBase"]["Universe"]["where"]
+    pushdown = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
     assert _where_mentions(pushdown, "sma50d")
     assert not _where_mentions(pushdown, "vcp_atr_compression")
     assert not _where_mentions(pushdown, "high_90d")
@@ -78,20 +74,20 @@ def test_compiled_spec_has_datasources_no_regime_gate_blob() -> None:
     spec = compile_pipeline(get_preset("minervini_sepa"))
     algo = spec.get("AlgorithmParameters") or {}
     assert "regime-gate" not in algo
-    sources = spec["VeraBase"].get("DataSources") or []
+    sources = spec["SigmaRail"].get("DataSources") or []
     names = {s.get("name") for s in sources}
     assert "equity" in names
     assert "regime" in names
     assert "bars" in names
     regime = next(s for s in sources if s["name"] == "regime")
-    assert regime.get("Type") == "VeraMarketRegimeSignalsDaily"
+    assert regime.get("Type") == "SigmaRailMarketRegimeSignalsDaily"
     assert "score" in regime or regime.get("table")
 
 
 def test_compiled_spec_does_not_persist_full_pipeline_as_strategy_ssot() -> None:
-    """VeraBase.Pipeline must not re-own the whole strategy (exit/sizing/regime)."""
+    """SigmaRail.Pipeline must not re-own the whole strategy (exit/sizing/regime)."""
     spec = compile_pipeline(get_preset("minervini_sepa"))
-    pipeline = spec["VeraBase"].get("Pipeline")
+    pipeline = spec["SigmaRail"].get("Pipeline")
     assert pipeline is None or pipeline.get("deprecated") is True
     alpha = spec["Framework"]["Alpha"]["Parameters"]
     assert "stages" in alpha
@@ -100,15 +96,9 @@ def test_compiled_spec_does_not_persist_full_pipeline_as_strategy_ssot() -> None
 def test_risk_parameters_include_all_exit_tranches() -> None:
     spec = compile_pipeline(get_preset("minervini_sepa"))
     risk = spec["Framework"]["RiskManagement"]
-    if risk["Type"] == "CompositeRiskManagementModel":
-        swing = next(
-            m
-            for m in risk["Parameters"]["models"]
-            if m["Type"] == "SwingProgressiveRiskManagementModel"
-        )
-        tranches = swing["Parameters"].get("tranches")
-    else:
-        tranches = risk["Parameters"].get("tranches")
+    assert risk["Type"] == "SigmaRailRiskManagementModel"
+    progressive = next(rule for rule in risk["Parameters"]["rules"] if rule["kind"] == "progressive")
+    tranches = progressive["parameters"].get("tranches")
     assert isinstance(tranches, list)
     assert len(tranches) >= 3
     assert tranches[0]["trigger_r"] == 2.5
@@ -116,7 +106,7 @@ def test_risk_parameters_include_all_exit_tranches() -> None:
     assert tranches[2]["trigger_r"] == 8.0
 
 
-def test_hedge_use_without_vera_hedge_model_fails_compile() -> None:
+def test_hedge_use_without_sigmarail_hedge_model_fails_compile() -> None:
     doc = get_preset("minervini_sepa")
     raw = doc.model_dump(mode="json")
     raw["risk"]["regime_gate"] = {
@@ -130,13 +120,13 @@ def test_hedge_use_without_vera_hedge_model_fails_compile() -> None:
 
 
 def test_momentum_pushdown_still_filters_in_universe_facet() -> None:
-    """Non-SEPA: membership still pushdown into VeraBase.Universe.where for CH."""
+    """Non-SEPA: membership still pushdown into SigmaRail.Universe.where for CH."""
     spec = compile_pipeline(get_preset("momentum"))
-    pushdown = spec["VeraBase"]["Universe"]["where"]
+    pushdown = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
     assert _where_mentions(pushdown, "rs_rating") or _where_mentions(pushdown, "close")
-    membership = spec["Framework"]["UniverseSelection"]["Parameters"].get("membership")
+    membership = spec["Framework"]["UniverseSelection"]["Parameters"]["query"]["where"]
     assert membership is not None
-    assert "membership" not in spec["Framework"]["Alpha"]["Parameters"]
+    assert spec["Framework"]["UniverseSelection"]["Type"] == "SigmaRailClickHouseUniverseSelection"
 
 
 def test_champion_pcm_has_live_knobs_no_lean_pcm_leftovers() -> None:
@@ -157,7 +147,7 @@ def test_champion_pcm_has_live_knobs_no_lean_pcm_leftovers() -> None:
 def test_champion_execution_fill_session_moo() -> None:
     spec = compile_pipeline(get_preset("minervini_sepa"))
     exe = spec["Framework"]["Execution"]
-    assert exe["Type"] == "VeraScreenerExecutionModel"
+    assert exe["Type"] == "SigmaRailScreenerExecutionModel"
     assert exe["Parameters"].get("fill_session") == "moo"
 
 
@@ -165,7 +155,7 @@ def test_champion_pcm_has_add_trigger_no_pyramid_circuit() -> None:
     spec = compile_pipeline(get_preset("minervini_sepa"))
     alpha = spec["Framework"]["Alpha"]["Parameters"]
     pcm = spec["Framework"]["PortfolioConstruction"]["Parameters"]
-    assert spec["Framework"]["Alpha"]["Type"] == "VeraPyramidAlphaModel"
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
     assert "add_trigger_pct" not in alpha or alpha.get("add_trigger_pct") is None
     assert abs(float(pcm["add_trigger_pct"]) - 0.08) < 1e-9
     assert "circuit_drawdown_threshold" not in alpha
@@ -177,15 +167,17 @@ def test_champion_has_no_silent_sh_hedge() -> None:
     assert preset.risk.max_sector_exposure is None
     spec = compile_pipeline(preset)
     risk = spec["Framework"]["RiskManagement"]
-    assert risk["Type"] == "SwingProgressiveRiskManagementModel"
+    assert risk["Type"] == "SigmaRailRiskManagementModel"
     blob = json.dumps(risk)
-    assert "VeraHedgeModel" not in blob
+    assert "SigmaRailHedgeModel" not in blob
     assert '"SH"' not in blob
 
 
 def test_champion_risk_stamps_exit_knobs() -> None:
     spec = compile_pipeline(get_preset("minervini_sepa"))
-    params = spec["Framework"]["RiskManagement"]["Parameters"]
+    risk = spec["Framework"]["RiskManagement"]
+    assert risk["Type"] == "SigmaRailRiskManagementModel"
+    params = next(rule["parameters"] for rule in risk["Parameters"]["rules"] if rule["kind"] == "progressive")
     assert params.get("atr_stop_multiplier") == 2.0
     assert params.get("use_atr_stops") is True
     assert params.get("max_holding_days") == 63

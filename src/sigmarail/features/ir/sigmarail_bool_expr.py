@@ -1,8 +1,8 @@
-"""SQL emission for the canonical expression dialect (C-VERA-EXPR-V1).
+"""SQL emission for the canonical expression dialect (C-SIGMARAIL-EXPR-V1).
 
 The dialect itself — node classes, unions, parsing and depth validation — lives in the
 **`sigmarail_spec`** package since the 2026-10-02 consolidation. It moved because
-VeraTradingLab needs the same dialect *and its row evaluator*, and cannot import VeraBase:
+SigmaRailTradingLab needs the same dialect *and its row evaluator*, and cannot import SigmaRail:
 that tree ships into the LEAN container, where pandas/clickhouse/fastapi are absent.
 
 What remains **here** is the part that genuinely needs the database: resolving column names

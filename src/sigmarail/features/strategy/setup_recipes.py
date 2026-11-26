@@ -5,7 +5,7 @@ These recipes are the maintained catalog: apply via ``apply_setup_recipe`` /
 ``compose_minervini_sepa_with_setup`` (tests + scripts) or via Studio Measures
 (+ Add Filter / expression browser mirrors for leaf recipes).
 
-Keep leaf thresholds in sync with ``VeraScreeningStudio/.../expressionRecipes.ts``.
+Keep leaf thresholds in sync with ``SigmaRailScreeningStudio/.../expressionRecipes.ts``.
 """
 
 from __future__ import annotations

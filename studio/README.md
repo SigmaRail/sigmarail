@@ -9,17 +9,17 @@ under `studio/` while their service migration is evaluated. The feature migratio
 [the migration map](docs/STUDIO_MIGRATION.md) for what is implemented and what
 remains to be adapted.
 
-## Three-project architecture
+## Intended project boundaries
 
-- **SigmaRail Spec** owns the product description, architecture, and versioned data, query, expression,
-  authoring, strategy, and slot contracts.
-- **SigmaRail** owns this interface and its services, ClickHouse schema and transforms, data loading,
-  query execution, API, and MCP integration.
-- **SigmaRail Lean** owns the customized LEAN integration and strategy execution.
+- **SigmaRail Core** owns the financial data schema, transformations, loading, database population, and the root test database lifecycle.
+- **SigmaRail Spec** owns the versioned data, expression, Studio-authoring, and strategy contracts as
+  an independently versioned distribution in `packages/sigmarail-spec/`.
+- **AppTension** owns the SigmaRail web interface and authenticated application shell.
+- **SigmaRail Studio services** under `studio/` own the Django REST API, MCP host, and query orchestration during migration.
+- **SigmaRail Lean** will own strategy execution and LEAN integration when that project is migrated.
 
-The interface and MCP are components of SigmaRail. They consume Spec contracts and call explicit
-data/runtime services; they do not define a parallel strategy language, duplicate schema SQL, or
-absorb the LEAN execution engine.
+These services consume published contracts and call explicit data/runtime
+services. They should not duplicate schema SQL or absorb the LEAN execution engine.
 
 ## Current migration status
 

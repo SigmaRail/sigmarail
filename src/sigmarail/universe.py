@@ -598,7 +598,7 @@ def metadata() -> dict[str, Any]:
     field_count = sum(len(tables[table]["columns"]) for table in UNIVERSE_TABLES)
     return {
         "api_version": "1.0",
-        "dialect": {"id": "C-VERA-EXPR-V1", "version": "1"},
+        "dialect": {"id": "C-SIGMARAIL-EXPR-V1", "version": "1"},
         "registry_digest": registry_digest(),
         "field_count": field_count,
         "l7_sources": sorted(LEGACY_PREFIX_TABLE),

@@ -101,15 +101,15 @@ class AlphaSpec(BaseModel):
     circuit_pause_days: int = Field(ge=1, le=365)
     field_weights: dict[str, float] | None = Field(
         default=None,
-        description="Multi-factor column weights for VeraCompositeAlphaModel",
+        description="Multi-factor column weights for SigmaRailCompositeAlphaModel",
     )
     membership: dict | None = Field(
         default=None,
-        description="Legacy Alpha copy; runtime prefers UniverseSelection.Parameters.membership",
+        description="Alpha membership expression; overall candidate membership comes from SigmaRail.Universe.",
     )
     named_groups: dict[str, dict] = Field(
         default_factory=dict,
-        description="Legacy Alpha copy; runtime prefers UniverseSelection.Parameters.named_groups",
+        description="Alpha named groups; overall candidate membership comes from SigmaRail.Universe.",
     )
     stages: list[dict] = Field(
         default_factory=list,
@@ -160,7 +160,7 @@ class PortfolioSpec(BaseModel):
 
 
 class SectorAlphaSpec(BaseModel):
-    """Parameter schema for VeraSectorAlphaModel."""
+    """Parameter schema for SigmaRailSectorAlphaModel."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -174,7 +174,7 @@ class SectorAlphaSpec(BaseModel):
 
 
 class SectorPortfolioSpec(BaseModel):
-    """Parameter schema for VeraSectorPortfolioConstructionModel."""
+    """Parameter schema for SigmaRailSectorPortfolioConstructionModel."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -187,7 +187,7 @@ class SectorPortfolioSpec(BaseModel):
 
 
 class SectorEtfAlphaSpec(BaseModel):
-    """Parameter schema for VeraSectorEtfAlphaModel."""
+    """Parameter schema for SigmaRailSectorEtfAlphaModel."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -198,7 +198,7 @@ class SectorEtfAlphaSpec(BaseModel):
 
 
 class SectorEtfPortfolioSpec(BaseModel):
-    """Parameter schema for VeraSectorEtfPortfolioConstructionModel."""
+    """Parameter schema for SigmaRailSectorEtfPortfolioConstructionModel."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -209,7 +209,7 @@ class SectorEtfPortfolioSpec(BaseModel):
 
 
 class TqqqTacticalSpec(BaseModel):
-    """Parameter schema for VeraTqqqTacticalAlphaModel / PCM (shared kwargs)."""
+    """Parameter schema for SigmaRailTqqqTacticalAlphaModel / PCM (shared kwargs)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -230,7 +230,7 @@ class TqqqTacticalSpec(BaseModel):
 class RegimeSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    # Prefer Vera-native naming over warehouse jargon ("mart").
+    # Prefer SigmaRail-native naming over warehouse jargon ("mart").
     # Backward-compat: accept legacy "mart" and map to the canonical value.
     source: Literal["screener", "market_regime_signals_daily"]
 
@@ -274,7 +274,7 @@ class LeanFrameworkSpec(BaseModel):
         return self
 
     def lean_set_parameter_map(self) -> dict[str, str]:
-        """Keys/values passed to QCAlgorithm.SetParameter for VeraScreenerAlphaModel.Update."""
+        """Keys/values passed to QCAlgorithm.SetParameter for SigmaRailScreenerAlphaModel.Update."""
         return {
             "regime-source": self.regime.source,
             "exit-mode": self.exits.mode,
@@ -282,11 +282,11 @@ class LeanFrameworkSpec(BaseModel):
         }
 
     def alpha_model_kwargs(self) -> dict[str, Any]:
-        """Kwargs for VeraScreenerAlphaModel(store, **kwargs) after shared store is bound."""
+        """Kwargs for SigmaRailScreenerAlphaModel(store, **kwargs) after shared store is bound."""
         return cast(dict[str, Any], self.alpha.model_dump())
 
     def portfolio_model_kwargs(self) -> dict[str, Any]:
-        """Kwargs for VeraScreenerPortfolioConstructionModel(store, **kwargs)."""
+        """Kwargs for SigmaRailScreenerPortfolioConstructionModel(store, **kwargs)."""
         return cast(dict[str, Any], self.portfolio.model_dump())
 
 
@@ -378,7 +378,7 @@ IfStep.model_rebuild()
 SelectStep.model_rebuild()
 
 
-class VeraLab(BaseModel):
+class SigmaRailLab(BaseModel):
     """
     Unified algorithm JSON.
     Pipeline mode: root is null; universe, alpha, portfolio, regime, exits are set.
@@ -398,7 +398,7 @@ class VeraLab(BaseModel):
     root: Optional[GraphStep] = None
 
     @model_validator(mode="after")
-    def _policy_and_required(self) -> VeraLab:
+    def _policy_and_required(self) -> SigmaRailLab:
         if self.root is not None:
             if any(
                 x is not None
@@ -463,7 +463,7 @@ class VeraLab(BaseModel):
             if self.universe is None:
                 return None
             raise ValueError(
-                "Pipeline VeraLab universe was removed; use Kind VeraLabV1 with universe_query_v1"
+                "Pipeline SigmaRailLab universe was removed; use Kind SigmaRailStrategyV1 with universe_query_v1"
             )
         from .graph_runtime import lower_graph_to_universe
 

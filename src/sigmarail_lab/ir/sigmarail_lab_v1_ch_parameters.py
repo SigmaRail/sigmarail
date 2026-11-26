@@ -1,4 +1,4 @@
-"""ClickHouse runner framework slots for Kind VeraLabV1: Type allowlists + typed Parameters."""
+"""ClickHouse runner framework slots for Kind SigmaRailStrategyV1: Type allowlists + typed Parameters."""
 
 from __future__ import annotations
 
@@ -8,13 +8,11 @@ from .lean_framework_json import FrameworkBundleV1
 from .lean_framework_parameters import (
     ConstantAlphaModelParams,
     EqualWeightingPortfolioConstructionModelParams,
-    HighRoeUniverseSelectionModelParams,
     ImmediateExecutionModelParams,
-    ManualUniverseSelectionModelParams,
     MaximumDrawdownPercentPerSecurityParams,
     RsiAlphaModelParams,
-    VeraCompositeAlphaModelParams,
-    VeraPyramidAlphaModelParams,
+    SigmaRailCompositeAlphaModelParams,
+    SigmaRailPyramidAlphaModelParams,
 )
 from .models import (
     AlphaSpec,
@@ -29,9 +27,7 @@ from .sigmarail_screener_framework_types import (
     ALLOWED_ALPHA_TYPES,
     ALLOWED_EXECUTION_TYPES,
     ALLOWED_PORTFOLIO_CONSTRUCTION_TYPES,
-    ALLOWED_UNIVERSE_SELECTION_TYPES,
     COMPOSITE_ALPHA,
-    HIGH_ROE_UNIVERSE_SELECTION,
     PYRAMID_ALPHA,
     SECTOR_ALPHA,
     SECTOR_ETF_ALPHA,
@@ -50,7 +46,7 @@ _CH_RISK = frozenset({
     "SwingProgressiveRiskManagementModel",
 })
 
-# VeraLabV1 hybrid & composite: store universe + stock QC types supported by runtime framework interpreter.
+# SigmaRailStrategyV1 hybrid & composite: store universe + stock QC types supported by runtime framework interpreter.
 _HYBRID_ALPHA_TYPES = frozenset({
     "RsiAlphaModel",
     "ConstantAlphaModel",
@@ -81,33 +77,11 @@ class EmptyParameters(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class VeraScreenerUniverseSelectionModelParams(BaseModel):
-    """Universe screen tree (same ownership as Studio section 1)."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    screen: dict | None = Field(
-        default=None,
-        description="Boolean where tree compiled from universe.screen (root all/any)",
-    )
-    hygiene_where: dict | None = Field(
-        default=None,
-        description="Legacy hygiene AST; omitted on new compiles",
-    )
-    membership: dict | None = Field(
-        default=None,
-        description="Derived named membership subtree for Alpha in_membership flags",
-    )
-    named_groups: dict[str, dict] = Field(
-        default_factory=dict,
-        description="Derived named group subtrees (e.g. code_33) for Alpha flags",
-    )
-
 def _assert_slot_type(slot: str, type_id: str, allowed: frozenset[str]) -> None:
     tid = (type_id or "").strip()
     if tid not in allowed:
         raise ValueError(
-            f"VeraLabV1 {slot}: Type {type_id!r} is not allowlisted for the ClickHouse runner "
+            f"SigmaRailStrategyV1 {slot}: Type {type_id!r} is not allowlisted for the ClickHouse runner "
             f"(allowed: {sorted(allowed)})"
         )
 
@@ -116,40 +90,15 @@ def validate_sigmarail_lab_v1_framework_bundle(fb: FrameworkBundleV1) -> None:
     """
     Validate Framework bundle for main.py / ClickHouseUniverseAlgorithm.
 
-    **Full screener-backed slots** — VeraScreener* (or legacy ScreenerStore* / ClickHouse*) Alpha, PCM, Execution + AlphaSpec /
-    PortfolioSpec / empty execution params.
+    **Full screener-backed slots** — SigmaRailScreener* Alpha, PCM, Execution + AlphaSpec /
+    PortfolioSpec / empty execution params. Universe membership is always SigmaRail.Universe.
 
-    **Hybrid / Composite** — store universe only; standard QC framework models (RSI, MACD, EMA Cross,
+    **Hybrid / Composite** — SigmaRail query universe; standard QC framework models (RSI, MACD, EMA Cross,
     ConfidenceWeighted, RiskParity, TrailingStop, VWAP, etc.) wired via LeanFrameworkInterpreter.
 
-    Raises ValueError (wrapped as ValidationError by Pydantic when called from VeraLabV1Document).
+    Raises ValueError (wrapped as ValidationError by Pydantic when called from SigmaRailStrategyV1Document).
     """
-    _assert_slot_type(
-        "Framework.UniverseSelection", fb.universe_selection.type, ALLOWED_UNIVERSE_SELECTION_TYPES
-    )
     _assert_slot_type("Framework.RiskManagement", fb.risk_management.type, _CH_RISK)
-
-    u_type = (fb.universe_selection.type or "").strip()
-    if u_type == HIGH_ROE_UNIVERSE_SELECTION:
-        HighRoeUniverseSelectionModelParams.model_validate(
-            fb.universe_selection.parameters or {}
-        )
-    elif u_type == "ManualUniverseSelectionModel":
-        ManualUniverseSelectionModelParams.model_validate(
-            fb.universe_selection.parameters or {}
-        )
-    elif u_type in ("CompositeUniverseSelectionModel", "CoarseFundamentalUniverseSelectionModel"):
-        pass
-    elif u_type in (
-        "VeraScreenerUniverseSelectionModel",
-        "ScreenerStoreUniverseSelectionModel",
-        "ClickHouseUniverseSelectionModel",
-    ):
-        VeraScreenerUniverseSelectionModelParams.model_validate(
-            fb.universe_selection.parameters or {}
-        )
-    else:
-        EmptyParameters.model_validate(fb.universe_selection.parameters or {})
 
     rtype = (fb.risk_management.type or "").strip()
     if rtype == "NullRiskManagementModel":
@@ -174,9 +123,9 @@ def validate_sigmarail_lab_v1_framework_bundle(fb: FrameworkBundleV1) -> None:
     # Composite / pyramid models have their own parameter schemas (field_weights,
     # phases, selection, entry_triggers) that differ from the legacy AlphaSpec.
     if a_type == COMPOSITE_ALPHA:
-        VeraCompositeAlphaModelParams.model_validate(fb.alpha.parameters or {})
+        SigmaRailCompositeAlphaModelParams.model_validate(fb.alpha.parameters or {})
     elif a_type == PYRAMID_ALPHA:
-        VeraPyramidAlphaModelParams.model_validate(fb.alpha.parameters or {})
+        SigmaRailPyramidAlphaModelParams.model_validate(fb.alpha.parameters or {})
     elif a_type in ALLOWED_ALPHA_TYPES:
         # Sector and ETF models use different parameter schemas — no max_positions cross-check.
         if a_type == SECTOR_ETF_ALPHA:

@@ -31,25 +31,21 @@ _SAMPLE_UNIVERSE = {
 }
 
 _STUB_FRAMEWORK = {
-    "UniverseSelection": {
-        "Type": "VeraScreenerUniverseSelectionModel",
-        "Parameters": {},
-    },
     "Alpha": {
-        "Type": "RsiAlphaModel",
-        "Parameters": {"period": 14, "resolution": "Daily"},
+        "Type": "SigmaRailScreenerAlphaModel",
+        "Parameters": {"signal_mode": "screen", "signal_duration_days": 14},
     },
     "PortfolioConstruction": {
-        "Type": "EqualWeightingPortfolioConstructionModel",
+        "Type": "SigmaRailScreenerPortfolioConstructionModel",
         "Parameters": {"min_weight": 0.05, "max_weight": 0.25, "max_positions": 10},
     },
     "RiskManagement": {
-        "Type": "MaximumDrawdownPercentPerSecurity",
-        "Parameters": {"maximum_drawdown_percent": 0.05},
+        "Type": "SigmaRailRiskManagementModel",
+        "Parameters": {"rules": []},
     },
     "Execution": {
-        "Type": "ImmediateExecutionModel",
-        "Parameters": {},
+        "Type": "SigmaRailScreenerExecutionModel",
+        "Parameters": {"fill_session": "moo"},
     },
 }
 
@@ -67,9 +63,9 @@ def stub_template(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
     (tmp_path / f"{tid}.json").write_text(
         json.dumps(
             {
-                "SchemaVersion": 2,
-                "Kind": "VeraLabV1",
-                "VeraBase": {},
+                "SchemaVersion": 3,
+                "Kind": "SigmaRailStrategyV1",
+                "SigmaRail": {},
                 "Framework": copy.deepcopy(_STUB_FRAMEWORK),
                 "AlgorithmParameters": {"regime-source": "screener"},
             }
@@ -86,7 +82,7 @@ def test_list_strategy_templates_empty() -> None:
 
 def test_load_framework_catalog() -> None:
     catalog = load_framework_catalog()
-    assert catalog.get("version") == 1
+    assert catalog.get("version") == 2
     assert isinstance(catalog.get("slots"), list)
 
 
@@ -95,9 +91,9 @@ def test_compose_replaces_universe() -> None:
         universe_spec=_SAMPLE_UNIVERSE,
         framework=_STUB_FRAMEWORK,
     )
-    assert spec["Kind"] == "VeraLabV1"
-    assert spec["VeraBase"]["Universe"] == _SAMPLE_UNIVERSE
-    assert spec["Framework"]["Alpha"]["Type"] == "RsiAlphaModel"
+    assert spec["Kind"] == "SigmaRailStrategyV1"
+    assert spec["Framework"]["UniverseSelection"]["Parameters"]["query"] == _SAMPLE_UNIVERSE
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
 
 
 def test_compose_framework_overrides(stub_template: str) -> None:
@@ -106,11 +102,11 @@ def test_compose_framework_overrides(stub_template: str) -> None:
         template_id=stub_template,
         framework_overrides={
             "Alpha": {
-                "Parameters": {"period": 21, "resolution": "Daily"},
+                "Parameters": {"signal_duration_days": 21},
             }
         },
     )
-    assert spec["Framework"]["Alpha"]["Parameters"]["period"] == 21
+    assert spec["Framework"]["Alpha"]["Parameters"]["signal_duration_days"] == 21
 
 
 def test_compose_framework_overrides_deep_merge(stub_template: str) -> None:
@@ -192,47 +188,21 @@ def test_validate_composed_spec_uses_sigma_rail_schema() -> None:
 
 def test_compose_custom_assembled_ensemble() -> None:
     assembled_fw = {
-        "UniverseSelection": {
-            "Type": "VeraScreenerUniverseSelectionModel",
-            "Parameters": {},
-        },
         "Alpha": {
-            "Type": "CompositeAlphaModel",
-            "Parameters": {
-                "models": [
-                    {
-                        "Type": "VeraScreenerAlphaModel",
-                        "Parameters": {"max_positions": 10, "stop_loss_pct": 0.08},
-                    },
-                    {
-                        "Type": "RsiAlphaModel",
-                        "Parameters": {"period": 14, "resolution": "Daily"},
-                    },
-                ]
-            },
+            "Type": "SigmaRailScreenerAlphaModel",
+            "Parameters": {"signal_mode": "composite_score", "signals": [{"field_weights": {"rs_rating": 1.0}}]},
         },
         "PortfolioConstruction": {
-            "Type": "ConfidenceWeightedPortfolioConstructionModel",
-            "Parameters": {},
+            "Type": "SigmaRailScreenerPortfolioConstructionModel",
+            "Parameters": {"allocation_policy": "equal_weight", "max_positions": 10},
         },
         "RiskManagement": {
-            "Type": "CompositeRiskManagementModel",
-            "Parameters": {
-                "models": [
-                    {
-                        "Type": "TrailingStopRiskManagementModel",
-                        "Parameters": {"maximum_drawdown_percent": 0.05},
-                    },
-                    {
-                        "Type": "MaximumSectorExposureRiskManagementModel",
-                        "Parameters": {"maximum_sector_exposure": 0.25},
-                    },
-                ]
-            },
+            "Type": "SigmaRailRiskManagementModel",
+            "Parameters": {"rules": [{"kind": "trailing_stop", "parameters": {"maximum_drawdown_percent": 0.05}}]},
         },
         "Execution": {
-            "Type": "VolumeWeightedAveragePriceExecutionModel",
-            "Parameters": {},
+            "Type": "SigmaRailScreenerExecutionModel",
+            "Parameters": {"fill_session": "moo"},
         },
     }
 
@@ -241,87 +211,19 @@ def test_compose_custom_assembled_ensemble() -> None:
         framework=assembled_fw,
     )
 
-    assert spec["Kind"] == "VeraLabV1"
-    assert spec["SchemaVersion"] == 2
-    assert spec["VeraBase"]["Universe"] == _SAMPLE_UNIVERSE
-    assert spec["Framework"]["Alpha"]["Type"] == "CompositeAlphaModel"
-    assert len(spec["Framework"]["Alpha"]["Parameters"]["models"]) == 2
-    assert spec["Framework"]["RiskManagement"]["Type"] == "CompositeRiskManagementModel"
-    assert len(spec["Framework"]["RiskManagement"]["Parameters"]["models"]) == 2
-    assert spec["Framework"]["PortfolioConstruction"]["Type"] == "ConfidenceWeightedPortfolioConstructionModel"
-    assert spec["Framework"]["Execution"]["Type"] == "VolumeWeightedAveragePriceExecutionModel"
+    assert spec["Kind"] == "SigmaRailStrategyV1"
+    assert spec["SchemaVersion"] == 3
+    assert spec["Framework"]["UniverseSelection"]["Parameters"]["query"] == _SAMPLE_UNIVERSE
+    assert spec["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
+    assert spec["Framework"]["Alpha"]["Parameters"]["signals"][0]["field_weights"] == {"rs_rating": 1.0}
+    assert spec["Framework"]["RiskManagement"]["Type"] == "SigmaRailRiskManagementModel"
+    assert spec["Framework"]["RiskManagement"]["Parameters"]["rules"][0]["kind"] == "trailing_stop"
+    assert spec["Framework"]["PortfolioConstruction"]["Type"] == "SigmaRailScreenerPortfolioConstructionModel"
+    assert spec["Framework"]["Execution"]["Type"] == "SigmaRailScreenerExecutionModel"
 
 
-def test_compose_all_qc_framework_permutations() -> None:
-    """Adversarial validation: all supported QC Framework model permutations must compose and validate."""
-    alpha_options = [
-        {"Type": "RsiAlphaModel", "Parameters": {"period": 14, "resolution": "Daily"}},
-        {"Type": "MacdAlphaModel", "Parameters": {"fast_period": 12, "slow_period": 26, "signal_period": 9}},
-        {"Type": "EmaCrossAlphaModel", "Parameters": {"fast_period": 10, "slow_period": 50}},
-        {
-            "Type": "CompositeAlphaModel",
-            "Parameters": {
-                "models": [
-                    {"Type": "RsiAlphaModel", "Parameters": {"period": 14}},
-                    {"Type": "MacdAlphaModel", "Parameters": {"fast_period": 12, "slow_period": 26, "signal_period": 9}},
-                ]
-            },
-        },
-    ]
-
-    pcm_options = [
-        {"Type": "ConfidenceWeightedPortfolioConstructionModel", "Parameters": {"max_weight": 0.15}},
-        {"Type": "RiskParityPortfolioConstructionModel", "Parameters": {"rebalance": "Daily"}},
-        {"Type": "EqualWeightingPortfolioConstructionModel", "Parameters": {"rebalance": "Daily"}},
-        {"Type": "SectorWeightingPortfolioConstructionModel", "Parameters": {"rebalance": "Weekly"}},
-    ]
-
-    risk_options = [
-        {"Type": "TrailingStopRiskManagementModel", "Parameters": {"maximum_drawdown_percent": 0.05}},
-        {"Type": "MaximumSectorExposureRiskManagementModel", "Parameters": {"maximum_sector_exposure": 0.30}},
-        {"Type": "MaximumDrawdownPercentPerSecurity", "Parameters": {"maximum_drawdown_percent": 0.08}},
-        {
-            "Type": "CompositeRiskManagementModel",
-            "Parameters": {
-                "models": [
-                    {"Type": "TrailingStopRiskManagementModel", "Parameters": {"maximum_drawdown_percent": 0.05}},
-                    {"Type": "MaximumSectorExposureRiskManagementModel", "Parameters": {"maximum_sector_exposure": 0.25}},
-                ]
-            },
-        },
-    ]
-
-    execution_options = [
-        {"Type": "VolumeWeightedAveragePriceExecutionModel", "Parameters": {}},
-        {"Type": "ImmediateExecutionModel", "Parameters": {}},
-        {"Type": "StandardDeviationExecutionModel", "Parameters": {"resolution": "Minute"}},
-    ]
-
-    universe_options = [
-        {"Type": "VeraScreenerUniverseSelectionModel", "Parameters": {}},
-        {"Type": "ManualUniverseSelectionModel", "Parameters": {"symbols": ["AAPL", "NVDA", "SPY"]}},
-        {"Type": "CoarseFundamentalUniverseSelectionModel", "Parameters": {"min_volume": 5000000, "min_price": 5}},
-    ]
-
-    for uni in universe_options:
-        for alpha in alpha_options:
-            for pcm in pcm_options:
-                for risk in risk_options:
-                    for exe in execution_options:
-                        fw = {
-                            "UniverseSelection": uni,
-                            "Alpha": alpha,
-                            "PortfolioConstruction": pcm,
-                            "RiskManagement": risk,
-                            "Execution": exe,
-                        }
-                        spec = compose_strategy_v1(
-                            universe_spec=_SAMPLE_UNIVERSE,
-                            framework=fw,
-                        )
-                        assert spec["Kind"] == "VeraLabV1"
-                        assert spec["Framework"]["UniverseSelection"]["Type"] == uni["Type"]
-                        assert spec["Framework"]["Alpha"]["Type"] == alpha["Type"]
-                        assert spec["Framework"]["PortfolioConstruction"]["Type"] == pcm["Type"]
-                        assert spec["Framework"]["RiskManagement"]["Type"] == risk["Type"]
-                        assert spec["Framework"]["Execution"]["Type"] == exe["Type"]
+def test_compose_rejects_alternate_lean_classes() -> None:
+    framework = copy.deepcopy(_STUB_FRAMEWORK)
+    framework["Alpha"]["Type"] = "ConstantAlphaModel"
+    with pytest.raises(ValueError, match="fixed SigmaRail implementation"):
+        compose_strategy_v1(universe_spec=_SAMPLE_UNIVERSE, framework=framework)

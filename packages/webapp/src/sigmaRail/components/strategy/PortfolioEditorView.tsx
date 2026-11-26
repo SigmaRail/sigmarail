@@ -164,7 +164,7 @@ export function PortfolioEditorView() {
               ✓ Compiled →{" "}
               {String(
                 (compiled as { Framework?: { Alpha?: { Type?: string } } }).Framework?.Alpha?.Type ??
-                  "VeraLabV1",
+                  "SigmaRailStrategyV1",
               )}
             </p>
             <pre className="mt-2 max-h-80 overflow-auto rounded border border-line bg-surface-sunk p-2 font-mono text-[10px] text-ink-muted">

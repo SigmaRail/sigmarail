@@ -1,6 +1,6 @@
 """Build ClickHouse SQL for daily_screener universe loads.
 
-Ported from VeraTradingLab `vera_lab.ir.sql_builder`.
+Ported from SigmaRailTradingLab `sigmarail_lab.ir.sql_builder`.
 """
 
 from __future__ import annotations

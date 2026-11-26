@@ -23,7 +23,7 @@ from typing import Any
 from sigmarail_studio_mcp.backtest_runner.project_registry import (
     default_project_id,
     get_project,
-    lean_projects_root,
+    lean_workspace_root,
     resolve_output_rel,
 )
 from sigmarail_studio_mcp.backtest_runner.project_staging import stage_lean_project
@@ -39,7 +39,7 @@ def _cleanup_lean_config_after_job(func):
         try:
             return func(job_id, *args, **kwargs)
         finally:
-            overlay = lean_projects_root() / f".lean-config-{job_id}.json"
+            overlay = lean_workspace_root() / f".lean-config-{job_id}.json"
             try:
                 overlay.unlink(missing_ok=True)
             except OSError:
@@ -116,10 +116,9 @@ def _write_lean_clickhouse_config(
     password: str,
 ) -> Path:
     """Create a short-lived LEAN config overlay with worker-owned CH settings."""
-    source = lean_root / str(project["lean_config_overlay"])
+    source = Path(str(project["lean_config_template"])).expanduser().resolve()
     original = json.loads(source.read_text())
-    # Keep the overlay minimal: the developer's shared lean-composite.json also
-    # contains brokerage and API credentials that a backtest never needs.
+    # Start from SigmaRail's source-controlled, non-secret LEAN configuration.
     safe_keys = (
         "data-folder",
         "data-provider",
@@ -571,7 +570,7 @@ def preflight(*, worker_window_minutes: int = 30) -> dict[str, Any]:
     if not worker_recent:
         messages.append(
             f"no worker heartbeat/activity in the last {worker_window_minutes} minutes "
-            "(run: vera-backtest-workerctl start)"
+            "(start the SigmaRail backtest-worker service with Docker Compose)"
         )
 
     ready = docker_ok and lean_cli_ok and clickhouse_ok
@@ -605,12 +604,6 @@ def tail_log(job_id: str, tail_lines: int = 200) -> dict[str, Any]:
         client.close()
 
     log_path = output_path / "lean-backtest.log"
-    if not log_path.is_file():
-        migrated_path = lean_projects_root() / resolve_output_rel(
-            default_project_id(), job_id
-        ) / "lean-backtest.log"
-        if migrated_path.is_file():
-            log_path = migrated_path
     if not log_path.is_file():
         return {
             "job_id": job_id,
@@ -898,7 +891,7 @@ def _build_lean_cmd(
 ) -> list[str]:
     """Build argv for lean_backtest_composite.py (matches smoke_backtest_local.sh)."""
     wrapper = lean_root / str(project["composite_wrapper"])
-    lean_config = lean_root / str(project["lean_config_overlay"])
+    lean_config = Path(str(project["lean_config_overlay"])).expanduser().resolve()
     lean_cli_name = str(project.get("lean_cli_name") or project.get("id"))
     if not wrapper.is_file():
         raise FileNotFoundError(f"composite wrapper not found: {wrapper}")
@@ -1016,7 +1009,7 @@ def run_job(
     project = get_project(lean_project)
     lean_project = str(project["id"])
 
-    lean_root = lean_projects_root()
+    lean_root = lean_workspace_root()
     staged = stage_lean_project(
         lean_root,
         job_id=job_id,
@@ -1598,7 +1591,7 @@ def investigate_job(
             verdict = "orphaned"
             hints.append(
                 "log shows 'Analysis Complete' but job never finalized — worker/telemetry died "
-                "mid-run; verify worker alive (vera-backtest-workerctl status), then cancel + resubmit"
+                "mid-run; verify the SigmaRail backtest-worker service, then cancel + resubmit"
             )
         elif (heartbeat_age is not None and heartbeat_age > heartbeat_stale_seconds) or (
             log_age_seconds is not None and log_age_seconds > log_stale_seconds
@@ -1620,7 +1613,7 @@ def investigate_job(
         worker_alive = worker_heartbeat_recent()
         out["worker_alive"] = worker_alive
         if not worker_alive:
-            hints.append("no recent worker heartbeat — worker is down; start vera-backtest-workerctl")
+            hints.append("no recent worker heartbeat — start the SigmaRail backtest-worker service")
         else:
             hints.append("queued — worker will claim when a slot frees")
     else:
@@ -1640,7 +1633,7 @@ def _lint_guard(spec_json: str) -> None:
     (``off`` | ``warn`` | ``enforce``, default ``enforce``).
 
     Skipped silently when the linter cannot be imported — this package deliberately does not
-    depend on VeraBase, and the guarded path still enforces. A gate that cannot run must not
+    depend on SigmaRail, and the guarded path still enforces. A gate that cannot run must not
     pretend to have run, so the guarded caller reports the skip separately.
     """
     mode = (
@@ -1685,9 +1678,9 @@ def save_spec(
     author_agent: str = "user",
     is_ephemeral: int = 0,
 ) -> dict[str, Any]:
-    """INSERT a VeraLab spec into strategy_algorithm_specs.
+    """INSERT a SigmaRailLab spec into strategy_algorithm_specs.
 
-    ``spec_json`` is the compiled VeraLabV1 (run artifact). ``pipeline_json``
+    ``spec_json`` is the compiled SigmaRailStrategyV1 (run artifact). ``pipeline_json``
     (optional) is the authored PipelineDocument for Studio/agent round-trip.
     ``portfolio_json`` (optional) is the PortfolioDocument source of truth.
     """

@@ -1,5 +1,5 @@
 """
-ETF sector allocation + regime leverage VeraLab spec builder.
+ETF sector allocation + regime leverage SigmaRailLab spec builder.
 
 Use ``build_spec(...)`` to produce a JSON string ready for ``save_spec`` in
 ``vera-mcp-backtest``.  Defaults match ``tests/fixtures/ir/sector_etf_v1.json``.
@@ -81,15 +81,11 @@ def build_spec(
     )
 
     doc: dict[str, Any] = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
-            "UniverseSelection": {
-                "Type": "VeraScreenerUniverseSelectionModel",
-                "Parameters": {},
-            },
             "Alpha": {
-                "Type": "VeraSectorEtfAlphaModel",
+                "Type": "SigmaRailSectorEtfAlphaModel",
                 "Parameters": {
                     "sector_long_n": sector_long_n,
                     "sector_short_n": sector_short_n,
@@ -98,7 +94,7 @@ def build_spec(
                 },
             },
             "PortfolioConstruction": {
-                "Type": "VeraSectorEtfPortfolioConstructionModel",
+                "Type": "SigmaRailSectorEtfPortfolioConstructionModel",
                 "Parameters": {
                     "max_long_exposure": max_long_exposure,
                     "max_inverse_exposure": max_inverse_exposure,
@@ -107,7 +103,7 @@ def build_spec(
                 },
             },
             "Execution": {
-                "Type": "VeraScreenerExecutionModel",
+                "Type": "SigmaRailScreenerExecutionModel",
                 "Parameters": {},
             },
             "RiskManagement": {
@@ -116,7 +112,7 @@ def build_spec(
             },
         },
         "AlgorithmParameters": {},
-        "VeraBase": {
+        "SigmaRail": {
             "Universe": {
                 "source": "daily_screener",
                 "criteria": {

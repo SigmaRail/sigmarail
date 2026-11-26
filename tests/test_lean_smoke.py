@@ -164,7 +164,7 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
             pytest.fail(f"SigmaRail API did not start:\n{(tmp_path / 'sigmarail-api.log').read_text()}")
 
         meta = meta_response.json()
-        assert meta["dialect"]["id"] == "C-VERA-EXPR-V1"
+        assert meta["dialect"]["id"] == "C-SIGMARAIL-EXPR-V1"
         assert meta["registry_digest"].startswith("sha256:")
         body = {
             "start_date": "2024-12-02",
@@ -205,7 +205,7 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
                 encoding="utf-8"
             )
         )
-        smoke_ir["VeraBase"]["Universe"] = _universe_spec()
+        smoke_ir["SigmaRail"]["Universe"] = _universe_spec()
         (project / "sigmarail-smoke.json").write_text(
             json.dumps(smoke_ir, indent=2), encoding="utf-8"
         )
@@ -284,7 +284,7 @@ def test_custom_lean_engine_loads_synthetic_universe_from_sigmarail_api(
         engine_log = output / "log.txt"
         assert engine_log.is_file(), f"LEAN engine log missing; CLI log:\n{log[-12000:]}"
         engine_text = engine_log.read_text(encoding="utf-8", errors="replace")
-        assert "SigmaRailDailyScreener: dialect=C-VERA-EXPR-V1" in engine_text, engine_text[-12000:]
+        assert "SigmaRailDailyScreener: dialect=C-SIGMARAIL-EXPR-V1" in engine_text, engine_text[-12000:]
         assert re.search(r"daily_screener loaded: [1-9][0-9]* rows", engine_text), engine_text[-12000:]
         assert "SigmaRail strategy resolution failed" not in engine_text, engine_text[-12000:]
         summaries = list(output.glob("*-summary.json"))

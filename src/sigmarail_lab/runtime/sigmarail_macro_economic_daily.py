@@ -20,7 +20,7 @@ _SELECT = """
 """
 
 
-class VeraMacroEconomicDaily:
+class SigmaRailMacroEconomicDaily:
     """In-memory cache of macro rows by date (YYYY-MM-DD)."""
 
     def __init__(self) -> None:

@@ -1,8 +1,8 @@
 """Lean-safe RegimeGate evaluator (C-REGIME-GATE-V1).
 
-VeraBase ``vera_query_core.strategy.regime_gate`` remains the authoring SSOT.
+SigmaRail ``sigmarail_query_core.strategy.regime_gate`` remains the authoring SSOT.
 LEAN Docker only mounts this project (``PYTHONPATH=/project``), so the store
-imports the evaluator from here instead of VeraBase.
+imports the evaluator from here instead of SigmaRail.
 """
 
 from __future__ import annotations

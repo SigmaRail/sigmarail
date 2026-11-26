@@ -1,9 +1,9 @@
 # SigmaRail capability migration to-do
 
-This is the execution checklist for preserving the Vera-era capability surface while
+This is the execution checklist for preserving the SigmaRail-era capability surface while
 moving runtime ownership to SigmaRail projects. A capability is complete only when its
 MCP/API behavior is retained, its dependencies are SigmaRail-owned or explicitly
-module-owned, and its tests pass without Vera packages installed.
+module-owned, and its tests pass without SigmaRail packages installed.
 
 ## Phase 1 — Finish the shared strategy contract
 
@@ -55,13 +55,13 @@ module-owned, and its tests pass without Vera packages installed.
 
 ## Phase 5 — Release and close-out
 
-- [ ] Remove or migrate every runtime import of `sigmarail.features`, `vera_spec`, and
-  `vera_lab`; classify remaining occurrences as documented compatibility strings,
+- [ ] Remove or migrate every runtime import of `sigmarail.features`, `sigmarail_spec`, and
+  `sigmarail_lab`; classify remaining occurrences as documented compatibility strings,
   provenance, or versioned serialized identifiers.
 - [ ] Run Core, Spec, Studio, Lean, and optional-module suites in clean environments;
   run the synthetic full-stack Lean smoke and deterministic Spec build check.
 - [ ] Verify no tools/domains were dropped, generated artifacts are current, packaging
-  works without Vera checkouts on `PYTHONPATH`, and install docs match the module model.
+  works without SigmaRail checkouts on `PYTHONPATH`, and install docs match the module model.
 - [ ] Update the capability audit, source locks, release notes, and CI cross-repository
   pins; obtain independent exact-SHA review before merging.
 
@@ -72,7 +72,7 @@ module-owned, and its tests pass without Vera packages installed.
   validation at this checkpoint: 729 Spec tests and 100 Core/Studio tests passed, with
   one integration test skipped.
 - Active next slice: connect the generated runtime model/action catalog to SigmaRail
-  Lean and remove remaining Vera strings/imports from the linter gates. The linter parity
+  Lean and remove remaining SigmaRail strings/imports from the linter gates. The linter parity
   suite passes; factor performance follows as the first Core analytics port.
 - Still outstanding: all unchecked items above. Legacy MCP modules remain registered;
   pending imports are migration work, not completed SigmaRail implementations.

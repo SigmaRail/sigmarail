@@ -67,19 +67,19 @@ def _state_from_targets(targets: dict[str, float]) -> str | None:
 
 
 def _build_catalog_from_store(store: Any) -> DataSourceCatalog:
-    """Build DataSourceCatalog from store's VeraBase data_sources if available."""
+    """Build DataSourceCatalog from store's SigmaRail data_sources if available."""
     catalog = DataSourceCatalog()
-    # Check if store has attached data sources from VeraBase facet
-    vera_base = getattr(store, "_vera_base", None)
-    if vera_base is not None:
-        data_sources = getattr(vera_base, "data_sources", None)
+    # Check if store has attached data sources from SigmaRail facet
+    sigmarail_base = getattr(store, "_sigmarail_base", None)
+    if sigmarail_base is not None:
+        data_sources = getattr(sigmarail_base, "data_sources", None)
         if data_sources:
             for spec in data_sources:
                 catalog.register(spec)
     return catalog
 
 
-class VeraGraphPolicyAlphaModel(AlphaModel):
+class SigmaRailGraphPolicyAlphaModel(AlphaModel):
     def __init__(self, store: Any, **_: Any):
         self._store = store
         root = getattr(store, "_policy_graph_root", None)
@@ -94,7 +94,7 @@ class VeraGraphPolicyAlphaModel(AlphaModel):
         self._state_days: Counter = Counter()
         self._peak_equity = None
         self._max_dd = 0.0
-        self.Name = "VeraGraphPolicyAlphaModel"
+        self.Name = "SigmaRailGraphPolicyAlphaModel"
 
     def Update(self, algorithm, data):
         if getattr(algorithm, "IsWarmingUp", False):
@@ -205,7 +205,7 @@ class VeraGraphPolicyAlphaModel(AlphaModel):
         algorithm._etf_compare_summary = summary
 
 
-class VeraGraphPolicyPortfolioConstructionModel(PortfolioConstructionModel):
+class SigmaRailGraphPolicyPortfolioConstructionModel(PortfolioConstructionModel):
     def __init__(self, store: Any, **_: Any):
         self._store = store
         root = getattr(store, "_policy_graph_root", None)

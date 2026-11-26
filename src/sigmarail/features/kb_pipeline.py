@@ -45,7 +45,7 @@ def _ensure_knowledgebase_import() -> None:
 
     raise ImportError(
         "No module named 'knowledgebase'. Set PYTHONPATH to KnowledgeBase/src "
-        "or run SigmaRail MCP via VeraBase/scripts/run_vera_mcp_stdio.sh"
+        "or run SigmaRail MCP via SigmaRail/scripts/run_vera_mcp_stdio.sh"
     )
 
 

@@ -1,2 +1,20 @@
 packages:
   - "packages/**"
+allowBuilds:
+  '@apollo/rover': set this to true or false
+  '@opentelemetry/sdk-node': set this to true or false
+  '@swc/core': set this to true or false
+  aws-sdk: set this to true or false
+  contentful: set this to true or false
+  core-js: set this to true or false
+  core-js-pure: set this to true or false
+  cpu-features: set this to true or false
+  es5-ext: set this to true or false
+  esbuild: set this to true or false
+  msw: set this to true or false
+  nx: set this to true or false
+  protobufjs: set this to true or false
+  serverless: set this to true or false
+  spawn-sync: set this to true or false
+  ssh2: set this to true or false
+  yarn: set this to true or false

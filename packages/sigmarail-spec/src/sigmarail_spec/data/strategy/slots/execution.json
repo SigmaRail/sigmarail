@@ -1,14 +1,9 @@
 {
   "capability_types": {
-    "ClickHouseExecutionModel": null,
-    "ImmediateExecutionModel": null,
-    "ScreenerStoreExecutionModel": null,
-    "StandardDeviationExecutionModel": null,
-    "VeraScreenerExecutionModel": [
+    "SigmaRailScreenerExecutionModel": [
       "fill_session",
       "store"
-    ],
-    "VolumeWeightedAveragePriceExecutionModel": null
+    ]
   },
   "contract_refs": {
     "authoring": "sigmarail-spec://v1/strategy/authoring",
@@ -19,12 +14,7 @@
   "purpose": "Submit target orders using the selected fill session.",
   "slot": "Execution",
   "type_ids": [
-    "ClickHouseExecutionModel",
-    "ImmediateExecutionModel",
-    "ScreenerStoreExecutionModel",
-    "StandardDeviationExecutionModel",
-    "VeraScreenerExecutionModel",
-    "VolumeWeightedAveragePriceExecutionModel"
+    "SigmaRailScreenerExecutionModel"
   ],
   "version": 1
 }

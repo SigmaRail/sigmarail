@@ -1,22 +1,21 @@
-"""All-weather fixed-universe VeraLabV1 JSON for LEAN Docker.
+"""All-weather fixed-universe SigmaRailStrategyV1 JSON for LEAN Docker.
 
 Must stay byte-identical to ``tests/fixtures/ir/all-weather-v1.json``.
 """
 
 RAW_JSON = """{
-  "SchemaVersion": 2,
-  "Kind": "VeraLabV1",
+  "SchemaVersion": 3,
+  "Kind": "SigmaRailStrategyV1",
   "Framework": {
-    "UniverseSelection": {
-      "Type": "VeraScreenerUniverseSelectionModel",
-      "Parameters": {}
-    },
     "Alpha": {
       "Type": "ConstantAlphaModel",
-      "Parameters": { "period_days": 30, "magnitude": 0.25 }
+      "Parameters": {
+        "period_days": 30,
+        "magnitude": 0.25
+      }
     },
     "PortfolioConstruction": {
-      "Type": "VeraScreenerPortfolioConstructionModel",
+      "Type": "SigmaRailScreenerPortfolioConstructionModel",
       "Parameters": {
         "max_positions": 4,
         "max_weight": 0.3,
@@ -25,7 +24,7 @@ RAW_JSON = """{
       }
     },
     "Execution": {
-      "Type": "VeraScreenerExecutionModel",
+      "Type": "SigmaRailScreenerExecutionModel",
       "Parameters": {}
     },
     "RiskManagement": {
@@ -34,23 +33,71 @@ RAW_JSON = """{
     }
   },
   "AlgorithmParameters": {},
-  "VeraBase": {
+  "SigmaRail": {
     "Universe": {
       "version": 1,
       "from": "daily_screener",
-      "select": ["ticker", "close", "atr_14_pct"],
+      "select": [
+        "ticker",
+        "close",
+        "atr_14_pct"
+      ],
       "where": {
         "type": "any",
         "items": [
-          { "type": "eq", "left": { "type": "col", "name": "ticker" }, "right": { "type": "lit", "value": "VTI" } },
-          { "type": "eq", "left": { "type": "col", "name": "ticker" }, "right": { "type": "lit", "value": "TLT" } },
-          { "type": "eq", "left": { "type": "col", "name": "ticker" }, "right": { "type": "lit", "value": "GLD" } },
-          { "type": "eq", "left": { "type": "col", "name": "ticker" }, "right": { "type": "lit", "value": "TIP" } }
+          {
+            "type": "eq",
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "VTI"
+            }
+          },
+          {
+            "type": "eq",
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "TLT"
+            }
+          },
+          {
+            "type": "eq",
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "GLD"
+            }
+          },
+          {
+            "type": "eq",
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "TIP"
+            }
+          }
         ]
       },
-      "order_by": [{ "field": "close", "direction": "desc" }],
+      "order_by": [
+        {
+          "field": "close",
+          "direction": "desc"
+        }
+      ],
       "limit_per_day": 10
     }
   }
-}
-"""
+}"""

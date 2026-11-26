@@ -128,7 +128,7 @@
       "uri": "sigmarail-spec://v1/strategy/authoring"
     },
     {
-      "description": "VeraLabV1 and LEAN framework execution schemas and slot index.",
+      "description": "SigmaRailStrategyV1 and LEAN framework execution schemas and slot index.",
       "id": "strategy.execution",
       "path": "strategy/execution.json",
       "title": "LEAN execution contract",
@@ -138,7 +138,7 @@
       "description": "SigmaRail universe query JSON schema.",
       "id": "strategy.universe-query",
       "path": "strategy/universe-query.json",
-      "title": "VeraBase universe query schema",
+      "title": "SigmaRail universe query schema",
       "uri": "sigmarail-spec://v1/strategy/universe-query"
     },
     {

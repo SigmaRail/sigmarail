@@ -7,12 +7,6 @@ from typing import Any
 
 # Mirrors tests/fixtures/ir/lean_framework_v1_minimal.json "Framework".
 _MINIMAL_RSI_SPY_QQQ: dict[str, Any] = {
-    "UniverseSelection": {
-        "Type": "ManualUniverseSelectionModel",
-        "Parameters": {
-            "symbols": ["SPY", "QQQ"],
-        },
-    },
     "Alpha": {
         "Type": "RsiAlphaModel",
         "Parameters": {

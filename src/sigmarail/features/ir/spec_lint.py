@@ -1,8 +1,8 @@
-"""Static validation of VeraLabV1 specs.
+"""Static validation of SigmaRailStrategyV1 specs.
 
-The table that feeds E200/E201 is *generated* by `vera_lab.ir.runtime_param_table`, which
-lives in the VeraTradingLab tree because it introspects the Lean runtime. This module only
-**reads** it. That direction is deliberate: VeraBase must never import `vera_lab`.
+The table that feeds E200/E201 is *generated* by `sigmarail_lab.ir.runtime_param_table`, which
+lives in the SigmaRailTradingLab tree because it introspects the Lean runtime. This module only
+**reads** it. That direction is deliberate: SigmaRail must never import `sigmarail_lab`.
 
 Static lint — reject invalid fields, operators, columns and expressions. Why this exists: ``save_spec`` only does ``json.loads`` + INSERT, so a spec carrying
 unknown parameter names, unknown columns or malformed expression ASTs saves cleanly and
@@ -10,10 +10,10 @@ fails later (or silently succeeds, because framework models accept ``**_extra``)
 
 This module does **not** re-implement validation. It reuses the existing ground truth and
 applies it to *the whole spec document*, which nothing currently does — today those
-validators only run on the ``VeraBase.Universe`` subtree during SQL compilation:
+validators only run on the ``SigmaRail.Universe`` subtree during SQL compilation:
 
 * ``sigmarail_spec``.parse_bool_expr`` / ``validate_bool_expr_depth``  — AST node types,
-  operators, arity, extra fields, nesting (C-VERA-EXPR-V1)
+  operators, arity, extra fields, nesting (C-SIGMARAIL-EXPR-V1)
 * ``universe_v1_column_registry.get_universe_v1_col_sql_map``        — DB-backed columns
 
 Codes
@@ -56,15 +56,16 @@ __all__ = [
 ]
 
 FRAMEWORK = "Framework"
-UNIVERSE_SUBTREE_PREFIX = "VeraBase/Universe"
+UNIVERSE_SUBTREE_PREFIX = "Framework/UniverseSelection/Parameters/query"
 
-# `Framework.UniverseSelection.Parameters` is deliberately *not* consumed by
-# VeraScreenerUniverseSelectionModel (its __init__ is `(self, store)`). The interpreter's
-# `_params_with_universe_screen` forwards membership/named_groups to the Alpha, and the
-# compiler lowers `screen` into the universe query. So these are live despite the class
-# not declaring them — encoding this is the fix for the false positives an earlier,
-# class-only checker emitted.
-UNIVERSE_SLOT_FORWARDED = frozenset({"screen", "membership", "named_groups"})
+STRATEGY_FRAMEWORK_SLOTS = frozenset({"UniverseSelection", "Alpha", "PortfolioConstruction", "Execution", "RiskManagement"})
+FIXED_STRATEGY_TYPES = {
+    "UniverseSelection": "SigmaRailClickHouseUniverseSelection",
+    "Alpha": "SigmaRailScreenerAlphaModel",
+    "PortfolioConstruction": "SigmaRailScreenerPortfolioConstructionModel",
+    "RiskManagement": "SigmaRailRiskManagementModel",
+    "Execution": "SigmaRailScreenerExecutionModel",
+}
 
 
 @dataclass(frozen=True)
@@ -94,7 +95,7 @@ def _discriminators(model: Any) -> frozenset[str]:
 
 
 # One dialect, one home. The candidate-list machinery that used to live here existed only
-# because VeraBase and VeraTradingLab declared colliding discriminators (`gte` as
+# because SigmaRail and SigmaRailTradingLab declared colliding discriminators (`gte` as
 # `left`/`right` here, as flat `column`/`value` there). That dialect now lives once, in
 # `sigmarail_spec`, and the flat form is gone — it had no producer, no consumer and zero stored
 # specs. A discriminator therefore resolves to exactly one class.
@@ -289,6 +290,16 @@ def _lint_parameters(
     issues: list[LintIssue] = []
     fw = doc.get(FRAMEWORK) or {}
     for slot, spec in fw.items():
+        if slot not in STRATEGY_FRAMEWORK_SLOTS:
+            issues.append(
+                LintIssue(
+                    "error",
+                    "E200",
+                    f"{FRAMEWORK}/{slot}",
+                    "unsupported strategy framework slot; expected one of the five fixed SigmaRail slots",
+                )
+            )
+            continue
         if not isinstance(spec, dict):
             continue
         type_id = spec.get("Type") or spec.get("type")
@@ -296,17 +307,29 @@ def _lint_parameters(
         if not type_id or not isinstance(params, dict):
             continue
         base = f"{FRAMEWORK}/{slot}"
-        if type_id not in runtime_kwargs:
+        if doc.get("Kind") == "SigmaRailStrategyV1" and type_id != FIXED_STRATEGY_TYPES[slot]:
+            issues.append(
+                LintIssue(
+                    "error", "E200", base,
+                    f"SigmaRailStrategyV1 fixes this slot to {FIXED_STRATEGY_TYPES[slot]!r}",
+                )
+            )
+            continue
+        if type_id == "SigmaRailClickHouseUniverseSelection":
+            allowed = {"query"}
+        elif type_id == "SigmaRailRiskManagementModel":
+            allowed = {"rules"}
+        elif type_id not in runtime_kwargs:
             issues.append(LintIssue("error", "E200", base, f"unknown model Type {type_id!r}"))
             continue
-        allowed = runtime_kwargs[type_id]
+        else:
+            allowed = runtime_kwargs[type_id]
         if allowed is None:
             # Known type (e.g. a Lean built-in) whose parameter names cannot be
             # introspected from here. Checking anyway would fabricate E201 errors.
             continue
-        extra_allowed = UNIVERSE_SLOT_FORWARDED if slot == "UniverseSelection" else frozenset()
         for name in params:
-            if name in allowed or name in extra_allowed:
+            if name in allowed:
                 continue
             issues.append(
                 LintIssue(
@@ -395,7 +418,8 @@ def _declared_columns(doc: dict) -> set[str]:
     (``screens_hit``, ``setup_pass``, ``w_conviction``, ...). Omitting them yields false
     errors on every valid spec — verified against the baseline.
     """
-    uni = ((doc.get("VeraBase") or {}).get("Universe")) or {}
+    fw = doc.get("Framework") or {}
+    uni = (((fw.get("UniverseSelection") or {}).get("Parameters") or {}).get("query")) or {}
     names = {c for c in (uni.get("select") or []) if isinstance(c, str)}
     for item in uni.get("computed") or []:
         if isinstance(item, dict) and isinstance(item.get("alias"), str):
@@ -420,15 +444,16 @@ def _lint_column_refs(
         if bare not in allowed and bare.split(".", 1)[-1] not in allowed:
             issues.append(LintIssue(severity, "E110", path, f"unknown column: {name!r}"))
 
-    universe = ((doc.get("VeraBase") or {}).get("Universe")) or {}
+    fw = doc.get("Framework") or {}
+    universe = (((fw.get("UniverseSelection") or {}).get("Parameters") or {}).get("query")) or {}
     # `select[]` **is** the declaration, so validating it against the declared set is
     # vacuous — it must be checked against physical columns only.
     for i, name in enumerate(universe.get("select") or []):
-        check(f"/VeraBase/Universe/select[{i}]", name, "error", physical)
+        check(f"/Framework/UniverseSelection/Parameters/query/select[{i}]", name, "error", physical)
     for i, item in enumerate(universe.get("order_by") or []):
         if isinstance(item, dict):
             check(
-                f"/VeraBase/Universe/order_by[{i}]/field",
+                f"/Framework/UniverseSelection/Parameters/query/order_by[{i}]/field",
                 item.get("field"),
                 "error",
                 referenceable,
@@ -460,7 +485,7 @@ def lint_spec(
     column_map: dict[str, Any] | None = None,
     action_vocabulary: dict[str, frozenset[str]] | None = None,
 ) -> list[LintIssue]:
-    """Lint a VeraLabV1 spec document. Returns a flat list of issues (may be empty).
+    """Lint a SigmaRailStrategyV1 spec document. Returns a flat list of issues (may be empty).
 
     """
     types = classes_by_type()
@@ -482,14 +507,18 @@ def lint_spec(
         # aliases the universe registry does not know (screens_hit, setup_pass,
         # w_conviction — verified absent), so an unknown name there is a warning, never
         # a false error.
-        severity = "warning" if path.startswith("/Framework") else "error"
+        severity = (
+            "error"
+            if path.startswith(f"/{UNIVERSE_SUBTREE_PREFIX}")
+            else "warning" if path.startswith("/Framework") else "error"
+        )
         found = _lint_expression(
             path, raw, bool_names, columns, column_severity=severity, types=types
         )
         # E100 stays an error even when no extra dialect is supplied. It was briefly
         # downgraded to a warning on the theory that an unrecognised node might belong to
         # the other dialect — but that made the gate *weaker in the Studio than in the
-        # CLI*, since `vera_lab` is only importable in the latter. The one genuine case
+        # CLI*, since `sigmarail_lab` is only importable in the latter. The one genuine case
         # (`regime.source`) is now accepted by this dialect directly, so an E100 here is a
         # real defect. If a future dialect node does trip it, the path names the node and
         # `SIGMARAIL_SPEC_LINT=warn` is the escape hatch.
@@ -556,10 +585,10 @@ def lint_spec_json(
         ]
 
 
-# Committed artifact: the valid-Type / constructor-kwarg table, generated where vera_lab
-# IS importable (the VeraTradingLab tree) and read where it is not (the Studio, the
+# Committed artifact: the valid-Type / constructor-kwarg table, generated where sigmarail_lab
+# IS importable (the SigmaRailTradingLab tree) and read where it is not (the Studio, the
 # runner). Without it E200/E201 are skipped exactly where specs get saved.
-ARTIFACT_PATH = Path(__file__).resolve().parents[1] / "data" / "runtime_param_table.json"
+from sigmarail_spec.strategy_lint import ARTIFACT_PATH as ARTIFACT_PATH
 
 
 def runtime_kwargs_from_artifact(
@@ -580,10 +609,10 @@ def runtime_kwargs_from_artifact(
 def resolve_runtime_kwargs() -> dict[str, set[str] | None] | None:
     """The committed artifact, which is the authoritative table in this process.
 
-    Live introspection needs `vera_lab`, which is only importable inside the VeraTradingLab
+    Live introspection needs `sigmarail_lab`, which is only importable inside the SigmaRailTradingLab
     tree — and this module deliberately does not depend on it any more (see the module note
     below). The artifact is generated *from* the live runtime and
-    `vera_lab.ir.runtime_param_table --check` fails when the two drift, so reading it here
+    `sigmarail_lab.ir.runtime_param_table --check` fails when the two drift, so reading it here
     is equivalent whenever the gate is green.
     """
     return runtime_kwargs_from_artifact()
@@ -634,7 +663,7 @@ def _load_from_clickhouse(ir_id: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: lint a VeraLabV1 spec from a file or from ClickHouse.
+    """CLI: lint a SigmaRailStrategyV1 spec from a file or from ClickHouse.
 
     ``python -m sigmarail.features.ir.spec_lint spec.json``
     ``python -m sigmarail.features.ir.spec_lint --ir-id champion_vcp_reversal``
@@ -672,8 +701,8 @@ def main(argv: list[str] | None = None) -> int:
                 "warning",
                 "LINT002",
                 "-",
-                "vera_lab not importable — E200/E201 and the VeraTradingLab AST dialect "
-                "are unavailable (run from the VeraTradingLab tree to enable them)",
+                "sigmarail_lab not importable — E200/E201 and the SigmaRailTradingLab AST dialect "
+                "are unavailable (run from the SigmaRailTradingLab tree to enable them)",
             )
         )
 

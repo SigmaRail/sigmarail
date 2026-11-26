@@ -78,7 +78,7 @@ def stage_lean_project(
     destination = (lean_root / relative).resolve()
     workspace = lean_root.resolve()
     if workspace not in destination.parents:
-        raise ValueError("generated LEAN project must remain inside LEAN_PROJECTS_ROOT")
+        raise ValueError("generated LEAN project must remain inside the SigmaRail LEAN workspace")
 
     if destination.exists():
         shutil.rmtree(destination)

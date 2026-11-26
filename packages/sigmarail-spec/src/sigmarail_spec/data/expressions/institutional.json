@@ -25,5 +25,5 @@
     "sigmarail.field.screener_ownership_daily.ticker.ticker"
   ],
   "scope": "Current consumer contract slice. SigmaRail SQL does not currently parse or evaluate this AST.",
-  "version": "C-VERA-EXPR-V1"
+  "version": "C-SIGMARAIL-EXPR-V1"
 }

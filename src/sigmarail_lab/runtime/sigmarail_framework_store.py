@@ -15,8 +15,8 @@ from .ch_connection import resolve_clickhouse_settings
 from .ch_http import ChHttpClient
 from .sigmarail_daily_screener import SigmaRailDailyScreener
 from .sigmarail_market_regime_signals_daily import SigmaRailMarketRegimeSignalsDaily
-from .sigmarail_macro_economic_daily import VeraMacroEconomicDaily
-from .sigmarail_symbol_technical_features import VeraSymbolTechnicalFeaturesDaily
+from .sigmarail_macro_economic_daily import SigmaRailMacroEconomicDaily
+from .sigmarail_symbol_technical_features import SigmaRailSymbolTechnicalFeaturesDaily
 
 
 class SigmaRailFrameworkStore:
@@ -25,19 +25,19 @@ class SigmaRailFrameworkStore:
     def __init__(self, universe_spec: dict[str, Any]) -> None:
         self._screener = SigmaRailDailyScreener(universe_spec)
         self._regime = SigmaRailMarketRegimeSignalsDaily()
-        self._macro = VeraMacroEconomicDaily()
-        self._technical = VeraSymbolTechnicalFeaturesDaily()
+        self._macro = SigmaRailMacroEconomicDaily()
+        self._technical = SigmaRailSymbolTechnicalFeaturesDaily()
         self._algorithm = None
         self._client: ChHttpClient | None = None
         self._policy_graph_root: GraphStep | None = None
-        self._vera_base: Any = None
+        self._sigmarail_base: Any = None
         self._regime_gate_evaluator = None
         self._regime_gate_as_of: str | None = None
         self._regime_gate_last: bool = True
 
     def attach_regime_gate(self, gate: Any) -> None:
         """Attach RegimeGateV1 (or dict) evaluator for store-backed regime condition filtering."""
-        # Lean Docker PYTHONPATH is /project only — do not import VeraBase here.
+        # Lean Docker PYTHONPATH is /project only — do not import SigmaRail here.
         from sigmarail_lab.runtime.regime_gate import RegimeGateEvaluator
 
         self._regime_gate_evaluator = RegimeGateEvaluator(gate)
@@ -57,12 +57,12 @@ class SigmaRailFrameworkStore:
         return self._regime_gate_last
 
     def attach_policy_graph(self, root: GraphStep) -> None:
-        """Attach Policy B graph root for VeraGraphPolicy* models."""
+        """Attach Policy B graph root for SigmaRailGraphPolicy* models."""
         self._policy_graph_root = root
 
-    def attach_vera_base(self, vera_base: Any) -> None:
-        """Attach VeraBase facet (includes data_sources) for graph policy data sources."""
-        self._vera_base = vera_base
+    def attach_sigmarail_base(self, sigmarail_base: Any) -> None:
+        """Attach SigmaRail facet (includes data_sources) for graph policy data sources."""
+        self._sigmarail_base = sigmarail_base
 
     def bind(self, algorithm, *, regime_source: str | None = None) -> None:
         self._algorithm = algorithm
@@ -134,6 +134,9 @@ class SigmaRailFrameworkStore:
 
     def get_universe(self, date_str: str) -> dict[str, float]:
         return self._screener.get_universe(date_str)
+
+    def get_universe_rows(self, date_str: str) -> dict[str, dict[str, Any]]:
+        return self._screener.get_universe_rows(date_str)
 
     def get_atrs(self, date_str: str) -> dict[str, float]:
         return self._screener.get_atrs(date_str)

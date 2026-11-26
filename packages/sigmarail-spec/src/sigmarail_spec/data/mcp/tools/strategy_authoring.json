@@ -2,16 +2,16 @@
   "domain": "strategy_authoring",
   "tools": [
     {
-      "description": "List Lean framework `Type` ids, slots, init parameters, and vera_lab flags.",
+      "description": "List Lean framework `Type` ids, slots, init parameters, and sigmarail_lab flags.",
       "id": "studio.mcp.tool.lean_discover_types",
       "input_schema": {
         "properties": {
-          "include_unwired": {
-            "title": "Include Unwired",
+          "include_sigmarail_screener_ids": {
+            "title": "Include Sigmarail Screener Ids",
             "type": "boolean"
           },
-          "include_vera_screener_ids": {
-            "title": "Include Vera Screener Ids",
+          "include_unwired": {
+            "title": "Include Unwired",
             "type": "boolean"
           },
           "lean_root": {
@@ -50,7 +50,7 @@
       }
     },
     {
-      "description": "Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict.",
+      "description": "Compile a staged PipelineDocument JSON into a SigmaRailStrategyV1 spec dict.",
       "id": "studio.mcp.tool.strategy_compile_pipeline",
       "input_schema": {
         "properties": {
@@ -72,7 +72,7 @@
       }
     },
     {
-      "description": "Compile a PortfolioDocument JSON (legs + allocation) into a VeraLabV1 spec.",
+      "description": "Compile a PortfolioDocument JSON (legs + allocation) into a SigmaRailStrategyV1 spec.",
       "id": "studio.mcp.tool.strategy_compile_portfolio",
       "input_schema": {
         "properties": {
@@ -94,7 +94,7 @@
       }
     },
     {
-      "description": "Compile a named strategy preset into a VeraLabV1 spec dict.",
+      "description": "Compile a named strategy preset into a SigmaRailStrategyV1 spec dict.",
       "id": "studio.mcp.tool.strategy_compile_preset",
       "input_schema": {
         "properties": {
@@ -152,7 +152,7 @@
       }
     },
     {
-      "description": "Semantic slot-level diff between two VeraLabV1 specs.",
+      "description": "Semantic slot-level diff between two SigmaRailStrategyV1 specs.",
       "id": "studio.mcp.tool.strategy_diff",
       "input_schema": {
         "properties": {
@@ -178,7 +178,7 @@
       }
     },
     {
-      "description": "Decompile a VeraLabV1 spec JSON back into a PipelineDocument.",
+      "description": "Decompile a SigmaRailStrategyV1 spec JSON back into a PipelineDocument.",
       "id": "studio.mcp.tool.strategy_fork",
       "input_schema": {
         "properties": {
@@ -200,7 +200,7 @@
       }
     },
     {
-      "description": "Decompile a VeraLabV1 spec JSON back into a PortfolioDocument.",
+      "description": "Decompile a SigmaRailStrategyV1 spec JSON back into a PortfolioDocument.",
       "id": "studio.mcp.tool.strategy_fork_portfolio",
       "input_schema": {
         "properties": {
@@ -455,7 +455,7 @@
       }
     },
     {
-      "description": "Validate + compile an authored PipelineDocument and save it (forks when runs exist).\n\nUse this to persist the output of ``strategy_compose_document`` / ``strategy_fork`` — no raw\nVeraLabV1 JSON needed. Check ``forked`` and use the returned ``ir_id`` for follow-up calls.",
+      "description": "Validate + compile an authored PipelineDocument and save it (forks when runs exist).\n\nUse this to persist the output of ``strategy_compose_document`` / ``strategy_fork`` — no raw\nSigmaRailStrategyV1 JSON needed. Check ``forked`` and use the returned ``ir_id`` for follow-up calls.",
       "id": "studio.mcp.tool.strategy_save_pipeline",
       "input_schema": {
         "properties": {

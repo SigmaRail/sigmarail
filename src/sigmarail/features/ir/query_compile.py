@@ -1,7 +1,7 @@
 """Compile universe specs to ClickHouse SQL (L7 screener joins).
 
 ``source: daily_screener`` is the logical id; SQL joins ``screener_*``.
-Ported from VeraTradingLab `vera_lab.ir.query_compile` with minimal changes.
+Ported from SigmaRailTradingLab `sigmarail_lab.ir.query_compile` with minimal changes.
 """
 
 from __future__ import annotations

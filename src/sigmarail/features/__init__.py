@@ -1,7 +1,7 @@
 """Shared core for Vera screener/query execution.
 
 This package is intended to be imported by:
-- VeraTradingLab (LEAN Python runtime)
+- SigmaRail Lean (LEAN Python runtime)
 - SigmaRail Studio MCP server (thin wrapper)
 - A small REST service (thin wrapper)
 

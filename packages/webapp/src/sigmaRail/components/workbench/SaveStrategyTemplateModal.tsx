@@ -60,8 +60,8 @@ export function SaveStrategyTemplateModal({
 
       const compiled = compiledSpec && typeof compiledSpec === "object" ? compiledSpec : null;
       const compiledBase =
-        compiled && typeof compiled.VeraBase === "object" && compiled.VeraBase
-          ? (compiled.VeraBase as Record<string, unknown>)
+        compiled && typeof compiled.SigmaRail === "object" && compiled.SigmaRail
+          ? (compiled.SigmaRail as Record<string, unknown>)
           : {};
       const compiledAlgo =
         compiled && typeof compiled.AlgorithmParameters === "object" && compiled.AlgorithmParameters
@@ -71,27 +71,32 @@ export function SaveStrategyTemplateModal({
       const basePayload = compiled
         ? {
             ...compiled,
-            SchemaVersion: compiled.SchemaVersion ?? 2,
-            Kind: compiled.Kind ?? "VeraLabV1",
+            SchemaVersion: 3,
+            Kind: compiled.Kind ?? "SigmaRailStrategyV1",
             Framework: (compiled.Framework as AssembledFrameworkSpec) ?? assembledSpec,
             AlgorithmParameters: { ...compiledAlgo },
-            VeraBase: { ...compiledBase },
+            SigmaRail: { ...compiledBase },
           }
         : {
-            SchemaVersion: 2,
-            Kind: "VeraLabV1",
-            Framework: assembledSpec,
-            AlgorithmParameters: {},
-            VeraBase: {
-              Universe: {
-                version: 1,
-                from: "daily_screener",
-                select: ["ticker", "close", "overall_score"],
-                where: { type: "all", items: [] },
-                order_by: [{ field: "overall_score", direction: "desc" }],
-                limit_per_day: 50,
+            SchemaVersion: 3,
+            Kind: "SigmaRailStrategyV1",
+            Framework: {
+              ...assembledSpec,
+              UniverseSelection: {
+                Type: "SigmaRailClickHouseUniverseSelection",
+                Parameters: {
+                  query: {
+                    version: 1,
+                    select: ["ticker", "close", "overall_score"],
+                    where: { type: "all", items: [] },
+                    order_by: [{ field: "overall_score", direction: "desc" }],
+                    limit_per_day: 50,
+                  },
+                },
               },
             },
+            AlgorithmParameters: {},
+            SigmaRail: {},
           };
       const tagList = tags
         .split(",")
@@ -211,7 +216,7 @@ export function SaveStrategyTemplateModal({
             </p>
             <div className="flex items-center justify-between text-ink-muted">
               <span>Universe:</span>
-              <span className="font-mono text-ink font-medium">{previewFw.UniverseSelection?.Type}</span>
+              <span className="font-mono text-ink font-medium">SigmaRailClickHouseUniverseSelection</span>
             </div>
             <div className="flex items-center justify-between text-ink-muted">
               <span>Alpha Model:</span>

@@ -30,4 +30,4 @@ Tool count: see `sigmarail_studio_mcp/parity.py`. Canonical mapping: `sigmarail_
 ## Parity
 
 `parity.py` maps every old tool (`vera.*`, `vera-backtest.*`, `vera-lean-framework.*`) to its sigmarail-studio
-equivalent. Backlog must be empty — enforced by `platform_gate.check_vera_studio_parity`.
+equivalent. Backlog must be empty — enforced by `platform_gate.check_sigmarail_studio_parity`.

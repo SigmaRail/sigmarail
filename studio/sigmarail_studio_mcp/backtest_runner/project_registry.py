@@ -10,30 +10,35 @@ from typing import Any
 import yaml
 
 _DEFAULT_PROJECT_ID = "SigmaRailTradingLab"
-_COMPATIBLE_PROJECT_IDS = {_DEFAULT_PROJECT_ID, "VeraTradingLab"}
+_RESERVED_PROJECT_IDS = {_DEFAULT_PROJECT_ID}
 _REGISTRY_FILENAME = "lean_projects.yaml"
 
 
-def lean_projects_root() -> Path:
-    """Locate SigmaRail's persistent LEAN runtime directory."""
-    configured = (os.environ.get("LEAN_PROJECTS_ROOT") or "").strip()
-    if configured:
-        return Path(configured).expanduser().resolve()
+def _repo_root() -> Path:
+    configured = (os.environ.get("SIGMARAIL_REPO_ROOT") or "").strip()
+    return Path(configured).expanduser().resolve() if configured else Path(__file__).resolve().parents[3]
 
-    for parent in (Path.cwd(), *Path(__file__).resolve().parents):
-        if (parent / "lean.json").is_file():
-            return parent
-        candidate = parent / ".runtime" / "lean"
-        if (candidate / "lean.json").is_file():
-            return candidate
-    raise RuntimeError(
-        "Cannot locate SigmaRail's LEAN runtime (lean.json not found). "
-        "Set LEAN_PROJECTS_ROOT to the runtime directory containing lean.json."
-    )
+
+def lean_workspace_root() -> Path:
+    """Locate the isolated LEAN workspace owned by this SigmaRail checkout."""
+    configured = (os.environ.get("SIGMARAIL_LEAN_WORKSPACE_ROOT") or "").strip()
+    if configured:
+        root = Path(configured).expanduser().resolve()
+    else:
+        root = _repo_root() / ".sigmarail" / "lean"
+
+    root.mkdir(parents=True, exist_ok=True)
+    config_path = root / "lean.json"
+    if not config_path.exists():
+        template = _repo_root() / "deploy" / "lean" / "lean.json"
+        if not template.is_file():
+            raise RuntimeError(f"SigmaRail LEAN workspace template is missing: {template}")
+        config_path.write_bytes(template.read_bytes())
+    return root
 
 
 def _registry_path(root: Path | None = None) -> Path:
-    return (root or lean_projects_root()) / _REGISTRY_FILENAME
+    return (root or lean_workspace_root()) / _REGISTRY_FILENAME
 
 
 def _sigmarail_project(root: Path | None = None) -> dict[str, Any]:
@@ -41,18 +46,18 @@ def _sigmarail_project(root: Path | None = None) -> dict[str, Any]:
     source_root = (
         Path(configured).expanduser().resolve()
         if configured
-        else Path(__file__).resolve().parents[3] / "trading_lab"
+        else _repo_root() / "trading_lab"
     )
-    lean_root = root or lean_projects_root()
+    lean_root = root or lean_workspace_root()
     return {
         "id": _DEFAULT_PROJECT_ID,
         "label": "SigmaRail Trading Lab",
         "lean_cli_name": "sigmarail-run",
-        "workspace_root_env": "LEAN_PROJECTS_ROOT",
+        "workspace_root_env": "SIGMARAIL_LEAN_WORKSPACE_ROOT",
         "composite_wrapper": str(source_root / "scripts" / "lean_backtest_composite.py"),
-        "lean_config_overlay": "lean-composite.json",
+        "lean_config_template": str(source_root / "lean_config_template.json"),
         "default_image": "lean-local:latest",
-        "spec_kinds": ["VeraLabV1"],
+        "spec_kinds": ["SigmaRailStrategyV1"],
         "runner_entry": "main.py",
         "generated_project": True,
         "lean_workspace": str(lean_root),
@@ -78,7 +83,7 @@ def load_registry(root: Path | None = None) -> dict[str, Any]:
 def list_projects(*, enabled_only: bool = True, root: Path | None = None) -> list[dict[str, Any]]:
     projects = [_sigmarail_project(root)]
     for entry in load_registry(root).get("projects", []):
-        if not isinstance(entry, dict) or entry.get("id") in _COMPATIBLE_PROJECT_IDS:
+        if not isinstance(entry, dict) or entry.get("id") in _RESERVED_PROJECT_IDS:
             continue
         if enabled_only and not entry.get("enabled", True):
             continue
@@ -87,11 +92,10 @@ def list_projects(*, enabled_only: bool = True, root: Path | None = None) -> lis
 
 
 def get_project(project_id: str, *, root: Path | None = None) -> dict[str, Any]:
-    """Return a project; the old project ID resolves to the in-repo SigmaRail lab."""
+    """Return the in-repo SigmaRail project or a configured project."""
     pid = (project_id or _DEFAULT_PROJECT_ID).strip()
-    if pid in _COMPATIBLE_PROJECT_IDS:
+    if pid == _DEFAULT_PROJECT_ID:
         project = _sigmarail_project(root)
-        project["requested_id"] = pid
         return project
     for entry in load_registry(root).get("projects", []):
         if isinstance(entry, dict) and entry.get("id") == pid:

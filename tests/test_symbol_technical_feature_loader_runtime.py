@@ -1,7 +1,7 @@
 from datetime import date
 
 from sigmarail_lab.runtime.sigmarail_symbol_technical_features import (
-    VeraSymbolTechnicalFeaturesDaily,
+    SigmaRailSymbolTechnicalFeaturesDaily,
 )
 
 
@@ -15,7 +15,7 @@ class _FakeClickHouse:
 
 
 def test_technical_feature_range_is_loaded_in_bounded_date_chunks():
-    loader = VeraSymbolTechnicalFeaturesDaily()
+    loader = SigmaRailSymbolTechnicalFeaturesDaily()
     client = _FakeClickHouse()
     loader.set_http_client(client)
     loader.set_tickers(["AAA", "BBB"])
@@ -39,7 +39,7 @@ def test_technical_feature_chunk_results_are_combined_for_lookup():
                 return [{"ticker": "AAA", "trade_date": "2025-01-02", "value": 1}]
             return [{"ticker": "AAA", "trade_date": "2025-02-01", "value": 2}]
 
-    loader = VeraSymbolTechnicalFeaturesDaily()
+    loader = SigmaRailSymbolTechnicalFeaturesDaily()
     loader.set_http_client(_Rows())
     loader.set_tickers(["AAA"])
     loader.load_range(date(2025, 1, 1), date(2025, 2, 5))
@@ -49,7 +49,7 @@ def test_technical_feature_chunk_results_are_combined_for_lookup():
 
 
 def test_technical_feature_queries_batch_tickers_and_fail_on_partial_response():
-    loader = VeraSymbolTechnicalFeaturesDaily()
+    loader = SigmaRailSymbolTechnicalFeaturesDaily()
     client = _FakeClickHouse()
     loader.set_http_client(client)
     loader.set_tickers([f"T{i:04d}" for i in range(501)])

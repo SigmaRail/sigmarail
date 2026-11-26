@@ -1,20 +1,12 @@
-"""High-ROE quality basket VeraLabV1 JSON for LEAN Docker.
+"""High-ROE quality basket SigmaRailStrategyV1 JSON for LEAN Docker.
 
 Must stay byte-identical to ``tests/fixtures/ir/high-roe-large-cap-quality-v1.json`` (see ``tests/test_resolver_kinds.py``).
 """
 
 RAW_JSON = """{
-  "SchemaVersion": 2,
-  "Kind": "VeraLabV1",
+  "SchemaVersion": 3,
+  "Kind": "SigmaRailStrategyV1",
   "Framework": {
-    "UniverseSelection": {
-      "Type": "HighRoeQualityUniverseSelectionModel",
-      "Parameters": {
-        "new_assets_per_month": 2,
-        "min_market_cap_millions": 500,
-        "min_ipo_days": 180
-      }
-    },
     "Alpha": {
       "Type": "ConstantAlphaModel",
       "Parameters": {
@@ -36,19 +28,32 @@ RAW_JSON = """{
     }
   },
   "AlgorithmParameters": {},
-  "VeraBase": {
+  "SigmaRail": {
     "Universe": {
       "version": 1,
       "from": "daily_screener",
-      "select": ["ticker", "overall_score"],
+      "select": [
+        "ticker",
+        "overall_score"
+      ],
       "where": {
         "type": "gte",
-        "left": { "type": "col", "name": "close" },
-        "right": { "type": "lit", "value": 1 }
+        "left": {
+          "type": "col",
+          "name": "close"
+        },
+        "right": {
+          "type": "lit",
+          "value": 1
+        }
       },
-      "order_by": [{ "field": "overall_score", "direction": "desc" }],
+      "order_by": [
+        {
+          "field": "overall_score",
+          "direction": "desc"
+        }
+      ],
       "limit_per_day": 1
     }
   }
-}
-"""
+}"""

@@ -16,8 +16,13 @@ export SIGMARAIL_BACKTEST_WORKER_HEARTBEAT="${SIGMARAIL_BACKTEST_WORKER_HEARTBEA
 export RUNNER_ID="${RUNNER_ID:-sigmarail-compose-backtest-worker}"
 mkdir -p "${TMPDIR:-/tmp}"
 
-if [ ! -f "${LEAN_PROJECTS_ROOT:?LEAN_PROJECTS_ROOT is required}/lean.json" ]; then
-  echo "LEAN_PROJECTS_ROOT must be mounted and contain lean.json" >&2
+lean_root="${SIGMARAIL_LEAN_WORKSPACE_ROOT:?SIGMARAIL_LEAN_WORKSPACE_ROOT is required}"
+mkdir -p "$lean_root"
+if [ ! -f "$lean_root/lean.json" ]; then
+  cp /app/lean-workspace/lean.json "$lean_root/lean.json"
+fi
+if [ ! -f "$lean_root/lean.json" ]; then
+  echo "SigmaRail LEAN workspace could not be initialized at $lean_root" >&2
   exit 2
 fi
 

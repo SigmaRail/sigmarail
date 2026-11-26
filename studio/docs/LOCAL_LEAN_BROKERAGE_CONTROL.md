@@ -1,7 +1,7 @@
 # Local LEAN brokerage control
 
 Studio can manage up to two isolated local LEAN Docker deployments. Each run gets
-a private snapshot of the `VeraTradingLab` Python sources and its own LEAN output
+a private snapshot of the SigmaRail `trading_lab` Python sources and its own LEAN output
 directory, so stop/liquidate commands can target the selected algorithm.
 
 ## Supported account profiles
@@ -42,7 +42,7 @@ live-data provider; the Deploy form shows the broker and data provider separatel
   selected credentials while its engine is running, so its private Docker-mounted
   runtime config must be treated as a secret.
 - The original single Alpaca-paper profile remains readable. Saving its new
-  credentials migrates the legacy Alpaca values out of `LeanProjects/lean.json`.
+  credentials migrates legacy Alpaca values out of `.sigmarail/lean/lean.json`.
 
 ## Enable local controls
 

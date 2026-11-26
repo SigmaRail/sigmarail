@@ -2,7 +2,7 @@
 
 These pin the *arithmetic*, which the dialect tests do not: `test_expr.py` checks the shape of
 a parsed tree, while this file records what the evaluator actually returns for a fixed set of
-expressions and rows. It exists because the evaluator moved out of VeraTradingLab on
+expressions and rows. It exists because the evaluator moved out of SigmaRailTradingLab on
 2026-10-03 — the move was proven byte-identical and by a 103,200-comparison differential test,
 and this file keeps that guarantee once the old implementation is gone from the tree.
 
@@ -599,7 +599,7 @@ def test_slot_bool_matches_golden(name: str) -> None:
     assert [evaluate_slot_bool(r, EXPRS[name]) for r in ROWS] == GOLDEN[name]["slot"]
 
 
-# --- C-VERA-EXPR-V2 operand pins (min / max / clamp / abs / cond) -------------
+# --- C-SIGMARAIL-EXPR-V2 operand pins (min / max / clamp / abs / cond) -------------
 # These pin the *value* path (`evaluate_slot_number`), including the fail-closed
 # convention: any operand resolving to None propagates None; `cond` treats an
 # unevaluatable `when` as false and takes `otherwise`.

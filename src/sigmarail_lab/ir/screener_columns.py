@@ -17,7 +17,7 @@ else:
 
 
 class ScreenerColumn(StrEnum):
-    """Subset aligned with VeraBase daily_screener; expand as compilers gain coverage."""
+    """Subset aligned with SigmaRail daily_screener; expand as compilers gain coverage."""
 
     TICKER = "ticker"
     CLOSE = "close"

@@ -238,7 +238,7 @@ class BrokerPositionsResponse(BaseModel):
 
 
 class DialectInfo(BaseModel):
-    """The expression dialect the service compiles with (``C-VERA-EXPR-V1``)."""
+    """The expression dialect the service compiles with (``C-SIGMARAIL-EXPR-V1``)."""
 
     model_config = ConfigDict(extra="forbid")
 

@@ -45,11 +45,10 @@ def test_compose_from_screen_preset_preserves_strategy_wire_shape() -> None:
         data=json.dumps(
             {
                 "framework": {
-                    "UniverseSelection": {"Type": "VeraScreenerUniverseSelectionModel", "Parameters": {}},
-                    "Alpha": {"Type": "RsiAlphaModel", "Parameters": {"period": 14, "resolution": "Daily"}},
-                    "PortfolioConstruction": {"Type": "EqualWeightingPortfolioConstructionModel", "Parameters": {}},
-                    "RiskManagement": {"Type": "MaximumDrawdownPercentPerSecurity", "Parameters": {}},
-                    "Execution": {"Type": "ImmediateExecutionModel", "Parameters": {}},
+                    "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": {}},
+                    "PortfolioConstruction": {"Type": "SigmaRailScreenerPortfolioConstructionModel", "Parameters": {}},
+                    "RiskManagement": {"Type": "SigmaRailRiskManagementModel", "Parameters": {}},
+                    "Execution": {"Type": "SigmaRailScreenerExecutionModel", "Parameters": {}},
                 },
                 "title": "Leaders BT",
                 "universe": {"source": "screen_preset", "preset_id": "leaders"},
@@ -58,7 +57,8 @@ def test_compose_from_screen_preset_preserves_strategy_wire_shape() -> None:
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert response.json()["spec"]["VeraBase"]["Universe"]["version"] in (1, 2)
+    query = response.json()["spec"]["Framework"]["UniverseSelection"]["Parameters"]["query"]
+    assert query["version"] in (1, 2)
     assert response.json()["lineage"]["studio_spec_hash"]
 
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from api.models import LiveAccountProfile
-from screens.execution import lean_projects_root
+from sigmarail_studio_mcp.backtest_runner.project_registry import lean_workspace_root
 
 
 class CredentialVaultError(RuntimeError):
@@ -182,7 +182,7 @@ def verify_brokerage_connection(profile: LiveAccountProfile) -> dict[str, Any]:
 
 def migrate_legacy_lean_credentials(profile: LiveAccountProfile) -> bool:
     """Move paper Alpaca keys from lean.json to the OS vault and remove the file copy."""
-    root = lean_projects_root().expanduser().resolve()
+    root = lean_workspace_root().expanduser().resolve()
     config_path = root / "lean.json"
     try:
         config = json.loads(config_path.read_text(encoding="utf-8"))

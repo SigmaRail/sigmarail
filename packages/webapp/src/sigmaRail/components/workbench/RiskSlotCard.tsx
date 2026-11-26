@@ -37,7 +37,7 @@ interface RiskSlotCardProps {
   /** Ordered rule AST (Phase 1, C-FW-RULES) — compiles to Risk Parameters.rules. */
   rules?: RuleSpec[];
   onChangeRules?: (next: RuleSpec[]) => void;
-  /** Initial-stop Operand AST (C-VERA-EXPR-V2) — compiles to Risk Parameters.init_stop. */
+  /** Initial-stop Operand AST (C-SIGMARAIL-EXPR-V2) — compiles to Risk Parameters.init_stop. */
   initStop?: Record<string, unknown> | null;
   onChangeInitStop?: (next: Record<string, unknown> | null) => void;
   /** Saved spec id — enables the rule-table preview tester. */
@@ -79,7 +79,7 @@ export function RiskSlotCard({
   // tranche/time-stop/weight-cap knobs — they are inert and must not fake
   // control. Pre-rule protective layers stay live (ATR stop, trail, cooldown).
   const hasRules = onChangeRules != null && rules.length > 0;
-  // C-VERA-EXPR-V2: when the spec carries an init_stop Operand AST the runtime
+  // C-SIGMARAIL-EXPR-V2: when the spec carries an init_stop Operand AST the runtime
   // evaluates it at fill — the ATR/max-stop knobs are generation inputs baked
   // into that expression, so they are inert and hidden while the AST exists.
   const hasInitStop = initStop != null;

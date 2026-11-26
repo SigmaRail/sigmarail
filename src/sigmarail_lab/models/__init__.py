@@ -1,4 +1,4 @@
-"""VeraLab domain and persistence models."""
+"""SigmaRailLab domain and persistence models."""
 
 from sigmarail_lab.models.strategy_runs import StrategyRunRecord, ArtifactRecord
 

@@ -20,8 +20,8 @@ import pytest
 
 from screens import spec_save
 
-OLD_JSON = '{"Kind":"VeraLabV1","x":1}'
-NEW_JSON = '{"Kind":"VeraLabV1","x":2}'
+OLD_JSON = '{"Kind":"SigmaRailStrategyV1","x":1}'
+NEW_JSON = '{"Kind":"SigmaRailStrategyV1","x":2}'
 
 
 def _hash(payload: str) -> str:

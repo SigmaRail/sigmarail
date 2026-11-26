@@ -40,7 +40,7 @@ function Kpi({ label, value, title }: { label: string; value: string; title?: st
 }
 
 /**
- * Pre-LEAN factor scorecard (VeraProjects#70/#75): evaluates a field measure's
+ * Pre-LEAN factor scorecard (SigmaRailProjects#70/#75): evaluates a field measure's
  * forward-return efficacy vs the EW active universe — before LEAN backtest.
  * Props-driven so the same card can mount in backtest results or standalone.
  */

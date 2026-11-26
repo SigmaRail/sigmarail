@@ -4,7 +4,7 @@ Two surfaces:
 
 - :func:`materialize_pcm_rules` — injects ``Parameters.rules``/``size_expr``
   and the book-level ``scale_expr``/``slots_expr``/``order_expr`` into a
-  compiled VeraLabV1 spec's ``Framework.PortfolioConstruction`` when the
+  compiled SigmaRailStrategyV1 spec's ``Framework.PortfolioConstruction`` when the
   model is ``RiskBudgetedPortfolioConstructionModel`` and carries no authored
   table.
 - :func:`seed_pipeline_pcm_rules` — mirrors them into the stored
@@ -108,7 +108,7 @@ def pcm_bindings_catalog() -> dict[str, list[dict]]:
 
 
 def materialize_pcm_rules(spec: dict[str, Any]) -> bool:
-    """Inject the generated allocation table into a VeraLabV1 spec when absent.
+    """Inject the generated allocation table into a SigmaRailStrategyV1 spec when absent.
 
     Mutates ``spec`` in place; returns ``True`` when anything was written.
     Only applies to ``RiskBudgetedPortfolioConstructionModel`` — composite or

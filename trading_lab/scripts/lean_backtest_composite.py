@@ -8,9 +8,7 @@ bars never load even when lean.json asks for Composite.
 
 This wrapper patches ``LeanRunner.run_lean`` to re-assert Composite (+ keep
 ``composite-data-providers``) on both top-level and the active environment, then
-delegates to ``lean backtest``. Compose runs also select an explicit Docker
-network. Remove a conflicting ``network_mode`` option at the Docker SDK boundary
-because a container cannot join both an explicit network and a network mode.
+delegates to ``lean backtest``.
 """
 
 from __future__ import annotations
@@ -46,28 +44,12 @@ def main(argv: list[str] | None = None) -> int:
 
     original = LeanRunner.run_lean
     from lean.components.docker import docker_manager
-    original_run_image = docker_manager.DockerManager.run_image
 
     network_name = (os.environ.get("SIGMARAIL_BACKTEST_DOCKER_NETWORK") or "").strip()
     if network_name:
         # DockerManager otherwise forces LEAN's isolated ``lean_cli`` bridge.
         # Use Compose's bridge so the LEAN job can resolve backend/ClickHouse.
         docker_manager.DOCKER_NETWORK = network_name
-
-        def run_image(self, image, **kwargs):  # type: ignore[no-untyped-def]
-            # DockerManager adds ``network`` immediately before calling the
-            # Docker SDK. If LEAN or project config already supplied
-            # ``network_mode``, docker-py rejects the mutually exclusive pair.
-            if kwargs.get("network_mode"):
-                self._logger.warning(
-                    "Ignoring Docker network_mode because SigmaRail selected "
-                    "the Compose network %s",
-                    network_name,
-                )
-                kwargs.pop("network_mode", None)
-            return original_run_image(self, image, **kwargs)
-
-        docker_manager.DockerManager.run_image = run_image  # type: ignore[method-assign]
 
     def run_lean(self, lean_config, *args, **kwargs):  # type: ignore[no-untyped-def]
         _force_composite(lean_config)

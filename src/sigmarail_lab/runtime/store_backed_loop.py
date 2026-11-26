@@ -1,6 +1,6 @@
 """Store-backed daily loop: Alpha → PCM → Risk.ManageRisk → Execution.
 
-Champion (and other VeraScreenerExecutionModel books) do not use Lean's default
+Champion (and other SigmaRailScreenerExecutionModel books) do not use Lean's default
 insight pipeline. This helper is the single place that must call ManageRisk so
 tranches, time-stop, ATR stops, and hedge actually run.
 """
@@ -82,16 +82,27 @@ def run_store_backed_rebalance(
     still fires. Returns merged targets (may be empty).
     """
     as_of_date = algorithm.Time.date()
-    last = getattr(algorithm, "_vera_store_loop_date", None)
+    last = getattr(algorithm, "_sigmarail_store_loop_date", None)
     if last == as_of_date:
         return None
-    algorithm._vera_store_loop_date = as_of_date
+    algorithm._sigmarail_store_loop_date = as_of_date
 
     insights = []
     if alpha is not None:
         insights = alpha.Update(algorithm, None) or []
     as_of = (as_of_date - timedelta(days=1)).isoformat()
     universe_rows = getattr(algorithm, "_decision_universe_rows", {})
+    selected_tickers = set(universe_rows) if isinstance(universe_rows, dict) else set()
+    held_tickers = {
+        _symbol_key(symbol) for symbol, holding in _portfolio_items(algorithm)
+        if getattr(holding, "Invested", False)
+    }
+    # Long/short candidates can only come from the compiled SigmaRail query. Retain
+    # insights for existing holdings so Alpha can close positions after they leave.
+    insights = [
+        insight for insight in insights
+        if _symbol_key(getattr(insight, "Symbol", "")) in selected_tickers | held_tickers
+    ]
     qualified = list(universe_rows.items())[:100] if isinstance(universe_rows, dict) else []
     insight_by_ticker = {}
     for insight in insights:
@@ -150,7 +161,7 @@ def run_store_backed_rebalance(
     portfolio_tickers = {str(ticker) for ticker, _ in qualified}
     portfolio_tickers.update(target_by_ticker)
     portfolio_tickers.update(held_tickers)
-    tags = getattr(algorithm, "_vera_order_tags", {})
+    tags = getattr(algorithm, "_sigmarail_order_tags", {})
     pcm_matches = getattr(pcm, "_decision_rule_matches_by_ticker", {}) if pcm is not None else {}
     for ticker in sorted(portfolio_tickers):
         target = target_by_ticker.get(ticker)

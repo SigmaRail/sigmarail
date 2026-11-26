@@ -1,5 +1,5 @@
 /**
- * Rule/Action AST (Phase 1) — client-side mirror of `vera_lab/ir/rules.py`
+ * Rule/Action AST (Phase 1) — client-side mirror of `sigmarail_lab/ir/rules.py`
  * (C-FW-RULES). Action set: exit, trim, ratchet_stop, cap_weight,
  * arm_cooldown, set_flag. Anything else is a lint error (E205) at save time.
  */
@@ -20,7 +20,7 @@ export type ActionTypeId =
 
 export type OperandAst =
   | { type: "col"; name: string }
-  // Runtime position binding (C-VERA-EXPR-V2) — resolves a field of the open
+  // Runtime position binding (C-SIGMARAIL-EXPR-V2) — resolves a field of the open
   // position context (entry/r/current_stop/…), not a screener row column.
   // Replaces the legacy `{"type":"col","name":"__position.<field>"}` spelling.
   | { type: "pos"; field: string }
@@ -29,7 +29,7 @@ export type OperandAst =
   | { type: "ref"; ns: string; field: string }
   | { type: "lit"; value: number | string | boolean }
   | { type: "formula"; op: "+" | "-" | "*" | "/"; args: OperandAst[] }
-  // C-VERA-EXPR-V2: aggregate + piecewise operands (min/max n-ary, abs unary,
+  // C-SIGMARAIL-EXPR-V2: aggregate + piecewise operands (min/max n-ary, abs unary,
   // clamp ternary, cond piecewise over a bool `when`).
   | { type: "min"; args: OperandAst[] }
   | { type: "max"; args: OperandAst[] }
@@ -80,7 +80,7 @@ export type ActionMeta = {
   hint: string;
 };
 
-/** Phase 1 catalog — mirrors ACTION_TERMINAL in vera_lab/ir/rules.py. */
+/** Phase 1 catalog — mirrors ACTION_TERMINAL in sigmarail_lab/ir/rules.py. */
 export const ACTION_CATALOG: readonly ActionMeta[] = [
   {
     id: "exit",

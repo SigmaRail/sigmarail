@@ -36,14 +36,14 @@ def test_execution_projects_endpoint() -> None:
     with patch(
         "api.views.exec_adapter.list_lean_projects",
         return_value={
-            "projects": [{"id": "VeraTradingLab", "label": "Vera Trading Lab"}],
+            "projects": [{"id": "SigmaRailTradingLab", "label": "SigmaRail Trading Lab"}],
             "registry_path": "/tmp/lean_projects.yaml",
         },
     ):
         resp = Client().get("/api/execution/projects")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["projects"][0]["id"] == "VeraTradingLab"
+    assert body["projects"][0]["id"] == "SigmaRailTradingLab"
 
 
 @pytest.mark.django_db
@@ -93,7 +93,7 @@ def test_backtest_job_log_not_found_404() -> None:
 def test_submit_queue_mode_default() -> None:
     with patch("api.views.exec_adapter.runner_available", return_value=True), patch(
         "api.views.exec_adapter.submit_backtest_job",
-        return_value={"job_id": "job-q", "status": "pending", "lean_project": "VeraTradingLab"},
+        return_value={"job_id": "job-q", "status": "pending", "lean_project": "SigmaRailTradingLab"},
     ) as mock_submit:
         resp = Client().post(
             "/api/backtests/jobs",
@@ -118,7 +118,7 @@ def test_submit_queue_mode_default() -> None:
 def test_submit_immediate_with_lean_project() -> None:
     with patch("api.views.exec_adapter.runner_available", return_value=True), patch(
         "api.views.exec_adapter.submit_backtest_job",
-        return_value={"job_id": "job-imm", "status": "running", "lean_project": "VeraTradingLab"},
+        return_value={"job_id": "job-imm", "status": "running", "lean_project": "SigmaRailTradingLab"},
     ) as mock_submit:
         resp = Client().post(
             "/api/backtests/jobs",
@@ -128,7 +128,7 @@ def test_submit_immediate_with_lean_project() -> None:
                     "start_date": "2024-01-01",
                     "end_date": "2024-12-31",
                     "immediate": True,
-                    "lean_project": "VeraTradingLab",
+                    "lean_project": "SigmaRailTradingLab",
                 }
             ),
             content_type="application/json",
@@ -139,7 +139,7 @@ def test_submit_immediate_with_lean_project() -> None:
         ir_id="studio-x",
         start_date="2024-01-01",
         end_date="2024-12-31",
-        lean_project="VeraTradingLab",
+        lean_project="SigmaRailTradingLab",
         immediate=True,
         extra_env=None,
         job_id=None,
@@ -150,8 +150,8 @@ def test_list_lean_projects_fallback() -> None:
     from pathlib import Path
 
     with patch(
-        "screens.execution.lean_projects_root",
-        return_value=Path("/nonexistent/LeanProjects"),
+        "screens.execution.lean_workspace_root",
+        return_value=Path("/nonexistent/sigmarail-lean"),
     ):
         out = exec_adapter.list_lean_projects()
     assert out["projects"][0]["id"] == "SigmaRailTradingLab"

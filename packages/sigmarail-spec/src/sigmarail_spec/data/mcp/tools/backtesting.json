@@ -72,7 +72,7 @@
       }
     },
     {
-      "description": "Fetch a single VeraLab algorithm spec by ir_id (includes full algorithm_json).",
+      "description": "Fetch a single SigmaRailLab algorithm spec by ir_id (includes full algorithm_json).",
       "id": "studio.mcp.tool.backtest_get_spec",
       "input_schema": {
         "properties": {
@@ -238,7 +238,7 @@
       }
     },
     {
-      "description": "List backtest runs for a VeraLab ir_id (most-recent first).",
+      "description": "List backtest runs for a SigmaRailLab ir_id (most-recent first).",
       "id": "studio.mcp.tool.backtest_list_runs_by_ir_id",
       "input_schema": {
         "properties": {
@@ -264,7 +264,7 @@
       }
     },
     {
-      "description": "List stored VeraLab algorithm specs (most-recent first, no algorithm_json blob).",
+      "description": "List stored SigmaRailLab algorithm specs (most-recent first, no algorithm_json blob).",
       "id": "studio.mcp.tool.backtest_list_specs",
       "input_schema": {
         "properties": {
@@ -378,7 +378,7 @@
       }
     },
     {
-      "description": "Store a VeraLab algorithm spec in strategy_algorithm_specs.\n\nForks automatically when `ir_id` already has backtest runs: the spec is\nsaved under a NEW ir_id with parent_ir_id + mutation_type=\"fork\", so\nexisting runs are never re-pointed at changed content. Check `forked` in\nthe response and use the returned `ir_id` for follow-up calls.",
+      "description": "Store a SigmaRailLab algorithm spec in strategy_algorithm_specs.\n\nForks automatically when `ir_id` already has backtest runs: the spec is\nsaved under a NEW ir_id with parent_ir_id + mutation_type=\"fork\", so\nexisting runs are never re-pointed at changed content. Check `forked` in\nthe response and use the returned `ir_id` for follow-up calls.",
       "id": "studio.mcp.tool.backtest_save_spec",
       "input_schema": {
         "properties": {

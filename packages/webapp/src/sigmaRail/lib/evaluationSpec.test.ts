@@ -3,12 +3,12 @@ import { normalizeSearchStrategy } from "../types";
 import { evaluationExtraEnv, readEvaluation, stampEvaluation } from "./evaluationSpec";
 
 describe("stampEvaluation", () => {
-  it("writes VeraBase.Evaluation and string AlgorithmParameters for LEAN", () => {
+  it("writes SigmaRail.Evaluation and string AlgorithmParameters for LEAN", () => {
     const out = stampEvaluation(
       {
-        Kind: "VeraLabV1",
+        Kind: "SigmaRailStrategyV1",
         AlgorithmParameters: { "regime-source": "screener" },
-        VeraBase: { Universe: { version: 1, select: ["ticker"] } },
+        SigmaRail: { Universe: { version: 1, select: ["ticker"] } },
       },
       {
         start_date: "2024-01-02",
@@ -17,7 +17,7 @@ describe("stampEvaluation", () => {
         benchmark: "qqq",
       },
     );
-    expect(out.VeraBase).toMatchObject({
+    expect(out.SigmaRail).toMatchObject({
       Evaluation: {
         start_date: "2024-01-02",
         end_date: "2024-06-30",
@@ -40,7 +40,7 @@ describe("stampEvaluation", () => {
 
   it("readEvaluation hydrates UI fields from a stamped spec", () => {
     const stamped = stampEvaluation(
-      { VeraBase: {}, AlgorithmParameters: {} },
+      { SigmaRail: {}, AlgorithmParameters: {} },
       { start_date: "2025-02-01", end_date: "2025-08-01", initial_cash: 25000, benchmark: "IWM" },
     );
     expect(readEvaluation(stamped)).toEqual({

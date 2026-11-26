@@ -14,7 +14,7 @@ Operand AST the ``enter``/``add`` actions scale.
 
 Consumed by:
   - ``sigmarail_lab.runtime.qc_risk_budgeted_pcm`` (generated mode: ``rules=None``),
-  - ``vera_query_core.strategy`` (compile-time materialization into
+  - ``sigmarail_query_core.strategy`` (compile-time materialization into
     ``Parameters.rules``/``size_expr``) via Studio's bridge — the LEAN
     container only carries ``sigmarail_lab`` + vendored ``sigmarail_spec``.
 

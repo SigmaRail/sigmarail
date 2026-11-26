@@ -1,18 +1,14 @@
-"""TQQQ tactical VeraLabV1 JSON for LEAN Docker (``.json`` not synced into container).
+"""TQQQ tactical SigmaRailStrategyV1 JSON for LEAN Docker (``.json`` not synced into container).
 
 Must stay byte-identical to ``tests/fixtures/ir/tqqq-tactical-v1.json`` (see ``tests/test_resolver_kinds.py``).
 """
 
 RAW_JSON = """{
-  "SchemaVersion": 2,
-  "Kind": "VeraLabV1",
+  "SchemaVersion": 3,
+  "Kind": "SigmaRailStrategyV1",
   "Framework": {
-    "UniverseSelection": {
-      "Type": "VeraScreenerUniverseSelectionModel",
-      "Parameters": {}
-    },
     "Alpha": {
-      "Type": "VeraTqqqTacticalAlphaModel",
+      "Type": "SigmaRailTqqqTacticalAlphaModel",
       "Parameters": {
         "signal_ticker": "QQQ",
         "trade_ticker": "TQQQ",
@@ -28,7 +24,7 @@ RAW_JSON = """{
       }
     },
     "PortfolioConstruction": {
-      "Type": "VeraTqqqTacticalPortfolioConstructionModel",
+      "Type": "SigmaRailTqqqTacticalPortfolioConstructionModel",
       "Parameters": {
         "signal_ticker": "QQQ",
         "trade_ticker": "TQQQ",
@@ -44,7 +40,7 @@ RAW_JSON = """{
       }
     },
     "Execution": {
-      "Type": "VeraScreenerExecutionModel",
+      "Type": "SigmaRailScreenerExecutionModel",
       "Parameters": {}
     },
     "RiskManagement": {
@@ -53,7 +49,7 @@ RAW_JSON = """{
     }
   },
   "AlgorithmParameters": {},
-  "VeraBase": {
+  "SigmaRail": {
     "Universe": {
       "version": 1,
       "from": "daily_screener",
@@ -74,24 +70,46 @@ RAW_JSON = """{
         "items": [
           {
             "type": "eq",
-            "left": { "type": "col", "name": "ticker" },
-            "right": { "type": "lit", "value": "SPY" }
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "SPY"
+            }
           },
           {
             "type": "eq",
-            "left": { "type": "col", "name": "ticker" },
-            "right": { "type": "lit", "value": "QQQ" }
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "QQQ"
+            }
           },
           {
             "type": "eq",
-            "left": { "type": "col", "name": "ticker" },
-            "right": { "type": "lit", "value": "TQQQ" }
+            "left": {
+              "type": "col",
+              "name": "ticker"
+            },
+            "right": {
+              "type": "lit",
+              "value": "TQQQ"
+            }
           }
         ]
       },
-      "order_by": [{ "field": "close", "direction": "desc" }],
+      "order_by": [
+        {
+          "field": "close",
+          "direction": "desc"
+        }
+      ],
       "limit_per_day": 10
     }
   }
-}
-"""
+}"""

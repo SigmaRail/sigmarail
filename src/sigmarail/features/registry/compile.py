@@ -1,6 +1,6 @@
 """Compile co-located ``*.entities.yaml`` sidecars into one generated aggregate.
 
-The aggregate (``VeraBase/registry/compiled.json``) is a build artifact like
+The aggregate (``SigmaRail/registry/compiled.json``) is a build artifact like
 ``sql/lineage/*.json`` -- committed, deterministic, never hand-edited.
 """
 
@@ -20,7 +20,7 @@ _WALK_DIRS = ("sql/schema", "sql/transform", "src")
 
 
 def _repo_root() -> Path:
-    # .../VeraBase/src/sigmarail.features/registry/compile.py -> VeraBase/
+    # .../SigmaRail/src/sigmarail.features/registry/compile.py -> SigmaRail/
     return Path(__file__).resolve().parents[3]
 
 

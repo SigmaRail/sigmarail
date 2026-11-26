@@ -1,4 +1,4 @@
-"""Spec lint (C-VERA-SPEC-LINT).
+"""Spec lint (C-SIGMARAIL-SPEC-LINT).
 
 Each "regression guard" test below corresponds to a real false positive or a real miss
 found while calibrating against the 12 `champion_vcp_reversal*` specs. They are the point
@@ -6,7 +6,7 @@ of the file: a linter that cries wolf is worse than none, and one that cannot se
 unknown node type is not a linter.
 
 Hermetic on purpose — ``column_map`` and ``runtime_kwargs`` are injected, so these tests
-need no ClickHouse and no ``vera_lab`` import.
+need no ClickHouse and no ``sigmarail_lab`` import.
 """
 
 from __future__ import annotations
@@ -25,7 +25,18 @@ COLUMNS = {
 }
 
 KWARGS = {
-    "VeraPyramidAlphaModel": {
+    "SigmaRailScreenerAlphaModel": {
+        "max_positions", "min_hold_days", "stop_loss_pct", "stop_cooldown_days",
+        "circuit_drawdown_threshold", "circuit_pause_days", "hold_buffer_rank",
+        "entry_triggers", "stop_loss", "signal_mode", "signal_duration_days",
+    },
+    "SigmaRailScreenerPortfolioConstructionModel": {
+        "allocation_policy", "hold_policy", "max_total_exposure", "exit_when_no_bars",
+    },
+    "SigmaRailRiskManagementModel": {"rules"},
+    "SigmaRailScreenerExecutionModel": {"fill_session"},
+    "SigmaRailClickHouseUniverseSelection": {"query"},
+    "SigmaRailPyramidAlphaModel": {
         "setup_where",
         "eligibility_expr",
         "weight_expr",
@@ -37,7 +48,7 @@ KWARGS = {
         "trailing_stop_pct",
         "risk_skip_time_stop_expr",
     },
-    "VeraScreenerUniverseSelectionModel": set(),  # takes only `store`
+    "SigmaRailScreenerUniverseSelectionModel": set(),  # takes only `store`
     "RiskBudgetedPortfolioConstructionModel": {"risk_per_trade_pct"},
 }
 
@@ -57,33 +68,39 @@ def errors(issues) -> list[spec_lint.LintIssue]:
 
 
 def alpha(**params) -> dict:
-    return {"Framework": {"Alpha": {"Type": "VeraPyramidAlphaModel", "Parameters": params}}}
+    return {"Framework": {"Alpha": {"Type": "SigmaRailPyramidAlphaModel", "Parameters": params}}}
+
+
+def universe_spec(query: dict) -> dict:
+    return {
+        "Kind": "SigmaRailStrategyV1",
+        "Framework": {
+            "UniverseSelection": {
+                "Type": "SigmaRailClickHouseUniverseSelection",
+                "Parameters": {"query": query},
+            }
+        },
+    }
 
 
 # --- calibration: a valid spec must be silent -----------------------------------------
 
 def test_valid_spec_produces_no_issues() -> None:
     doc = {
-        "VeraBase": {
-            "Universe": {
+        "Kind": "SigmaRailStrategyV1",
+        "Framework": {
+            "UniverseSelection": {
+                "Type": "SigmaRailClickHouseUniverseSelection",
+                "Parameters": {"query": {
                 "select": ["close", "rs_rating"],
                 "computed": [{"alias": "screens_hit", "kind": "int"}],
-            }
-        },
-        "Framework": {
+                }},
+            },
             "Alpha": {
-                "Type": "VeraPyramidAlphaModel",
+                "Type": "SigmaRailScreenerAlphaModel",
                 "Parameters": {
-                    "eligibility_expr": {
-                        "type": "any",
-                        "items": [
-                            {"type": "gte", "left": {"type": "col", "name": "screens_hit"},
-                             "right": {"type": "lit", "value": 1}},
-                            {"type": "gte", "left": {"type": "col", "name": "rs_rating"},
-                             "right": {"type": "lit", "value": 85.0}},
-                        ],
-                    },
-                    "weight_expr": {"type": "col", "name": "rs_rating"},
+                    "signal_mode": "screen",
+                    "signal_duration_days": 5,
                 },
             }
         },
@@ -98,8 +115,11 @@ def test_regression_self_declared_computed_alias_is_in_scope() -> None:
     first cut treated them as unknown and produced 4 false errors on every real spec.
     """
     doc = {
-        "VeraBase": {
-            "Universe": {
+        "Kind": "SigmaRailStrategyV1",
+        "Framework": {
+            "UniverseSelection": {
+                "Type": "SigmaRailClickHouseUniverseSelection",
+                "Parameters": {"query": {
                 "computed": [
                     {"alias": "screens_hit", "kind": "int"},
                     {"alias": "setup_pass", "kind": "bool"},
@@ -113,37 +133,34 @@ def test_regression_self_declared_computed_alias_is_in_scope() -> None:
                          "right": {"type": "lit", "value": 1}},
                     ],
                 },
-            }
+                }},
+            },
         }
     }
     assert lint(doc) == []
 
 
-def test_regression_universe_forwarded_params_are_allowed() -> None:
-    """Guard: screen/membership/named_groups are live despite the class declaring none.
-
-    `VeraScreenerUniverseSelectionModel.__init__` is `(self, store)`, but the interpreter
-    forwards membership/named_groups to the Alpha and the compiler lowers `screen` into
-    the universe query. A class-only check called these dead — a false positive.
-    """
+def test_retired_universe_class_is_not_runtime_allowlisted() -> None:
+    """A SchemaVersion 3 strategy cannot select an alternate universe class."""
     doc = {
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
             "UniverseSelection": {
-                "Type": "VeraScreenerUniverseSelectionModel",
-                "Parameters": {
-                    "screen": {"type": "gte", "left": {"type": "col", "name": "close"},
-                               "right": {"type": "lit", "value": 5.0}},
-                    "membership": {"type": "gte", "left": {"type": "col", "name": "rs_rating"},
-                                   "right": {"type": "lit", "value": 70}},
-                    "named_groups": {"hygiene": {"type": "gte",
-                                                 "left": {"type": "col", "name": "close"},
-                                                 "right": {"type": "lit", "value": 5.0}}},
-                },
+                "Type": "SigmaRailScreenerUniverseSelectionModel",
+                "Parameters": {},
             }
         }
     }
-    assert "E201" not in codes(lint(doc))
-    assert errors(lint(doc)) == []
+    assert "E200" in codes(lint(doc))
+
+
+def test_current_strategy_rejects_alternate_lean_slot_classes() -> None:
+    doc = {
+        "Kind": "SigmaRailStrategyV1",
+        "Framework": {"Alpha": {"Type": "ConstantAlphaModel", "Parameters": {"period_days": 730}}},
+    }
+    issues = lint(doc)
+    assert any(issue.code == "E200" and "SigmaRailScreenerAlphaModel" in issue.message for issue in issues)
 
 
 def test_regression_position_namespace_is_not_a_column() -> None:
@@ -210,9 +227,9 @@ def test_gates_where_is_discovered() -> None:
 # --- E110: columns -------------------------------------------------------------------
 
 def test_unknown_column_in_universe_subtree_is_an_error() -> None:
-    doc = {"VeraBase": {"Universe": {"where": {
+    doc = universe_spec({"select": ["close"], "where": {
         "type": "gte", "left": {"type": "col", "name": "no_such_column"},
-        "right": {"type": "lit", "value": 1}}}}}
+        "right": {"type": "lit", "value": 1}}})
     assert [i for i in lint(doc) if i.code == "E110" and i.severity == "error"]
 
 
@@ -278,13 +295,13 @@ def test_render_summarises(sev: str) -> None:
 
 def test_unknown_column_in_order_by_is_an_error() -> None:
     """`order_by[].field` names a column but is a plain string, not a `col` node."""
-    doc = {"VeraBase": {"Universe": {"order_by": [{"field": "no_such_column", "direction": "desc"}]}}}
+    doc = universe_spec({"order_by": [{"field": "no_such_column", "direction": "desc"}]})
     hits = [i for i in lint(doc) if i.code == "E110" and i.severity == "error"]
     assert hits and "no_such_column" in hits[0].message
 
 
 def test_unknown_column_in_select_is_an_error() -> None:
-    doc = {"VeraBase": {"Universe": {"select": ["close", "nope_not_a_column"]}}}
+    doc = universe_spec({"select": ["close", "nope_not_a_column"]})
     assert [i for i in lint(doc) if i.code == "E110" and i.severity == "error"]
 
 
@@ -298,7 +315,7 @@ def test_row_rank_unknown_column_is_only_a_warning() -> None:
 
 def test_valid_column_refs_are_silent() -> None:
     doc = {
-        "VeraBase": {
+        "SigmaRail": {
             "Universe": {
                 "select": ["close"],
                 "computed": [{"alias": "screens_hit"}],
@@ -307,7 +324,7 @@ def test_valid_column_refs_are_silent() -> None:
         },
         "Framework": {
             "Alpha": {
-                "Type": "VeraPyramidAlphaModel",
+                "Type": "SigmaRailPyramidAlphaModel",
                 "Parameters": {"row_rank": {"by": ["rs_rating"], "min": {"rs_rating": 1}}},
             }
         },
@@ -347,7 +364,7 @@ def test_unknown_type_still_rejected_when_table_is_present() -> None:
 
 
 def test_committed_artifact_exists_and_is_well_formed() -> None:
-    """The gate reads this in the Studio process, where vera_lab is not importable."""
+    """The gate reads this in the Studio process, where sigmarail_lab is not importable."""
     table = spec_lint.runtime_kwargs_from_artifact()
     assert table, "packaged runtime_param_table.json is missing or malformed"
     assert len(table) >= 50
@@ -364,7 +381,7 @@ def test_redundant_op_on_a_comparison_is_rejected() -> None:
     """20 stored specs carry {"type":"eq","op":"eq",...}.
 
     The runtime dispatches on `type` and only reads `op` for `formula`, so the stray field
-    is inert — but it violates C-VERA-EXPR-V1 (`extra="forbid"`), and a stale `op` is
+    is inert — but it violates C-SIGMARAIL-EXPR-V1 (`extra="forbid"`), and a stale `op` is
     precisely the field that goes wrong when `type` is later changed.
     """
     doc = alpha(setup_where={"type": "eq", "op": "eq",
@@ -375,21 +392,21 @@ def test_redundant_op_on_a_comparison_is_rejected() -> None:
 
 def test_suffixed_vcp_column_passes_and_bare_name_fails() -> None:
     """research-vcp-factor-004 selects `vcp_tightness`; the real column is suffixed."""
-    assert lint({"VeraBase": {"Universe": {"select": ["vcp_tightness_5d_90d"]}}}) == []
-    hits = [i for i in lint({"VeraBase": {"Universe": {"select": ["vcp_tightness"]}}})
+    assert lint(universe_spec({"select": ["vcp_tightness_5d_90d"]})) == []
+    hits = [i for i in lint(universe_spec({"select": ["vcp_tightness"]}))
             if i.code == "E110" and i.severity == "error"]
     assert hits and "vcp_tightness" in hits[0].message
 
 
 def test_param_live_on_one_model_is_dead_on_another() -> None:
-    """`row_scale_denom` is on VeraPyramidAlphaModel, not the PCM — 13 specs set it there,
+    """`row_scale_denom` is on SigmaRailPyramidAlphaModel, not the PCM — 13 specs set it there,
     where **_extra eats it silently."""
     doc = {"Framework": {"PortfolioConstruction": {
         "Type": "RiskBudgetedPortfolioConstructionModel",
         "Parameters": {"row_scale_denom": 5}}}}
     issues = spec_lint.lint_spec(doc, column_map=COLUMNS,
                                  runtime_kwargs={"RiskBudgetedPortfolioConstructionModel": {"max_positions"},
-                                                 "VeraPyramidAlphaModel": {"row_scale_denom"}})
+                                                 "SigmaRailPyramidAlphaModel": {"row_scale_denom"}})
     assert "E201" in {i.code for i in issues}
 
 
@@ -397,7 +414,7 @@ def test_param_live_on_one_model_is_dead_on_another() -> None:
 
 def test_regime_node_with_source_is_accepted() -> None:
     """Regression: this dialect lacked `source`, so a spec carrying it failed validation
-    whenever the VeraTradingLab dialect was unavailable — which is the Studio process,
+    whenever the SigmaRailTradingLab dialect was unavailable — which is the Studio process,
     where saves actually happen. Nine `regime` nodes in the corpus use it."""
     doc = alpha(eligibility_expr={
         "type": "regime", "field": "is_bear_market_active", "eq": 1,

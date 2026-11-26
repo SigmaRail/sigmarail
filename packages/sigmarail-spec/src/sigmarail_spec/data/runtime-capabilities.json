@@ -1,5 +1,5 @@
 {
-  "_generated_from": "sigmarail_lab.runtime constructor signatures + lean_framework_interpreter._default_vera_store_builders()",
+  "_generated_from": "sigmarail_lab.runtime constructor signatures + lean_framework_interpreter._default_sigmarail_store_builders()",
   "_regenerate": "python -m sigmarail_lab.ir.runtime_param_table --export",
   "_terminal": {
     "add": true,
@@ -718,14 +718,8 @@
       "port",
       "user"
     ],
-    "ClickHouseAlphaModel": null,
-    "ClickHouseExecutionModel": null,
-    "ClickHousePortfolioConstructionModel": null,
-    "ClickHouseUniverseSelectionModel": null,
-    "CoarseFundamentalUniverseSelectionModel": null,
     "CompositeAlphaModel": null,
     "CompositeRiskManagementModel": null,
-    "CompositeUniverseSelectionModel": null,
     "ConfidenceWeightedPortfolioConstructionModel": null,
     "ConstantAlphaModel": null,
     "EconomicEnvironmentRegimeSource": [
@@ -739,21 +733,18 @@
       "start",
       "ticker"
     ],
-    "HighRoeQualityUniverseSelectionModel": null,
     "HighRoeRollingCohort": [
       "debug",
       "min_ipo_days",
       "min_market_cap_millions",
       "n_new"
     ],
-    "HighRoeUniverseSelectionModel": null,
     "ImmediateExecutionModel": null,
     "Insight": [],
     "InsightDirection": [],
     "InsightType": [],
     "InsightWeightingPortfolioConstructionModel": null,
     "MacdAlphaModel": null,
-    "ManualUniverseSelectionModel": null,
     "Market": [],
     "MaximumDrawdownPercentPerSecurity": null,
     "MaximumSectorExposureRiskManagementModel": null,
@@ -834,10 +825,6 @@
     "RiskManagementModel": [],
     "RiskParityPortfolioConstructionModel": null,
     "RsiAlphaModel": null,
-    "ScreenerStoreAlphaModel": null,
-    "ScreenerStoreExecutionModel": null,
-    "ScreenerStorePortfolioConstructionModel": null,
-    "ScreenerStoreUniverseSelectionModel": null,
     "SectorWeightingPortfolioConstructionModel": null,
     "SecurityType": [],
     "SigmaRailApiClient": [
@@ -850,13 +837,115 @@
       "operation",
       "status"
     ],
+    "SigmaRailClickHouseUniverseSelection": [
+      "query"
+    ],
+    "SigmaRailCompositeAlphaModel": [
+      "circuit_drawdown_threshold",
+      "circuit_pause_days",
+      "entry_triggers",
+      "field_weights",
+      "hold_buffer_rank",
+      "max_positions",
+      "min_hold_days",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store"
+    ],
     "SigmaRailDailyScreener": [
       "universe_spec"
     ],
     "SigmaRailFrameworkStore": [
       "universe_spec"
     ],
+    "SigmaRailGraphPolicyAlphaModel": null,
+    "SigmaRailGraphPolicyPortfolioConstructionModel": null,
+    "SigmaRailHedgeModel": [
+      "instruments",
+      "store"
+    ],
+    "SigmaRailMacroEconomicDaily": [],
     "SigmaRailMarketRegimeSignalsDaily": [],
+    "SigmaRailPyramidAlphaModel": [
+      "add_trigger_pct",
+      "confidence_expr",
+      "direction_expr",
+      "eligibility_expr",
+      "entry_triggers",
+      "field_weights",
+      "gate_combine",
+      "gates",
+      "insight_period_days",
+      "magnitude_expr",
+      "max_entry_atr_pct",
+      "max_positions",
+      "membership",
+      "min_hold_days",
+      "min_screens",
+      "named_groups",
+      "phases",
+      "risk_allow_pyramid_add_expr",
+      "row_rank",
+      "row_scale_denom",
+      "selection",
+      "setup_col",
+      "setup_expr",
+      "setup_where",
+      "stages",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store",
+      "uses",
+      "weight_expr"
+    ],
+    "SigmaRailQueryUniverseAlphaModel": [
+      "model"
+    ],
+    "SigmaRailRiskManagementModel": [
+      "models"
+    ],
+    "SigmaRailScreenerAlphaModel": [
+      "circuit_drawdown_threshold",
+      "circuit_pause_days",
+      "entry_triggers",
+      "hold_buffer_rank",
+      "max_positions",
+      "min_hold_days",
+      "signal_duration_days",
+      "signal_mode",
+      "stop_cooldown_days",
+      "stop_loss",
+      "stop_loss_pct",
+      "store"
+    ],
+    "SigmaRailScreenerExecutionModel": [
+      "fill_session",
+      "store"
+    ],
+    "SigmaRailScreenerPortfolioConstructionModel": [
+      "allocation_policy",
+      "exit_when_no_bars",
+      "hold_policy",
+      "max_positions",
+      "max_total_exposure",
+      "max_weight",
+      "min_weight",
+      "store",
+      "target_atr_risk",
+      "target_exposure",
+      "uses"
+    ],
+    "SigmaRailSectorAlphaModel": null,
+    "SigmaRailSectorEtfAlphaModel": null,
+    "SigmaRailSectorEtfPortfolioConstructionModel": null,
+    "SigmaRailSectorPortfolioConstructionModel": null,
+    "SigmaRailSymbolTechnicalFeaturesDaily": [
+      "tickers"
+    ],
+    "SigmaRailTqqqTacticalAlphaModel": null,
+    "SigmaRailTqqqTacticalPortfolioConstructionModel": null,
     "StandardDeviationExecutionModel": null,
     "SurrogateRouter": [
       "client",
@@ -916,99 +1005,6 @@
       "symbol"
     ],
     "TrailingStopRiskManagementModel": null,
-    "UniverseSelectionModel": [],
-    "VeraCompositeAlphaModel": [
-      "circuit_drawdown_threshold",
-      "circuit_pause_days",
-      "entry_triggers",
-      "field_weights",
-      "hold_buffer_rank",
-      "max_positions",
-      "min_hold_days",
-      "stop_cooldown_days",
-      "stop_loss",
-      "stop_loss_pct",
-      "store"
-    ],
-    "VeraGraphPolicyAlphaModel": null,
-    "VeraGraphPolicyPortfolioConstructionModel": null,
-    "VeraHedgeModel": [
-      "instruments",
-      "store"
-    ],
-    "VeraMacroEconomicDaily": [],
-    "VeraPyramidAlphaModel": [
-      "add_trigger_pct",
-      "confidence_expr",
-      "direction_expr",
-      "eligibility_expr",
-      "entry_triggers",
-      "field_weights",
-      "gate_combine",
-      "gates",
-      "insight_period_days",
-      "magnitude_expr",
-      "max_entry_atr_pct",
-      "max_positions",
-      "membership",
-      "min_hold_days",
-      "min_screens",
-      "named_groups",
-      "phases",
-      "risk_allow_pyramid_add_expr",
-      "row_rank",
-      "row_scale_denom",
-      "selection",
-      "setup_col",
-      "setup_expr",
-      "setup_where",
-      "stages",
-      "stop_cooldown_days",
-      "stop_loss",
-      "stop_loss_pct",
-      "store",
-      "uses",
-      "weight_expr"
-    ],
-    "VeraScreenerAlphaModel": [
-      "circuit_drawdown_threshold",
-      "circuit_pause_days",
-      "entry_triggers",
-      "hold_buffer_rank",
-      "max_positions",
-      "min_hold_days",
-      "stop_cooldown_days",
-      "stop_loss",
-      "stop_loss_pct",
-      "store"
-    ],
-    "VeraScreenerExecutionModel": [
-      "fill_session",
-      "store"
-    ],
-    "VeraScreenerPortfolioConstructionModel": [
-      "exit_when_no_bars",
-      "hold_policy",
-      "max_positions",
-      "max_total_exposure",
-      "max_weight",
-      "min_weight",
-      "store",
-      "target_atr_risk",
-      "uses"
-    ],
-    "VeraScreenerUniverseSelectionModel": [
-      "store"
-    ],
-    "VeraSectorAlphaModel": null,
-    "VeraSectorEtfAlphaModel": null,
-    "VeraSectorEtfPortfolioConstructionModel": null,
-    "VeraSectorPortfolioConstructionModel": null,
-    "VeraSymbolTechnicalFeaturesDaily": [
-      "tickers"
-    ],
-    "VeraTqqqTacticalAlphaModel": null,
-    "VeraTqqqTacticalPortfolioConstructionModel": null,
     "VolatilityTargetingPortfolioConstructionModel": [
       "band",
       "store",
@@ -1019,8 +1015,7 @@
       "alpha",
       "execution",
       "portfolio_construction",
-      "risk_management",
-      "universe_selection"
+      "risk_management"
     ],
     "_GateConfig": [
       "confirm_off_days",

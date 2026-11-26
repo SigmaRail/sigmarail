@@ -1,15 +1,10 @@
-"""Generate and verify `runtime_param_table.json` — the valid-Type / kwarg artifact.
+"""Generate and verify SigmaRail LEAN runtime capabilities.
 
-**Why this lives here and not in VeraBase.** The table is derived by introspecting
-`sigmarail_lab.runtime` class signatures and `lean_framework_interpreter._default_vera_store_builders()`.
-That introspection needs this tree on `PYTHONPATH`. It used to live in
-`vera_query_core.ir.spec_lint`, which made the database layer import the Lean runtime — the
-one genuine cross-domain edge in VeraBase, and the wrong direction. Generating here and
-*reading* there makes the dependency strictly one-way: VeraTradingLab → VeraBase, never back.
-
-The artifact itself still lives in VeraBase (`vera_query_core/data/runtime_param_table.json`)
-because VeraBase is what reads it — the Studio and the backtest runner have no access to this
-tree, and a stale artifact makes `E200`/`E201` lie.
+The table is derived by introspecting
+`sigmarail_lab.runtime` class signatures and `lean_framework_interpreter._default_sigmarail_store_builders()`.
+This module owns generation, while the canonical, packaged artifact lives in
+`sigmarail-spec`; Studio and the compiler consume that contract without importing the
+execution runtime.
 """
 
 from __future__ import annotations
@@ -25,14 +20,15 @@ _MISSING = object()
 
 DEFAULT_ARTIFACT = (
     pathlib.Path(__file__).resolve().parents[4]
-    / "VeraBase" / "src" / "vera_query_core" / "data" / "runtime_param_table.json"
+    / "packages" / "sigmarail-spec" / "src" / "sigmarail_spec" / "data"
+    / "runtime-capabilities.json"
 )
 
 REGENERATE = "python -m sigmarail_lab.ir.runtime_param_table --export"
 
 
 def artifact_path(path: str | pathlib.Path | None = None) -> pathlib.Path:
-    """Resolve the artifact: explicit argument, then $SIGMARAIL_PARAM_TABLE, then the sibling tree."""
+    """Resolve the artifact: explicit argument, then $SIGMARAIL_PARAM_TABLE, then sigmarail-spec."""
     if path:
         return pathlib.Path(path)
     env = os.environ.get("SIGMARAIL_PARAM_TABLE")
@@ -43,8 +39,8 @@ def runtime_param_table() -> dict[str, set[str] | None]:
     """Valid model Types mapped to their explicit constructor kwargs.
 
     A value of ``None`` means *known Type, parameter names not introspectable* — the Lean
-    built-ins such as ``ManualUniverseSelectionModel``. ``E201`` is skipped for those rather
-    than fabricating errors. Unlike the old VeraBase implementation this does not return
+    built-in LEAN models whose constructor signatures are not available. ``E201`` is skipped for those rather
+    than fabricating errors. Unlike the old SigmaRail implementation this does not return
     ``None`` on failure: here `sigmarail_lab` must be importable, so a failure is a real error.
     """
     import importlib
@@ -83,7 +79,7 @@ def runtime_param_table() -> dict[str, set[str] | None]:
         # Authoritative valid-Type list. Scanning runtime classes alone missed every Lean
         # built-in, which produced 243 false E200 errors across the stored corpus.
         try:
-            for type_id in lfi._default_vera_store_builders():
+            for type_id in lfi._default_sigmarail_store_builders():
                 table.setdefault(type_id, None)
         except Exception:
             pass
@@ -116,7 +112,7 @@ def payload(table: dict[str, set[str] | None] | None = None) -> dict:
     return {
         "_generated_from": (
             "sigmarail_lab.runtime constructor signatures + "
-            "lean_framework_interpreter._default_vera_store_builders()"
+            "lean_framework_interpreter._default_sigmarail_store_builders()"
         ),
         "_regenerate": REGENERATE,
         "types": {k: (sorted(v) if v is not None else None) for k, v in sorted(table.items())},
@@ -241,7 +237,7 @@ def check(path: str | pathlib.Path | None = None) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--export", nargs="?", const="", metavar="PATH",
-                    help="write the table (default: the VeraBase artifact)")
+                    help="write the canonical sigmarail-spec runtime capabilities artifact")
     ap.add_argument("--check", nargs="?", const="", metavar="PATH",
                     help="diff the artifact against the runtime; exit 1 when stale")
     args = ap.parse_args(argv)

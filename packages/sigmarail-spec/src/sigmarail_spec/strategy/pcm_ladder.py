@@ -13,10 +13,10 @@ frees one; ``resize`` targets existing holdings. ``size_expr`` is the sizing
 Operand AST the ``enter``/``add`` actions scale.
 
 Consumed by:
-  - ``vera_lab.runtime.qc_risk_budgeted_pcm`` (generated mode: ``rules=None``),
-  - ``vera_query_core.strategy`` (compile-time materialization into
+  - ``sigmarail_lab.runtime.qc_risk_budgeted_pcm`` (generated mode: ``rules=None``),
+  - ``sigmarail_query_core.strategy`` (compile-time materialization into
     ``Parameters.rules``/``size_expr``) via Studio's bridge — the LEAN
-    container only carries ``vera_lab`` + vendored ``vera_spec``.
+    container only carries ``sigmarail_lab`` + vendored ``sigmarail_spec``.
 
 Pure dict-building: no runtime imports, no store/algorithm access.
 """

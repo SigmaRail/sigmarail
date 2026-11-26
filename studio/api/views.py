@@ -510,7 +510,7 @@ class ScreenFieldValuesView(APIView):
 
 
 class ScreenFieldAlphaPerformanceView(APIView):
-    """Pre-LEAN factor-performance evaluation (VeraProjects#70/#74).
+    """Pre-LEAN factor-performance evaluation (SigmaRailProjects#70/#74).
 
     Delegates in-process to
     ``sigmarail.features.alpha_evaluation.evaluate_factor_performance`` — quantile
@@ -1138,11 +1138,13 @@ class BacktestComposeView(APIView):
         lineage = body.get("lineage")
         try:
             if isinstance(full_spec, dict):
-                # Pipeline path: frontend pre-compiled a full VeraLabV1.
+                # Pipeline path: frontend pre-compiled a full SigmaRailStrategyV1.
                 # Validate and pass through unchanged; derive lineage from its universe.
                 spec = full_spec
-                vb = spec.get("VeraBase")
-                universe_spec = vb.get("Universe") if isinstance(vb, dict) else None
+                fw = spec.get("Framework")
+                universe_slot = fw.get("UniverseSelection") if isinstance(fw, dict) else None
+                universe_params = universe_slot.get("Parameters") if isinstance(universe_slot, dict) else None
+                universe_spec = universe_params.get("query") if isinstance(universe_params, dict) else None
                 if not isinstance(universe_spec, dict):
                     universe_spec = (
                         _resolve_universe_spec(universe)
@@ -2961,7 +2963,8 @@ class StrategyEvalRulesView(APIView):
             except ValueError as exc:
                 return Response({"detail": str(exc)}, status=400)
         else:
-            universe_spec = ((spec.get("VeraBase") or {}).get("Universe") or {})
+            fw = spec.get("Framework") or {}
+            universe_spec = (((fw.get("UniverseSelection") or {}).get("Parameters") or {}).get("query")) or {}
         if not isinstance(universe_spec, dict) or not universe_spec:
             return Response(
                 {"detail": "no universe_query_v1 found to fetch the ticker row"},

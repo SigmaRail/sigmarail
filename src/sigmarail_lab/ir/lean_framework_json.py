@@ -1,6 +1,6 @@
 """Agent-facing Lean framework JSON (Phase 1): Kind LeanFrameworkV1.
 
-PascalCase JSON keys via Pydantic aliases; no dependency on pipeline VeraLab or ClickHouse.
+PascalCase JSON keys via Pydantic aliases; no dependency on pipeline SigmaRailLab or ClickHouse.
 See docs/LEAN_FRAMEWORK_V1.md and the OOD Pydantic plan.
 """
 
@@ -28,20 +28,70 @@ class FrameworkSlotSpec(BaseModel):
 
 
 class FrameworkBundleV1(BaseModel):
-    """All five framework slots required for LeanFrameworkV1 (plan §8.4)."""
+    """Four LEAN model slots for a standalone LeanFrameworkV1 document."""
 
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
-    universe_selection: FrameworkSlotSpec = Field(alias="UniverseSelection")
     alpha: FrameworkSlotSpec = Field(alias="Alpha")
     portfolio_construction: FrameworkSlotSpec = Field(alias="PortfolioConstruction")
     execution: FrameworkSlotSpec = Field(alias="Execution")
     risk_management: FrameworkSlotSpec = Field(alias="RiskManagement")
 
 
+class FixedClickHouseUniverseSelectionV1(BaseModel):
+    """Fixed ClickHouse query universe; the AST is this slot's configuration."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    type: Literal["SigmaRailClickHouseUniverseSelection"] = Field(alias="Type")
+    parameters: dict[str, Any] = Field(default_factory=dict, alias="Parameters")
+
+    @model_validator(mode="after")
+    def _query_is_present(self) -> Self:
+        query = self.parameters.get("query")
+        if not isinstance(query, dict) or query.get("version") not in (1, 2) or not isinstance(query.get("select"), list):
+            raise ValueError("UniverseSelection.Parameters.query must be a universe_query_v1/v2 AST")
+        if set(self.parameters) != {"query"}:
+            raise ValueError("UniverseSelection.Parameters accepts only the query AST")
+        return self
+
+class FixedSigmaRailAlphaV1(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+    type: Literal["SigmaRailScreenerAlphaModel"] = Field(alias="Type")
+    parameters: dict[str, Any] = Field(default_factory=dict, alias="Parameters")
+
+
+class FixedSigmaRailPortfolioConstructionV1(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+    type: Literal["SigmaRailScreenerPortfolioConstructionModel"] = Field(alias="Type")
+    parameters: dict[str, Any] = Field(default_factory=dict, alias="Parameters")
+
+class FixedSigmaRailRiskManagementV1(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+    type: Literal["SigmaRailRiskManagementModel"] = Field(alias="Type")
+    parameters: dict[str, Any] = Field(default_factory=dict, alias="Parameters")
+
+class FixedSigmaRailExecutionV1(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+    type: Literal["SigmaRailScreenerExecutionModel"] = Field(alias="Type")
+    parameters: dict[str, Any] = Field(default_factory=dict, alias="Parameters")
+
+
+class SigmaRailStrategyFrameworkV1(BaseModel):
+    """Five fixed SigmaRail implementations; Parameters hold all slot configuration."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    universe_selection: FixedClickHouseUniverseSelectionV1 = Field(alias="UniverseSelection")
+    alpha: FixedSigmaRailAlphaV1 = Field(alias="Alpha")
+    portfolio_construction: FixedSigmaRailPortfolioConstructionV1 = Field(alias="PortfolioConstruction")
+    execution: FixedSigmaRailExecutionV1 = Field(alias="Execution")
+    risk_management: FixedSigmaRailRiskManagementV1 = Field(alias="RiskManagement")
+
+
 class LeanFrameworkV1Document(BaseModel):
     """
-    Phase-1 document: wire standard QC framework models only (no VeraBase / ClickHouse).
+    Phase-1 document: wire standard QC framework models only (no SigmaRail / ClickHouse).
 
     JSON uses SchemaVersion + Kind; distinct from legacy pipeline JSON (schema_version: 1).
     Supply **Framework** inline or **FrameworkPreset** (named bundle), not both.

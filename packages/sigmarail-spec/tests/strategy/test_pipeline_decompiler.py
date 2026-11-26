@@ -101,8 +101,8 @@ def test_round_trip_recompiles() -> None:
     spec1 = compile_pipeline(original)
     decompiled = decompile_pipeline(spec1)
     spec2 = compile_pipeline(decompiled)
-    assert spec2["Kind"] == "VeraLabV1"
-    assert spec2["Framework"]["Alpha"]["Type"] == "VeraPyramidAlphaModel"
+    assert spec2["Kind"] == "SigmaRailStrategyV1"
+    assert spec2["Framework"]["Alpha"]["Type"] == "SigmaRailScreenerAlphaModel"
 
 
 def test_decompile_restores_stage_documentation() -> None:
@@ -163,10 +163,10 @@ def test_decompile_restores_stage_documentation() -> None:
 
 
 def test_ssot_pipeline_round_trip() -> None:
-    """Alpha.Parameters.stages restores authored Alpha-card stages (not VeraBase.Pipeline)."""
+    """Alpha.Parameters.stages restores authored Alpha-card stages (not SigmaRail.Pipeline)."""
     doc = get_preset("minervini_sepa")
     spec = compile_pipeline(doc)
-    assert "Pipeline" not in spec["VeraBase"] or spec["VeraBase"].get("Pipeline") is None
+    assert "Pipeline" not in spec["SigmaRail"] or spec["SigmaRail"].get("Pipeline") is None
     alpha_stages = spec["Framework"]["Alpha"]["Parameters"]["stages"]
     assert len(alpha_stages) >= 3
     decompiled = decompile_pipeline(spec)
@@ -183,7 +183,7 @@ def test_legacy_decompile_preserves_filter_conditions() -> None:
     spec = compile_pipeline(doc)
     # Exercise legacy AST decompilation (no Alpha stages, no Pipeline)
     spec["Framework"]["Alpha"]["Parameters"].pop("stages", None)
-    spec["VeraBase"].pop("Pipeline", None)
+    spec["SigmaRail"].pop("Pipeline", None)
     decompiled = decompile_pipeline(spec)
     root = next(g for g in _named_groups(decompiled.universe.screen) if g.name == "membership")
     assert _leaf_count(root.conditions) >= 3
@@ -198,7 +198,7 @@ def test_legacy_decompile_preserves_nested_groups_and_formulas() -> None:
     doc = compose_minervini_sepa_with_setup()
     spec = compile_pipeline(doc)
     spec["Framework"]["Alpha"]["Parameters"].pop("stages", None)
-    spec["VeraBase"].pop("Pipeline", None)
+    spec["SigmaRail"].pop("Pipeline", None)
     decompiled = decompile_pipeline(spec)
     root = next(g for g in _named_groups(decompiled.universe.screen) if g.name == "membership")
     assert root.logic == "and"

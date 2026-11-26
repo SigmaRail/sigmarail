@@ -27,7 +27,7 @@ const paperDeployment = {
   deployment_id: 'paper-e2e-001',
   ir_id: paperRun.ir_id,
   approval_backtest_run_id: paperRun.run_id,
-  project: 'VeraTradingLab',
+  project: 'SigmaRailTradingLab',
   mode: 'paper' as const,
   brokerage: 'alpaca',
   data_provider: 'alpaca',
@@ -90,7 +90,7 @@ test('paper account setup and start are driven through the Studio UI', async ({ 
       return fulfill({
         enabled: true,
         mode: 'paper',
-        project: 'VeraTradingLab',
+        project: 'SigmaRailTradingLab',
         status: runtimeStarted ? 'running' : 'stopped',
         active_count: runtimeStarted ? 1 : 0,
         max_concurrent: 2,

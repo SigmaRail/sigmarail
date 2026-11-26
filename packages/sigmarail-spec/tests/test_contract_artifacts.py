@@ -63,7 +63,8 @@ def test_strategy_slot_documents_are_focused_and_partition_runtime_types() -> No
     execution = get_document("strategy.execution")
     all_runtime_types = set(get_document("strategy.runtime-capabilities")["types"])
     slot_names = (
-        "universe-selection", "alpha", "portfolio-construction", "risk-management", "execution"
+        "universe-selection", "alpha", "portfolio-construction",
+        "risk-management", "execution",
     )
     slot_docs = [
         get_document(f"sigmarail-spec://v1/strategy/slots/{name}") for name in slot_names
@@ -74,9 +75,13 @@ def test_strategy_slot_documents_are_focused_and_partition_runtime_types() -> No
 
     assert classified | unclassified == all_runtime_types
     assert sum(map(len, ids_by_slot.values())) == len(classified)
-    assert ids_by_slot["Alpha"] >= {"VeraPyramidAlphaModel", "VeraCompositeAlphaModel"}
-    assert ids_by_slot["RiskManagement"] >= {"VeraHedgeModel", "TrailingStopRiskManagementModel"}
-    assert ids_by_slot["UniverseSelection"] >= {"VeraScreenerUniverseSelectionModel"}
+    assert ids_by_slot == {
+        "UniverseSelection": {"SigmaRailClickHouseUniverseSelection"},
+        "Alpha": {"SigmaRailScreenerAlphaModel"},
+        "PortfolioConstruction": {"SigmaRailScreenerPortfolioConstructionModel"},
+        "RiskManagement": {"SigmaRailRiskManagementModel"},
+        "Execution": {"SigmaRailScreenerExecutionModel"},
+    }
     for doc in slot_docs:
         assert "lean_framework_schema" not in doc
         assert "executable_strategy_schema" not in doc
@@ -121,13 +126,6 @@ def test_expression_runtime_is_canonical_package_module() -> None:
 
     assert BoolExprItem is not None and SpecExpr is not None
     assert evaluate_slot_bool({"x": 1}, {"type": "gte", "left": {"type": "col", "name": "x"}, "right": {"type": "lit", "value": 1}})
-
-
-def test_legacy_sigmarail_spec_imports_reexport_canonical_types() -> None:
-    from sigmarail_spec.expr import SpecExpr as CanonicalSpecExpr
-    from vera_spec.expr import SpecExpr as LegacySpecExpr
-
-    assert LegacySpecExpr is CanonicalSpecExpr
 
 
 def test_source_tree_digest_ignores_bytecode_and_cache_directories(tmp_path) -> None:

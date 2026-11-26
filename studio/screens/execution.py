@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from screens.ch import get_ch_client
+from sigmarail_studio_mcp.backtest_runner.project_registry import lean_workspace_root
 
 _RUNNER_IMPORT_ERROR: str | None = None
 save_spec = None  # type: ignore[misc, assignment]
@@ -38,7 +39,7 @@ _DEFAULT_PROJECTS: list[dict[str, Any]] = [
         "id": "SigmaRailTradingLab",
         "label": "SigmaRail Trading Lab",
         "lean_cli_name": "sigmarail-run",
-        "spec_kinds": ["VeraLabV1"],
+        "spec_kinds": ["SigmaRailStrategyV1"],
         "enabled": True,
     },
 ]
@@ -59,23 +60,9 @@ def runner_unavailable_detail() -> str:
     return detail
 
 
-def lean_projects_root() -> Path:
-    env = os.environ.get("LEAN_PROJECTS_ROOT", "").strip()
-    if env:
-        return Path(env)
-    studio_root = Path(__file__).resolve().parents[1]
-    runtime = studio_root.parent / ".runtime" / "lean"
-    if (runtime / "lean.json").exists():
-        return runtime
-    for parent in Path(__file__).resolve().parents:
-        if (parent / "lean.json").exists():
-            return parent
-    return runtime
-
-
 def list_lean_projects() -> dict[str, Any]:
     """Load Lean project catalog from lean_projects.yaml (with safe fallback)."""
-    registry_path = lean_projects_root() / "lean_projects.yaml"
+    registry_path = lean_workspace_root() / "lean_projects.yaml"
     if registry_path.is_file():
         try:
             raw = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
@@ -91,7 +78,7 @@ def list_lean_projects() -> dict[str, Any]:
                 p for p in projects
                 if isinstance(p, dict)
                 and p.get("enabled", True)
-                and p.get("id") not in {"VeraTradingLab", "SigmaRailTradingLab"}
+                and p.get("id") not in {"SigmaRailTradingLab", "SigmaRailTradingLab"}
             ]
             return {
                 "projects": [*_DEFAULT_PROJECTS, *enabled],
@@ -430,10 +417,9 @@ def _resolve_log_path(job_id: str) -> Path | None:
         log_path = Path(output_path) / "lean-backtest.log"
         if log_path.is_file():
             return log_path
-    root = lean_projects_root()
+    root = lean_workspace_root()
     for candidate in (
         root / ".sigmarail" / "runs" / job_id / "project" / "results" / job_id / "lean-backtest.log",
-        root / "sigmarail-run" / "results" / job_id / "lean-backtest.log",
         root / "results" / job_id / "lean-backtest.log",
     ):
         if candidate.is_file():
@@ -495,7 +481,7 @@ def get_job_log_tail(job_id: str, *, tail: int = 200) -> dict[str, Any]:
 __all__ = [
     "execution_health",
     "get_job_log_tail",
-    "lean_projects_root",
+    "lean_workspace_root",
     "list_lean_projects",
     "list_recent_jobs",
     "runner_available",

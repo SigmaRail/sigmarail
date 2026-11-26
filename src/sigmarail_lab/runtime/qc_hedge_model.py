@@ -49,7 +49,7 @@ except ImportError:
         USA = 1
 
 
-class VeraHedgeModel(RiskManagementModel):
+class SigmaRailHedgeModel(RiskManagementModel):
     """Deploy SH/SPXS inverse to the regime allocation_fraction."""
 
     def __init__(
@@ -61,7 +61,7 @@ class VeraHedgeModel(RiskManagementModel):
         self._store = store
         self._instruments = instruments or [{"ticker": "SH", "max_allocation": 0.25}]
         self._last_run_date = None
-        self.Name = "VeraHedgeModel"
+        self.Name = "SigmaRailHedgeModel"
 
     def _hedge_ratio(self, algorithm) -> float:
         """1.0 - effective_allocation_fraction, clamped to [0, 1]."""

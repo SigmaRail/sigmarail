@@ -3,7 +3,7 @@
 Two surfaces:
 
 - :func:`materialize_swing_risk_rules` — injects ``Parameters.rules`` into a
-  compiled VeraLabV1 spec's ``Framework.RiskManagement`` when the model is
+  compiled SigmaRailStrategyV1 spec's ``Framework.RiskManagement`` when the model is
   ``SwingProgressiveRiskManagementModel`` and carries no authored rules.
 - :func:`seed_pipeline_risk_rules` — mirrors those rules into the stored
   ``pipeline_document``'s exit stage when the author left it empty, so the
@@ -51,7 +51,7 @@ def generate_default_init_stop(params: dict[str, Any] | None = None) -> dict:
 
 
 def materialize_swing_risk_rules(spec: dict[str, Any]) -> bool:
-    """Inject the generated ladder into a VeraLabV1 spec when absent.
+    """Inject the generated ladder into a SigmaRailStrategyV1 spec when absent.
 
     Mutates ``spec`` in place; returns ``True`` when ``Parameters.rules`` was
     written. Only applies to a top-level ``SwingProgressiveRiskManagementModel``

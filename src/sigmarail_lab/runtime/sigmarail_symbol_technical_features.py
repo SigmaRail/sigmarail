@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .ch_http import ChHttpClient
 
 
-class VeraSymbolTechnicalFeaturesDaily:
+class SigmaRailSymbolTechnicalFeaturesDaily:
     """Cache rows from symbol_technical_features_daily keyed by (ticker, date)."""
 
     _TICKERS_PER_QUERY = 250

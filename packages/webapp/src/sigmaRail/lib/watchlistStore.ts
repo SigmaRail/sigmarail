@@ -21,8 +21,8 @@ export interface Watchlist {
 
 const STORAGE_KEY = "sigmarail_studio_watchlists_v1";
 const RECENT_KEY = "sigmarail_studio_recently_viewed_v1";
-const LEGACY_STORAGE_KEY = "vera_screening_studio_watchlists_v1";
-const LEGACY_RECENT_KEY = "vera_screening_studio_recently_viewed_v1";
+const LEGACY_STORAGE_KEY = "sigmarail_screening_studio_watchlists_v1";
+const LEGACY_RECENT_KEY = "sigmarail_screening_studio_recently_viewed_v1";
 const PRIOR_STORAGE_KEY = "sigmarail_studio_watchlists_v1";
 const PROFILE_SAVE_DELAY_MS = 500;
 

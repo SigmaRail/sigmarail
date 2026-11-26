@@ -181,7 +181,7 @@ def register_paper_deployment(
 ) -> dict[str, Any]:
     """Insert a row into ``live_deployments`` (paper promotion registry).
 
-    Mirrors ``LeanProjects/VeraTradingLab/scripts/register_live_deployment.py``.
+    Registers a SigmaRail-owned live deployment record.
     """
     deployment_id = (deployment_id or "").strip() or str(uuid.uuid4())
     ir_id = (ir_id or "").strip()
@@ -270,7 +270,7 @@ def list_live_deployments(client: Any, *, limit: int = 20) -> dict[str, Any]:
 
 
 def list_live_deployments_core(client: Any, *, limit: int = 20) -> dict[str, Any]:
-    """Compatibility report adapter; requires the optional Vera runtime."""
+    """Compatibility report adapter; requires the optional SigmaRail runtime."""
     from sigmarail.features.live_report import list_live_deployments as _list_live_deployments
 
     return _list_live_deployments(client, limit=limit)
@@ -307,14 +307,14 @@ def get_live_deployment_status(client: Any, deployment_id: str) -> dict[str, Any
 
 
 def get_live_status(client: Any, deployment_id: str) -> dict[str, Any]:
-    """Compatibility report adapter; requires the optional Vera runtime."""
+    """Compatibility report adapter; requires the optional SigmaRail runtime."""
     from sigmarail.features.live_report import get_live_status as _get_live_status
 
     return _get_live_status(client, deployment_id)
 
 
 def get_backtest_report(client: Any, run_id: str) -> dict[str, Any]:
-    """Compatibility report adapter; requires the optional Vera runtime."""
+    """Compatibility report adapter; requires the optional SigmaRail runtime."""
     from sigmarail.features.backtest_report import get_backtest_report
 
     return get_backtest_report(client, run_id)

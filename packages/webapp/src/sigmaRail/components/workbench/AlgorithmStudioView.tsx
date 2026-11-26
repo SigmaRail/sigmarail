@@ -89,17 +89,17 @@ function specDataFromLoadedSpec(
 }
 
 const EMPTY_FRAMEWORK: AssembledFrameworkSpec = {
-  UniverseSelection: { Type: "VeraScreenerUniverseSelectionModel", Parameters: {} },
-  Alpha: { Type: "VeraPyramidAlphaModel", Parameters: {} },
+  UniverseSelection: { Type: "SigmaRailClickHouseUniverseSelection", Parameters: {} },
+  Alpha: { Type: "SigmaRailScreenerAlphaModel", Parameters: {} },
   PortfolioConstruction: {
-    Type: "RiskBudgetedPortfolioConstructionModel",
+    Type: "SigmaRailScreenerPortfolioConstructionModel",
     Parameters: {},
   },
   RiskManagement: {
-    Type: "SwingProgressiveRiskManagementModel",
+    Type: "SigmaRailRiskManagementModel",
     Parameters: {},
   },
-  Execution: { Type: "VeraScreenerExecutionModel", Parameters: {} },
+  Execution: { Type: "SigmaRailScreenerExecutionModel", Parameters: {} },
 };
 
 const HYGIENE_STAGE_NAME = "Universe Hygiene";
@@ -129,23 +129,23 @@ const STRATEGY_FIELD_CATALOG: Record<string, { label: string; hint: string }> = 
 
 export interface AssembledFrameworkSpec {
   UniverseSelection: {
-    Type: string;
+    Type: "SigmaRailClickHouseUniverseSelection";
     Parameters: Record<string, unknown>;
   };
   Alpha: {
-    Type: string;
+    Type: "SigmaRailScreenerAlphaModel";
     Parameters: Record<string, unknown>;
   };
   PortfolioConstruction: {
-    Type: string;
+    Type: "SigmaRailScreenerPortfolioConstructionModel";
     Parameters: Record<string, unknown>;
   };
   RiskManagement: {
-    Type: string;
+    Type: "SigmaRailRiskManagementModel";
     Parameters: Record<string, unknown>;
   };
   Execution: {
-    Type: string;
+    Type: "SigmaRailScreenerExecutionModel";
     Parameters: Record<string, unknown>;
   };
 }
@@ -289,30 +289,23 @@ export function AlgorithmStudioView({
     const specData = specDataFromLoadedSpec(loadedSpec);
     if (!specData) return;
 
-    const fw = (specData.Framework || specData.framework || {}) as Record<string, unknown>;
-
-    // 1. Universe Slot
-    const uni = (fw.UniverseSelection || fw.universe || {}) as Record<string, unknown>;
-    const uniType = String(uni.Type || uni.type_id || "VeraScreenerUniverseSelectionModel");
-
-    const vb = (specData.VeraBase || specData.vera_base || {}) as Record<string, unknown>;
-    // Do not stuff the full universe contract (computed gates / screens_hit) into the
-    // Universe slot inline AST — that bypasses pipeline compile and can surface
-    // dangling screen_* columns in SQL preview. Prefer pipeline_document recompile.
+    const framework = (specData.Framework || {}) as Record<string, unknown>;
+    const universeSlot = (framework.UniverseSelection || {}) as Record<string, unknown>;
+    const universeParams = (universeSlot.Parameters || {}) as Record<string, unknown>;
+    const universeQuery = universeParams.query;
     const hasPipelineAuthored =
       (loadedSpec.pipeline_document &&
         typeof loadedSpec.pipeline_document === "object" &&
         "stages" in loadedSpec.pipeline_document) ||
-      (vb.Pipeline &&
-        typeof vb.Pipeline === "object" &&
-        "stages" in (vb.Pipeline as Record<string, unknown>));
+      ((specData.SigmaRail as Record<string, unknown> | undefined)?.Pipeline &&
+        typeof (specData.SigmaRail as Record<string, unknown>).Pipeline === "object" &&
+        "stages" in ((specData.SigmaRail as Record<string, unknown>).Pipeline as Record<string, unknown>));
     if (
       !hasPipelineAuthored &&
-      uniType === "VeraScreenerUniverseSelectionModel" &&
-      vb.Universe &&
-      typeof vb.Universe === "object"
+      universeQuery &&
+      typeof universeQuery === "object"
     ) {
-      const uAst = vb.Universe as UniverseQueryV1;
+      const uAst = universeQuery as UniverseQueryV1;
       setInlineSpec(uAst);
       onSelectUniverseChoice({ kind: "inline" });
     }
@@ -363,7 +356,7 @@ export function AlgorithmStudioView({
           const rules = parseRules(params.rules);
           if (rules.length > 0) doc = patchExitRules(doc, rules);
         }
-        // Same mirror for the materialized initial-stop AST (C-VERA-EXPR-V2):
+        // Same mirror for the materialized initial-stop AST (C-SIGMARAIL-EXPR-V2):
         // Parameters.init_stop hydrates the exit stage when the doc lacks it.
         if (initStopFromDoc(doc) == null) {
           const initStop = params.init_stop;
@@ -396,7 +389,7 @@ export function AlgorithmStudioView({
       return;
     }
 
-    const vb = (specData.VeraBase || specData.vera_base || {}) as Record<string, unknown>;
+    const vb = (specData.SigmaRail || specData.sigmarail_base || {}) as Record<string, unknown>;
     if (vb.Pipeline && typeof vb.Pipeline === "object" && "stages" in (vb.Pipeline as Record<string, unknown>)) {
       applyAuthored(vb.Pipeline as PipelineDocument);
       return;

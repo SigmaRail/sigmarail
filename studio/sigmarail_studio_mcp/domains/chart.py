@@ -1,4 +1,4 @@
-"""chart domain: TradingView + Vera price chart embeds."""
+"""chart domain: TradingView + SigmaRail price chart embeds."""
 from __future__ import annotations
 
 from typing import Any
@@ -16,6 +16,6 @@ def tv_embed(symbol: str, interval: str = "D", theme: str = "dark", height: int 
 
 
 def price_embed(ticker: str, lookback_days: int = 252, theme: str = "dark", height: int = 520, show_rsi: bool = True) -> dict[str, Any]:
-    from sigmarail.features.vera_price_chart import vera_price_chart_embed_payload
+    from sigmarail.features.sigmarail_price_chart import sigmarail_price_chart_embed_payload
 
-    return call(vera_price_chart_embed_payload, ticker=ticker, lookback_days=lookback_days, theme=theme, height=height, show_rsi=show_rsi)
+    return call(sigmarail_price_chart_embed_payload, ticker=ticker, lookback_days=lookback_days, theme=theme, height=height, show_rsi=show_rsi)

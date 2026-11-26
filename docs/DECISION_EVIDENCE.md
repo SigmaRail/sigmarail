@@ -18,7 +18,7 @@ snapshot candidate limit.
 
 The LEAN loop is maintained in `src/sigmarail_lab` in this SigmaRail
 repository. The existing runner stages that source into a unique per-run LEAN
-project under `LEAN_PROJECTS_ROOT`, then submits that isolated project to the
+project under `SIGMARAIL_LEAN_WORKSPACE_ROOT`, then submits that isolated project to the
 configured Docker-backed LEAN instance. Backtests include `decision_events` in
 the existing `backtest_day_snapshots` artifact. Live runs include the most
 recent bounded events and strategy hash in the existing `live_snapshot`

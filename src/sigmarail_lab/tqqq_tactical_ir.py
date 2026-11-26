@@ -1,4 +1,4 @@
-"""Build VeraLab JSON specs for TQQQ tactical and buy-and-hold baselines."""
+"""Build SigmaRailLab JSON specs for TQQQ tactical and buy-and-hold baselines."""
 
 from __future__ import annotations
 
@@ -52,23 +52,19 @@ def build_tactical_spec(
         **alpha_params,
     }
     doc: dict[str, Any] = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
-            "UniverseSelection": {
-                "Type": "VeraScreenerUniverseSelectionModel",
-                "Parameters": {},
-            },
             "Alpha": {
-                "Type": "VeraTqqqTacticalAlphaModel",
+                "Type": "SigmaRailTqqqTacticalAlphaModel",
                 "Parameters": params,
             },
             "PortfolioConstruction": {
-                "Type": "VeraTqqqTacticalPortfolioConstructionModel",
+                "Type": "SigmaRailTqqqTacticalPortfolioConstructionModel",
                 "Parameters": params,
             },
             "Execution": {
-                "Type": "VeraScreenerExecutionModel",
+                "Type": "SigmaRailScreenerExecutionModel",
                 "Parameters": {},
             },
             "RiskManagement": {
@@ -77,7 +73,7 @@ def build_tactical_spec(
             },
         },
         "AlgorithmParameters": {},
-        "VeraBase": {"Universe": _tqqq_universe_block(params["trade_ticker"])},
+        "SigmaRail": {"Universe": _tqqq_universe_block(params["trade_ticker"])},
     }
     return {
         "ir_id": ir_id,
@@ -99,15 +95,11 @@ def build_buyhold_spec(
     title = title or f"{trade_ticker} Buy-and-Hold v1"
     always = ["SPY", "QQQ", trade_ticker]
     doc: dict[str, Any] = {
-        "SchemaVersion": 2,
-        "Kind": "VeraLabV1",
+        "SchemaVersion": 3,
+        "Kind": "SigmaRailStrategyV1",
         "Framework": {
-            "UniverseSelection": {
-                "Type": "VeraScreenerUniverseSelectionModel",
-                "Parameters": {},
-            },
             "Alpha": {
-                "Type": "VeraTqqqTacticalAlphaModel",
+                "Type": "SigmaRailTqqqTacticalAlphaModel",
                 "Parameters": {
                     "signal_ticker": "QQQ",
                     "trade_ticker": trade_ticker,
@@ -117,7 +109,7 @@ def build_buyhold_spec(
                 },
             },
             "PortfolioConstruction": {
-                "Type": "VeraTqqqTacticalPortfolioConstructionModel",
+                "Type": "SigmaRailTqqqTacticalPortfolioConstructionModel",
                 "Parameters": {
                     "signal_ticker": "QQQ",
                     "trade_ticker": trade_ticker,
@@ -127,7 +119,7 @@ def build_buyhold_spec(
                 },
             },
             "Execution": {
-                "Type": "VeraScreenerExecutionModel",
+                "Type": "SigmaRailScreenerExecutionModel",
                 "Parameters": {},
             },
             "RiskManagement": {
@@ -136,7 +128,7 @@ def build_buyhold_spec(
             },
         },
         "AlgorithmParameters": {},
-        "VeraBase": {"Universe": _tqqq_universe_block(trade_ticker)},
+        "SigmaRail": {"Universe": _tqqq_universe_block(trade_ticker)},
     }
     return {
         "ir_id": ir_id,

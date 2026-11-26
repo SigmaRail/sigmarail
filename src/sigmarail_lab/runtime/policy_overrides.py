@@ -6,7 +6,7 @@ from typing import Any
 
 from sigmarail_lab.runtime.signal_evaluation import evaluate_slot_bool
 
-# Keep in sync with vera_query_core.strategy.pipeline.POLICY_OVERRIDE_KEYS
+# Keep in sync with sigmarail_query_core.strategy.pipeline.POLICY_OVERRIDE_KEYS
 POLICY_OVERRIDE_KEYS = frozenset(
     {
         "risk_per_trade_pct",

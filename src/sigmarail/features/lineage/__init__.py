@@ -1,4 +1,4 @@
-"""SQL-to-column lineage extraction for VeraBase transforms.
+"""SQL-to-column lineage extraction for SigmaRail transforms.
 
 This module produces deterministic JSON artifacts intended to be checked into the repo
 and served through MCP/REST for column explanations.

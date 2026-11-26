@@ -2,7 +2,7 @@
 
 These assertions used to run against the ``/v1/strategy/*`` endpoints. Those endpoints were
 removed (``C-API-SURFACE-V1``): compiling a spec is a **library** capability
-(``vera_query_core.strategy``), reached in-process by Studio and the MCP servers, so the
+(``sigmarail_query_core.strategy``), reached in-process by Studio and the MCP servers, so the
 same coverage now targets the library directly — no HTTP, no second transport.
 """
 
@@ -58,7 +58,7 @@ def test_list_presets() -> None:
 
 def test_compile_produces_a_veralab_v1_document() -> None:
     spec = compile_pipeline(PipelineDocument.model_validate(_PIPELINE_WITH_RANK))
-    assert spec["Kind"] == "VeraLabV1"
+    assert spec["Kind"] == "SigmaRailStrategyV1"
 
 
 def test_compile_decompile_round_trip() -> None:

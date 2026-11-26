@@ -1,7 +1,7 @@
 """Old-MCP → sigmarail-studio tool parity catalog.
 
 Single source of truth for the Phase 4 parity gate and Phase 5 cutover. ``MAPPING``
-maps ``server.tool`` → ``vera_studio_tool``; tools absent from ``MAPPING`` are gaps.
+maps ``server.tool`` → ``sigmarail_studio_tool``; tools absent from ``MAPPING`` are gaps.
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ MAPPING: dict[str, str] = {
     "vera.get_influencer_index_posture": "research_influencer_index_posture",
     "vera.get_influencer_action_rollups": "research_influencer_action_rollups",
     "vera.tv_chart_embed": "chart_tv_embed",
-    "vera.vera_price_chart_embed": "chart_price_embed",
+    "vera.sigmarail_price_chart_embed": "chart_price_embed",
     "vera.get_backtest_report": "backtest_report",
     "vera.list_runs_by_ir_id": "backtest_list_runs_by_ir_id",
     "vera.wait_for_backtest": "backtest_wait",
@@ -99,7 +99,7 @@ BACKLOG: set[str] = set()
 # MCP app / resource helpers (not domain tools; handled by the embed layer).
 APP_RESOURCES = {
     "vera.tv_chart_mcp_app",
-    "vera.vera_price_chart_mcp_app",
+    "vera.sigmarail_price_chart_mcp_app",
     "vera.kb_extraction_schema_resource",
     "vera.kb_extraction_page_schema_resource",
     "vera.kb_chunk_embed_schema_resource",

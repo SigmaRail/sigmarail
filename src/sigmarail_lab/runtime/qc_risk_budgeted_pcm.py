@@ -112,7 +112,7 @@ class RiskBudgetedPortfolioConstructionModel(PortfolioConstructionModel):
         # challenger criteria, the pyramid add, the drift cap, the entry.
         # None → the ladder is generated from the ctor knobs; [] → fail-closed.
         rules: list | None = None,
-        # Sizing Operand AST (C-VERA-EXPR-V2) — the full-position target weight
+        # Sizing Operand AST (C-SIGMARAIL-EXPR-V2) — the full-position target weight
         # the `enter`/`add` actions scale. None → generated from the knobs.
         size_expr: dict | None = None,
         # Book-level Operand ASTs (C-FW-RULES Phase 3) — evaluated once per
@@ -502,10 +502,10 @@ class RiskBudgetedPortfolioConstructionModel(PortfolioConstructionModel):
             pt.Tag = tag
         except Exception:
             pass
-        tags = getattr(algorithm, "_vera_order_tags", None)
+        tags = getattr(algorithm, "_sigmarail_order_tags", None)
         if not isinstance(tags, dict):
             tags = {}
-            algorithm._vera_order_tags = tags
+            algorithm._sigmarail_order_tags = tags
         tags[ticker] = tag
         targets.append(pt)
 

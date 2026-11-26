@@ -53,7 +53,7 @@
       },
       "DataSourceSpec": {
         "additionalProperties": false,
-        "description": "Specification for a data source — graph policy and store-backed VeraLabV1.\n\nStore-backed specs set ``Type`` (loader class), ``grain`` (session | ticker_date |\ndaily), optional ``uses`` / ``score`` for regime policy (C-REGIME-POLICY-V1).",
+        "description": "Specification for a data source — graph policy and store-backed SigmaRailStrategyV1.\n\nStore-backed specs set ``Type`` (loader class), ``grain`` (session | ticker_date |\ndaily), optional ``uses`` / ``score`` for regime policy (C-REGIME-POLICY-V1).",
         "properties": {
           "Type": {
             "anyOf": [
@@ -231,39 +231,9 @@
         "title": "EvaluationSettings",
         "type": "object"
       },
-      "FrameworkBundleV1": {
+      "FixedClickHouseUniverseSelectionV1": {
         "additionalProperties": false,
-        "description": "All five framework slots required for LeanFrameworkV1 (plan §8.4).",
-        "properties": {
-          "Alpha": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
-          },
-          "Execution": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
-          },
-          "PortfolioConstruction": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
-          },
-          "RiskManagement": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
-          },
-          "UniverseSelection": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
-          }
-        },
-        "required": [
-          "UniverseSelection",
-          "Alpha",
-          "PortfolioConstruction",
-          "Execution",
-          "RiskManagement"
-        ],
-        "title": "FrameworkBundleV1",
-        "type": "object"
-      },
-      "FrameworkSlotSpec": {
-        "additionalProperties": false,
-        "description": "One framework slot: QC class name + constructor kwargs.",
+        "description": "Fixed ClickHouse query universe; the AST is this slot's configuration.",
         "properties": {
           "Parameters": {
             "additionalProperties": true,
@@ -271,7 +241,7 @@
             "type": "object"
           },
           "Type": {
-            "description": "Allowlisted Lean / QC Python class name",
+            "const": "SigmaRailClickHouseUniverseSelection",
             "title": "Type",
             "type": "string"
           }
@@ -279,12 +249,92 @@
         "required": [
           "Type"
         ],
-        "title": "FrameworkSlotSpec",
+        "title": "FixedClickHouseUniverseSelectionV1",
         "type": "object"
       },
-      "VeraBaseFacet": {
+      "FixedSigmaRailAlphaV1": {
         "additionalProperties": false,
-        "description": "Data-plane facet (sibling to Framework); universe drives ClickHouse screener when wired.",
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "const": "SigmaRailScreenerAlphaModel",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FixedSigmaRailAlphaV1",
+        "type": "object"
+      },
+      "FixedSigmaRailExecutionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "const": "SigmaRailScreenerExecutionModel",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FixedSigmaRailExecutionV1",
+        "type": "object"
+      },
+      "FixedSigmaRailPortfolioConstructionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "const": "SigmaRailScreenerPortfolioConstructionModel",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FixedSigmaRailPortfolioConstructionV1",
+        "type": "object"
+      },
+      "FixedSigmaRailRiskManagementV1": {
+        "additionalProperties": false,
+        "properties": {
+          "Parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "Type": {
+            "const": "SigmaRailRiskManagementModel",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "Type"
+        ],
+        "title": "FixedSigmaRailRiskManagementV1",
+        "type": "object"
+      },
+      "SigmaRailFacet": {
+        "additionalProperties": false,
+        "description": "Data-plane settings; universe configuration lives in Framework.UniverseSelection.",
         "properties": {
           "DataSources": {
             "items": {
@@ -342,22 +392,44 @@
             ],
             "default": null,
             "title": "Regime"
+          }
+        },
+        "title": "SigmaRailFacet",
+        "type": "object"
+      },
+      "SigmaRailStrategyFrameworkV1": {
+        "additionalProperties": false,
+        "description": "Five fixed SigmaRail implementations; Parameters hold all slot configuration.",
+        "properties": {
+          "Alpha": {
+            "$ref": "#/$defs/FixedSigmaRailAlphaV1"
           },
-          "Universe": {
-            "additionalProperties": true,
-            "title": "Universe",
-            "type": "object"
+          "Execution": {
+            "$ref": "#/$defs/FixedSigmaRailExecutionV1"
+          },
+          "PortfolioConstruction": {
+            "$ref": "#/$defs/FixedSigmaRailPortfolioConstructionV1"
+          },
+          "RiskManagement": {
+            "$ref": "#/$defs/FixedSigmaRailRiskManagementV1"
+          },
+          "UniverseSelection": {
+            "$ref": "#/$defs/FixedClickHouseUniverseSelectionV1"
           }
         },
         "required": [
-          "Universe"
+          "UniverseSelection",
+          "Alpha",
+          "PortfolioConstruction",
+          "Execution",
+          "RiskManagement"
         ],
-        "title": "VeraBaseFacet",
+        "title": "SigmaRailStrategyFrameworkV1",
         "type": "object"
       }
     },
     "additionalProperties": false,
-    "description": "Target Phase-2 document: explicit framework types + VeraBase.Universe (+ plugin parameters).",
+    "description": "Current strategy document with five fixed SigmaRail framework slots.",
     "properties": {
       "AlgorithmParameters": {
         "additionalProperties": {
@@ -368,20 +440,20 @@
         "type": "object"
       },
       "Framework": {
-        "$ref": "#/$defs/FrameworkBundleV1"
+        "$ref": "#/$defs/SigmaRailStrategyFrameworkV1"
       },
       "Kind": {
-        "const": "VeraLabV1",
+        "const": "SigmaRailStrategyV1",
         "title": "Kind",
         "type": "string"
       },
       "SchemaVersion": {
-        "const": 2,
+        "const": 3,
         "title": "Schemaversion",
         "type": "integer"
       },
-      "VeraBase": {
-        "$ref": "#/$defs/VeraBaseFacet"
+      "SigmaRail": {
+        "$ref": "#/$defs/SigmaRailFacet"
       },
       "title": {
         "anyOf": [
@@ -401,16 +473,16 @@
       "SchemaVersion",
       "Kind",
       "Framework",
-      "VeraBase"
+      "SigmaRail"
     ],
-    "title": "VeraLabV1Document",
+    "title": "SigmaRailStrategyV1Document",
     "type": "object"
   },
   "lean_framework_schema": {
     "$defs": {
       "FrameworkBundleV1": {
         "additionalProperties": false,
-        "description": "All five framework slots required for LeanFrameworkV1 (plan §8.4).",
+        "description": "Four LEAN model slots for a standalone LeanFrameworkV1 document.",
         "properties": {
           "Alpha": {
             "$ref": "#/$defs/FrameworkSlotSpec"
@@ -423,13 +495,9 @@
           },
           "RiskManagement": {
             "$ref": "#/$defs/FrameworkSlotSpec"
-          },
-          "UniverseSelection": {
-            "$ref": "#/$defs/FrameworkSlotSpec"
           }
         },
         "required": [
-          "UniverseSelection",
           "Alpha",
           "PortfolioConstruction",
           "Execution",
@@ -461,7 +529,7 @@
       }
     },
     "additionalProperties": false,
-    "description": "Phase-1 document: wire standard QC framework models only (no VeraBase / ClickHouse).\n\nJSON uses SchemaVersion + Kind; distinct from legacy pipeline JSON (schema_version: 1).\nSupply **Framework** inline or **FrameworkPreset** (named bundle), not both.",
+    "description": "Phase-1 document: wire standard QC framework models only (no SigmaRail / ClickHouse).\n\nJSON uses SchemaVersion + Kind; distinct from legacy pipeline JSON (schema_version: 1).\nSupply **Framework** inline or **FrameworkPreset** (named bundle), not both.",
     "properties": {
       "Algorithm": {
         "anyOf": [
@@ -514,66 +582,19 @@
   },
   "runtime_type_ids_by_slot": {
     "Alpha": [
-      "ClickHouseAlphaModel",
-      "ConstantAlphaModel",
-      "EmaCrossAlphaModel",
-      "MacdAlphaModel",
-      "RsiAlphaModel",
-      "ScreenerStoreAlphaModel",
-      "SwingBreakoutAlphaModel",
-      "SwingPullbackAlphaModel",
-      "VeraCompositeAlphaModel",
-      "VeraGraphPolicyAlphaModel",
-      "VeraPyramidAlphaModel",
-      "VeraScreenerAlphaModel",
-      "VeraSectorAlphaModel",
-      "VeraSectorEtfAlphaModel",
-      "VeraTqqqTacticalAlphaModel"
+      "SigmaRailScreenerAlphaModel"
     ],
     "Execution": [
-      "ClickHouseExecutionModel",
-      "ImmediateExecutionModel",
-      "ScreenerStoreExecutionModel",
-      "StandardDeviationExecutionModel",
-      "VeraScreenerExecutionModel",
-      "VolumeWeightedAveragePriceExecutionModel"
+      "SigmaRailScreenerExecutionModel"
     ],
     "PortfolioConstruction": [
-      "ClickHousePortfolioConstructionModel",
-      "ConfidenceWeightedPortfolioConstructionModel",
-      "EqualWeightingPortfolioConstructionModel",
-      "InsightWeightingPortfolioConstructionModel",
-      "PerformanceWeightedPortfolioConstructionModel",
-      "RegimeWeightedPortfolioConstructionModel",
-      "RiskBudgetedPortfolioConstructionModel",
-      "RiskParityPortfolioConstructionModel",
-      "ScreenerStorePortfolioConstructionModel",
-      "SectorWeightingPortfolioConstructionModel",
-      "VeraGraphPolicyPortfolioConstructionModel",
-      "VeraScreenerPortfolioConstructionModel",
-      "VeraSectorEtfPortfolioConstructionModel",
-      "VeraSectorPortfolioConstructionModel",
-      "VeraTqqqTacticalPortfolioConstructionModel",
-      "VolatilityTargetingPortfolioConstructionModel"
+      "SigmaRailScreenerPortfolioConstructionModel"
     ],
     "RiskManagement": [
-      "CompositeRiskManagementModel",
-      "MaximumDrawdownPercentPerSecurity",
-      "MaximumSectorExposureRiskManagementModel",
-      "MaximumUnrealizedProfitPercentPerSecurity",
-      "NullRiskManagementModel",
-      "SwingProgressiveRiskManagementModel",
-      "TrailingStopRiskManagementModel",
-      "VeraHedgeModel"
+      "SigmaRailRiskManagementModel"
     ],
     "UniverseSelection": [
-      "ClickHouseUniverseSelectionModel",
-      "CoarseFundamentalUniverseSelectionModel",
-      "CompositeUniverseSelectionModel",
-      "HighRoeQualityUniverseSelectionModel",
-      "ManualUniverseSelectionModel",
-      "ScreenerStoreUniverseSelectionModel",
-      "VeraScreenerUniverseSelectionModel"
+      "SigmaRailClickHouseUniverseSelection"
     ]
   },
   "slots": {
@@ -594,7 +615,7 @@
       "slot": "RiskManagement"
     },
     "universe_selection": {
-      "purpose": "Select dated candidates through universe queries.",
+      "purpose": "Select securities from the ClickHouse query AST.",
       "slot": "UniverseSelection"
     }
   },
@@ -604,40 +625,75 @@
     "ChHttpClient",
     "ChHttpSettings",
     "CompositeAlphaModel",
+    "CompositeRiskManagementModel",
+    "ConfidenceWeightedPortfolioConstructionModel",
+    "ConstantAlphaModel",
     "EconomicEnvironmentRegimeSource",
+    "EmaCrossAlphaModel",
+    "EqualWeightingPortfolioConstructionModel",
     "ExecutionModel",
     "FetchWindow",
     "HighRoeRollingCohort",
-    "HighRoeUniverseSelectionModel",
+    "ImmediateExecutionModel",
     "Insight",
     "InsightDirection",
     "InsightType",
+    "InsightWeightingPortfolioConstructionModel",
+    "MacdAlphaModel",
     "Market",
+    "MaximumDrawdownPercentPerSecurity",
+    "MaximumSectorExposureRiskManagementModel",
+    "MaximumUnrealizedProfitPercentPerSecurity",
+    "NullRiskManagementModel",
+    "PerformanceWeightedPortfolioConstructionModel",
     "PortfolioConstructionModel",
     "PortfolioTarget",
     "PositionRiskState",
     "PyramidPositionState",
     "RegimeGateEvaluator",
+    "RegimeWeightedPortfolioConstructionModel",
     "Resolution",
+    "RiskBudgetedPortfolioConstructionModel",
     "RiskManagementModel",
+    "RiskParityPortfolioConstructionModel",
+    "RsiAlphaModel",
+    "SectorWeightingPortfolioConstructionModel",
     "SecurityType",
     "SigmaRailApiClient",
     "SigmaRailApiError",
+    "SigmaRailCompositeAlphaModel",
     "SigmaRailDailyScreener",
     "SigmaRailFrameworkStore",
+    "SigmaRailGraphPolicyAlphaModel",
+    "SigmaRailGraphPolicyPortfolioConstructionModel",
+    "SigmaRailHedgeModel",
+    "SigmaRailMacroEconomicDaily",
     "SigmaRailMarketRegimeSignalsDaily",
+    "SigmaRailPyramidAlphaModel",
+    "SigmaRailQueryUniverseAlphaModel",
+    "SigmaRailSectorAlphaModel",
+    "SigmaRailSectorEtfAlphaModel",
+    "SigmaRailSectorEtfPortfolioConstructionModel",
+    "SigmaRailSectorPortfolioConstructionModel",
+    "SigmaRailSymbolTechnicalFeaturesDaily",
+    "SigmaRailTqqqTacticalAlphaModel",
+    "SigmaRailTqqqTacticalPortfolioConstructionModel",
+    "StandardDeviationExecutionModel",
     "SurrogateRouter",
+    "SwingBreakoutAlphaModel",
+    "SwingProgressiveRiskManagementModel",
+    "SwingPullbackAlphaModel",
     "Symbol",
     "SymbolRollingData",
-    "UniverseSelectionModel",
-    "VeraMacroEconomicDaily",
-    "VeraSymbolTechnicalFeaturesDaily",
+    "TrailingStopRiskManagementModel",
+    "VolatilityTargetingPortfolioConstructionModel",
+    "VolumeWeightedAveragePriceExecutionModel",
     "WiredFrameworkV1",
     "_GateConfig"
   ],
   "version": 1,
   "wire_format": {
-    "kind": "VeraLabV1",
-    "schema_version": 2
+    "kind": "SigmaRailStrategyV1",
+    "schema_version": 3
   }
 }

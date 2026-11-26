@@ -80,7 +80,7 @@ def test_lint_spec_json_flags_invalid_json() -> None:
 
 
 def test_lint_spec_json_flags_unknown_node_type() -> None:
-    doc = {"Framework": {"Alpha": {"Type": "VeraPyramidAlphaModel",
+    doc = {"Framework": {"Alpha": {"Type": "SigmaRailPyramidAlphaModel",
                                    "Parameters": {"setup_where": {"type": "frobnicate"}}}}}
     findings = spec_save.lint_spec_json(json.dumps(doc))
     assert [f for f in findings if f["code"] == "E100" and f["severity"] == "error"]
@@ -98,7 +98,7 @@ def test_lint_spec_json_reports_skipped_parameter_check() -> None:
     findings = spec_save.lint_spec_json(json.dumps({"Framework": {}}))
     if any(f["code"] == "LINT002" for f in findings):
         assert all(f["severity"] == "warning" for f in findings if f["code"] == "LINT002")
-    else:  # vera_lab importable in this environment -> check actually ran
+    else:  # sigmarail_lab importable in this environment -> check actually ran
         assert not any(f["code"] == "LINT002" for f in findings)
 
 
@@ -108,7 +108,7 @@ BAD_SPEC = json.dumps(
     {
         "Framework": {
             "Alpha": {
-                "Type": "VeraPyramidAlphaModel",
+                "Type": "SigmaRailPyramidAlphaModel",
                 "Parameters": {"setup_where": {"type": "frobnicate"}},
             }
         }

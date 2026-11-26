@@ -1,19 +1,19 @@
-"""The canonical Vera expression dialect (C-VERA-EXPR-V1) — one dialect, one home.
+"""The canonical SigmaRail expression dialect (C-SIGMARAIL-EXPR-V1) — one dialect, one home.
 
-VeraBase and VeraTradingLab previously declared **two** dialects with colliding
-discriminators: VeraBase's `gte` carried `left`/`right` *operands*, VeraTradingLab's
+SigmaRail and SigmaRailTradingLab previously declared **two** dialects with colliding
+discriminators: SigmaRail's `gte` carried `left`/`right` *operands*, SigmaRailTradingLab's
 carried a flat `column`/`value`. That divergence produced false validation failures
 whenever one side could not import the other, and it is what this package removes.
 
 Structural facts established before the move (2026-10-02):
 
-* VeraBase's dialect is a superset of what the stored corpus uses — 20 nodes, nested
-  operands (`col`/`lit`/`formula`), including `gt`/`lt` which VeraTradingLab's lacked.
+* SigmaRail's dialect is a superset of what the stored corpus uses — 20 nodes, nested
+  operands (`col`/`lit`/`formula`), including `gt`/`lt` which SigmaRailTradingLab's lacked.
 * The flat `column`/`value` form has **no producer, no consumer and zero corpus specs**;
-  its only references were the validators inside VeraTradingLab's own module. It is
+  its only references were the validators inside SigmaRailTradingLab's own module. It is
   therefore dropped rather than normalised, so one class exists per discriminator.
-* `regime_allows_entries` existed only in VeraTradingLab and is added here.
-* `regime.source` existed only in VeraTradingLab and was added upstream during the
+* `regime_allows_entries` existed only in SigmaRailTradingLab and is added here.
+* `regime.source` existed only in SigmaRailTradingLab and was added upstream during the
   spec-lint slice.
 
 This module must stay **pydantic-only** — no pandas, clickhouse, fastapi, or Lean. It is
@@ -39,7 +39,7 @@ class ColRef(BaseModel):
 
 
 class PosRef(BaseModel):
-    """Runtime position binding (C-VERA-EXPR-V2).
+    """Runtime position binding (C-SIGMARAIL-EXPR-V2).
 
     Resolves a field of the *open position context* — ``entry``, ``r``,
     ``current_stop``, ``days_held``, tranche flags, … — supplied by the slot
@@ -59,7 +59,7 @@ class PosRef(BaseModel):
 
 
 class BindingRef(BaseModel):
-    """Namespaced runtime binding (C-VERA-EXPR-V2).
+    """Namespaced runtime binding (C-SIGMARAIL-EXPR-V2).
 
     Resolves ``ns.field`` against runtime-supplied context dicts — ``pos``
     (open position), ``hold`` (held-holding state), ``cand`` (candidate
@@ -87,7 +87,7 @@ class LitVal(BaseModel):
 
 
 class FormulaExpr(BaseModel):
-    """Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``."""
+    """Binary arithmetic formula operand (C-SIGMARAIL-EXPR); nests via ``args``."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -103,7 +103,7 @@ class FormulaExpr(BaseModel):
 
 
 class MinExpr(BaseModel):
-    """N-ary minimum operand (C-VERA-EXPR); ``args`` may nest."""
+    """N-ary minimum operand (C-SIGMARAIL-EXPR); ``args`` may nest."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -112,7 +112,7 @@ class MinExpr(BaseModel):
 
 
 class MaxExpr(BaseModel):
-    """N-ary maximum operand (C-VERA-EXPR); ``args`` may nest."""
+    """N-ary maximum operand (C-SIGMARAIL-EXPR); ``args`` may nest."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -283,9 +283,9 @@ class RegimeExpr(BaseModel):
     type: Literal["regime"] = "regime"
     field: str
     # Data source for the field ("regime", "vix", "macro", "technical", ...). The
-    # VeraTradingLab dialect has always accepted this; this module did not, so a spec
+    # SigmaRailTradingLab dialect has always accepted this; this module did not, so a spec
     # carrying it failed validation whenever that dialect was unavailable — which is
-    # exactly the case in the Studio process, where `vera_lab` is not importable. Nine
+    # exactly the case in the Studio process, where `sigmarail_lab` is not importable. Nine
     # `regime` nodes in the stored corpus use it.
     source: str = "regime"
     eq: bool | float | int | None = None
@@ -317,7 +317,7 @@ class RegimeMartAllowsEntriesExpr(BaseModel):
 
 
 class RegimeAllowsEntriesExpr(BaseModel):
-    """Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation."""
+    """Regime-gate admission. SigmaRailTradingLab-only until now; folded in on consolidation."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -326,7 +326,7 @@ class RegimeAllowsEntriesExpr(BaseModel):
 
 
 class CondExpr(BaseModel):
-    """Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.
+    """Piecewise operand (C-SIGMARAIL-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.
 
     ``when`` is evaluated with **fail-closed slot semantics** — missing columns or an
     unevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback
@@ -368,7 +368,7 @@ BoolExprItem = Annotated[
     Field(discriminator="type"),
 ]
 
-# Value-level union (C-VERA-EXPR-V2): arithmetic, aggregate, and piecewise operands.
+# Value-level union (C-SIGMARAIL-EXPR-V2): arithmetic, aggregate, and piecewise operands.
 # Defined after BoolExprItem so `cond` can carry a boolean `when` and still nest inside
 # operands (all field annotations above use the "Operand" forward ref, resolved by the
 # model_rebuild calls below).

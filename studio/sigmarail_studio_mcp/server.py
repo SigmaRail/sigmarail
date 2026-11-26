@@ -267,32 +267,32 @@ def _build() -> FastMCP:
 
     @_tool("strategy")
     def strategy_compile_pipeline(pipeline_json: str) -> dict[str, Any]:
-        """Compile a staged PipelineDocument JSON into a VeraLabV1 spec dict."""
+        """Compile a staged PipelineDocument JSON into a SigmaRailStrategyV1 spec dict."""
         return strategy.compile_pipeline(pipeline_json)
 
     @_tool("strategy")
     def strategy_compile_preset(preset_id: str) -> dict[str, Any]:
-        """Compile a named strategy preset into a VeraLabV1 spec dict."""
+        """Compile a named strategy preset into a SigmaRailStrategyV1 spec dict."""
         return strategy.compile_preset(preset_id)
 
     @_tool("strategy")
     def strategy_fork(spec_json: str) -> dict[str, Any]:
-        """Decompile a VeraLabV1 spec JSON back into a PipelineDocument."""
+        """Decompile a SigmaRailStrategyV1 spec JSON back into a PipelineDocument."""
         return strategy.fork(spec_json)
 
     @_tool("strategy")
     def strategy_compile_portfolio(portfolio_json: str) -> dict[str, Any]:
-        """Compile a PortfolioDocument JSON (legs + allocation) into a VeraLabV1 spec."""
+        """Compile a PortfolioDocument JSON (legs + allocation) into a SigmaRailStrategyV1 spec."""
         return strategy.compile_portfolio(portfolio_json)
 
     @_tool("strategy")
     def strategy_fork_portfolio(spec_json: str) -> dict[str, Any]:
-        """Decompile a VeraLabV1 spec JSON back into a PortfolioDocument."""
+        """Decompile a SigmaRailStrategyV1 spec JSON back into a PortfolioDocument."""
         return strategy.fork_portfolio(spec_json)
 
     @_tool("strategy")
     def strategy_diff(spec_a_json: str, spec_b_json: str) -> dict[str, Any]:
-        """Semantic slot-level diff between two VeraLabV1 specs."""
+        """Semantic slot-level diff between two SigmaRailStrategyV1 specs."""
         return strategy.strategy_diff(spec_a_json, spec_b_json)
 
     @_tool("strategy")
@@ -333,7 +333,7 @@ def _build() -> FastMCP:
         """Validate + compile an authored PipelineDocument and save it (forks when runs exist).
 
         Use this to persist the output of ``strategy_compose_document`` / ``strategy_fork`` — no raw
-        VeraLabV1 JSON needed. Check ``forked`` and use the returned ``ir_id`` for follow-up calls.
+        SigmaRailStrategyV1 JSON needed. Check ``forked`` and use the returned ``ir_id`` for follow-up calls.
         """
         return strategy.save_pipeline(
             ir_id,
@@ -379,7 +379,7 @@ def _build() -> FastMCP:
 
     @_tool("backtesting")
     def backtest_list_runs_by_ir_id(ir_id: str, limit: int = 20) -> dict[str, Any]:
-        """List backtest runs for a VeraLab ir_id (most-recent first)."""
+        """List backtest runs for a SigmaRailLab ir_id (most-recent first)."""
         return backtest.list_runs_by_ir_id(ir_id, limit=limit)
 
     @_tool("backtesting")
@@ -389,12 +389,12 @@ def _build() -> FastMCP:
 
     @_tool("backtesting")
     def backtest_list_specs(limit: int = 20) -> dict[str, Any]:
-        """List stored VeraLab algorithm specs (most-recent first, no algorithm_json blob)."""
+        """List stored SigmaRailLab algorithm specs (most-recent first, no algorithm_json blob)."""
         return backtest.list_specs(limit=limit)
 
     @_tool("backtesting")
     def backtest_get_spec(ir_id: str) -> dict[str, Any]:
-        """Fetch a single VeraLab algorithm spec by ir_id (includes full algorithm_json)."""
+        """Fetch a single SigmaRailLab algorithm spec by ir_id (includes full algorithm_json)."""
         return backtest.get_spec(ir_id)
 
     @_tool("backtesting")
@@ -423,7 +423,7 @@ def _build() -> FastMCP:
         changelog_notes: str = "",
         author_agent: str = "agent",
     ) -> dict[str, Any]:
-        """Store a VeraLab algorithm spec in strategy_algorithm_specs.
+        """Store a SigmaRailLab algorithm spec in strategy_algorithm_specs.
 
         Forks automatically when `ir_id` already has backtest runs: the spec is
         saved under a NEW ir_id with parent_ir_id + mutation_type="fork", so
@@ -714,7 +714,7 @@ def _build() -> FastMCP:
 
     @_tool("portfolio")
     def portfolio_allocation_drift() -> dict[str, Any]:
-        """Latest sector/stock drift vs Vera targets and household deployment vs regime."""
+        """Latest sector/stock drift vs SigmaRail targets and household deployment vs regime."""
         return portfolio.allocation_drift()
 
     @_tool("portfolio")
@@ -830,7 +830,7 @@ def _build() -> FastMCP:
 
     @_tool("screening")
     def chart_price_embed(ticker: str, lookback_days: int = 252, theme: str = "dark", height: int = 520, show_rsi: bool = True) -> dict[str, Any]:
-        """Vera daily OHLCV Chart.js embed (from screener_price_tech_daily)."""
+        """SigmaRail daily OHLCV Chart.js embed (from screener_price_tech_daily)."""
         return chart.price_embed(ticker, lookback_days=lookback_days, theme=theme, height=height, show_rsi=show_rsi)
 
     # --- studio domain ------------------------------------------------------
@@ -859,10 +859,10 @@ def _build() -> FastMCP:
         slot: str | None = None,
         include_unwired: bool = True,
         lean_root: str | None = None,
-        include_vera_screener_ids: bool = True,
+        include_sigmarail_screener_ids: bool = True,
     ) -> dict[str, Any]:
-        """List Lean framework `Type` ids, slots, init parameters, and vera_lab flags."""
-        return lean.discover_types(slot=slot, include_unwired=include_unwired, lean_root=lean_root, include_vera_screener_ids=include_vera_screener_ids)
+        """List Lean framework `Type` ids, slots, init parameters, and sigmarail_lab flags."""
+        return lean.discover_types(slot=slot, include_unwired=include_unwired, lean_root=lean_root, include_sigmarail_screener_ids=include_sigmarail_screener_ids)
 
     # --- kb domain ----------------------------------------------------------
     @_tool("knowledge")

@@ -304,7 +304,7 @@
       },
       "BindingRef": {
         "additionalProperties": false,
-        "description": "Namespaced runtime binding (C-VERA-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
+        "description": "Namespaced runtime binding (C-SIGMARAIL-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
         "properties": {
           "field": {
             "minLength": 1,
@@ -1371,7 +1371,7 @@
       },
       "CondExpr": {
         "additionalProperties": false,
-        "description": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
+        "description": "Piecewise operand (C-SIGMARAIL-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
         "properties": {
           "otherwise": {
             "discriminator": {
@@ -1576,7 +1576,7 @@
       },
       "FormulaExpr": {
         "additionalProperties": false,
-        "description": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+        "description": "Binary arithmetic formula operand (C-SIGMARAIL-EXPR); nests via ``args``.",
         "properties": {
           "args": {
             "items": {
@@ -1714,7 +1714,7 @@
       },
       "MaxExpr": {
         "additionalProperties": false,
-        "description": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+        "description": "N-ary maximum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
         "properties": {
           "args": {
             "items": {
@@ -1785,7 +1785,7 @@
       },
       "MinExpr": {
         "additionalProperties": false,
-        "description": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+        "description": "N-ary minimum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
         "properties": {
           "args": {
             "items": {
@@ -1958,7 +1958,7 @@
       },
       "PosRef": {
         "additionalProperties": false,
-        "description": "Runtime position binding (C-VERA-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
+        "description": "Runtime position binding (C-SIGMARAIL-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
         "properties": {
           "field": {
             "title": "Field",
@@ -1979,7 +1979,7 @@
       },
       "RegimeAllowsEntriesExpr": {
         "additionalProperties": false,
-        "description": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+        "description": "Regime-gate admission. SigmaRailTradingLab-only until now; folded in on consolidation.",
         "properties": {
           "eq": {
             "anyOf": [
@@ -2420,7 +2420,7 @@
         "otherwise"
       ],
       "id": "expression.node.cond",
-      "summary": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.",
+      "summary": "Piecewise operand (C-SIGMARAIL-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.",
       "type": "cond"
     },
     {
@@ -2440,7 +2440,7 @@
         "args"
       ],
       "id": "expression.node.formula",
-      "summary": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+      "summary": "Binary arithmetic formula operand (C-SIGMARAIL-EXPR); nests via ``args``.",
       "type": "formula"
     },
     {
@@ -2507,7 +2507,7 @@
         "args"
       ],
       "id": "expression.node.max",
-      "summary": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+      "summary": "N-ary maximum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
       "type": "max"
     },
     {
@@ -2516,7 +2516,7 @@
         "args"
       ],
       "id": "expression.node.min",
-      "summary": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+      "summary": "N-ary minimum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
       "type": "min"
     },
     {
@@ -2544,7 +2544,7 @@
         "field"
       ],
       "id": "expression.node.pos",
-      "summary": "Runtime position binding (C-VERA-EXPR-V2).",
+      "summary": "Runtime position binding (C-SIGMARAIL-EXPR-V2).",
       "type": "pos"
     },
     {
@@ -2554,7 +2554,7 @@
         "field"
       ],
       "id": "expression.node.ref",
-      "summary": "Namespaced runtime binding (C-VERA-EXPR-V2).",
+      "summary": "Namespaced runtime binding (C-SIGMARAIL-EXPR-V2).",
       "type": "ref"
     },
     {
@@ -2575,7 +2575,7 @@
         "eq"
       ],
       "id": "expression.node.regime_allows_entries",
-      "summary": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+      "summary": "Regime-gate admission. SigmaRailTradingLab-only until now; folded in on consolidation.",
       "type": "regime_allows_entries"
     },
     {
@@ -2920,7 +2920,7 @@
       },
       "BindingRef": {
         "additionalProperties": false,
-        "description": "Namespaced runtime binding (C-VERA-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
+        "description": "Namespaced runtime binding (C-SIGMARAIL-EXPR-V2).\n\nResolves ``ns.field`` against runtime-supplied context dicts — ``pos``\n(open position), ``hold`` (held-holding state), ``cand`` (candidate\ninsight), ``acct`` (portfolio/account), ``pyr`` (pyramid phase),\n``regime`` (regime inputs), and any namespace a consumer registers. The\nslot evaluator merges each context dict under ``__<ns>.``; a missing\nnamespace or field resolves to ``None`` (fails closed in comparisons).\n\nNot a row column: row-only evaluation sees ``None``, and consumers\ncompiling to SQL must reject it.",
         "properties": {
           "field": {
             "minLength": 1,
@@ -3987,7 +3987,7 @@
       },
       "CondExpr": {
         "additionalProperties": false,
-        "description": "Piecewise operand (C-VERA-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
+        "description": "Piecewise operand (C-SIGMARAIL-EXPR-V2): ``when`` selects ``then`` or ``otherwise``.\n\n``when`` is evaluated with **fail-closed slot semantics** — missing columns or an\nunevaluatable predicate resolve to false, so ``otherwise`` is the graceful-fallback\nbranch (e.g. percent stop when ``atr`` is absent). ``otherwise`` is named, not\n``else``, because ``else`` is a Python keyword and aliases would leak into\nserialization everywhere.",
         "properties": {
           "otherwise": {
             "discriminator": {
@@ -4192,7 +4192,7 @@
       },
       "FormulaExpr": {
         "additionalProperties": false,
-        "description": "Binary arithmetic formula operand (C-VERA-EXPR); nests via ``args``.",
+        "description": "Binary arithmetic formula operand (C-SIGMARAIL-EXPR); nests via ``args``.",
         "properties": {
           "args": {
             "items": {
@@ -4330,7 +4330,7 @@
       },
       "MaxExpr": {
         "additionalProperties": false,
-        "description": "N-ary maximum operand (C-VERA-EXPR); ``args`` may nest.",
+        "description": "N-ary maximum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
         "properties": {
           "args": {
             "items": {
@@ -4401,7 +4401,7 @@
       },
       "MinExpr": {
         "additionalProperties": false,
-        "description": "N-ary minimum operand (C-VERA-EXPR); ``args`` may nest.",
+        "description": "N-ary minimum operand (C-SIGMARAIL-EXPR); ``args`` may nest.",
         "properties": {
           "args": {
             "items": {
@@ -4574,7 +4574,7 @@
       },
       "PosRef": {
         "additionalProperties": false,
-        "description": "Runtime position binding (C-VERA-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
+        "description": "Runtime position binding (C-SIGMARAIL-EXPR-V2).\n\nResolves a field of the *open position context* — ``entry``, ``r``,\n``current_stop``, ``days_held``, tranche flags, … — supplied by the slot\nevaluator's ``position`` argument. It is **not a row column**: a row-only\nevaluation (universe ``where`` / ``computed``) resolves it to ``None``,\nand consumers compiling to SQL must reject it.\n\nDeprecated spelling: ``{\"type\":\"pos\",\"field\":f}`` is the same binding as\n``{\"type\":\"ref\",\"ns\":\"pos\",\"field\":f}``. New specs should author ``ref``;\n``pos`` remains valid and evaluates identically.",
         "properties": {
           "field": {
             "title": "Field",
@@ -4595,7 +4595,7 @@
       },
       "RegimeAllowsEntriesExpr": {
         "additionalProperties": false,
-        "description": "Regime-gate admission. VeraTradingLab-only until now; folded in on consolidation.",
+        "description": "Regime-gate admission. SigmaRailTradingLab-only until now; folded in on consolidation.",
         "properties": {
           "eq": {
             "anyOf": [
@@ -4972,5 +4972,5 @@
       }
     ]
   },
-  "version": "C-VERA-EXPR-V1"
+  "version": "C-SIGMARAIL-EXPR-V1"
 }

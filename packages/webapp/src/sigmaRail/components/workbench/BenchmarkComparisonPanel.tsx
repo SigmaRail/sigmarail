@@ -44,7 +44,7 @@ const BENCHMARK_GROUPS = [
   "CAN SLIM & Breakouts",
   "Momentum & Trend",
 ] as const;
-const LEGACY_BENCHMARK_KEYS = ["sigmarail_custom_benchmarks", "vera_custom_benchmarks"] as const;
+const LEGACY_BENCHMARK_KEYS = ["sigmarail_custom_benchmarks", "sigmarail_custom_benchmarks"] as const;
 
 function accountBenchmarkKey(userId: string): string {
   return `sigmarail-studio.user.${encodeURIComponent(userId)}.custom-benchmarks`;

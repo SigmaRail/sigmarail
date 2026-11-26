@@ -16,7 +16,7 @@ from QuantConnect.Algorithm.Framework.Portfolio import PortfolioConstructionMode
 from sigmarail_lab.tqqq_tactical_rules import TqqqTacticalParams, evaluate_target_weight
 
 
-class VeraTqqqTacticalAlphaModel(AlphaModel):
+class SigmaRailTqqqTacticalAlphaModel(AlphaModel):
     """Daily signal for single-name TQQQ tactical sleeve."""
 
     def __init__(self, store: Any, **params: Any):
@@ -24,7 +24,7 @@ class VeraTqqqTacticalAlphaModel(AlphaModel):
         self._params = TqqqTacticalParams.from_dict(params)
         self._last_run_date = None
         self._target_weight = 0.0
-        self.Name = "VeraTqqqTacticalAlphaModel"
+        self.Name = "SigmaRailTqqqTacticalAlphaModel"
 
     def Update(self, algorithm, data):
         today = algorithm.Time.date()
@@ -70,7 +70,7 @@ class VeraTqqqTacticalAlphaModel(AlphaModel):
         return [Insight.Price(symbol, timedelta(days=2), InsightDirection.Up)]
 
 
-class VeraTqqqTacticalPortfolioConstructionModel(PortfolioConstructionModel):
+class SigmaRailTqqqTacticalPortfolioConstructionModel(PortfolioConstructionModel):
     """Apply evaluate_target_weight result as percent target."""
 
     def __init__(self, store: Any, **params: Any):

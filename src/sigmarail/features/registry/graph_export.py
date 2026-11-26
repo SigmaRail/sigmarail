@@ -215,7 +215,7 @@ def build_graph(
     # Decisions index (best-effort; FinanceProjects monorepo path)
     decisions_path = decisions_index
     if decisions_path is None:
-        # VeraBase/ -> FinanceProjects/docs/decisions/index.md
+        # SigmaRail/ -> FinanceProjects/docs/decisions/index.md
         candidate = root.parent / "docs" / "decisions" / "index.md"
         if candidate.is_file():
             decisions_path = candidate

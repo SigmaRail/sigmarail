@@ -16,6 +16,7 @@ from .expr import (
     is_runtime_only_expr, parse_bool_expr, validate_bool_expr_depth,
 )
 from .entry_trigger_ast import ENUM_TRIGGER_TYPES, compile_entry_trigger, trigger_eval_row
+from .lean_framework_parameters import validate_framework_bundle_v1
 from .universe_query import UniverseQueryV1, universe_v1_allowed_columns
 from .strategy import (
     AllocationPolicy, ExecutionConfig, ExitTranche, FactorInfo, FilterCondition,
@@ -116,6 +117,7 @@ __all__ = [
     "parse_bool_expr", "validate_bool_expr_depth", "ENUM_TRIGGER_TYPES", "evaluate_entry_triggers",
     "compile_entry_trigger",
     "trigger_eval_row",
+    "validate_framework_bundle_v1",
     "evaluate_single_trigger",
     "evaluate_slot_bool",
     "evaluate_slot_number",

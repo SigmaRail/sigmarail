@@ -58,17 +58,17 @@ BAR_REQUIREMENTS_BY_TYPE: dict[str, BarRequirements] = {
         warmup_bars=10,
         needs_live_bars=True,
     ),
-    "VeraScreenerAlphaModel": BarRequirements(
+    "SigmaRailScreenerAlphaModel": BarRequirements(
         warmup_bars=0,
         needs_live_bars=False,
         required_columns=("overall_score",),
     ),
-    "VeraCompositeAlphaModel": BarRequirements(
+    "SigmaRailCompositeAlphaModel": BarRequirements(
         warmup_bars=0,
         needs_live_bars=False,
         required_columns=(),
     ),
-    "VeraPyramidAlphaModel": BarRequirements(
+    "SigmaRailPyramidAlphaModel": BarRequirements(
         warmup_bars=0,
         needs_live_bars=False,
         required_columns=(
@@ -81,17 +81,12 @@ BAR_REQUIREMENTS_BY_TYPE: dict[str, BarRequirements] = {
             "factor_beta_mkt_60d",
         ),
     ),
-    "VeraScreenerPortfolioConstructionModel": BarRequirements(
+    "SigmaRailScreenerPortfolioConstructionModel": BarRequirements(
         warmup_bars=0,
         needs_live_bars=False,
         required_columns=("atr_14_pct",),
     ),
-    "VeraScreenerExecutionModel": BarRequirements(
-        warmup_bars=0,
-        needs_live_bars=False,
-        required_columns=(),
-    ),
-    "VeraScreenerUniverseSelectionModel": BarRequirements(
+    "SigmaRailScreenerExecutionModel": BarRequirements(
         warmup_bars=0,
         needs_live_bars=False,
         required_columns=(),
@@ -135,7 +130,6 @@ def _operand_columns(operand: object) -> set[str]:
 
 def _slot_specs(bundle: "FrameworkBundleV1") -> Iterable["FrameworkSlotSpec"]:
     return (
-        bundle.universe_selection,
         bundle.alpha,
         bundle.portfolio_construction,
         bundle.execution,

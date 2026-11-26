@@ -40,7 +40,7 @@ def main() -> None:
              param_x_values, param_y_name, param_y_values, total_combinations,
              status, strategy_type, oos_days, constraints_json, max_concurrent,
              created_at, updated_at)
-            VALUES (%(sid)s, 'VeraTradingLab', %(base)s, %(title)s, 'sharpe_ratio',
+            VALUES (%(sid)s, 'SigmaRailTradingLab', %(base)s, %(title)s, 'sharpe_ratio',
              'risk_per_trade_pct', [0.005, 0.01], NULL, [], 2, 'running',
              'euler', 0, '[]', 1, %(now)s, %(now)s)""",
             parameters={"sid": f"session-{tid}", "base": f"{tid}-strat", "title": f"E2E {tid}", "now": now},
@@ -50,7 +50,7 @@ def main() -> None:
             "strategy_runs",
             [[
                 f"run-optimal-{tid}",          # run_id
-                "VeraTradingLab",              # strategy_id
+                "SigmaRailTradingLab",              # strategy_id
                 "",                            # strategy_repo_url
                 now,                           # run_timestamp
                 "0" * 40,                      # git_commit (FixedString(40))

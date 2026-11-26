@@ -6,11 +6,11 @@ ratchet — is emitted as a rule AST so a stored/generated spec fully describes
 runtime behavior. There is no procedural decision code underneath this.
 
 Consumed by:
-  - ``vera_lab.runtime.qc_swing_risk`` (generated mode: ``rules=None``), and
-  - ``vera_query_core.strategy`` (compile-time materialization into
+  - ``sigmarail_lab.runtime.qc_swing_risk`` (generated mode: ``rules=None``), and
+  - ``sigmarail_query_core.strategy`` (compile-time materialization into
     ``Parameters.rules`` so the saved spec is self-describing) — bridged via
-    ``vera_query_core.strategy.risk_ladder`` because the LEAN container only
-    carries ``vera_lab`` + vendored ``vera_spec``, never ``vera_query_core``.
+    ``sigmarail_query_core.strategy.risk_ladder`` because the LEAN container only
+    carries ``sigmarail_lab`` + vendored ``sigmarail_spec``, never ``sigmarail_query_core``.
 
 Pure dict-building: no runtime imports, no store/algorithm access — safe for
 both the IR layer and the container.
@@ -83,7 +83,7 @@ def generate_default_init_stop(
     atr_stop_multiplier: float = 2.0,
     max_stop_loss_pct: float = 0.05,
 ) -> dict:
-    """Materialize the position-init stop as an Operand AST (C-VERA-EXPR-V2).
+    """Materialize the position-init stop as an Operand AST (C-SIGMARAIL-EXPR-V2).
 
     Encodes the same computation ``qc_swing_risk._compute_initial_stop``
     performs — evaluated once at fill against the init context

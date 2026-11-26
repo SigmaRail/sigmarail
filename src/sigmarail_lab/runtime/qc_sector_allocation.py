@@ -1,16 +1,16 @@
 """
 Sector-aware, regime-scaled QC framework models.
 
-``VeraSectorAlphaModel``
+``SigmaRailSectorAlphaModel``
   Groups ``daily_screener`` rows by sector, computes per-sector avg RS rating,
   selects the top ``sector_top_n`` sectors, and emits Up insights for the top
   ``stocks_per_sector`` stocks within each qualifying sector.  Regime gate:
   ``weekly_allocation_fraction == 0`` → flat all equity; otherwise proceeds.
 
-``VeraSectorPortfolioConstructionModel``
+``SigmaRailSectorPortfolioConstructionModel``
   Allocates total equity budget = ``weekly_allocation_fraction × max_total_exposure``.
   Within the budget, sectors are weighted proportionally to their RS rank score.
-  Positions within each sector are ATR-sized (same logic as VeraScreenerPortfolioConstructionModel).
+  Positions within each sector are ATR-sized (same logic as SigmaRailScreenerPortfolioConstructionModel).
 
 Both models tag each Insight with the sector name (``Insight.Tag``) so the PCM can
 reconstruct per-sector budgets without a second lookup.
@@ -31,7 +31,7 @@ from QuantConnect.Algorithm.Framework.Portfolio import PortfolioConstructionMode
 from sigmarail_lab.runtime.sigmarail_screener_price_policy import mtm_price_for_holding
 
 
-class VeraSectorAlphaModel(AlphaModel):
+class SigmaRailSectorAlphaModel(AlphaModel):
     """Top-N sector selection with regime gate and per-sector stock selection."""
 
     def __init__(
@@ -59,7 +59,7 @@ class VeraSectorAlphaModel(AlphaModel):
         self._circuit_breaker_until = None
         self._last_run_date = None
         self._last_status_month = None
-        self.Name = "VeraSectorAlphaModel"
+        self.Name = "SigmaRailSectorAlphaModel"
 
     def _settled_portfolio_value(self, algorithm) -> float:
         cash = float(algorithm.Portfolio.Cash)
@@ -215,7 +215,7 @@ class VeraSectorAlphaModel(AlphaModel):
         return insights
 
 
-class VeraSectorPortfolioConstructionModel(PortfolioConstructionModel):
+class SigmaRailSectorPortfolioConstructionModel(PortfolioConstructionModel):
     """
     Sector-bucketed, regime-scaled position sizing.
 

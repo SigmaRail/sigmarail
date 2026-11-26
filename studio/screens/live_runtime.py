@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from screens.execution import lean_projects_root
+from sigmarail_studio_mcp.backtest_runner.project_registry import lean_workspace_root
 
 _LOCK = threading.Lock()
 _PROJECT_NAME = "SigmaRailTradingLab"
@@ -107,7 +107,7 @@ def request_is_local_control(remote_addr: str | None, origin: str | None, host: 
 
 
 def _root() -> Path:
-    return lean_projects_root().expanduser().resolve()
+    return lean_workspace_root().expanduser().resolve()
 
 
 def _project() -> Path:
@@ -654,7 +654,7 @@ def start_deployment(
         if previous:
             previous_name = _container_for(previous)
             if _inspect_container(previous_name).get("status") == "running":
-                raise RuntimeErrorDetail("An unmanaged LEAN live container runs from the shared VeraTradingLab project; stop it before starting a Studio deployment")
+                raise RuntimeErrorDetail("An unmanaged LEAN live container is already running; stop it before starting a SigmaRail deployment")
 
         deployment_id = str(uuid.uuid4())
         isolated_project = _deployment_project_path(deployment_id)

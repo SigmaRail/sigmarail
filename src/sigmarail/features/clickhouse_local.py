@@ -1,7 +1,7 @@
 """Start local native ClickHouse (clickhousectl + ~/.clickhouse) when HTTP is down.
 
 Mirrors ``scripts/daily-update.sh`` ensure/start logic so MCP and query services
-connect with the Vera ``stockuser`` / ``vera`` database profile from
+connect with the SigmaRail ``stockuser`` / ``vera`` database profile from
 ``scripts/setup-clickhouse.sh``, not a bare clickhousectl default instance.
 """
 
@@ -56,15 +56,15 @@ def resolve_local_paths(
     name = (server_name or os.environ.get("CLICKHOUSE_SERVER_NAME", "default")).strip() or "default"
     home = Path.home()
     data_root = Path(os.environ.get("CLICKHOUSE_DATA_ROOT", home / ".clickhouse" / "servers" / name))
-    vera_cfg = data_root / "config" / "config.xml"
+    sigmarail_cfg = data_root / "config" / "config.xml"
     legacy_cfg = data_root / "data" / "preprocessed_configs" / "config.xml"
 
     if config_path is not None:
         cfg = Path(config_path)
     elif os.environ.get("SIGMARAIL_CLICKHOUSE_CONFIG", "").strip():
         cfg = Path(os.environ["SIGMARAIL_CLICKHOUSE_CONFIG"].strip())
-    elif vera_cfg.is_file():
-        cfg = vera_cfg
+    elif sigmarail_cfg.is_file():
+        cfg = sigmarail_cfg
     elif legacy_cfg.is_file():
         cfg = legacy_cfg
     elif os.environ.get("CLICKHOUSE_CONFIG", "").strip():
@@ -72,12 +72,12 @@ def resolve_local_paths(
         cfg = env_cfg
         if env_cfg.is_file() and not str(env_cfg).startswith(str(home / ".clickhouse")):
             logger.warning(
-                "CLICKHOUSE_CONFIG=%s is outside ~/.clickhouse and no Vera config at %s",
+                "CLICKHOUSE_CONFIG=%s is outside ~/.clickhouse and no SigmaRail config at %s",
                 env_cfg,
-                vera_cfg,
+                sigmarail_cfg,
             )
     else:
-        cfg = vera_cfg
+        cfg = sigmarail_cfg
 
     port = http_port
     if port is None:
@@ -167,7 +167,7 @@ def _clickhouse_binary() -> Path | None:
 def _start_via_config_daemon(paths: LocalClickHousePaths) -> bool:
     if not paths.config_path.is_file():
         logger.error(
-            "ClickHouse config not found at %s — run: cd VeraBase && ./scripts/setup-clickhouse.sh",
+            "ClickHouse config not found at %s — run: cd SigmaRail && ./scripts/setup-clickhouse.sh",
             paths.config_path,
         )
         return False
@@ -189,8 +189,8 @@ def _start_via_config_daemon(paths: LocalClickHousePaths) -> bool:
     return True
 
 
-def _vera_clickhouse_start_script() -> Path | None:
-    """Resolve VeraBase/scripts/start-vera-clickhouse.sh when running from a dev checkout."""
+def _sigmarail_clickhouse_start_script() -> Path | None:
+    """Resolve SigmaRail/scripts/start-vera-clickhouse.sh when running from a dev checkout."""
     candidates = [
         Path(__file__).resolve().parents[2] / "scripts" / "start-vera-clickhouse.sh",
     ]
@@ -203,8 +203,8 @@ def _vera_clickhouse_start_script() -> Path | None:
     return None
 
 
-def _start_via_vera_script() -> bool:
-    script = _vera_clickhouse_start_script()
+def _start_via_sigmarail_script() -> bool:
+    script = _sigmarail_clickhouse_start_script()
     if script is None:
         return False
     logger.info("Starting ClickHouse via %s", script)
@@ -232,7 +232,7 @@ def start_clickhouse_server_once(paths: LocalClickHousePaths) -> bool:
     if clickhouse_http_ready(paths.http_ping_url):
         return True
 
-    if _start_via_vera_script():
+    if _start_via_sigmarail_script():
         time.sleep(2)
         if clickhouse_http_ready(paths.http_ping_url):
             return True
@@ -260,7 +260,7 @@ def wait_clickhouse_ready(
     return False
 
 
-def _verify_vera_http(settings: ClickHouseSettings, paths: LocalClickHousePaths) -> bool:
+def _verify_sigmarail_http(settings: ClickHouseSettings, paths: LocalClickHousePaths) -> bool:
     """True when HTTP responds and the configured database is reachable."""
     if not clickhouse_http_ready(paths.http_ping_url):
         return False
@@ -286,7 +286,7 @@ def _verify_vera_http(settings: ClickHouseSettings, paths: LocalClickHousePaths)
         return False
 
 
-def is_missing_vera_database(exc: BaseException, settings: ClickHouseSettings) -> bool:
+def is_missing_sigmarail_database(exc: BaseException, settings: ClickHouseSettings) -> bool:
     msg = str(exc).lower()
     db = settings.database.lower()
     return db in msg and ("unknown_database" in msg or "does not exist" in msg)
@@ -300,13 +300,13 @@ def ensure_clickhouse_running(settings: ClickHouseSettings) -> None:
     paths = resolve_local_paths(http_port=int(settings.http_port))
     max_rounds = int(os.environ.get("CLICKHOUSE_START_MAX_ROUNDS", "3"))
 
-    if _verify_vera_http(settings, paths):
+    if _verify_sigmarail_http(settings, paths):
         logger.debug("ClickHouse already responding with database %s", settings.database)
         return
 
     if clickhouse_http_ready(paths.http_ping_url):
         logger.warning(
-            "HTTP port open at %s but database %r unavailable — restarting with Vera config %s",
+            "HTTP port open at %s but database %r unavailable — restarting with SigmaRail config %s",
             paths.http_ping_url,
             settings.database,
             paths.config_path,
@@ -330,7 +330,7 @@ def ensure_clickhouse_running(settings: ClickHouseSettings) -> None:
         if not start_clickhouse_server_once(paths):
             logger.warning("ClickHouse start attempt failed (round %s/%s)", round_idx, max_rounds)
         elif wait_clickhouse_ready(paths):
-            if _verify_vera_http(settings, paths):
+            if _verify_sigmarail_http(settings, paths):
                 logger.info("ClickHouse ready at %s (database %s)", paths.http_ping_url, settings.database)
                 return
             logger.warning(
@@ -344,5 +344,5 @@ def ensure_clickhouse_running(settings: ClickHouseSettings) -> None:
     raise RuntimeError(
         f"ClickHouse did not become ready at {paths.http_ping_url}. "
         f"Config: {paths.config_path}. "
-        "Run: cd VeraBase && ./scripts/setup-clickhouse.sh && ./scripts/start-vera-clickhouse.sh"
+        "Run: cd SigmaRail && ./scripts/setup-clickhouse.sh && ./scripts/start-vera-clickhouse.sh"
     )

@@ -80,14 +80,14 @@ def validate_registry(repo_root: Path) -> list[str]:
                 if related not in known_ids:
                     errors.append(f"{rel}: {eid} related entry {related!r} is unknown")
 
-    # No-influencer-concept-nodes: every concept must resolve under VeraBase sql/|src/.
+    # No-influencer-concept-nodes: every concept must resolve under SigmaRail sql/|src/.
     for eid, ent in (compiled.get("entities") or {}).items():
         if ent.get("kind") != "concept":
             continue
         src = str(ent.get("_source") or "")
         if not any(src.startswith(pfx) for pfx in _VERABASE_SOURCE_PREFIXES):
             errors.append(
-                f"{eid}: kind=concept requires _source under VeraBase sql/ or src/ "
+                f"{eid}: kind=concept requires _source under SigmaRail sql/ or src/ "
                 f"(got {src!r}) — influencer frameworks may not mint concept nodes"
             )
     return errors

@@ -16,8 +16,8 @@ export function stampEvaluation(
   const start = String(evalCfg.start_date || "").trim();
   const end = String(evalCfg.end_date || "").trim();
   const basePayload =
-    spec.VeraBase && typeof spec.VeraBase === "object"
-      ? { ...(spec.VeraBase as Record<string, unknown>) }
+    spec.SigmaRail && typeof spec.SigmaRail === "object"
+      ? { ...(spec.SigmaRail as Record<string, unknown>) }
       : {};
   const algo =
     spec.AlgorithmParameters && typeof spec.AlgorithmParameters === "object"
@@ -32,7 +32,7 @@ export function stampEvaluation(
       ...(start ? { "start-date": start } : {}),
       ...(end ? { "end-date": end } : {}),
     },
-    VeraBase: {
+    SigmaRail: {
       ...basePayload,
       Evaluation: {
         start_date: start,
@@ -47,8 +47,8 @@ export function stampEvaluation(
 export function readEvaluation(spec: Record<string, unknown> | null | undefined): Partial<EvaluationStamp> {
   if (!spec) return {};
   const vb =
-    spec.VeraBase && typeof spec.VeraBase === "object"
-      ? (spec.VeraBase as Record<string, unknown>)
+    spec.SigmaRail && typeof spec.SigmaRail === "object"
+      ? (spec.SigmaRail as Record<string, unknown>)
       : {};
   const ev =
     vb.Evaluation && typeof vb.Evaluation === "object"

@@ -1,7 +1,7 @@
 """Save-time risk-ladder materialization (C-FW-RULES spec-truth contract).
 
 ``screens/risk_rules`` uses the SigmaRail Spec-owned generated ladder and remains
-fully testable without a LEAN or VeraBase checkout.
+fully testable without a LEAN or SigmaRail checkout.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
-"""Pipeline decompiler: VeraLabV1 JSON -> PipelineDocument (round-trip).
+"""Pipeline decompiler: SigmaRailStrategyV1 JSON -> PipelineDocument (round-trip).
 
 Best-effort inverse of ``compiler.compile_pipeline``. The decompiler lets the
-UI, CLI, and MCP load any existing VeraLabV1 spec (however it was authored)
+UI, CLI, and MCP load any existing SigmaRailStrategyV1 spec (however it was authored)
 back into the staged pipeline view.
 """
 
@@ -21,7 +21,6 @@ from .pipeline import (
     FilterNode,
     HedgeConfig,
     HedgeInstrument,
-    ModelRef,
     PipelineBindings,
     PipelineDocumentation,
     PipelineDocument,
@@ -308,51 +307,15 @@ def _binding_fields_for_pipeline(
     return bindings, policy_rules, overrides
 
 
-def _screen_tree_from_slots(framework: dict[str, Any]) -> list[FilterNode]:
-    """Prefer Universe.Parameters.screen; else membership + named_groups."""
-    uni = (framework.get("UniverseSelection") or {}).get("Parameters") or {}
-    screen_ast = uni.get("screen")
-    if screen_ast and not _where_is_empty(screen_ast):
-        node = _decompile_where(screen_ast)
-        if node is None:
-            return []
-        if isinstance(node, FilterGroup):
-            return [node]
-        return [FilterGroup(logic="and", conditions=[node])]
-    membership, named = _screen_params_from_slots(framework)
-    nodes = _screen_nodes_from_params(membership, named)
-    if len(nodes) > 1:
-        return [FilterGroup(logic="or", conditions=nodes)]
-    return nodes
-
-
-def _screen_with_legacy_hygiene(
-    framework: dict[str, Any], universe_sel: dict[str, Any]
-) -> list[FilterNode]:
-    """Load screen tree; AND leftover hygiene_where from old specs."""
-    nodes = _screen_tree_from_slots(framework)
-    hygiene = (universe_sel.get("Parameters") or {}).get("hygiene_where")
-    if not hygiene or _where_is_empty(hygiene):
-        return nodes
-    hnode = _decompile_where(hygiene)
-    if hnode is None:
-        return nodes
-    if not nodes:
-        if isinstance(hnode, FilterGroup):
-            return [hnode]
-        return [FilterGroup(logic="and", conditions=[hnode])]
-    return [FilterGroup(logic="and", conditions=[hnode, *nodes])]
-
-
-def _screen_params_from_slots(framework: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
-    """Derived flag ASTs on Universe; fall back to legacy Alpha copies."""
-    uni = (framework.get("UniverseSelection") or {}).get("Parameters") or {}
-    alpha = (framework.get("Alpha") or {}).get("Parameters") or {}
-    membership = uni.get("membership")
-    if membership is None or _where_is_empty(membership):
-        membership = alpha.get("membership")
-    named = uni.get("named_groups") or alpha.get("named_groups") or {}
-    return membership, named if isinstance(named, dict) else {}
+def _screen_from_universe_ast(universe: dict[str, Any]) -> list[FilterNode]:
+    """Rebuild the authored screen from the sole persisted membership query AST."""
+    where = universe.get("where")
+    if not where or _where_is_empty(where):
+        return []
+    node = _decompile_where(where)
+    if node is None:
+        return []
+    return [node] if isinstance(node, FilterGroup) else [FilterGroup(logic="and", conditions=[node])]
 
 
 def _screen_nodes_from_alpha(alpha_params: dict[str, Any]) -> list[FilterNode]:
@@ -396,6 +359,14 @@ def _sizing_from_pcm(pcm: dict[str, Any]) -> SizingConfig:
     """Map PCM Type/Parameters back to SizingConfig (RiskBudgeted stays semantic)."""
     pcm_type = str(pcm.get("Type") or "")
     pcm_params = dict(pcm.get("Parameters") or {})
+    allocation_policy = str(pcm_params.get("allocation_policy") or "")
+    if allocation_policy == "equal_weight":
+        return SizingConfig(policy=SizingPolicy.EQUAL_WEIGHT)
+    if allocation_policy == "risk_parity":
+        return SizingConfig(policy=SizingPolicy.RISK_PARITY, max_positions=pcm_params.get("max_positions"), max_weight=pcm_params.get("max_weight"), rebalance=pcm_params.get("rebalance"))
+    if allocation_policy == "risk_budgeted":
+        allowed = set(SizingConfig.model_fields)
+        return SizingConfig(policy=SizingPolicy.RISK_BUDGETED, **{k: v for k, v in pcm_params.items() if k in allowed and k != "policy"})
     if pcm_type == "RiskBudgetedPortfolioConstructionModel":
         rebalance = pcm_params.get("rebalance")
         if not rebalance and "rebalance_period_days" in pcm_params:
@@ -448,8 +419,6 @@ def _sizing_from_pcm(pcm: dict[str, Any]) -> SizingConfig:
         )
     if pcm_type == "EqualWeightingPortfolioConstructionModel":
         return SizingConfig(policy=SizingPolicy.EQUAL_WEIGHT)
-    if pcm_type and pcm_type != "VeraScreenerPortfolioConstructionModel":
-        return SizingConfig(model=ModelRef(type=pcm_type, parameters=pcm_params))
     return SizingConfig()
 
 
@@ -459,12 +428,7 @@ def _execution_from_slot(execution: dict[str, Any]) -> ExecutionConfig:
     fill_session = exec_params.get("fill_session")
     if fill_session not in ("moo", "moc"):
         fill_session = "moo"
-    if exec_type in ("", "VeraScreenerExecutionModel"):
-        return ExecutionConfig(fill_session=fill_session)
-    return ExecutionConfig(
-        fill_session=fill_session,
-        model=ModelRef(type=exec_type, parameters=exec_params),
-    )
+    return ExecutionConfig(fill_session=fill_session)
 
 
 def _exit_stage_from_swing(swing_params: dict[str, Any]) -> Stage:
@@ -529,11 +493,10 @@ def _decompile_from_alpha_stages(
     alpha_params = alpha.get("Parameters", {}) or {}
     risk = framework.get("RiskManagement", {})
     pcm = framework.get("PortfolioConstruction", {})
-    universe_sel = framework.get("UniverseSelection", {})
     execution = framework.get("Execution", {})
     algo = spec.get("AlgorithmParameters", {}) or {}
-    vb = spec.get("VeraBase") or {}
-    universe = vb.get("Universe", {})
+    vb = spec.get("SigmaRail") or {}
+    universe = (((framework.get("UniverseSelection") or {}).get("Parameters") or {}).get("query")) or {}
     strategy_name = str(spec.get("title") or spec.get("Kind") or "Decompiled Strategy")
 
     stages: list[Stage] = []
@@ -541,17 +504,10 @@ def _decompile_from_alpha_stages(
         stages.append(Stage.model_validate(raw))
 
     # Exit from Risk Parameters.tranches (honesty) — Composite unwraps primary swing
-    risk_type = str(risk.get("Type") or "")
     rp = risk.get("Parameters") or {}
-    swing_params = rp
-    if risk_type == "CompositeRiskManagementModel":
-        for m in rp.get("models") or []:
-            if isinstance(m, dict) and m.get("Type") == "SwingProgressiveRiskManagementModel":
-                swing_params = m.get("Parameters") or {}
-                risk_type = "SwingProgressiveRiskManagementModel"
-                break
-    if risk_type == "SwingProgressiveRiskManagementModel":
-        stages.append(_exit_stage_from_swing(swing_params))
+    progressive = next((r for r in (rp.get("rules") or []) if isinstance(r, dict) and r.get("kind") == "progressive"), None)
+    if progressive:
+        stages.append(_exit_stage_from_swing(dict(progressive.get("parameters") or {})))
     _apply_alpha_param_knobs(stages, alpha_params)
     pcm_params = (pcm.get("Parameters") or {}) if isinstance(pcm, dict) else {}
     _apply_pcm_pyramid_knobs(stages, pcm_params)
@@ -561,23 +517,11 @@ def _decompile_from_alpha_stages(
 
     hedge = None
     risk_params_full = risk.get("Parameters") or {}
-    if risk.get("Type") == "VeraHedgeModel":
-        instruments = risk_params_full.get("instruments") or []
+    hedge_rule = next((r for r in (risk_params_full.get("rules") or []) if isinstance(r, dict) and r.get("kind") == "hedge"), None)
+    if hedge_rule:
+        instruments = (hedge_rule.get("parameters") or {}).get("instruments") or []
         if instruments:
-            hedge = HedgeConfig(
-                instruments=[HedgeInstrument.model_validate(i) for i in instruments]
-            )
-    elif risk.get("Type") == "CompositeRiskManagementModel":
-        for m in risk_params_full.get("models") or []:
-            if isinstance(m, dict) and m.get("Type") == "VeraHedgeModel":
-                instruments = (m.get("Parameters") or {}).get("instruments") or []
-                if instruments:
-                    hedge = HedgeConfig(
-                        instruments=[
-                            HedgeInstrument.model_validate(i) for i in instruments
-                        ]
-                    )
-                break
+            hedge = HedgeConfig(instruments=[HedgeInstrument.model_validate(i) for i in instruments])
     if hedge is None and algo.get("hedge-instruments"):
         tickers = [t.strip() for t in algo["hedge-instruments"].split(",") if t.strip()]
         hedge = HedgeConfig(
@@ -608,45 +552,17 @@ def _decompile_from_alpha_stages(
             pass
     _restore_stage_documentation(stages, _stage_documentation_records(algo))
 
-    universe_type = str(universe_sel.get("Type") or "")
-    alpha_type = str(alpha.get("Type") or "")
-
-    alpha_ref = None
-    if alpha_type and alpha_type not in (
-        "VeraScreenerAlphaModel",
-        "VeraCompositeAlphaModel",
-        "VeraPyramidAlphaModel",
-    ):
-        alpha_ref = ModelRef(type=alpha_type, parameters=dict(alpha_params))
-
-    risk_model = None
-    if risk.get("Type") not in (
-        "NullRiskManagementModel",
-        "SwingProgressiveRiskManagementModel",
-        "CompositeRiskManagementModel",
-        "VeraHedgeModel",
-    ):
-        risk_model = ModelRef(type=str(risk.get("Type")), parameters=dict(risk_params_full))
-
     sizing = _sizing_from_pcm(pcm)
 
     universe_cfg = UniverseConfig(
-        screen=_screen_with_legacy_hygiene(framework, universe_sel),
+        screen=_screen_from_universe_ast(universe),
         limit_per_day=universe.get("limit_per_day"),
     )
     manual_syms = _manual_symbols_from_universe(universe)
-    if universe_type == "ManualUniverseSelectionModel" or manual_syms:
+    if manual_syms:
         universe_cfg = UniverseConfig(
             source=UniverseSource.MANUAL,
-            symbols=manual_syms
-            or list((universe_sel.get("Parameters") or {}).get("symbols") or []),
-        )
-    elif universe_type and universe_type != "VeraScreenerUniverseSelectionModel":
-        universe_cfg = UniverseConfig(
-            model=ModelRef(
-                type=universe_type,
-                parameters=dict(universe_sel.get("Parameters") or {}),
-            )
+            symbols=manual_syms,
         )
 
     execution_cfg = _execution_from_slot(execution)
@@ -658,11 +574,9 @@ def _decompile_from_alpha_stages(
         gate_combine=alpha_params.get("gate_combine"),
         min_screens=alpha_params.get("min_screens"),
         max_entry_atr_pct=alpha_params.get("max_entry_atr_pct"),
-        alpha=alpha_ref,
         universe=universe_cfg,
         sizing=sizing,
         risk=RiskConfig(
-            model=risk_model,
             regime_gate=regime_gate,
             max_positions=alpha_params.get("max_positions"),
             time_stop_skip_if=(
@@ -689,13 +603,12 @@ def _decompile_from_alpha_stages(
 
 
 def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
-    """Decompile a VeraLabV1 JSON dict back into a PipelineDocument.
+    """Decompile a SigmaRailStrategyV1 JSON dict back into a PipelineDocument.
 
-    Prefer ``Framework.Alpha.Parameters.stages`` (five-slot honesty). Legacy
-    ``VeraBase.Pipeline`` is accepted once for old specs. Otherwise reconstruct
-    heuristically from framework slots and membership / pushdown AST.
+    Prefer ``Framework.Alpha.Parameters.stages``. Otherwise reconstruct from
+    the fixed SigmaRail slots and the UniverseSelection query AST.
     """
-    vb = spec.get("VeraBase") or {}
+    vb = spec.get("SigmaRail") or {}
     framework = spec.get("Framework", {})
     alpha = framework.get("Alpha", {})
     alpha_params = alpha.get("Parameters", {}) or {}
@@ -715,15 +628,14 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
 
     risk = framework.get("RiskManagement", {})
     pcm = framework.get("PortfolioConstruction", {})
-    universe_sel = framework.get("UniverseSelection", {})
     execution = framework.get("Execution", {})
     algo = spec.get("AlgorithmParameters", {})
-    universe = vb.get("Universe", {})
+    universe = (((framework.get("UniverseSelection") or {}).get("Parameters") or {}).get("query")) or {}
     strategy_name = str(spec.get("title") or spec.get("Kind") or "Decompiled Strategy")
 
     stages: list[Stage] = []
 
-    screen_nodes = _screen_with_legacy_hygiene(framework, universe_sel)
+    screen_nodes = _screen_from_universe_ast(universe)
     if not screen_nodes:
         filter_src = universe.get("where")
         filter_node = _decompile_where(filter_src) if filter_src else None
@@ -788,7 +700,7 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
             )
         )
     else:
-        # Single-factor (VeraScreenerAlphaModel): reconstruct from universe order_by.
+        # Single-factor (SigmaRailScreenerAlphaModel): reconstruct from universe order_by.
         order_by = universe.get("order_by") or []
         if order_by:
             field = order_by[0].get("field")
@@ -834,18 +746,10 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
             )
         )
 
-    # --- exit stage from progressive risk model ----------------------------
-    risk_type_raw = str(risk.get("Type") or "")
     rp = risk.get("Parameters") or {}
-    swing_params = rp
-    if risk_type_raw == "CompositeRiskManagementModel":
-        for m in rp.get("models") or []:
-            if isinstance(m, dict) and m.get("Type") == "SwingProgressiveRiskManagementModel":
-                swing_params = m.get("Parameters") or {}
-                risk_type_raw = "SwingProgressiveRiskManagementModel"
-                break
-    if risk_type_raw == "SwingProgressiveRiskManagementModel":
-        stages.append(_exit_stage_from_swing(swing_params))
+    progressive = next((r for r in (rp.get("rules") or []) if isinstance(r, dict) and r.get("kind") == "progressive"), None)
+    if progressive:
+        stages.append(_exit_stage_from_swing(dict(progressive.get("parameters") or {})))
     _apply_alpha_param_knobs(stages, alpha_params)
     _apply_pcm_pyramid_knobs(stages, pcm_params)
 
@@ -868,19 +772,6 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
     stage_records = _stage_documentation_records(algo)
     _restore_stage_documentation(stages, stage_records)
 
-    # --- passthrough for slots we can't express semantically (lossless) ------
-    alpha_type = str(alpha.get("Type") or "")
-    risk_type = str(risk.get("Type") or "NullRiskManagementModel")
-    universe_type = str(universe_sel.get("Type") or "")
-
-    alpha_ref = None
-    if alpha_type and alpha_type not in ("VeraScreenerAlphaModel", "VeraCompositeAlphaModel", "VeraPyramidAlphaModel"):
-        alpha_ref = ModelRef(type=alpha_type, parameters=dict(alpha_params))
-
-    risk_model = None
-    if risk_type not in ("NullRiskManagementModel", "SwingProgressiveRiskManagementModel"):
-        risk_model = ModelRef(type=risk_type, parameters=dict(risk.get("Parameters") or {}))
-
     sizing = _sizing_from_pcm(pcm)
 
     universe_cfg = UniverseConfig(
@@ -888,13 +779,11 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
         limit_per_day=universe.get("limit_per_day"),
     )
     manual_syms = _manual_symbols_from_universe(universe)
-    if universe_type == "ManualUniverseSelectionModel" or manual_syms:
+    if manual_syms:
         universe_cfg = UniverseConfig(
             source=UniverseSource.MANUAL,
-            symbols=manual_syms or list((universe_sel.get("Parameters") or {}).get("symbols") or []),
+            symbols=manual_syms,
         )
-    elif universe_type and universe_type != "VeraScreenerUniverseSelectionModel":
-        universe_cfg = UniverseConfig(model=ModelRef(type=universe_type, parameters=dict(universe_sel.get("Parameters") or {})))
 
     execution_cfg = _execution_from_slot(execution)
 
@@ -906,11 +795,9 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
         gate_combine=alpha_params.get("gate_combine"),
         min_screens=alpha_params.get("min_screens"),
         max_entry_atr_pct=alpha_params.get("max_entry_atr_pct"),
-        alpha=alpha_ref,
         universe=universe_cfg,
         sizing=sizing,
         risk=RiskConfig(
-            model=risk_model,
             time_stop_skip_if=(
                 dict(risk_params["time_stop_skip_if"])
                 if isinstance(risk_params.get("time_stop_skip_if"), dict)
@@ -927,7 +814,7 @@ def decompile_pipeline(spec: dict[str, Any]) -> PipelineDocument:
 
 
 def decompile_portfolio(spec: dict[str, Any]) -> PortfolioDocument:
-    """Decompile a VeraLabV1 JSON dict back into a PortfolioDocument.
+    """Decompile a SigmaRailStrategyV1 JSON dict back into a PortfolioDocument.
 
     A ``CompositeAlphaModel`` spec becomes a multi-leg portfolio (one leg per
     child alpha, each passed through verbatim via ``ModelRef``); anything else
@@ -937,27 +824,27 @@ def decompile_portfolio(spec: dict[str, Any]) -> PortfolioDocument:
     alpha = framework.get("Alpha", {})
     name = str(spec.get("title") or spec.get("Kind") or "Decompiled Portfolio")
 
-    if alpha.get("Type") == "CompositeAlphaModel":
-        children = (alpha.get("Parameters") or {}).get("models") or []
+    if (alpha.get("Parameters") or {}).get("signal_mode") == "composite_score":
+        children = (alpha.get("Parameters") or {}).get("signals") or []
         legs = []
         for i, child in enumerate(children):
-            child_type = str(child.get("Type") or "Alpha")
+            child_type = str(child.get("signal_mode") or f"signal_{i}")
             leg_spec = {
-                "SchemaVersion": 2,
-                "Kind": "VeraLabV1",
+                "SchemaVersion": 3,
+                "Kind": "SigmaRailStrategyV1",
                 "title": f"{child_type}_{i}",
                 "Framework": {
                     **framework,
-                    "Alpha": {"Type": child.get("Type"), "Parameters": child.get("Parameters") or {}},
+                    "Alpha": {"Type": "SigmaRailScreenerAlphaModel", "Parameters": child},
                 },
                 "AlgorithmParameters": spec.get("AlgorithmParameters", {}),
-                "VeraBase": spec.get("VeraBase", {}),
+                "SigmaRail": spec.get("SigmaRail", {}),
             }
             legs.append(decompile_pipeline(leg_spec))
 
         alloc = AllocationPolicy()
-        pcm_type = str(framework.get("PortfolioConstruction", {}).get("Type") or "")
-        if pcm_type == "RiskParityPortfolioConstructionModel":
+        pcm_params = (framework.get("PortfolioConstruction") or {}).get("Parameters") or {}
+        if pcm_params.get("allocation_policy") == "risk_parity":
             alloc.base = "risk_parity"
         return PortfolioDocument(name=name, legs=legs, allocation=alloc)
 
