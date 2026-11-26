@@ -1,17 +1,21 @@
-# SigmaRail Studio contributor notes
+# SigmaRail research and authoring interface contributor notes
 
 ## Project boundary
 
-SigmaRail Studio owns the research and strategy-authoring application, its UI, consolidated MCP, and adapters to the SigmaRail data and strategy services. SigmaRail core owns database schema, transforms, load/populate, and data semantics. SigmaRail Spec owns versioned machine-readable contracts. SigmaRail Lean owns strategy execution when migrated.
+This directory contains the research and strategy-authoring interface within the SigmaRail implementation. Read the [three-project architecture](https://github.com/SigmaRail/sigmarail-spec/blob/main/docs/ARCHITECTURE.md) before changing behavior.
+
+- SigmaRail Spec defines the product model and versioned contracts.
+- The SigmaRail implementation owns this UI, API/MCP services, ClickHouse schema, transforms, loading, and query execution.
+- SigmaRail Lean owns the customized LEAN runtime and strategy execution.
 
 ## Migration rules
 
 - Keep work specific to capabilities implemented in the SigmaRail project family. Do not advertise unported features as working SigmaRail capabilities.
 - Keep SQL as SigmaRail core's executable truth. Studio may consume generated schema/lineage contracts and issue validated read-only queries through its data adapter.
-- Preserve existing saved-screen and strategy payload compatibility while migration is in progress. In particular, do not mechanically rename versioned wire keys such as `VeraBase` or `VeraLabV1`.
+- Preserve versioned saved-screen and strategy payload compatibility. Do not rename wire keys or reinterpret stored documents without a contract version and migration plan.
 - Keep knowledge-base and non-core provider integrations optional and separate from core SigmaRail data.
 - Do not carry source-specific destructive database maintenance into this application.
-- Keep the existing local Vera services untouched during migration. Hosting changes require a completed endpoint and explicit cutover plan.
+- Treat hosted-service and routing changes as a separate deployment task with a completed endpoint and explicit cutover plan.
 - Never commit credentials, production data, or generated local user data.
 
 ## Validation

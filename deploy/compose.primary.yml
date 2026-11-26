@@ -57,7 +57,6 @@ services:
       SIGMARAIL_RUNTIME_TAILSCALE_HOST: turnip.tail850cb1.ts.net
       SIGMARAIL_RUNTIME_TAILSCALE_PORT: "8445"
       SIGMARAIL_RUNTIME_TAILSCALE_TARGET: http://localhost:4300
-      SIGMARAIL_BUILD_REVISION: ${SIGMARAIL_BUILD_REVISION:-unknown}
       SIGMARAIL_BUILD_BRANCH: main
       SIGMARAIL_BUILD_TREE: /Users/mdiggory/FinanceProjects/sigmarail
       SIGMARAIL_IMAGE_ID: ${SIGMARAIL_IMAGE_ID:-unknown}
@@ -92,7 +91,7 @@ services:
     environment:
       DB_CONNECTION: '{"dbname":"backend","username":"backend","password":"${SIGMARAIL_BACKTEST_DB_PASSWORD:?Set SIGMARAIL_BACKTEST_DB_PASSWORD}","host":"db","port":5432}'
       REDIS_CONNECTION: redis://redis:6379
-      LEAN_PROJECTS_ROOT: /Users/mdiggory/FinanceProjects/LeanProjects
+      LEAN_PROJECTS_ROOT: ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}
       SIGMARAIL_REPO_ROOT: /workspace
       SIGMARAIL_TRADING_LAB_SOURCE: /workspace/trading_lab
       SIGMARAIL_CLICKHOUSE_HOST: host.docker.internal
@@ -103,7 +102,7 @@ services:
       # LEAN's CLI creates temporary files that Docker bind-mounts into each
       # execution container. Keep those files under the host-shared workspace
       # so the Docker Desktop daemon can resolve the source path.
-      TMPDIR: /Users/mdiggory/FinanceProjects/LeanProjects/.sigmarail/docker-tmp
+      TMPDIR: ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}/.sigmarail/docker-tmp
       RUNNER_ID: sigmarail-compose-backtest-worker
       AWS_EC2_METADATA_DISABLED: "true"
     volumes:
@@ -112,7 +111,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Keep the path identical inside the worker so Docker Desktop can mount
       # each staged LEAN project into its per-job execution container.
-      - /Users/mdiggory/FinanceProjects/LeanProjects:/Users/mdiggory/FinanceProjects/LeanProjects
+      - ${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}:${SIGMARAIL_RUNTIME_ROOT:-/Users/mdiggory/FinanceProjects/sigmarail/.runtime/lean}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

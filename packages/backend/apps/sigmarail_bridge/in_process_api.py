@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from dataclasses import dataclass
 from http import HTTPStatus
-from pathlib import Path
 
 from django.http import HttpResponse
 from django.test import RequestFactory
@@ -23,13 +21,6 @@ logger = logging.getLogger(__name__)
 
 class InProcessDispatchError(RuntimeError):
     """An API route could not be dispatched in-process."""
-
-
-def _add_compatibility_package_paths() -> None:
-    """Expose shared query-contract packages without shadowing AppTension config."""
-    for package_root in (Path("/opt/vera-base/src"), Path("/opt/vera-spec/src")):
-        if package_root.is_dir() and str(package_root) not in sys.path:
-            sys.path.append(str(package_root))
 
 
 @dataclass
@@ -80,7 +71,6 @@ def dispatch_api_request(
         route = f"{route}?{query}"
 
     try:
-        _add_compatibility_package_paths()
         resolver = URLResolver(RegexPattern(r"^"), "api.urls")
         match = resolver.resolve(route.split("?", 1)[0])
     except Exception as exc:

@@ -64,13 +64,13 @@ def lean_projects_root() -> Path:
     if env:
         return Path(env)
     studio_root = Path(__file__).resolve().parents[1]
-    sibling = studio_root.parent / "LeanProjects"
-    if (sibling / "lean.json").exists():
-        return sibling
+    runtime = studio_root.parent / ".runtime" / "lean"
+    if (runtime / "lean.json").exists():
+        return runtime
     for parent in Path(__file__).resolve().parents:
         if (parent / "lean.json").exists():
             return parent
-    return sibling
+    return runtime
 
 
 def list_lean_projects() -> dict[str, Any]:
@@ -433,6 +433,7 @@ def _resolve_log_path(job_id: str) -> Path | None:
     root = lean_projects_root()
     for candidate in (
         root / ".sigmarail" / "runs" / job_id / "project" / "results" / job_id / "lean-backtest.log",
+        root / "sigmarail-run" / "results" / job_id / "lean-backtest.log",
         root / "results" / job_id / "lean-backtest.log",
     ):
         if candidate.is_file():
