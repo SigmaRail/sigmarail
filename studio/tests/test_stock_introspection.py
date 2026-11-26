@@ -35,6 +35,63 @@ def test_stock_introspection_uses_publication_time_and_dated_classification():
     assert "lastupdated <= toDateTime64" in source
 
 
+def test_optional_estimates_table_failure_removes_join_but_preserves_null_fields(monkeypatch):
+    class QueryResult:
+        def __init__(self, rows=(), columns=()):
+            self.result_rows = rows
+            self.column_names = columns
+
+    class ClickHouseError(Exception):
+        code = 60
+
+    class Client:
+        def __init__(self):
+            self.calls = []
+
+        def query(self, sql, parameters=None):
+            self.calls.append((sql, parameters))
+            if "SELECT\n        p.ticker" in sql:
+                assert "ext_analyst_estimates_screener_estimates_daily" not in sql
+                assert "CAST(NULL, 'Nullable(Float64)') AS eps_cq_mean" in sql
+                assert "CAST(NULL, 'Nullable(Int8)') AS eps_beat_flag" in sql
+                return QueryResult([], [])
+            if "SELECT date FROM screener_price_tech_daily" in sql and "ORDER BY date DESC LIMIT 1" in sql:
+                if len(self.calls) > 4:
+                    return QueryResult([])
+                return QueryResult([(datetime.date(2026, 11, 19),)])
+            if "SELECT max(date) FROM ext_analyst_estimates" in sql:
+                raise ClickHouseError("UNKNOWN_TABLE")
+            raise AssertionError(f"unexpected query: {sql[:80]}")
+
+    import datetime
+
+    client = Client()
+    with pytest.raises(ValueError, match="No market data found"):
+        stock_introspection.get_stock_introspection(
+            client, "ULCC", "2026-11-19", history_days=30, include_dossier=False
+        )
+    assert any("FROM screener_price_tech_daily p FINAL" in sql for sql, _ in client.calls)
+
+
+def test_optional_estimates_only_swallows_unknown_table_errors():
+    class Client:
+        def query(self, sql, parameters=None):
+            if "SELECT\n        p.ticker" in sql:
+                return type("Result", (), {"result_rows": []})()
+            if "SELECT date FROM screener_price_tech_daily" in sql:
+                return type("Result", (), {"result_rows": [(datetime.date(2026, 11, 19),)]})()
+            if "SELECT max(date) FROM ext_analyst_estimates" in sql:
+                raise RuntimeError("ClickHouse server unavailable")
+            raise AssertionError("unexpected follow-up query")
+
+    import datetime
+
+    with pytest.raises(RuntimeError, match="server unavailable"):
+        stock_introspection.get_stock_introspection(
+            Client(), "ULCC", "2026-11-19", history_days=30, include_dossier=False
+        )
+
+
 
 @pytest.mark.django_db
 @pytest.mark.skip(

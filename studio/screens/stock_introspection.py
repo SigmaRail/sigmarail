@@ -62,6 +62,7 @@ def get_stock_introspection(
         as_of_date = act_d.isoformat() if hasattr(act_d, "isoformat") else str(act_d)
 
     es_as_of = as_of_date
+    estimates_available = True
     try:
         es_date_sql = """
         SELECT max(date) FROM ext_analyst_estimates_screener_estimates_daily
@@ -71,8 +72,36 @@ def get_stock_introspection(
         if es_date_res.result_rows and es_date_res.result_rows[0][0] is not None:
             es_d = es_date_res.result_rows[0][0]
             es_as_of = es_d.isoformat() if hasattr(es_d, "isoformat") else str(es_d)
-    except Exception:
-        es_as_of = as_of_date
+    except Exception as exc:
+        # Analyst estimates are an optional extension. Older/local ClickHouse
+        # deployments may not have installed its table; keep the stock overview
+        # usable without masking unrelated query or connectivity failures.
+        if getattr(exc, "code", None) != 60 and "UNKNOWN_TABLE" not in str(exc):
+            raise
+        estimates_available = False
+
+    estimate_fields = {
+        "eps_cq_mean": "Nullable(Float64)", "eps_nq_mean": "Nullable(Float64)",
+        "eps_cy_mean": "Nullable(Float64)", "eps_ny_mean": "Nullable(Float64)",
+        "sales_cq_mean": "Nullable(Float64)", "sales_nq_mean": "Nullable(Float64)",
+        "sales_cy_mean": "Nullable(Float64)", "sales_ny_mean": "Nullable(Float64)",
+        "eps_cq_rev_pct_90d": "Nullable(Float64)", "eps_nq_rev_pct_90d": "Nullable(Float64)",
+        "eps_cy_rev_pct_90d": "Nullable(Float64)", "eps_ny_rev_pct_90d": "Nullable(Float64)",
+        "sales_nq_rev_pct_90d": "Nullable(Float64)", "sales_ny_rev_pct_90d": "Nullable(Float64)",
+        "eps_last_surprise_pct": "Nullable(Float64)", "eps_last_reported": "Nullable(Float64)",
+        "eps_last_estimate": "Nullable(Float64)", "eps_beat_flag": "Nullable(Int8)",
+        "sales_last_reported": "Nullable(Float64)", "sales_last_estimate": "Nullable(Float64)",
+        "sales_last_surprise_pct": "Nullable(Float64)", "sales_beat_flag": "Nullable(Int8)",
+    }
+    estimate_projection = ",\n        ".join(
+        f"es.{name}" if estimates_available else f"CAST(NULL, '{type_name}') AS {name}"
+        for name, type_name in estimate_fields.items()
+    )
+    estimate_join = (
+        "LEFT JOIN ext_analyst_estimates_screener_estimates_daily es FINAL "
+        "ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)"
+        if estimates_available else ""
+    )
 
     # 1. Fetch point-in-time as-of metrics
     as_of_sql = f"""
@@ -95,18 +124,13 @@ def get_stock_introspection(
         f.mrq_revenue, f.mrq_epsdil, f.mrq_grossmargin, f.mrq_netmargin, f.mrq_de,
         f.arq_revenue_growth_yoy, f.arq_eps_growth_yoy,
         o.inst_shrholders, o.inst_shrholders_qoq_pct, o.inst_sponsor_trend, o.insider_cluster_buy_flag,
-        es.eps_cq_mean, es.eps_nq_mean, es.eps_cy_mean, es.eps_ny_mean,
-        es.sales_cq_mean, es.sales_nq_mean, es.sales_cy_mean, es.sales_ny_mean,
-        es.eps_cq_rev_pct_90d, es.eps_nq_rev_pct_90d, es.eps_cy_rev_pct_90d, es.eps_ny_rev_pct_90d,
-        es.sales_nq_rev_pct_90d, es.sales_ny_rev_pct_90d, es.eps_last_surprise_pct,
-        es.eps_last_reported, es.eps_last_estimate, es.eps_beat_flag,
-        es.sales_last_reported, es.sales_last_estimate, es.sales_last_surprise_pct, es.sales_beat_flag,
+        {estimate_projection},
         dv.marketcap, dv.pe, dv.ps
     FROM screener_price_tech_daily p FINAL
     LEFT JOIN screener_ratings_daily r FINAL ON p.ticker = r.ticker AND p.date = r.date
     LEFT JOIN screener_fundamentals_daily f FINAL ON p.ticker = f.ticker AND p.date = f.date
     LEFT JOIN screener_ownership_daily o FINAL ON p.ticker = o.ticker AND p.date = o.date
-    LEFT JOIN ext_analyst_estimates_screener_estimates_daily es FINAL ON p.ticker = es.ticker AND es.date = toDate(%(es_as_of)s)
+    {estimate_join}
     LEFT JOIN daily_valuation dv ON p.ticker = dv.ticker AND p.date = dv.date
     ASOF LEFT JOIN (
         SELECT ticker, date, argMax(sector, lastupdated) AS sector,
