@@ -85,6 +85,14 @@ for its requirements and start/update commands.
 
 ## How SigmaRail is implemented
 
+SigmaRail is implemented across three projects. [SigmaRail Spec](https://github.com/SigmaRail/sigmarail-spec)
+defines the product architecture and versioned contracts. This repository implements the data platform,
+query services, research and strategy-authoring interface, and its API/MCP adapters. [SigmaRail Lean](https://github.com/SigmaRail/Lean)
+integrates ClickHouse with LEAN and executes supported strategies. Studio is the name of the research
+and authoring interface inside this SigmaRail implementation; it is not a separate architecture authority.
+See the [architecture guide](https://github.com/SigmaRail/sigmarail-spec/blob/main/docs/ARCHITECTURE.md)
+before changing contract behavior.
+
 The research workbench includes screens, charts, watchlists, strategy editing,
 backtest review, and MCP access. The Python package provides data loading, schema
 management, derived screening metrics, and a bounded read-only query API. The
