@@ -15,7 +15,7 @@ _REGISTRY_FILENAME = "lean_projects.yaml"
 
 
 def lean_projects_root() -> Path:
-    """Locate the LEAN CLI workspace; the strategy source lives in SigmaRail."""
+    """Locate SigmaRail's persistent LEAN runtime directory."""
     configured = (os.environ.get("LEAN_PROJECTS_ROOT") or "").strip()
     if configured:
         return Path(configured).expanduser().resolve()
@@ -23,12 +23,12 @@ def lean_projects_root() -> Path:
     for parent in (Path.cwd(), *Path(__file__).resolve().parents):
         if (parent / "lean.json").is_file():
             return parent
-        candidate = parent / "LeanProjects"
+        candidate = parent / ".runtime" / "lean"
         if (candidate / "lean.json").is_file():
             return candidate
     raise RuntimeError(
-        "Cannot locate a LEAN CLI workspace (lean.json not found). "
-        "Set LEAN_PROJECTS_ROOT to the workspace containing lean.json."
+        "Cannot locate SigmaRail's LEAN runtime (lean.json not found). "
+        "Set LEAN_PROJECTS_ROOT to the runtime directory containing lean.json."
     )
 
 

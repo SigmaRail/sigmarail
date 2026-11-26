@@ -21,4 +21,5 @@ data/
 !packages/sigmarail-spec/src/sigmarail_spec/data/**/*.json
 !packages/sigmarail-spec/src/sigmarail_spec/data/data/**/*.json
 logs/
+.runtime/
 .DS_Store

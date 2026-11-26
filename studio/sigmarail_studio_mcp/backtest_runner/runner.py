@@ -606,6 +606,12 @@ def tail_log(job_id: str, tail_lines: int = 200) -> dict[str, Any]:
 
     log_path = output_path / "lean-backtest.log"
     if not log_path.is_file():
+        migrated_path = lean_projects_root() / resolve_output_rel(
+            default_project_id(), job_id
+        ) / "lean-backtest.log"
+        if migrated_path.is_file():
+            log_path = migrated_path
+    if not log_path.is_file():
         return {
             "job_id": job_id,
             "log_path": str(log_path),
